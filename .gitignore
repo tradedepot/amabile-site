@@ -1,0 +1,12 @@
+# OS / editor cruft
+.DS_Store
+Thumbs.db
+*.swp
+.idea/
+.vscode/
+
+# Local archive of retired old-design pages (kept locally, not deployed)
+_archive/
+
+# Scratch / duplicate product images (moved to _archive)
+assets/images/products/_*.png

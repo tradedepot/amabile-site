@@ -1,0 +1,610 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMABILE DI ROSA — Friends. Wine. Good Times.</title>
+<meta name="description" content="Juicy Italian wines from Piemonte. Sweet, fizzy, low-fuss — made for your favourite people. Pop the cork.">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script>try{if(localStorage.getItem("adr_entered"))document.documentElement.classList.add("ama-entered");}catch(e){}</script>
+<style>
+html.ama-entered #splash{display:none}
+:root{
+  /* brand kit anchors */
+  --red:#E74529; --sage:#82B28C; --blue:#4D7396; --cream:#FFF3E0; --kitcream:#FBFAEB;
+  /* party accents */
+  --orange:#FF8A3D; --pink:#FF4D8D; --lime:#C6FF4D; --purple:#7A2FF2; --night:#1A1030; --ink:#2a1207;
+  /* live theme (mood mixer drives these) */
+  --bg1:#FF8A3D; --bg2:#E74529; --bg3:#FF4D8D; --shadow:var(--purple); --btnA:var(--lime); --btnB:var(--pink); --txt:var(--ink);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html{scroll-behavior:smooth}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--txt);background:var(--night);overflow-x:hidden}
+.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.9;letter-spacing:.005em}
+img{display:block;max-width:100%}
+a{color:inherit}
+
+#sky{position:fixed;inset:0;z-index:-3;background:linear-gradient(135deg,var(--bg1),var(--bg2) 48%,var(--bg3));
+  background-size:200% 200%;animation:drift 17s ease-in-out infinite;transition:background 1s}
+@keyframes drift{0%,100%{background-position:0% 50%}50%{background-position:100% 50%}}
+#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
+
+/* SPLASH */
+#splash{position:fixed;inset:0;z-index:100;
+  background:radial-gradient(125% 95% at 50% 36%,#FF9A4D 0%,#E74529 28%,#9c2444 60%,#2c0f2c 100%);
+  display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:20px;padding:24px;transition:opacity .85s,transform .85s}
+#splash::after{content:"";position:absolute;inset:0;box-shadow:inset 0 0 240px 60px rgba(30,5,25,.55);pointer-events:none}
+#splash.gone{opacity:0;transform:scale(1.12);pointer-events:none}
+#splash>*{position:relative;z-index:2}
+#splash .hi{color:#F4FF8A;font-weight:700;letter-spacing:.34em;text-transform:uppercase;font-size:13px;text-shadow:0 2px 0 rgba(0,0,0,.25)}
+#splash .logo{width:min(640px,88vw);filter:drop-shadow(0 12px 0 rgba(0,0,0,.22))}
+#cork{font-size:clamp(50px,10vw,98px);cursor:pointer;animation:shake 2.6s ease-in-out infinite;transform-origin:50% 80%}
+@keyframes shake{0%,90%,100%{transform:rotate(0)}93%{transform:rotate(-13deg)}96%{transform:rotate(13deg)}98%{transform:rotate(-7deg)}}
+.popbtn{position:relative;overflow:hidden;margin-top:2px;border:5px solid #15260a;cursor:pointer;
+  background:linear-gradient(180deg,#D7FF72,#B4F03A);color:#15260a;font-family:"Bagel Fat One",cursive;letter-spacing:.015em;
+  font-size:clamp(30px,6vw,54px);padding:22px 68px;border-radius:999px;
+  box-shadow:0 16px 32px rgba(20,5,0,.45);animation:bobwig 2.8s ease-in-out infinite;transition:transform .12s,box-shadow .12s}
+.popbtn::before{content:"";position:absolute;top:0;left:-60%;width:42%;height:100%;
+  background:linear-gradient(100deg,transparent,rgba(255,255,255,.75),transparent);transform:skewX(-18deg);animation:shine 3.6s ease-in-out infinite}
+.popbtn:hover{animation:none;transform:translateY(-4px) scale(1.03);box-shadow:0 22px 40px rgba(20,5,0,.5)}
+.popbtn:active{animation:none;transform:translateY(2px) scale(.99);box-shadow:0 8px 18px rgba(20,5,0,.4)}
+@keyframes bobwig{0%,100%{transform:translateY(0) rotate(-1deg)}50%{transform:translateY(-6px) rotate(1deg)}}
+@keyframes shine{0%,18%{left:-60%}55%{left:130%}100%{left:130%}}
+#splash small{color:#ffd9c9;letter-spacing:.04em}
+
+.wrap{max-width:1200px;margin:0 auto;padding:0 24px}
+.eyebrow{display:inline-block;background:var(--night);color:var(--lime);font-weight:700;text-transform:uppercase;
+  letter-spacing:.2em;font-size:12px;padding:9px 18px;border-radius:999px}
+.btn{display:inline-block;border:0;cursor:pointer;font-family:"Bagel Fat One",cursive;font-size:20px;padding:16px 34px;
+  border-radius:999px;color:#241007;box-shadow:6px 6px 0 rgba(0,0,0,.22);transition:transform .12s}
+.btn:hover{transform:translate(-2px,-2px) rotate(-1deg)}
+.btn.a{background:var(--btnA)}.btn.b{background:var(--btnB);color:#3a0018}
+.btn.cream{background:var(--cream);color:var(--red)}
+
+/* NAV */
+#nav{position:fixed;top:0;left:0;right:0;z-index:55;display:flex;justify-content:space-between;align-items:center;
+  padding:12px 24px;background:rgba(255,243,224,.92);backdrop-filter:blur(8px);border-bottom:3px solid var(--red);
+  transform:translateY(-115%);transition:transform .5s}
+#nav.show{transform:none}
+#nav .logo img{height:30px}
+#nav .pills{display:flex;gap:6px;align-items:center}
+#nav .pills a{text-decoration:none;font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.03em;color:var(--ink);padding:9px 13px;border-radius:999px}
+#nav .pills a:hover{background:var(--red);color:var(--cream)}
+#nav .pills a.cta{background:var(--red);color:var(--cream)}
+#sound{cursor:pointer;border:0;background:var(--night);color:var(--lime);font-weight:700;border-radius:999px;padding:9px 13px;font-size:12px}
+
+/* HERO */
+#hero{min-height:100vh;display:flex;flex-direction:column;justify-content:center;align-items:center;text-align:center;overflow:hidden;padding:90px 16px 40px}
+#hero .brandlogo{width:min(400px,64vw);margin-bottom:30px;filter:drop-shadow(0 6px 0 rgba(0,0,0,.12));animation:sway 6s ease-in-out infinite}
+@keyframes sway{0%,100%{transform:rotate(-1.5deg)}50%{transform:rotate(1.5deg)}}
+#hero h1{font-size:clamp(58px,15vw,184px);color:var(--cream);text-shadow:5px 6px 0 var(--shadow);max-width:13ch}
+#hero h1 span{display:inline-block;animation:wob 3.4s ease-in-out infinite}
+#hero h1 span:nth-child(2){animation-delay:.2s}#hero h1 span:nth-child(3){animation-delay:.4s}
+@keyframes wob{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-12px) rotate(-2deg)}}
+#hero .sub{font-size:clamp(16px,2.3vw,23px);color:var(--cream);font-weight:600;margin:20px 0 26px;max-width:30ch}
+.hero-cta{display:flex;gap:14px;flex-wrap:wrap;justify-content:center}
+.disco{position:absolute;top:7%;right:7%;width:92px;height:92px;border-radius:50%;
+  background:conic-gradient(from 0deg,#fff,#c6c6ff,#fff,#ffd1ec,#fff,#d1fff0,#fff);box-shadow:0 0 26px rgba(255,255,255,.38);animation:spin 9s linear infinite}
+.disco::after{content:"";position:absolute;inset:0;border-radius:50%;background:repeating-conic-gradient(rgba(0,0,0,.12) 0 6deg,transparent 6deg 12deg)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.float-bottle{position:absolute;width:clamp(64px,9vw,120px);border-radius:14px;background:#fff;padding:6px;
+  box-shadow:0 16px 30px rgba(40,10,30,.3);animation:bob 5s ease-in-out infinite}
+.fb1{left:5%;top:26%;transform:rotate(-9deg)}
+.fb2{right:6%;bottom:14%;transform:rotate(9deg);animation-delay:.6s}
+@keyframes bob{0%,100%{translate:0 0}50%{translate:0 -20px}}
+
+/* MARQUEE */
+.marquee{background:var(--night);color:var(--lime);overflow:hidden;white-space:nowrap;padding:14px 0;border-top:4px solid var(--cream);border-bottom:4px solid var(--cream);transform:rotate(-1.1deg);margin:0 -12px}
+.marquee div{display:inline-block;animation:march 20s linear infinite;font-family:"Bagel Fat One",cursive;font-size:30px}
+.marquee span{margin:0 26px}
+.marquee i{color:var(--pink);font-style:normal}
+@keyframes march{to{transform:translateX(-50%)}}
+
+/* MOOD */
+section{position:relative;padding:9vh 0}
+#mood{text-align:center}
+#mood h2{font-size:clamp(40px,8vw,92px);color:var(--cream);text-shadow:5px 5px 0 var(--shadow)}
+.moodbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;margin:26px 0}
+.moodbtns button{cursor:pointer;border:0;background:var(--cream);color:var(--ink);font-family:"Bagel Fat One",cursive;
+  font-size:15px;padding:12px 20px;border-radius:999px;box-shadow:4px 4px 0 rgba(0,0,0,.2);transition:transform .12s}
+.moodbtns button:hover{transform:scale(1.06) rotate(-2deg)}
+.moodbtns button.on{background:var(--lime);transform:scale(1.08)}
+#moodcard{max-width:560px;margin:0 auto;background:var(--cream);border-radius:26px;padding:26px;box-shadow:10px 10px 0 var(--night);
+  display:flex;gap:20px;align-items:center;text-align:left}
+#moodcard .em{font-family:"Bagel Fat One",cursive;font-size:46px;color:var(--red);line-height:1}
+#moodcard h3{font-family:"Bagel Fat One",cursive;font-size:26px;margin-bottom:4px;color:var(--ink)}
+#moodcard p{color:#5a4636}
+
+/* CAST */
+#cast h2{font-size:clamp(40px,8vw,92px);color:var(--cream);text-align:center;text-shadow:5px 5px 0 var(--shadow);margin-bottom:6px}
+#cast .lead{text-align:center;color:var(--cream);font-weight:600;margin-bottom:34px}
+.cast-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:26px}
+.char{position:relative;cursor:pointer;perspective:1400px;transition:transform .2s;will-change:transform}
+.char:nth-child(3n+1){rotate:-1.6deg}.char:nth-child(3n+2){rotate:1deg}.char:nth-child(3n){rotate:-.6deg}
+.char:hover{rotate:0deg;transform:scale(1.03);z-index:2}
+.flip-inner{position:relative;transition:transform .65s cubic-bezier(.4,.15,.2,1);transform-style:preserve-3d}
+.char.on .flip-inner{transform:rotateY(180deg)}
+.face{border-radius:24px;background:var(--cream);box-shadow:8px 8px 0 rgba(0,0,0,.22);padding:16px;backface-visibility:hidden;-webkit-backface-visibility:hidden}
+.face.front{position:relative}
+.face.back{position:absolute;inset:0;transform:rotateY(180deg);display:flex;flex-direction:column;justify-content:center;text-align:left}
+.char .pic{position:relative;aspect-ratio:1/1;border-radius:16px;overflow:hidden;background:#fff;display:flex;align-items:center;justify-content:center}
+.char .playbadge{position:absolute;bottom:10px;right:10px;z-index:3;width:48px;height:48px;border-radius:999px;border:3px solid var(--cream);background:var(--red);color:#fff;font-size:15px;line-height:1;cursor:pointer;display:flex;align-items:center;justify-content:center;padding-left:3px;-webkit-appearance:none;appearance:none;box-shadow:0 5px 14px rgba(0,0,0,.32);transition:transform .15s}
+.char .playbadge:hover{transform:scale(1.1)}
+.film-link{display:inline-flex;align-items:center;gap:8px;margin-top:18px;background:none;border:0;cursor:pointer;color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:17px;border-bottom:3px solid rgba(255,243,224,.5);padding-bottom:2px;transition:border-color .15s}
+.film-link:hover{border-color:var(--cream)}
+.char .pic img{height:100%;object-fit:contain;pointer-events:none}
+.char .nick{display:inline-block;color:var(--cream);font-weight:700;font-size:12px;text-transform:uppercase;letter-spacing:.07em;padding:5px 12px;border-radius:999px;margin:14px 0 6px;transform:rotate(-2deg)}
+.char h3{font-family:"Bagel Fat One",cursive;font-size:25px;color:var(--ink)}
+.char .notes{font-size:14px;color:#6a4634;margin-top:6px}
+.face.back .notes{margin:8px 0}
+.face.back .specs{display:flex;gap:8px;margin:4px 0 10px}
+.face.back .specs span{background:var(--cream);border:2px solid var(--ink);border-radius:999px;padding:4px 11px;font-size:12px;font-weight:700}
+.face.back .pairs{font-size:13px;color:#6a4634;margin-bottom:14px}
+.face.back .findlink{align-self:flex-start;font-family:"Bagel Fat One",cursive;font-size:15px;color:#fff;background:var(--red);padding:9px 18px;border-radius:999px;text-decoration:none}
+.vid-open{display:inline-block;margin-top:12px;color:var(--cream);font-size:13px;opacity:.85}
+.vid-open:hover{opacity:1}
+.face.back .back-cta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-top:2px}
+.face.back .filmbtn{font-family:"Bagel Fat One",cursive;font-size:15px;color:var(--ink);background:var(--lime);border:0;cursor:pointer;padding:9px 16px;border-radius:999px}
+.film-cta{background:var(--cream);color:var(--red)}
+.vid-modal{position:fixed;inset:0;z-index:120;background:rgba(20,5,15,.86);display:none;align-items:center;justify-content:center;padding:24px}
+.vid-modal.open{display:flex}
+.vid-box{position:relative;width:min(980px,94vw)}
+.vid-frame{position:relative;padding-bottom:56.25%;height:0;border-radius:18px;overflow:hidden;border:5px solid var(--cream);box-shadow:0 24px 70px rgba(0,0,0,.55)}
+.vid-frame iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vid-close{position:absolute;top:-54px;right:0;background:var(--cream);color:var(--ink);border:0;font-family:"Bagel Fat One",cursive;font-size:18px;width:46px;height:46px;border-radius:999px;cursor:pointer}
+.char .grab{position:absolute;top:14px;right:16px;z-index:3;font-size:11px;font-weight:700;color:#b39a8c;text-transform:uppercase;letter-spacing:.05em}
+
+/* NIGHT JOURNEY */
+.scene{min-height:84vh;display:flex;align-items:center;justify-content:center;text-align:center;color:var(--cream);padding:6vh 22px}
+.scene .tag{font-family:"Bagel Fat One",cursive;font-size:22px;color:var(--lime)}
+.scene h2{font-size:clamp(46px,11vw,130px);text-shadow:5px 5px 0 rgba(0,0,0,.22)}
+.scene p{font-size:clamp(16px,2.3vw,22px);font-weight:600;margin-top:10px}
+.scene .occ{display:grid;grid-template-columns:1fr 1fr;gap:clamp(26px,4vw,60px);align-items:center;max-width:1060px;width:100%;text-decoration:none;color:inherit}
+.scene .occ.rev{direction:rtl}.scene .occ.rev>*{direction:ltr}
+.occ-photo{border:5px solid var(--cream);border-radius:26px;overflow:hidden;box-shadow:14px 14px 0 rgba(0,0,0,.28);transition:transform .25s}
+.scene .occ:hover .occ-photo{transform:translate(-4px,-4px) rotate(-1deg)}
+.occ-photo img{width:100%;aspect-ratio:4/3;object-fit:cover;display:block}
+.occ-text{text-align:left}
+.occ-text h2{font-size:clamp(38px,5.4vw,76px)}
+.occ-cta{display:inline-block;margin-top:16px;font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--lime)}
+.occ-photo{display:block;text-decoration:none}
+.occ-actions{display:flex;gap:24px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.occ-actions .occ-cta{margin-top:0}
+.occ-play{cursor:pointer;border:0;font-family:"Bagel Fat One",cursive;font-size:16px;color:#06311a;background:#1ED760;padding:11px 20px;border-radius:999px;box-shadow:4px 4px 0 rgba(0,0,0,.22);display:inline-flex;align-items:center;gap:8px;transition:transform .12s}
+.occ-play:hover{transform:translate(-2px,-2px)}
+.occ-play:active{transform:translate(2px,2px);box-shadow:1px 1px 0 rgba(0,0,0,.22)}
+.occ-player{margin-top:18px;max-width:520px;display:none}
+.occ-player.open{display:block;animation:occfade .35s ease;border:3px solid var(--ink);border-radius:18px;box-shadow:9px 9px 0 rgba(0,0,0,.25);overflow:hidden;background:#121212}
+.occ-player iframe{width:100%;border:0;border-radius:0;display:block}
+@keyframes occfade{from{opacity:0;transform:translateY(-6px)}to{opacity:1;transform:none}}
+@media(max-width:760px){.occ-player{margin-left:auto;margin-right:auto}.occ-actions{justify-content:center}}
+
+/* INVITE — trigger link on occasions */
+.occ-invite{cursor:pointer;border:0;background:none;font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--cream);border-bottom:3px solid rgba(255,243,224,.5);padding:0 0 2px}
+.occ-invite:hover{border-color:var(--cream)}
+/* INVITE MODAL */
+.inv-modal{position:fixed;inset:0;z-index:130;background:rgba(20,5,15,.72);backdrop-filter:blur(4px);display:none;align-items:flex-start;justify-content:center;padding:5vh 18px;overflow:auto}
+.inv-modal.open{display:flex}
+.inv-box{position:relative;width:min(920px,96vw);border:3px solid var(--ink);border-radius:24px;box-shadow:0 26px 70px rgba(0,0,0,.5);background:radial-gradient(135% 130% at 50% -12%,#FF9A4D 0%,#E74529 34%,#9c2444 92%);padding:34px 30px;animation:occfade .3s ease}
+.inv-close{position:absolute;top:14px;right:14px;width:42px;height:42px;border-radius:999px;border:0;cursor:pointer;background:var(--cream);color:var(--ink);font-family:"Bagel Fat One",cursive;font-size:16px}
+.inv-modal-head{text-align:center;margin-bottom:26px}
+.inv-modal-head h3{font-family:"Bagel Fat One",cursive;color:var(--cream);text-shadow:4px 4px 0 var(--shadow);font-size:clamp(28px,4.5vw,44px);margin:12px 0 16px;line-height:.98}
+.inv-modal-head p{color:var(--cream);font-weight:600;font-size:14px;margin:0}
+.invite-grid{display:grid;grid-template-columns:1fr 1fr;gap:clamp(24px,3vw,40px);align-items:start}
+.invite-form label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:var(--cream);margin:14px 0 6px}
+.invite-form label:first-child{margin-top:0}
+.invite-form input,.invite-form select{width:100%;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px;background:var(--cream);color:var(--ink)}
+.invite-form input:focus,.invite-form select:focus{outline:none;box-shadow:0 0 0 3px rgba(255,243,224,.55)}
+.wa-share{margin-top:22px;width:100%;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;border:0;background:#1ED760;color:#06311a;font-family:"Bagel Fat One",cursive;font-size:19px;padding:16px;border-radius:999px;box-shadow:6px 6px 0 var(--ink);transition:transform .12s}
+.wa-share:hover{transform:translate(-2px,-2px)}
+.wa-share:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
+.iv-download{display:block;margin:12px auto 0;cursor:pointer;border:0;background:none;color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;border-bottom:3px solid rgba(255,243,224,.5);padding:0 0 2px}
+.iv-download:hover{border-color:var(--cream)}
+.iv-hint{color:rgba(255,243,224,.8);font-size:12px;text-align:center;margin-top:12px}
+.invite-card{position:relative;aspect-ratio:4/5;border:3px solid var(--ink);border-radius:20px;box-shadow:9px 9px 0 rgba(0,0,0,.25);overflow:hidden;background:#2c0f2c;color:var(--cream)}
+.iv-bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.iv-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.15) 0%,rgba(20,5,15,.3) 42%,rgba(20,5,15,.86) 100%)}
+.iv-content{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:26px}
+.iv-stamp{align-self:flex-start;background:var(--cream);color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.15em;font-size:10px;padding:6px 12px;border-radius:999px}
+.invite-card h3{font-family:"Bagel Fat One",cursive;font-size:clamp(30px,3.6vw,42px);margin:auto 0 4px;line-height:.96;color:var(--cream);text-shadow:2px 3px 0 rgba(0,0,0,.4)}
+.invite-card .ivc-host{font-weight:600;color:#ffe9d9;margin:0 0 14px}
+.iv-meta{display:flex;gap:24px;flex-wrap:wrap}
+.iv-meta .iv-line{display:flex;gap:8px;font-size:13px;align-items:baseline}
+.iv-meta .iv-line b{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:12px;min-width:auto}
+.invite-card .iv-note{margin-top:12px;font-style:italic;font-size:13px;color:#ffe9d9}
+.iv-logo{height:20px;width:auto;margin-top:18px;opacity:.95;align-self:flex-start}
+@media(max-width:780px){.invite-grid{grid-template-columns:1fr}.invite-card{max-width:360px;margin:4px auto 0}}
+@media(max-width:760px){.scene .occ{grid-template-columns:1fr;max-width:460px}.scene .occ.rev{direction:ltr}.occ-text{text-align:center}.occ-photo{order:-1}}
+
+/* JOIN */
+#join{text-align:center;padding-bottom:13vh}
+#join .joinlogo{width:min(360px,62vw);margin:0 auto 18px}
+#join h2{font-size:clamp(46px,11vw,140px);color:var(--cream);text-shadow:6px 6px 0 var(--shadow)}
+#join .form{max-width:480px;margin:24px auto 0;display:flex;flex-direction:column;gap:12px}
+#join .join-row{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}
+#join .join-more{display:flex;gap:10px;max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .35s ease}
+#join .join-more.open{max-height:140px;opacity:1}
+#join .join-more input{min-width:120px}
+#join input{flex:1;min-width:200px;border:0;border-radius:999px;padding:16px 22px;font-family:inherit;font-size:16px}
+#join .socials{margin-top:26px;display:flex;gap:20px;justify-content:center;font-weight:700;text-transform:uppercase;letter-spacing:.05em}
+.legal{margin-top:38px;color:rgba(255,243,224,.8);font-size:13px}
+.legal a{color:var(--lime)}
+
+@media(max-width:780px){.cast-grid{grid-template-columns:1fr}.float-bottle,.disco{display:none}#nav .pills a:not(.cta){display:none}}
+@media(prefers-reduced-motion:reduce){*{animation:none!important;scroll-behavior:auto}}
+</style>
+</head>
+<body data-mood="aperitivo">
+<div id="sky"></div>
+<canvas id="fx"></canvas>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="hi">Friends · Wine · Good Times</div>
+  <img class="logo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa — Juicy Italian Wines">
+  <div id="cork">🍾</div>
+  <button class="popbtn" id="popbtn">POP THE CORK</button>
+  <small>You must be 18+ to enter · please sip responsibly</small>
+</div>
+
+<!-- NAV -->
+<nav id="nav">
+  <a class="logo" href="#top"><img src="assets/images/logo/brand_red_plain.png" alt="Amabile di Rosa"></a>
+  <div class="pills">
+    <a href="#cast">Wines</a><a href="#mood">Your Pour</a><a href="#join">Join the Party</a><a href="trade.html">Become a Wholesaler</a>
+    <a href="where-to-buy.html" class="cta">Find a Bottle</a>
+  </div>
+</nav>
+
+<main id="top">
+  <!-- HERO -->
+  <section id="hero">
+    <div class="disco"></div>
+    <img class="brandlogo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa — Juicy Italian Wines">
+    <h1 class="disp"><span>Friends.</span> <span>Wine.</span> <span>Good&nbsp;Times.</span></h1>
+    <p class="sub">The sweet, fizzy Italian wine,<br>best served with your favourite people.</p>
+    <div class="hero-cta">
+      <button class="btn a" onclick="document.getElementById('mood').scrollIntoView()">Pour me something →</button>
+      <button class="btn b" onclick="document.getElementById('cast').scrollIntoView()">Meet the wines</button>
+    </div>
+    <button class="film-link" onclick="openVid('ENsxmrOlFHo')">▶ Watch the film</button>
+  </section>
+
+  <div class="marquee"><div id="mq"></div></div>
+
+  <!-- MOOD -->
+  <section id="mood">
+    <div class="wrap">
+      <span class="eyebrow">The Mood Mixer</span>
+      <h2 class="disp" style="margin-top:14px">What's the vibe?</h2>
+      <div class="moodbtns" id="moodbtns">
+        <button data-m="aperitivo" class="on">🌅 Beach day</button>
+        <button data-m="lunch">🍝 Dinner party</button>
+        <button data-m="piazza">🪩 Dancefloor</button>
+        <button data-m="cosy">🌙 Cosy night</button>
+      </div>
+      <div id="moodcard" style="cursor:pointer">
+        <div class="em" id="mc-em">★</div>
+        <div>
+          <span class="eyebrow" id="mc-tag" style="margin-bottom:8px">Your pour</span>
+          <h3 id="mc-title">Tap a vibe</h3>
+          <p id="mc-desc">Pick a moment — we'll repaint the whole place and pour you a match.</p>
+          <span id="mc-go" style="display:none;font-family:'Bagel Fat One',cursive;color:var(--red);font-size:16px;margin-top:6px">Meet this wine →</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CAST -->
+  <section id="cast">
+    <div class="wrap">
+      <h2 class="disp">Meet the cast</h2>
+      <p class="lead">Six personalities, one golden rule: too much fun. (Tap a bottle to flip it over.)</p>
+      <div class="cast-grid" id="castGrid"></div>
+      <div style="text-align:center;margin-top:40px"><a class="btn a" href="where-to-buy.html">Find a bottle near you →</a></div>
+    </div>
+  </section>
+
+  <!-- NIGHT JOURNEY -->
+  <!-- Occasion playlists: data-pl holds each moment's Spotify playlist ID -->
+  <section class="scene" data-scene="aperitivo"><div class="occ"><a class="occ-photo" href="#cast"><img src="assets/images/occasions/golden_hour.jpg" alt="Poolside golden hour with Amabile"></a><div class="occ-text"><div class="tag">6 PM · Beach day</div><h2 class="disp">Golden hour</h2><p>Cork's out, sun's low, somebody's already laughing too loud. Chill the Rosato and pass it around.</p><div class="occ-actions"><a class="occ-cta" href="#cast">Meet the wines →</a><button class="occ-invite" onclick="openInvite('beach')">Host your friends →</button><button class="occ-play" data-pl="6na6gvlPZ5mMNIs73zviV8" data-label="▶ Play the Golden hour playlist">▶ Play the Golden hour playlist</button></div><div class="occ-player"></div></div></div></section>
+  <section class="scene" data-scene="lunch"><div class="occ rev"><a class="occ-photo" href="#cast"><img src="assets/images/occasions/dinner.jpg" alt="Amabile on the dinner table"></a><div class="occ-text"><div class="tag">9 PM · Dinner party</div><h2 class="disp">Dinner party</h2><p>Plates everywhere, nobody's leaving, the Rosso's going around again. Sweet wine, sweeter company.</p><div class="occ-actions"><a class="occ-cta" href="#cast">Meet the wines →</a><button class="occ-invite" onclick="openInvite('dinner')">Host your friends →</button><button class="occ-play" data-pl="2riRKe0E1qVRYoh3onIGQr" data-label="▶ Play the Dinner party playlist">▶ Play the Dinner party playlist</button></div><div class="occ-player"></div></div></div></section>
+  <section class="scene" data-scene="piazza"><div class="occ"><a class="occ-photo" href="#cast"><img src="assets/images/occasions/dancefloor.jpg" alt="A late-night Amabile dancefloor"></a><div class="occ-text"><div class="tag">1 AM · Dancefloor</div><h2 class="disp">Dancefloor</h2><p>The kitchen became a club. The Sparkling Moscato is to blame. We accept full responsibility.</p><div class="occ-actions"><a class="occ-cta" href="#cast">Meet the wines →</a><button class="occ-invite" onclick="openInvite('dance')">Host your friends →</button><button class="occ-play" data-pl="5UicJ37BPuqc11E30NU1xI" data-label="▶ Play the Dancefloor playlist">▶ Play the Dancefloor playlist</button></div><div class="occ-player"></div></div></div></section>
+
+  <!-- INVITE MODAL (triggered from an occasion) -->
+  <div id="inviteModal" class="inv-modal" onclick="closeInvite(event)">
+    <div class="inv-box">
+      <button class="inv-close" onclick="closeInvite()" aria-label="Close">✕</button>
+      <div class="inv-modal-head"><span class="eyebrow">Round up the crew</span><h3 class="disp">Send a good-times invite</h3><p>Fill it in, fire it into the group chat. Sorted.</p></div>
+      <div class="invite-grid">
+        <div class="invite-form">
+          <label for="iv-host">Your name</label><input id="iv-host" placeholder="e.g. Emilia" autocomplete="off">
+          <label for="iv-vibe">The vibe</label>
+          <select id="iv-vibe">
+            <option value="beach">🌅 Beach day</option>
+            <option value="dinner">🍝 Dinner party</option>
+            <option value="dance">🪩 Dancefloor</option>
+            <option value="cosy">🌙 Cosy night</option>
+            <option value="just">🥂 Just because</option>
+          </select>
+          <label for="iv-when">When</label><input id="iv-when" placeholder="e.g. Saturday, from 6pm" autocomplete="off">
+          <label for="iv-where">Where</label><input id="iv-where" placeholder="e.g. mine — Lekki Phase 1" autocomplete="off">
+          <label for="iv-note">A note <span style="opacity:.6">(optional)</span></label><input id="iv-note" placeholder="e.g. Bring your dancing shoes" autocomplete="off">
+          <button class="wa-share" id="iv-share">
+            <svg viewBox="0 0 24 24" width="22" height="22" fill="#06311a" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.52 13.99c-.25.7-1.47 1.34-2.02 1.39-.52.05-1.18.27-3.97-.83-3.34-1.32-5.46-4.74-5.62-4.96-.16-.22-1.35-1.8-1.35-3.43s.86-2.43 1.16-2.76c.3-.33.66-.41.88-.41l.63.01c.2.01.47-.08.74.56.27.66.92 2.28 1 2.45.08.16.13.36.03.58-.1.22-.16.36-.31.55-.16.2-.33.44-.47.59-.16.16-.32.34-.14.66.18.32.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.5 1.54.32.16.5.13.69-.08.18-.22.79-.92 1-1.24.21-.32.42-.27.71-.16.29.11 1.84.87 2.16 1.03.32.16.53.24.61.37.08.13.08.76-.17 1.46Z"/></svg>
+            Create &amp; share invite
+          </button>
+          <button class="iv-download" id="iv-download">↓ Download image</button>
+          <p class="iv-hint">Share opens your apps (WhatsApp, etc. on phone). Or download to post anywhere.</p>
+        </div>
+        <div class="invite-card" id="iv-card">
+          <div class="iv-bg" id="ivc-bg"></div>
+          <div class="iv-veil"></div>
+          <div class="iv-content">
+            <span class="iv-stamp">You're invited</span>
+            <h3 id="ivc-vibe">Beach day</h3>
+            <p id="ivc-host" class="ivc-host">Your name is pouring</p>
+            <div class="iv-meta"><div class="iv-line"><b>When</b><span id="ivc-when">—</span></div><div class="iv-line"><b>Where</b><span id="ivc-where">—</span></div></div>
+            <p class="iv-note" id="ivc-note" style="display:none"></p>
+            <img class="iv-logo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JOIN -->
+  <section id="join">
+    <div class="wrap">
+      <img class="joinlogo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+      <span class="eyebrow">Don't be a stranger</span>
+      <h2 class="disp" style="margin-top:14px;margin-bottom:0">Join the party</h2>
+      <p style="color:var(--cream);font-weight:600;margin-top:clamp(22px,3vw,40px)">Playlists, drops, and reasons to open a bottle. No spam — just good times.</p>
+      <form class="form" id="joinForm" onsubmit="return joinStep(event)">
+        <div class="join-row">
+          <input type="email" id="jEmail" required placeholder="your@email.com" aria-label="email">
+          <button class="btn cream" type="submit" id="jBtn">I'm in</button>
+        </div>
+        <div class="join-more" id="joinMore">
+          <input type="text" id="jName" placeholder="Your name" aria-label="your name">
+          <input type="text" id="jLoc" placeholder="Your city" aria-label="your city">
+        </div>
+      </form>
+      <div class="socials"><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a><a href="https://open.spotify.com/user/31lfejx4ccbvlj3my2bqfqccgwmu/playlists" target="_blank" rel="noopener">Spotify</a></div>
+      <div class="legal">© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines · <a href="responsible-drinking.html">Responsible drinking</a> · <a href="trade.html">Become a Wholesaler</a></div>
+    </div>
+  </section>
+</main>
+
+<div id="vidModal" class="vid-modal" onclick="closeVid(event)">
+  <div class="vid-box">
+    <button class="vid-close" onclick="closeVid()" aria-label="Close film">✕</button>
+    <div class="vid-frame" id="vidFrame"></div>
+    <a class="vid-open" id="vidLink" href="#" target="_blank" rel="noopener">Trouble playing? Open on YouTube ↗</a>
+  </div>
+</div>
+
+<script>
+var WINES=[
+ {nick:"The First Spark",name:"Bianco — White Wine",col:"#82B28C",bg:"#F0F1F3",video:"eF4itS4HcpM",abv:"9%",serve:"8°C",notes:"Pear, elderflower & citrus blossom. Sweet white with a light fizz.",pairs:"Suya, jollof rice, peppered snails, dodo, small chops, aged cheese, fresh fruit, panettone",img:"assets/images/products/bianco.jpg"},
+ {nick:"The Velvet Moment",name:"Rosato — Rosé Wine",col:"#4D7396",bg:"#F0F1F3",video:"kntAwtmtnso",abv:"9%",serve:"8°C",notes:"Strawberry, raspberry & rose petals. Sweet rosé, delicate sparkle.",pairs:"Jollof rice, suya, peppered gizzards, asun, nkwobi, grilled prawns, sushi, fruit desserts",img:"assets/images/products/rosato.jpg"},
+ {nick:"The Afterglow",name:"Rosso — Red Wine",col:"#E74529",bg:"#F0F1F3",video:"5Dp-HtvnTPI",abv:"9%",serve:"8°C",notes:"Cherry, blackberry & cocoa. Silky sweet red with a gentle fizz.",pairs:"Suya, asun, ofada & ayamase, peppered beef, barbecue, chocolate, prosciutto, red-fruit desserts",img:"assets/images/products/rosso.jpg"},
+ {nick:"The Showoff",name:"Sparkling Moscato",col:"#FF4D8D",bg:"#EDEDE3",abv:"9%",serve:"6–8°C",notes:"White & rosé — white peach, elderflower, strawberry. Brighter bubbles.",pairs:"Brunch, cake, celebrations",img:"assets/images/products/spumante_duo.jpg"},
+ {nick:"The Wildcard",name:"Vita Cans",col:"#FF8A3D",bg:"#E9EAE5",abv:"~9%",serve:"Ice cold",notes:"Cherry, mango, guava, passionfruit & more. Anytime, anywhere.",pairs:"Beach, picnic, on the move",img:"assets/images/products/cans_range.jpg"},
+ {nick:"The Designated Hero",name:"Alcohol-Free",col:"#7A2FF2",bg:"#E4E1D8",abv:"0.0%",serve:"Ice cold",notes:"All the ritual, none of the alcohol. White, red & rosé.",pairs:"Everyone, any time",img:"assets/images/products/non_alcoholic_range.jpg"}
+];
+/* moods: warm-party defaults, brand red/sage/blue woven in */
+var MOODS={
+ aperitivo:{wine:1,bg:["#FF8A3D","#E74529","#FF4D8D"],sh:"#7A2FF2",a:"#C6FF4D",b:"#FF4D8D",em:"~",title:"Rosato — The Velvet Moment",tag:"Beach day",desc:"Ice bucket, salty air, pink in the glass. Chill it hard and pass it around."},
+ lunch:{wine:2,bg:["#E74529","#C0392B","#7A2FF2"],sh:"#1A1030",a:"#FFC24D",b:"#FF4D8D",em:"♥",title:"Rosso — The Afterglow",tag:"Dinner party",desc:"Long table, loud table. Silky sweet red that plays nice with everything."},
+ piazza:{wine:3,bg:["#4D7396","#5B3FB0","#1A1030"],sh:"#FF4D8D",a:"#C6FF4D",b:"#FF8A3D",em:"✺",title:"Sparkling Moscato — The Showoff",tag:"Dancefloor",desc:"Bottles up, bubbles out. The kitchen is now a club and that's final."},
+ cosy:{wine:0,bg:["#82B28C","#5E8A6E","#E74529"],sh:"#1A1030",a:"#FFF3E0",b:"#FF8A3D",em:"✿",title:"Bianco — The First Spark",tag:"Cosy night",desc:"Blanket, one lamp, good chat. Sweet, floral, soft on the edges."}
+};
+
+/* SOUND EFFECTS (synthesized, momentary — no background music) */
+var AC=null,soundOn=true;
+function ac(){if(!AC){try{AC=new(window.AudioContext||window.webkitAudioContext)();}catch(e){}}return AC;}
+function blip(f,d,t,v){if(!soundOn)return;var c=ac();if(!c)return;var o=c.createOscillator(),g=c.createGain();o.type=t||"sine";o.frequency.value=f;o.connect(g);g.connect(c.destination);var n=c.currentTime;g.gain.setValueAtTime(v||.18,n);g.gain.exponentialRampToValueAtTime(.0001,n+(d||.25));o.start(n);o.stop(n+(d||.25));}
+function pop(){blip(640,.09,"triangle",.3);setTimeout(function(){blip(960,.12,"sine",.22);},58);}
+function fizz(){for(var i=0;i<6;i++){(function(k){setTimeout(function(){blip(1150+Math.random()*1300,.06,"sine",.05);},k*45);})(i);}}
+function chord(){[523,659,784,1046].forEach(function(f,i){setTimeout(function(){blip(f,.5,"triangle",.16);},i*92);});}
+
+/* CONFETTI + BUBBLES */
+var cv=document.getElementById("fx"),cx=cv.getContext("2d"),P=[],W,H;
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;} size(); addEventListener("resize",size);
+var COLS=["#FFC24D","#FF4D8D","#C6FF4D","#7A2FF2","#E74529","#fff","#82B28C","#4D7396"];
+function burst(x,y,n,big){for(var i=0;i<(n||26);i++){P.push({x:x,y:y,vx:(Math.random()-.5)*(big?12:8),vy:(Math.random()-1)*(big?12:9)-2,g:.26,r:(big?6:3)+Math.random()*5,c:COLS[i%COLS.length],a:1,rot:Math.random()*6,vr:(Math.random()-.5)*.4,sq:Math.random()>.4});}}
+function bub(x,y){if(P.length<220)P.push({x:x,y:y,vx:(Math.random()-.5)*.6,vy:-.6-Math.random(),g:0,r:2+Math.random()*5,a:.75,bub:true});}
+function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.a-=.012;if(p.rot!=null)p.rot+=p.vr;if(p.a<=0||p.y>H+40){P.splice(i,1);continue;}cx.globalAlpha=Math.max(p.a,0);
+ if(p.bub){cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.strokeStyle="rgba(255,255,255,.9)";cx.lineWidth=1.4;cx.stroke();}
+ else{cx.fillStyle=p.c;if(p.sq){cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillRect(-p.r,-p.r,p.r*2,p.r*2.3);cx.restore();}else{cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();}}}
+ cx.globalAlpha=1;requestAnimationFrame(tick);} tick();
+
+/* native cursor stays visible; bubbles trail it */
+addEventListener("pointermove",function(e){ if(Math.random()>.5)bub(e.clientX,e.clientY); });
+addEventListener("pointerdown",function(e){ if(document.getElementById("splash").classList.contains("gone")){burst(e.clientX,e.clientY,20);fizz();} });
+
+/* THEME */
+function applyTheme(d){var r=document.documentElement.style;r.setProperty("--bg1",d.bg[0]);r.setProperty("--bg2",d.bg[1]);r.setProperty("--bg3",d.bg[2]);r.setProperty("--shadow",d.sh);r.setProperty("--btnA",d.a);r.setProperty("--btnB",d.b);}
+function setMood(m,silent){var d=MOODS[m];document.body.dataset.mood=m;applyTheme(d);
+ document.querySelectorAll("#moodbtns button").forEach(function(b){b.classList.toggle("on",b.dataset.m===m);});
+ document.getElementById("mc-title").textContent=d.title;document.getElementById("mc-tag").textContent=d.tag;
+ document.getElementById("mc-desc").textContent=d.desc;document.getElementById("mc-em").textContent=d.em;
+ document.getElementById("mc-go").style.display="inline-block";
+ if(!silent){burst(innerWidth/2,innerHeight*0.35,44,true);fizz();}}
+document.getElementById("moodbtns").addEventListener("click",function(e){var b=e.target.closest("button");if(b){setMood(b.dataset.m);pop();}});
+/* "Meet this wine →" → go to that wine and flip it */
+function moodGotoWine(){
+ var d=MOODS[document.body.dataset.mood]; if(!d)return;
+ var cards=document.querySelectorAll("#castGrid .char"), card=cards[d.wine];
+ if(!card){document.getElementById("cast").scrollIntoView({behavior:"smooth"});return;}
+ card.scrollIntoView({behavior:"smooth",block:"center"});
+ setTimeout(function(){cards.forEach(function(c){c.classList.remove("on");});card.classList.add("on");},650);
+ pop();
+}
+document.getElementById("mc-go").addEventListener("click",function(e){e.stopPropagation();moodGotoWine();});
+/* tapping elsewhere on the card → that vibe's occasion on the page */
+document.getElementById("moodcard").addEventListener("click",function(){
+ var scene=document.querySelector('.scene[data-scene="'+document.body.dataset.mood+'"]');
+ if(scene){scene.scrollIntoView({behavior:"smooth",block:"start"});pop();}
+ else{moodGotoWine();}
+});
+
+/* CAST + drag */
+var grid=document.getElementById("castGrid");
+WINES.forEach(function(w){
+ var el=document.createElement("div");el.className="char";
+ el.innerHTML=
+  '<div class="flip-inner">'+
+    '<div class="face front">'+
+      '<span class="grab">tap ↻</span>'+
+      '<div class="pic" style="background:'+(w.bg||'#fff')+'"><img alt="'+w.name+'" src="'+w.img+'">'+(w.video?'<button class="playbadge" onclick="event.stopPropagation();openVid(\''+w.video+'\')" aria-label="Watch the film">▶</button>':'')+'</div>'+
+      '<span class="nick" style="background:'+w.col+'">'+w.nick+'</span><h3>'+w.name+'</h3>'+
+      '<p class="notes">'+w.notes+'</p>'+
+    '</div>'+
+    '<div class="face back" style="box-shadow:8px 8px 0 '+w.col+'">'+
+      '<span class="nick" style="background:'+w.col+';margin:0 0 6px">'+w.name+'</span>'+
+      '<p class="notes">'+w.notes+'</p>'+
+      '<div class="specs"><span>ABV '+w.abv+'</span><span>Serve '+w.serve+'</span></div>'+
+      '<p class="pairs"><strong>Pairs with:</strong> '+w.pairs+'</p>'+
+      '<a class="findlink" href="where-to-buy.html">Find a bottle →</a>'+
+    '</div>'+
+  '</div>';
+ el.addEventListener("click",function(e){
+   if(e.target.closest("a,button"))return;
+   el.classList.toggle("on");pop();
+   if(el.classList.contains("on")){var r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,18);}
+ });
+ grid.appendChild(el);
+});
+
+/* MARQUEE / SCENES / SPLASH */
+var t="";for(var i=0;i<2;i++){t+='<span>FRIENDS</span><i>★</i><span>WINE</span><i>✦</i><span>GOOD TIMES</span><i>✺</i><span>AMABILE DI ROSA</span><i>★</i>';}
+document.getElementById("mq").innerHTML=t+t;
+document.getElementById("yr").textContent=new Date().getFullYear();
+
+var io=new IntersectionObserver(function(es){es.forEach(function(en){if(en.isIntersecting){var s=en.target.dataset.scene;if(s&&MOODS[s]){applyTheme(MOODS[s]);burst(innerWidth/2,innerHeight*0.5,28);}}});},{threshold:.55});
+document.querySelectorAll(".scene").forEach(function(s){io.observe(s);});
+
+/* occasion playlists — reveal a Spotify player for that moment */
+document.querySelectorAll(".occ-play").forEach(function(btn){
+ btn.addEventListener("click",function(){
+   var player=btn.closest(".occ-text").querySelector(".occ-player");
+   var wasOpen=player.classList.contains("open");
+   document.querySelectorAll(".occ-player.open").forEach(function(p){p.classList.remove("open");p.innerHTML="";});
+   document.querySelectorAll(".occ-play").forEach(function(b){b.textContent=b.dataset.label;});
+   if(wasOpen)return;
+   player.innerHTML='<iframe src="https://open.spotify.com/embed/playlist/'+btn.dataset.pl+'?utm_source=generator&theme=0" width="100%" height="152" frameborder="0" loading="lazy" allow="autoplay; clipboard-write; encrypted-media; fullscreen; picture-in-picture"></iframe>';
+   player.classList.add("open");
+   btn.textContent="✕ Hide playlist";
+ });
+});
+/* Invite generator — builds a shareable invite graphic */
+(function(){
+ var VIBES={beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Cosy night",just:"Good times"};
+ var VPHOTO={beach:"assets/images/occasions/golden_hour.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg"};
+ var VIBEFILE={beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"cosy",just:"good-times"};
+ function slugify(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+ function fileName(){return (slugify(v("iv-host"))||"my")+"-"+(VIBEFILE[curVibe()]||"event")+"-invite.png";}
+ function v(id){var el=document.getElementById(id);return el?el.value.trim():"";}
+ function curVibe(){return document.getElementById("iv-vibe").value;}
+ function paint(){
+   var k=curVibe(), host=v("iv-host"), when=v("iv-when"), where=v("iv-where"), note=v("iv-note");
+   document.getElementById("ivc-vibe").textContent=VIBES[k]||"Good times";
+   document.getElementById("ivc-host").textContent=(host||"Your name")+" is pouring";
+   document.getElementById("ivc-when").textContent=when||"—";
+   document.getElementById("ivc-where").textContent=where||"—";
+   var n=document.getElementById("ivc-note");
+   if(note){n.textContent="“"+note+"”";n.style.display="block";}else{n.style.display="none";}
+   document.getElementById("ivc-bg").style.backgroundImage=VPHOTO[k]?"url('"+VPHOTO[k]+"')":"linear-gradient(160deg,#FF8A3D,#E74529 55%,#9c2444)";
+ }
+ ["iv-host","iv-vibe","iv-when","iv-where","iv-note"].forEach(function(id){var el=document.getElementById(id);if(el){el.addEventListener("input",paint);el.addEventListener("change",paint);}});
+ paint();
+ window.openInvite=function(vibe){var sel=document.getElementById("iv-vibe");if(vibe&&sel.querySelector('option[value="'+vibe+'"]'))sel.value=vibe;paint();document.getElementById("inviteModal").classList.add("open");setTimeout(function(){document.getElementById("iv-host").focus();},150);};
+ window.closeInvite=function(e){if(e&&e.target&&e.target.id!=="inviteModal")return;document.getElementById("inviteModal").classList.remove("open");};
+ addEventListener("keydown",function(e){if(e.key==="Escape")window.closeInvite();});
+
+ var logoImg=new Image(); logoImg.src="assets/images/logo/brand_white.png";
+ function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+ function cover(x,img,W,H){var ir=img.width/img.height,cr=W/H,sw,sh,sx,sy;if(ir>cr){sh=img.height;sw=sh*cr;sx=(img.width-sw)/2;sy=0;}else{sw=img.width;sh=sw/cr;sx=0;sy=(img.height-sh)/2;}x.drawImage(img,sx,sy,sw,sh,0,0,W,H);}
+ function wrap(x,t,maxW){var w=t.split(" "),l=[],c="";for(var i=0;i<w.length;i++){var tt=c?c+" "+w[i]:w[i];if(x.measureText(tt).width>maxW&&c){l.push(c);c=w[i];}else c=tt;}if(c)l.push(c);return l;}
+ function genImage(cb){
+   var W=1080,H=1350,pad=84,cv=document.createElement("canvas");cv.width=W;cv.height=H;var x=cv.getContext("2d");
+   var k=curVibe(),host=v("iv-host")||"Someone",when=v("iv-when"),where=v("iv-where"),note=v("iv-note"),vibe=VIBES[k]||"Good times";
+   function render(photo){
+     if(photo)cover(x,photo,W,H);else{var g=x.createLinearGradient(0,0,W,H);g.addColorStop(0,"#FF8A3D");g.addColorStop(.55,"#E74529");g.addColorStop(1,"#9c2444");x.fillStyle=g;x.fillRect(0,0,W,H);}
+     var vg=x.createLinearGradient(0,0,0,H);vg.addColorStop(0,"rgba(20,5,15,.12)");vg.addColorStop(.4,"rgba(20,5,15,.28)");vg.addColorStop(1,"rgba(20,5,15,.92)");x.fillStyle=vg;x.fillRect(0,0,W,H);
+     x.textAlign="left";x.textBaseline="middle";x.font='700 30px "Space Grotesk"';
+     var st="YOU'RE INVITED",stw=x.measureText(st).width;x.fillStyle="#FFF3E0";rr(x,pad,pad,stw+56,62,31);x.fill();x.fillStyle="#E74529";x.fillText(st,pad+28,pad+31);
+     var logoH=46,logoW=80;if(logoImg.complete&&logoImg.naturalWidth){logoW=logoImg.naturalWidth*(logoH/logoImg.naturalHeight);x.globalAlpha=.96;x.drawImage(logoImg,pad,H-pad-logoH,logoW,logoH);x.globalAlpha=1;}
+     x.globalAlpha=.82;x.fillStyle="#FFF3E0";x.font='500 24px "Space Grotesk"';x.fillText("Friends. Wine. Good Times.",pad+logoW+22,H-pad-logoH/2+1);x.globalAlpha=1;
+     x.textBaseline="alphabetic";var y=795;
+     x.fillStyle="rgba(0,0,0,.4)";x.font='400 108px "Bagel Fat One"';x.fillText(vibe,pad+3,y+4);x.fillStyle="#FFF3E0";x.fillText(vibe,pad,y);
+     y+=56;x.font='600 36px "Space Grotesk"';x.fillStyle="#ffe9d9";x.fillText("Hosted by "+host,pad,y);
+     y+=40;x.strokeStyle="rgba(255,243,224,.5)";x.lineWidth=3;x.beginPath();x.moveTo(pad,y);x.lineTo(pad+150,y);x.stroke();
+     function row(label,val){if(!val)return;y+=54;x.font='400 22px "Space Grotesk"';x.fillStyle="#C6FF4D";x.fillText(label,pad,y);x.font='500 30px "Space Grotesk"';x.fillStyle="#FFF3E0";x.fillText(val,pad+150,y);}
+     row("WHEN",when);row("WHERE",where);
+     if(note){y+=58;x.font='italic 30px "Space Grotesk"';x.fillStyle="#ffe9d9";wrap(x,"“"+note+"”",W-2*pad).slice(0,2).forEach(function(ln){x.fillText(ln,pad,y);y+=40;});}
+     if(cv.toBlob)cv.toBlob(function(b){cb(b,cv);},"image/png");else cb(null,cv);
+   }
+   if(VPHOTO[k]){var im=new Image();im.onload=function(){render(im);};im.onerror=function(){render(null);};im.src=VPHOTO[k];}else render(null);
+ }
+ function withImage(cb){
+   var ready=document.fonts?Promise.all([document.fonts.load('400 108px "Bagel Fat One"'),document.fonts.load('600 36px "Space Grotesk"'),document.fonts.load('500 30px "Space Grotesk"'),document.fonts.load('italic 30px "Space Grotesk"')]).catch(function(){}):Promise.resolve();
+   ready.then(function(){genImage(cb);});
+ }
+ function downloadIt(blob,cv,fname){var a=document.createElement("a");a.download=fname||"amabile-invite.png";a.href=blob?URL.createObjectURL(blob):cv.toDataURL("image/png");a.click();if(a.href.indexOf("blob:")===0)setTimeout(function(){URL.revokeObjectURL(a.href);},5000);}
+ var shareBtn=document.getElementById("iv-share");
+ if(shareBtn) shareBtn.addEventListener("click",function(){
+   shareBtn.disabled=true;
+   withImage(function(blob,cv){
+     shareBtn.disabled=false;
+     var fn=fileName();
+     var txt="You're invited — "+(VIBES[curVibe()]||"good times")+" with Amabile di Rosa. Friends. Wine. Good Times.";
+     try{
+       var file=blob?new File([blob],fn,{type:"image/png"}):null;
+       if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:txt}).then(function(){burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});return;}
+     }catch(e){}
+     downloadIt(blob,cv,fn);burst(innerWidth/2,innerHeight*0.6,70,true);
+   });
+ });
+ var dlBtn=document.getElementById("iv-download");
+ if(dlBtn) dlBtn.addEventListener("click",function(){dlBtn.disabled=true;withImage(function(blob,cv){dlBtn.disabled=false;downloadIt(blob,cv,fileName());burst(innerWidth/2,innerHeight*0.6,50,true);});});
+})();
+addEventListener("scroll",function(){document.getElementById("nav").classList.toggle("show",scrollY>innerHeight*0.7);});
+
+function enter(){ac();if(AC&&AC.state==="suspended")AC.resume();chord();
+ try{localStorage.setItem("adr_entered","1");}catch(e){}
+ var sp=document.getElementById("splash");burst(innerWidth/2,innerHeight*0.5,80,true);
+ sp.classList.add("gone");setMood("aperitivo");}
+document.getElementById("popbtn").addEventListener("click",enter);
+document.getElementById("cork").addEventListener("click",enter);
+/* returning visitor — skip the splash entirely, theme the page silently */
+if(document.documentElement.classList.contains("ama-entered")){setMood("aperitivo",true);}
+function openVid(id){var m=document.getElementById("vidModal");
+ document.getElementById("vidFrame").innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1" title="Amabile di Rosa film" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
+ document.getElementById("vidLink").href="https://www.youtube.com/watch?v="+id;
+ m.classList.add("open");}
+function closeVid(e){if(e&&e.target&&e.target.id!=="vidModal")return;
+ document.getElementById("vidModal").classList.remove("open");document.getElementById("vidFrame").innerHTML="";}
+addEventListener("keydown",function(e){if(e.key==="Escape")closeVid();});
+function joinStep(e){e.preventDefault();
+ var email=document.getElementById("jEmail"), more=document.getElementById("joinMore"), btn=document.getElementById("jBtn");
+ if(!more.classList.contains("open")){
+   if(!email.value||!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email.value)){email.style.boxShadow="0 0 0 3px var(--red)";return false;}
+   email.style.boxShadow=""; more.classList.add("open"); btn.textContent="Join the party →";
+   setTimeout(function(){document.getElementById("jName").focus();},120); return false;
+ }
+ var name=document.getElementById("jName"), loc=document.getElementById("jLoc"), ok=true;
+ [name,loc].forEach(function(f){if(!f.value.trim()){f.style.boxShadow="0 0 0 3px var(--red)";ok=false;}else f.style.boxShadow="";});
+ if(!ok)return false;
+ /* TODO: POST {email:email.value, name:name.value, city:loc.value} to your email/CRM endpoint */
+ burst(innerWidth/2,innerHeight*0.7,90,true); chord();
+ document.getElementById("joinForm").innerHTML='<p class="disp" style="color:var(--cream);font-size:24px">You\'re on the list, '+(name.value.trim().split(" ")[0]||'friend')+'! See you at the party.</p>';
+ return false;}
+</script>
+</body>
+</html>

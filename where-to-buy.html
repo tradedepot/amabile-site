@@ -1,0 +1,426 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Find a Bottle — Amabile di Rosa</title>
+<meta name="description" content="Order Amabile di Rosa online or find a stockist near you on the map. Pick your country — Friends. Wine. Good Times.">
+<meta name="theme-color" content="#E74529">
+<link rel="stylesheet" href="assets/css/party.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css">
+<style>
+.fab-hero{position:relative;overflow:hidden;color:var(--cream);text-align:center;padding:56px 24px 60px;background:radial-gradient(135% 130% at 50% -12%,#FF9A4D 0%,#E74529 34%,#9c2444 92%)}
+.fab-hero h1{font-size:clamp(46px,8vw,96px);color:var(--cream);text-shadow:5px 6px 0 var(--purple);margin:12px 0 8px}
+.fab-hero p{font-size:clamp(16px,2vw,20px);font-weight:600;max-width:42ch;margin:0 auto;color:#ffe9d9}
+.sec-title{text-align:center;font-size:clamp(30px,5vw,56px);color:var(--ink)}
+/* Shipping-to selector */
+.ship-row{display:flex;justify-content:center;align-items:center;gap:10px;flex-wrap:wrap;margin:4px 0 22px}
+.ship-row label{font-weight:700;font-size:13px;text-transform:uppercase;letter-spacing:.06em;color:#6a4634}
+.ship-sel{border:3px solid var(--ink);border-radius:999px;background:#fff;color:var(--ink);font-family:"Space Grotesk",sans-serif;font-weight:700;font-size:15px;padding:9px 16px;cursor:pointer}
+.ship-sel:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.2)}
+/* eCommerce */
+.shop-note{text-align:center;color:#6a4634;font-weight:600;margin:6px 0 22px}
+.shop-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:22px;max-width:1040px;margin:0 auto}
+.shop-grid.one{grid-template-columns:1fr;max-width:620px}
+.shop-card{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:24px;display:flex;flex-direction:column}
+.shop-card .badge{align-self:flex-start;background:var(--lime);color:#1d3300;font-weight:700;text-transform:uppercase;letter-spacing:.06em;font-size:11px;padding:5px 12px;border-radius:999px}
+.shop-card h3{font-family:"Bagel Fat One",cursive;font-size:26px;margin:14px 0 4px;color:var(--ink)}
+.shop-card p{color:#6a4634;font-size:14px;margin-bottom:18px;flex:1}
+.shop-primary{display:inline-block;background:var(--red);color:#fff;font-family:"Bagel Fat One",cursive;font-size:16px;padding:13px 20px;border-radius:999px;text-decoration:none;text-align:center;transition:transform .12s}
+.shop-primary:hover{transform:translate(-2px,-2px)}
+.pill-row{display:flex;gap:8px}
+.pill-row .pill{flex:1;text-align:center;text-decoration:none;font-family:"Bagel Fat One",cursive;font-size:15px;padding:11px 8px;border-radius:999px;border:2px solid var(--ink);transition:transform .12s}
+.pill-row .pill:hover{transform:translateY(-2px)}
+.pill.red{background:var(--red);color:#fff}.pill.blue{background:var(--blue);color:#fff}.pill.sage{background:var(--sage);color:#13301c}
+/* Fallback (markets with no online retailers yet) */
+.shop-fallback{background:#fff;border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 var(--ink);padding:30px 26px;text-align:center}
+.shop-fallback h3{font-family:"Bagel Fat One",cursive;font-size:24px;color:var(--ink);margin-bottom:8px}
+.shop-fallback p{color:#6a4634;font-size:15px;max-width:48ch;margin:0 auto 18px}
+.shop-fallback .fb-btns{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+/* Locator */
+.searchbar{display:flex;gap:10px;max-width:660px;margin:0 auto 28px}
+.searchbar input{flex:1;border:3px solid var(--ink);border-radius:999px;padding:14px 20px;font-family:inherit;font-size:16px;background:#fff;min-width:0}
+.searchbar input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.2)}
+.searchbar .geo{border:3px solid var(--ink);background:#fff;border-radius:999px;width:54px;flex:none;cursor:pointer;font-size:18px}
+.searchbar .geo:hover{background:var(--cream)}
+.searchbar .go{border:0;background:var(--red);color:#fff;font-family:"Bagel Fat One",cursive;font-size:17px;padding:0 26px;border-radius:999px;cursor:pointer}
+/* Google-powered address suggestions in a custom dropdown (keeps our input styling) */
+.searchbar .ac-wrap{position:relative;flex:1;min-width:0}
+.searchbar .ac-wrap input{width:100%}
+.ac-list{position:absolute;top:calc(100% + 6px);left:0;right:0;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 rgba(0,0,0,.18);overflow:hidden;z-index:1200;display:none;text-align:left}
+.ac-list.open{display:block}
+.ac-item{padding:11px 16px;cursor:pointer;border-bottom:1px solid #efe4d3}
+.ac-item:last-child{border-bottom:0}
+.ac-item:hover,.ac-item.active{background:var(--cream)}
+.ac-main{font-weight:700;font-size:15px;color:var(--ink)}
+.ac-sub{font-size:12px;color:#8a7565;margin-top:1px}
+.locator{display:grid;grid-template-columns:360px 1fr;border:3px solid var(--ink);border-radius:22px;overflow:hidden;box-shadow:10px 10px 0 var(--ink);max-width:1120px;margin:0 auto;background:#fff}
+.locator-list{max-height:540px;overflow:auto;border-right:3px solid var(--ink)}
+.store{width:100%;text-align:left;display:flex;justify-content:space-between;align-items:center;gap:10px;background:none;border:0;border-bottom:1px solid #e3d8c6;padding:16px 18px;cursor:pointer;font-family:inherit}
+.store:hover{background:#FFF3E0}
+.store h4{font-family:"Bagel Fat One",cursive;font-size:17px;color:var(--ink);margin:0}
+.store-meta{font-size:13px;color:#6a4634;margin-top:2px}
+.store-dist{background:var(--lime);color:#1d3300;font-weight:700;font-size:12px;padding:4px 10px;border-radius:999px;white-space:nowrap}
+.store-empty{padding:26px 20px;color:#6a4634;font-size:14px;text-align:center}
+#map{height:540px;background:#e9e4d8}
+.amb-pin{background:var(--red);border:2px solid #fff;border-radius:50%;box-shadow:0 2px 6px rgba(0,0,0,.4)}
+/* "You are here" / search-centre marker — blue, distinct from red store pins */
+.me-pin span{position:absolute;left:50%;top:50%;width:16px;height:16px;transform:translate(-50%,-50%);border-radius:50%;background:var(--blue);border:3px solid #fff;box-shadow:0 1px 5px rgba(0,0,0,.45);z-index:2}
+.me-pin::before{content:"";position:absolute;left:50%;top:50%;width:34px;height:34px;border-radius:50%;background:rgba(77,115,150,.35);transform:translate(-50%,-50%);animation:mePulse 1.8s ease-out infinite}
+@keyframes mePulse{0%{opacity:.7;transform:translate(-50%,-50%) scale(.45)}100%{opacity:0;transform:translate(-50%,-50%) scale(1.7)}}
+.popup-name{font-family:"Bagel Fat One",cursive;font-size:15px;color:var(--ink);line-height:1.15}
+.popup-meta{color:#6a4634;font-size:13px;margin:3px 0 9px}
+.leaflet-popup-content a.popup-dir,.popup-dir:link,.popup-dir:visited{display:inline-block;background:var(--red);color:#fff !important;text-decoration:none;font-weight:700;font-size:13px;padding:7px 13px;border-radius:999px}
+.popup-dir:hover{background:#c9381f;color:#fff !important}
+.locator-note{text-align:center;color:#8a7565;font-size:12px;margin-top:14px}
+@media(max-width:820px){.shop-grid{grid-template-columns:1fr;max-width:420px}.locator{grid-template-columns:1fr}.locator-list{max-height:240px;border-right:0;border-bottom:3px solid var(--ink)}#map{height:360px}}
+</style>
+</head>
+<body>
+<nav class="site-nav">
+  <a class="logo" href="index.html"><img src="assets/images/logo/brand_red_plain.png" alt="Amabile di Rosa"></a>
+  <div class="pills">
+    <a href="index.html">Home</a>
+    <a href="index.html#cast">Wines</a>
+    <a href="trade.html">Become a Wholesaler</a>
+    <a href="where-to-buy.html" class="cta">Find a Bottle</a>
+  </div>
+</nav>
+
+<header class="fab-hero">
+  <span class="eyebrow" style="background:rgba(0,0,0,.28)">Where to buy</span>
+  <h1 class="disp">Find a Bottle</h1>
+  <p>Get it delivered in minutes, or track down a stockist near you.</p>
+</header>
+
+<main>
+  <!-- ORDER ONLINE (top option) -->
+  <section>
+    <div class="wrap">
+      <h2 class="sec-title disp">Order online</h2>
+      <div class="ship-row">
+        <label for="marketSel">Shipping to</label>
+        <select class="ship-sel" id="marketSel" aria-label="Choose your country"></select>
+      </div>
+      <p class="shop-note" id="shopNote"></p>
+      <div class="shop-grid" id="shopGrid"></div>
+    </div>
+  </section>
+
+  <!-- STORE LOCATOR -->
+  <section style="background:#fff;border-top:3px solid var(--ink);border-bottom:3px solid var(--ink)">
+    <div class="wrap">
+      <h2 class="sec-title disp">Find a store near you</h2>
+      <p class="shop-note">Search your area, or use your location.</p>
+      <div class="searchbar">
+        <div class="ac-wrap">
+          <input id="addr" type="text" placeholder="Your area" autocomplete="off" aria-label="Search your area">
+          <div class="ac-list" id="acList" role="listbox"></div>
+        </div>
+        <button class="geo" id="geoBtn" title="Use my location" aria-label="Use my location">◎</button>
+        <button class="go" id="searchBtn">Search</button>
+      </div>
+      <div class="locator">
+        <div class="locator-list" id="storeList"></div>
+        <div id="map"></div>
+      </div>
+      <p class="locator-note" id="locNote"></p>
+    </div>
+  </section>
+
+  <!-- WHOLESALE CROSS-LINK -->
+  <section class="center">
+    <div class="wrap">
+      <h2 class="sec-title disp">Run a bar, shop or venue?</h2>
+      <p style="max-width:46ch;margin:12px auto 22px;font-weight:500">Stock Amabile and keep the good times flowing.</p>
+      <a class="btn red" href="trade.html">Become a Wholesaler →</a>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div><div class="footer-logo"><img src="assets/images/logo/brand_white.png" alt="Amabile di Rosa"></div>
+        <p style="max-width:32ch;color:rgba(255,243,224,.8)">Juicy Italian wines, best served with your favourite people.</p></div>
+      <div><h4>Explore</h4><ul><li><a href="index.html">Home</a></li><li><a href="index.html#cast">Wines</a></li><li><a href="where-to-buy.html">Find a Bottle</a></li><li><a href="trade.html">Become a Wholesaler</a></li></ul></div>
+      <div><h4>Say hi</h4><ul><li><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a></li><li><a href="https://open.spotify.com/user/31lfejx4ccbvlj3my2bqfqccgwmu/playlists" target="_blank" rel="noopener">Spotify</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines</span><span><a href="responsible-drinking.html">Responsible drinking</a></span></div>
+  </div>
+</footer>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script src="assets/js/stockists.js"></script>
+<script>
+document.getElementById("yr").textContent=new Date().getFullYear();
+
+/* ===== Google Places address search =====
+   TODO: paste your Google Maps API key below to turn the search box into
+   Google address autocomplete. Enable "Places API (New)" + "Maps JavaScript API"
+   on a billing-enabled project, and restrict the key to your site's domain.
+   While this is empty, the box falls back to the free keyless search (OpenStreetMap). */
+var GOOGLE_MAPS_KEY="AIzaSyBxemxS0Um38S8_7fuHk1Lcmapn3DKxMhQ";
+var AcSug=null,AcTokenCls=null,acToken=null,acTimer=null;
+function loadGoogleMaps(key,cb){
+  if(window.google&&window.google.maps&&google.maps.importLibrary){cb();return;}
+  window.__adrGmReady=cb;
+  var s=document.createElement("script");
+  s.src="https://maps.googleapis.com/maps/api/js?key="+encodeURIComponent(key)+"&libraries=places&loading=async&callback=__adrGmReady";
+  s.async=true;s.onerror=function(){console.warn("Google Maps failed to load — keeping keyless search.");};
+  document.head.appendChild(s);
+}
+function acEsc(s){return String(s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c];});}
+function acClose(){var l=document.getElementById("acList");if(l){l.classList.remove("open");l.innerHTML="";}}
+function acNewToken(){if(AcTokenCls)acToken=new AcTokenCls();}
+function initPlacesAutocomplete(){
+  google.maps.importLibrary("places").then(function(p){
+    if(!p||!p.AutocompleteSuggestion)return; // SDK shape unexpected; keep keyless fallback
+    AcSug=p.AutocompleteSuggestion;AcTokenCls=p.AutocompleteSessionToken;acNewToken();
+    var input=document.getElementById("addr");
+    input.addEventListener("input",function(){
+      clearTimeout(acTimer);var v=input.value.trim();
+      if(v.length<3){acClose();return;}
+      acTimer=setTimeout(function(){acFetch(v);},250);
+    });
+    input.addEventListener("keydown",function(e){
+      if(e.key==="Enter"){var first=document.querySelector("#acList .ac-item");if(first){e.preventDefault();first.click();}}
+      else if(e.key==="Escape")acClose();
+    });
+    document.addEventListener("click",function(e){if(!e.target.closest(".ac-wrap"))acClose();});
+  });
+}
+function acFetch(v){
+  if(!AcSug)return;
+  var req={input:v,sessionToken:acToken};
+  if(GEOCC)req.includedRegionCodes=[GEOCC];
+  AcSug.fetchAutocompleteSuggestions(req).then(function(res){
+    var sug=(res&&res.suggestions)||[],l=document.getElementById("acList");
+    sug=sug.filter(function(s){return s.placePrediction;});
+    if(!sug.length){acClose();return;}
+    l.innerHTML=sug.map(function(s,i){var pp=s.placePrediction;
+      var main=(pp.mainText&&pp.mainText.text)||pp.text.text;
+      var sub=(pp.secondaryText&&pp.secondaryText.text)||"";
+      return '<div class="ac-item" role="option" data-i="'+i+'"><div class="ac-main">'+acEsc(main)+'</div>'+(sub?'<div class="ac-sub">'+acEsc(sub)+'</div>':'')+'</div>';
+    }).join("");
+    l.classList.add("open");
+    l.querySelectorAll(".ac-item").forEach(function(it){it.addEventListener("click",function(){acPick(sug[+it.dataset.i]);});});
+  }).catch(function(){acClose();});
+}
+function acPick(s){
+  var pp=s.placePrediction,place=pp.toPlace();
+  place.fetchFields({fields:["location"]}).then(function(){
+    document.getElementById("addr").value=pp.text.text;
+    acClose();acNewToken();
+    if(place.location){centerOn(place.location.lat(),place.location.lng());setLocMsg("Showing stockists nearest to “"+pp.text.text+"”.");}
+  }).catch(function(){});
+}
+
+/* ============================================================
+   MARKET REGISTRY — the page renders entirely from this object.
+   To launch a new country: add an entry. No layout changes needed.
+   Each market: label, onlineNote, retailers[], map{center,zoom},
+   geocc (Nominatim country filter, "" = worldwide), placeholder, stores[].
+   Retailer kinds:
+     {kind:"single",  name,badge,blurb,cta,url}
+     {kind:"colours", name,badge,blurb,links:{red,rose,white}}  // red→red, rosé→blue, white→sage
+   Empty retailers[] => friendly fallback block (no invented links).
+   ============================================================ */
+var MARKETS={
+  NG:{
+    label:"Nigeria", flag:"🇳🇬",
+    onlineNote:"Online delivery available across Nigeria.",
+    retailers:[
+      {kind:"single",name:"Chowdeck",badge:"Fast delivery",blurb:"Amabile to your door in minutes, across Lagos.",cta:"Order on Chowdeck →",url:"https://chowdeck.com/store/lekki-freedom-way/supermarkets/amabile-di-rosa-mainland-official-storelekki-phase-iepbf6q"},
+      {kind:"colours",name:"booze.ng",badge:"Nationwide",blurb:"Sweet red, rosé and white — delivered across Nigeria.",links:{red:"https://booze.ng/product/amabile-di-rosa-sweet-red/",rose:"https://booze.ng/product/amabile-di-rosa-sweet-rose/",white:"https://booze.ng/product/amabile-di-rosa-sweet-white/"}},
+      {kind:"colours",name:"drinks.ng",badge:"Nationwide",blurb:"Pick your colour and check out in a tap.",links:{red:"https://drinks.ng/product/amabile-di-rosa",rose:"https://drinks.ng/product/amabile-di-rosa-rose-wine-12-75cl",white:"https://drinks.ng/product/amabile-di-rosa-white-wine-12-75cl"}}
+    ],
+    map:{center:[6.5244,3.3792],zoom:11}, geocc:"ng",
+    placeholder:"Your area — e.g. Lekki, Lagos",
+    stores:[]  /* populated at runtime from live BigQuery data (assets/js/stockists.js) */
+  },
+  /* ---- EXAMPLE STUB MARKET ---- */
+  GB:{
+    label:"United Kingdom", flag:"🇬🇧",
+    onlineNote:"UK online retailers are coming soon.",
+    retailers:[], /* TODO: add approved UK online retailers {kind,name,badge,blurb,links/url} */
+    map:{center:[51.5072,-0.1276],zoom:10}, geocc:"gb",
+    placeholder:"Your area — e.g. Shoreditch, London",
+    stores:[ /* TODO: replace with real UK stockists + coordinates */
+      {name:"Sample Wine Merchant",type:"Wine shop",area:"Soho, London",lat:51.5137,lng:-0.1340}
+    ]
+  },
+  /* ---- EXAMPLE STUB MARKET (home country) ---- */
+  IT:{
+    label:"Italy", flag:"🇮🇹",
+    onlineNote:"Find Amabile across Italy — retailers coming soon.",
+    retailers:[], /* TODO: add approved IT online retailers */
+    map:{center:[44.9009,8.2065],zoom:9}, geocc:"it",
+    placeholder:"Your area — e.g. Asti, Piemonte",
+    stores:[ /* TODO: replace with real IT stockists + coordinates */
+      {name:"Sample Enoteca",type:"Wine shop",area:"Asti, Piemonte",lat:44.9009,lng:8.2065}
+    ]
+  }
+};
+/* Global default for any country we don't list yet */
+var ROW={
+  label:"Somewhere else", flag:"🌍",
+  onlineNote:"We're not in your country yet — but we're expanding fast.",
+  retailers:[],
+  map:{center:[20,0],zoom:2}, geocc:"",
+  placeholder:"Search any city or area",
+  stores:[]
+};
+/* Fill Nigeria with the live stockist list (deduped by name+coords). */
+(function(){
+  var raw=window.ADR_STOCKISTS||[],seen={},out=[];
+  raw.forEach(function(s){
+    var k=(s.n||"").toLowerCase()+"|"+s.lat+"|"+s.lng;
+    if(seen[k])return; seen[k]=1;
+    out.push({name:s.n,type:s.t||"Stockist",area:s.a||"Nigeria",lat:s.lat,lng:s.lng});
+  });
+  MARKETS.NG.stores=out;
+  MARKETS.NG.count=out.length;
+})();
+function getMarket(code){return code==="ROW"?ROW:(MARKETS[code]||ROW);}
+
+/* ---- detect best market: saved choice > timezone > locale region > ROW ---- */
+function detectMarket(){
+  try{var s=localStorage.getItem("adr_market");if(s&&(s==="ROW"||MARKETS[s]))return s;}catch(e){}
+  var tz="";try{tz=Intl.DateTimeFormat().resolvedOptions().timeZone||"";}catch(e){}
+  if(/Lagos/.test(tz))return "NG";
+  if(/London/.test(tz))return "GB";
+  if(/Rome/.test(tz))return "IT";
+  var reg=((navigator.language||"").split("-")[1]||"").toUpperCase();
+  if(reg&&MARKETS[reg])return reg;
+  return "ROW";
+}
+
+/* ---- build the Shipping-to selector ---- */
+(function(){
+  var sel=document.getElementById("marketSel"),html="";
+  Object.keys(MARKETS).forEach(function(k){html+='<option value="'+k+'">'+MARKETS[k].flag+"  "+MARKETS[k].label+"</option>";});
+  html+='<option value="ROW">'+ROW.flag+"  "+ROW.label+"</option>";
+  sel.innerHTML=html;
+  sel.addEventListener("change",function(){try{localStorage.setItem("adr_market",sel.value);}catch(e){}loadMarket(sel.value);});
+})();
+
+/* ---- render the Order online cards for a market ---- */
+function shopCard(r){
+  if(r.kind==="single"){
+    return '<div class="shop-card"><span class="badge">'+r.badge+'</span><h3>'+r.name+'</h3><p>'+r.blurb+'</p>'+
+      '<div class="shop-links"><a class="shop-primary" href="'+r.url+'" target="_blank" rel="noopener">'+r.cta+'</a></div></div>';
+  }
+  return '<div class="shop-card"><span class="badge">'+r.badge+'</span><h3>'+r.name+'</h3><p>'+r.blurb+'</p>'+
+    '<div class="pill-row">'+
+      '<a class="pill red" href="'+r.links.red+'" target="_blank" rel="noopener">Red</a>'+
+      '<a class="pill blue" href="'+r.links.rose+'" target="_blank" rel="noopener">Rosé</a>'+
+      '<a class="pill sage" href="'+r.links.white+'" target="_blank" rel="noopener">White</a>'+
+    '</div></div>';
+}
+function renderShops(m){
+  document.getElementById("shopNote").textContent=m.onlineNote;
+  var grid=document.getElementById("shopGrid");
+  if(!m.retailers.length){
+    grid.className="shop-grid one";
+    grid.innerHTML='<div class="shop-fallback"><h3>Coming to '+m.label+' soon</h3>'+
+      '<p>We don’t have an online retailer here just yet. Message us to find your nearest bottle — or if you run a venue, help us bring Amabile to your area.</p>'+
+      '<div class="fb-btns"><a class="btn red" href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Message us</a>'+
+      '<a class="btn cream" href="trade.html">Become a Wholesaler →</a></div></div>';
+    return;
+  }
+  grid.className="shop-grid";
+  grid.innerHTML=m.retailers.map(shopCard).join("");
+}
+
+/* ---- map + locator (rebuilds per market) ---- */
+var map,markerLayer,ACTIVE,GEOCC="";
+function startMap(){
+  if(typeof L==="undefined"){document.getElementById("map").innerHTML='<div style="padding:24px;color:#6a4634">Map could not load — please check your connection.</div>';return;}
+  map=L.map("map",{scrollWheelZoom:false}).setView([6.5244,3.3792],11);
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png",{attribution:"&copy; OpenStreetMap",maxZoom:19}).addTo(map);
+  markerLayer=(typeof L.markerClusterGroup==="function")
+    ? L.markerClusterGroup({maxClusterRadius:48,showCoverageOnHover:false})
+    : L.layerGroup();
+  markerLayer.addTo(map);
+}
+function drawMarket(m){
+  if(!map)return;
+  markerLayer.clearLayers();
+  var pin=L.divIcon({className:"amb-pin",html:"",iconSize:[22,22],iconAnchor:[11,11]});
+  m.stores.forEach(function(s,i){var mk=L.marker([s.lat,s.lng],{icon:pin});
+    var dir="https://www.google.com/maps/dir/?api=1&destination="+s.lat+","+s.lng;
+    mk.bindPopup('<div class="popup-name">'+s.name+'</div><div class="popup-meta">'+s.type+' · '+s.area+'</div><a class="popup-dir" href="'+dir+'" target="_blank" rel="noopener">Get directions →</a>');
+    mk.addTo(markerLayer);s._mk=mk;});
+  map.setView(m.map.center,m.map.zoom);
+  setTimeout(function(){map.invalidateSize();},200);
+}
+function distKm(aLat,aLng,bLat,bLng){var R=6371,dLa=(bLat-aLat)*Math.PI/180,dLn=(bLng-aLng)*Math.PI/180,x=Math.sin(dLa/2)*Math.sin(dLa/2)+Math.cos(aLat*Math.PI/180)*Math.cos(bLat*Math.PI/180)*Math.sin(dLn/2)*Math.sin(dLn/2);return R*2*Math.atan2(Math.sqrt(x),Math.sqrt(1-x));}
+function renderList(lat,lng){
+  var el=document.getElementById("storeList");
+  if(!ACTIVE.stores.length){el.innerHTML='<div class="store-empty">No listed stockists here yet — try ordering online above.</div>';return;}
+  var rows=ACTIVE.stores.map(function(s,i){return {s:s,i:i,d:(lat!=null?distKm(lat,lng,s.lat,s.lng):null)};});
+  if(lat!=null)rows.sort(function(a,b){return a.d-b.d;});
+  el.innerHTML=rows.map(function(o){return '<button class="store" data-i="'+o.i+'"><div><h4>'+o.s.name+'</h4><div class="store-meta">'+o.s.type+' · '+o.s.area+'</div></div>'+(o.d!=null?'<span class="store-dist">'+o.d.toFixed(1)+' km</span>':'')+'</button>';}).join("");
+  el.querySelectorAll(".store").forEach(function(b){b.addEventListener("click",function(){var s=ACTIVE.stores[+b.dataset.i];if(!map)return;
+    if(s._mk&&markerLayer&&typeof markerLayer.zoomToShowLayer==="function"){markerLayer.zoomToShowLayer(s._mk,function(){s._mk.openPopup();});}
+    else{map.setView([s.lat,s.lng],14);if(s._mk)s._mk.openPopup();}});});
+}
+function centerOn(lat,lng){if(!map)return;map.setView([lat,lng],12);if(centerOn._me)map.removeLayer(centerOn._me);
+  var ic=L.divIcon({className:"me-pin",html:"<span></span>",iconSize:[34,34],iconAnchor:[17,17]});
+  centerOn._me=L.marker([lat,lng],{icon:ic,zIndexOffset:1000,interactive:false}).addTo(map);
+  renderList(lat,lng);}
+function geocode(q,cc){
+  var url="https://nominatim.openstreetmap.org/search?format=json&limit=1&q="+encodeURIComponent(q)+(cc?"&countrycodes="+cc:"");
+  return fetch(url,{headers:{"Accept":"application/json"}}).then(function(r){return r.json();}).then(function(d){return (d&&d[0])?d[0]:null;}).catch(function(){return null;});
+}
+function setLocMsg(t){var n=document.getElementById("locNote");if(n)n.textContent=t;}
+/* Search is scoped to the SELECTED market. The Shipping-to choice is authoritative;
+   locale only seeds the dropdown default. We never silently cross into another country. */
+function search(){
+  var q=document.getElementById("addr").value.trim();if(!q)return;
+  setLocMsg("Searching…");
+  geocode(q,GEOCC).then(function(hit){
+    if(hit){centerOn(+hit.lat,+hit.lon);setLocMsg("Showing stockists nearest to “"+q+"”.");}
+    else setLocMsg("Hmm, we couldn’t find “"+q+"”"+(GEOCC?(" in "+ACTIVE.label):"")+". Try a nearby town or area name.");
+  });
+}
+function geo(){
+  if(!navigator.geolocation){setLocMsg("Location isn’t available on this device — search your area instead.");return;}
+  setLocMsg("Finding your location…");
+  navigator.geolocation.getCurrentPosition(function(p){
+    centerOn(p.coords.latitude,p.coords.longitude); /* recenters map AND re-sorts the sidebar list by distance */
+    setLocMsg(ACTIVE.stores.length?"Showing stockists nearest to you.":"Found you — but there are no listed stockists here yet. Try ordering online above.");
+  },function(){setLocMsg("We couldn’t get your location. Check your browser permissions, or search your area instead.");});
+}
+
+/* ---- switch the whole page to a market ---- */
+function loadMarket(code){
+  ACTIVE=getMarket(code);GEOCC=ACTIVE.geocc;
+  document.getElementById("marketSel").value=(code==="ROW"||MARKETS[code])?code:"ROW";
+  document.getElementById("addr").placeholder=ACTIVE.placeholder;
+  if(typeof acClose==="function")acClose();
+  var note=document.getElementById("locNote");
+  if(note){
+    note.textContent=ACTIVE.stores.length
+      ? "Search your area or use your location to find your closest bottle."
+      : "No listed stockists here yet — order online above, or ask us to bring Amabile to your area.";
+  }
+  renderShops(ACTIVE);
+  drawMarket(ACTIVE);
+  renderList(null);
+}
+
+document.getElementById("searchBtn").addEventListener("click",search);
+document.getElementById("addr").addEventListener("keydown",function(e){if(e.key==="Enter")search();});
+document.getElementById("geoBtn").addEventListener("click",geo);
+
+startMap();
+loadMarket(detectMarket());
+if(GOOGLE_MAPS_KEY){loadGoogleMaps(GOOGLE_MAPS_KEY,initPlacesAutocomplete);}
+</script>
+</body>
+</html>
