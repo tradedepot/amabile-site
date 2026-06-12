@@ -1,0 +1,3 @@
+# Netlify — serverless functions live here (publish dir left as configured in the Netlify UI)
+[functions]
+  directory = "netlify/functions"

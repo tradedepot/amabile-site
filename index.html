@@ -399,12 +399,12 @@ section{position:relative;padding:9vh 0}
       <form class="form" id="joinForm" onsubmit="return joinStep(event)">
         <div class="join-row">
           <input type="email" id="jEmail" required placeholder="your@email.com" aria-label="email">
-          <button class="btn cream" type="submit" id="jBtn">I'm in</button>
         </div>
         <div class="join-more" id="joinMore">
           <input type="text" id="jName" placeholder="Your name" aria-label="your name">
           <input type="text" id="jLoc" placeholder="Your city" aria-label="your city">
         </div>
+        <button class="btn cream" type="submit" id="jBtn">I'm in</button>
       </form>
       <div class="socials"><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a><a href="https://open.spotify.com/user/31lfejx4ccbvlj3my2bqfqccgwmu/playlists" target="_blank" rel="noopener">Spotify</a></div>
       <div class="legal">© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines · <a href="responsible-drinking.html">Responsible drinking</a> · <a href="privacy.html">Privacy</a> · <a href="trade.html">Become a Wholesaler</a></div>
@@ -596,7 +596,12 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
    withImage(function(blob,cv){
      shareBtn.disabled=false;
      var fn=fileName();
-     var txt="You're invited — "+(VIBES[curVibe()]||"good times")+" with Amabile di Rosa. Friends. Wine. Good Times.";
+     var _vibe=VIBES[curVibe()]||"good times",_when=v("iv-when"),_where=v("iv-where"),_note=v("iv-note");
+     var txt="You're invited 🍷 "+_vibe;
+     if(_when)txt+=" — "+_when;
+     if(_where)txt+=" at "+_where;
+     txt+=".";
+     if(_note)txt+=" "+_note;
      try{
        var file=blob?new File([blob],fn,{type:"image/png"}):null;
        if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:txt}).then(function(){burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});return;}
@@ -617,6 +622,21 @@ document.getElementById("popbtn").addEventListener("click",enter);
 document.getElementById("cork").addEventListener("click",enter);
 /* returning visitor — skip the splash entirely, theme the page silently */
 if(document.documentElement.classList.contains("ama-entered")){setMood("aperitivo",true);}
+/* Deep link (e.g. Instagram bio → #join) — skip the cork-pop intro and land on the section */
+(function(){
+  var id=(location.hash||"").slice(1); if(!id||!document.getElementById(id))return;
+  if("scrollRestoration" in history) history.scrollRestoration="manual";
+  var sp=document.getElementById("splash"); if(sp){sp.classList.add("gone");sp.style.display="none";}
+  document.documentElement.classList.add("ama-entered");
+  document.documentElement.style.overflow=""; document.body.style.overflow="";
+  try{setMood("aperitivo",true);}catch(e){}
+  function jump(){var t=document.getElementById(id); if(!t)return;
+    var y=t.getBoundingClientRect().top+window.pageYOffset;
+    var prev=document.documentElement.style.scrollBehavior; document.documentElement.style.scrollBehavior="auto";
+    window.scrollTo(0,y); document.documentElement.style.scrollBehavior=prev;}
+  setTimeout(jump,120);
+  window.addEventListener("load",function(){jump(); setTimeout(jump,250);});
+})();
 function openVid(id){var m=document.getElementById("vidModal");
  document.getElementById("vidFrame").innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1" title="Amabile di Rosa film" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
  document.getElementById("vidLink").href="https://www.youtube.com/watch?v="+id;
@@ -634,7 +654,7 @@ function joinStep(e){e.preventDefault();
  var name=document.getElementById("jName"), loc=document.getElementById("jLoc"), ok=true;
  [name,loc].forEach(function(f){if(!f.value.trim()){f.style.boxShadow="0 0 0 3px var(--red)";ok=false;}else f.style.boxShadow="";});
  if(!ok)return false;
- /* TODO: POST {email:email.value, name:name.value, city:loc.value} to your email/CRM endpoint */
+ try{fetch("/.netlify/functions/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.value,name:name.value,city:loc.value})});}catch(e){}
  if(window.fbq)fbq('track','Subscribe');
  if(window.gtag)gtag('event','subscribe',{method:'newsletter'});
  if(window.ttq)ttq.track('Subscribe');
