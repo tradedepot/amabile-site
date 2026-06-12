@@ -4,7 +4,7 @@
 (function () {
   var CFG = {
     GA4_ID:          "", // Google Analytics 4, e.g. "G-XXXXXXXXXX"
-    META_PIXEL_ID:   "", // Meta (Facebook/Instagram) Pixel, e.g. "1234567890123456"
+    META_PIXEL_ID:   "1899998984027982", // Meta (Facebook/Instagram) Pixel
     TIKTOK_PIXEL_ID: ""  // TikTok Pixel, e.g. "CXXXXXXXXXXXXXXXXXXX"
   };
 

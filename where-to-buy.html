@@ -167,7 +167,7 @@
       <div><h4>Explore</h4><ul><li><a href="index.html">Home</a></li><li><a href="index.html#cast">Wines</a></li><li><a href="where-to-buy.html">Find a Bottle</a></li><li><a href="trade.html">Become a Wholesaler</a></li></ul></div>
       <div><h4>Say hi</h4><ul><li><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a></li><li><a href="https://open.spotify.com/user/31lfejx4ccbvlj3my2bqfqccgwmu/playlists" target="_blank" rel="noopener">Spotify</a></li></ul></div>
     </div>
-    <div class="footer-bottom"><span>© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines</span><span><a href="responsible-drinking.html">Responsible drinking</a></span></div>
+    <div class="footer-bottom"><span>© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines</span><span><a href="responsible-drinking.html">Responsible drinking</a> · <a href="privacy.html">Privacy</a></span></div>
   </div>
 </footer>
 
@@ -440,6 +440,13 @@ document.getElementById("geoBtn").addEventListener("click",geo);
 startMap();
 loadMarket(detectMarket());
 if(GOOGLE_MAPS_KEY){loadGoogleMaps(GOOGLE_MAPS_KEY,initPlacesAutocomplete);}
+
+/* Meta Pixel: fire OrderOnline when a retailer link is clicked */
+(function(){var sg=document.getElementById("shopGrid");if(!sg)return;
+  sg.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a||!window.fbq)return;
+    var card=a.closest(".shop-card"),r=card&&card.querySelector("h3")?card.querySelector("h3").textContent.trim():"";
+    fbq("trackCustom","OrderOnline",{retailer:r,colour:a.textContent.trim(),market:(ACTIVE&&ACTIVE.label)||""});});
+})();
 </script>
 <script src="/assets/js/analytics.js"></script>
 </body>

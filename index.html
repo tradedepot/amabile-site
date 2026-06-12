@@ -407,7 +407,7 @@ section{position:relative;padding:9vh 0}
         </div>
       </form>
       <div class="socials"><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a><a href="https://open.spotify.com/user/31lfejx4ccbvlj3my2bqfqccgwmu/playlists" target="_blank" rel="noopener">Spotify</a></div>
-      <div class="legal">© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines · <a href="responsible-drinking.html">Responsible drinking</a> · <a href="trade.html">Become a Wholesaler</a></div>
+      <div class="legal">© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines · <a href="responsible-drinking.html">Responsible drinking</a> · <a href="privacy.html">Privacy</a> · <a href="trade.html">Become a Wholesaler</a></div>
     </div>
   </section>
 </main>
@@ -635,6 +635,7 @@ function joinStep(e){e.preventDefault();
  [name,loc].forEach(function(f){if(!f.value.trim()){f.style.boxShadow="0 0 0 3px var(--red)";ok=false;}else f.style.boxShadow="";});
  if(!ok)return false;
  /* TODO: POST {email:email.value, name:name.value, city:loc.value} to your email/CRM endpoint */
+ if(window.fbq)fbq('track','Subscribe');
  burst(innerWidth/2,innerHeight*0.7,90,true); chord();
  document.getElementById("joinForm").innerHTML='<p class="disp" style="color:var(--cream);font-size:24px">You\'re on the list, '+(name.value.trim().split(" ")[0]||'friend')+'! See you at the party.</p>';
  return false;}
