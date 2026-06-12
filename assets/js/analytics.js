@@ -5,7 +5,7 @@
   var CFG = {
     GA4_ID:          "G-VPXZKLYBL3", // Google Analytics 4
     META_PIXEL_ID:   "1899998984027982", // Meta (Facebook/Instagram) Pixel
-    TIKTOK_PIXEL_ID: ""  // TikTok Pixel, e.g. "CXXXXXXXXXXXXXXXXXXX"
+    TIKTOK_PIXEL_ID: "CVNB8BBC77U9PG5HUVE0"  // TikTok Pixel
   };
 
   /* ---- Google Analytics 4 (gtag) ---- */

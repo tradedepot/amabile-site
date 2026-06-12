@@ -447,7 +447,8 @@ if(GOOGLE_MAPS_KEY){loadGoogleMaps(GOOGLE_MAPS_KEY,initPlacesAutocomplete);}
     var card=a.closest(".shop-card"),r=card&&card.querySelector("h3")?card.querySelector("h3").textContent.trim():"";
     var p={retailer:r,colour:a.textContent.trim(),market:(ACTIVE&&ACTIVE.label)||""};
     if(window.fbq)fbq("trackCustom","OrderOnline",p);
-    if(window.gtag)gtag("event","order_online",p);});
+    if(window.gtag)gtag("event","order_online",p);
+    if(window.ttq)ttq.track("ClickButton",{content_name:"Order online",retailer:r,market:p.market});});
 })();
 </script>
 <script src="/assets/js/analytics.js"></script>
