@@ -9,8 +9,21 @@
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Become a Wholesaler — Amabile di Rosa</title>
 <meta name="description" content="Stock Amabile di Rosa. For bars, shops, venues and distributors. Share your location and starting volume and we'll confirm trade terms on WhatsApp.">
+<link rel="canonical" href="https://www.amabiledirosa.com/trade.html">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Amabile di Rosa">
+<meta property="og:title" content="Become a Wholesaler — Amabile di Rosa">
+<meta property="og:description" content="Stock Amabile di Rosa. For bars, shops, venues and distributors.">
+<meta property="og:url" content="https://www.amabiledirosa.com/trade.html">
+<meta property="og:image" content="https://www.amabiledirosa.com/og-image.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Become a Wholesaler — Amabile di Rosa">
+<meta name="twitter:description" content="Stock Amabile di Rosa. For bars, shops, venues and distributors.">
+<meta name="twitter:image" content="https://www.amabiledirosa.com/og-image.jpg">
 <meta name="theme-color" content="#E74529">
-<link rel="stylesheet" href="assets/css/party.css">
+<link rel="stylesheet" href="assets/css/party.css?v=2">
 <style>
 .trade-hero{position:relative;overflow:hidden;color:var(--cream);padding:46px 0 64px;
   background:radial-gradient(135% 125% at 50% -12%,#FF9A4D 0%,#E74529 32%,#9c2444 78%,#2c0f2c 118%)}
@@ -19,6 +32,7 @@
 .trade-pitch .eyebrow{background:rgba(0,0,0,.26);color:var(--lime)}
 .trade-pitch h1{font-size:clamp(40px,5.6vw,74px);color:var(--cream);text-shadow:3px 4px 0 rgba(0,0,0,.22);margin:16px 0 14px;line-height:.98}
 .trade-pitch .lede{font-size:clamp(16px,1.4vw,19px);font-weight:600;color:#ffe9d9;max-width:40ch}
+.trade-pitch .lede-mobile{display:none}
 .trade-points{list-style:none;margin:24px 0 0;padding:0;display:grid;gap:13px}
 .trade-points li{position:relative;padding-left:36px;font-weight:600;font-size:15.5px;color:var(--cream)}
 .trade-points li::before{content:"✓";position:absolute;left:0;top:-1px;width:24px;height:24px;border-radius:999px;background:var(--lime);color:#1d3300;font-weight:800;font-size:14px;display:flex;align-items:center;justify-content:center}
@@ -26,11 +40,14 @@
 .trade-card h2{font-family:"Bagel Fat One",cursive;font-size:25px;color:var(--ink);line-height:1}
 .trade-card .form-sub{color:#6a5343;margin:4px 0 2px;font-size:14px}
 @media(max-width:860px){.trade-grid{grid-template-columns:1fr;gap:30px}.trade-pitch{text-align:center}.trade-pitch .lede{margin:0 auto}.trade-points{max-width:360px;margin-left:auto;margin-right:auto}}
+@media(max-width:640px){.trade-pitch .lede:not(.lede-mobile){display:none}.trade-pitch .lede-mobile{display:block}.trade-points{display:none}}
 </style>
 </head>
 <body>
 <nav class="site-nav">
   <a class="logo" href="index.html"><img src="assets/images/logo/brand_red_plain.png" alt="Amabile di Rosa"></a>
+  <input type="checkbox" id="navtog" class="nav-cb">
+  <label for="navtog" class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></label>
   <div class="pills">
     <a href="index.html">Home</a>
     <a href="index.html#cast">Wines</a>
@@ -45,6 +62,7 @@
       <span class="eyebrow">Trade &amp; Wholesale</span>
       <h1 class="disp">Become a Wholesaler</h1>
       <p class="lede">Bring Amabile di Rosa to your customers. Tell us where you are and how much you'd start with.</p>
+      <p class="lede lede-mobile">Sweet, fast-moving Italian wine customers ask for by name.</p>
       <ul class="trade-points">
         <li>Sweet, fast-moving Italian wine customers ask for by name</li>
         <li>Trade pricing set by your starting volume</li>
@@ -88,7 +106,7 @@
             </select>
           </div>
         </div>
-        <div class="field"><label>Email <span class="opt">(optional)</span></label><input name="email" type="email" placeholder="you@business.com"></div>
+        <div class="field"><label>Email <span class="req">*</span></label><input name="email" type="email" placeholder="you@business.com" required></div>
         <button type="button" class="wa-btn" id="waBtn">
           <svg viewBox="0 0 24 24" width="22" height="22" fill="#053a1d" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.52 13.99c-.25.7-1.47 1.34-2.02 1.39-.52.05-1.18.27-3.97-.83-3.34-1.32-5.46-4.74-5.62-4.96-.16-.22-1.35-1.8-1.35-3.43s.86-2.43 1.16-2.76c.3-.33.66-.41.88-.41l.63.01c.2.01.47-.08.74.56.27.66.92 2.28 1 2.45.08.16.13.36.03.58-.1.22-.16.36-.31.55-.16.2-.33.44-.47.59-.16.16-.32.34-.14.66.18.32.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.5 1.54.32.16.5.13.69-.08.18-.22.79-.92 1-1.24.21-.32.42-.27.71-.16.29.11 1.84.87 2.16 1.03.32.16.53.24.61.37.08.13.08.76-.17 1.46Z"/></svg>
           Continue on WhatsApp
@@ -116,15 +134,16 @@
 document.getElementById("yr").textContent=new Date().getFullYear();
 /* CONFIG — TODO: replace with the real business WhatsApp number (international, no + or spaces) and a lead webhook */
 var WHATSAPP_NUMBER="2348000000000";
-var LEAD_WEBHOOK="";
+var LEAD_WEBHOOK="https://script.google.com/macros/s/AKfycbwQPpN1tMc_GIz1Q6yK847J79nwnfZTrocpsAcQHGRaH5a7StOSZLqWy4Kl7QAYba2afg/exec";
 var form=document.getElementById("leadForm");
 function qp(k){return new URLSearchParams(location.search).get(k)||"";}
 var tracking={utm_source:qp("utm_source"),utm_medium:qp("utm_medium"),utm_campaign:qp("utm_campaign"),utm_content:qp("utm_content"),fbclid:qp("fbclid"),gclid:qp("gclid"),referrer:document.referrer,ts:new Date().toISOString()};
 function collect(){var d={};new FormData(form).forEach(function(v,k){d[k]=v;});Object.assign(d,tracking);return d;}
-function valid(){var ok=true;["name","business","phone","location","buyer_type","cases"].forEach(function(n){var el=form[n];if(!el.value){el.style.borderColor="#c0392b";ok=false;}else{el.style.borderColor="";}});var em=form.email.value;if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){form.email.style.borderColor="#c0392b";ok=false;}else{form.email.style.borderColor="";}return ok;}
+function valid(){var ok=true;["name","business","phone","location","buyer_type","cases","email"].forEach(function(n){var el=form[n];if(!el.value){el.style.borderColor="#c0392b";ok=false;}else{el.style.borderColor="";}});var em=form.email.value;if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){form.email.style.borderColor="#c0392b";ok=false;}return ok;}
 function waLink(d){var msg="Hi Amabile! I'd like to stock Amabile di Rosa."+"\nName: "+(d.name||"")+"\nBusiness: "+(d.business||"")+"\nType: "+(d.buyer_type||"")+"\nLocation: "+(d.location||"")+"\nStarting volume: "+(d.cases||"")+"\nPlease confirm trade terms and next steps.";return "https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(msg);}
 function postLead(d){if(LEAD_WEBHOOK.indexOf("http")!==0)return;try{fetch(LEAD_WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(d)});}catch(e){}}
 document.getElementById("waBtn").addEventListener("click",function(){if(!valid())return;var d=collect();postLead(d);document.getElementById("okMsg").style.display="block";window.open(waLink(d),"_blank");});
 </script>
+<script src="/assets/js/analytics.js"></script>
 </body>
 </html>
