@@ -3,7 +3,7 @@
    so it's safe to deploy now. When you add an ID, just redeploy — no other changes. */
 (function () {
   var CFG = {
-    GA4_ID:          "", // Google Analytics 4, e.g. "G-XXXXXXXXXX"
+    GA4_ID:          "G-VPXZKLYBL3", // Google Analytics 4
     META_PIXEL_ID:   "1899998984027982", // Meta (Facebook/Instagram) Pixel
     TIKTOK_PIXEL_ID: ""  // TikTok Pixel, e.g. "CXXXXXXXXXXXXXXXXXXX"
   };

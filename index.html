@@ -636,6 +636,7 @@ function joinStep(e){e.preventDefault();
  if(!ok)return false;
  /* TODO: POST {email:email.value, name:name.value, city:loc.value} to your email/CRM endpoint */
  if(window.fbq)fbq('track','Subscribe');
+ if(window.gtag)gtag('event','subscribe',{method:'newsletter'});
  burst(innerWidth/2,innerHeight*0.7,90,true); chord();
  document.getElementById("joinForm").innerHTML='<p class="disp" style="color:var(--cream);font-size:24px">You\'re on the list, '+(name.value.trim().split(" ")[0]||'friend')+'! See you at the party.</p>';
  return false;}

@@ -142,7 +142,7 @@ function collect(){var d={};new FormData(form).forEach(function(v,k){d[k]=v;});O
 function valid(){var ok=true;["name","business","phone","location","buyer_type","cases","email"].forEach(function(n){var el=form[n];if(!el.value){el.style.borderColor="#c0392b";ok=false;}else{el.style.borderColor="";}});var em=form.email.value;if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){form.email.style.borderColor="#c0392b";ok=false;}return ok;}
 function waLink(d){var msg="Hi Amabile! I'd like to stock Amabile di Rosa."+"\nName: "+(d.name||"")+"\nBusiness: "+(d.business||"")+"\nType: "+(d.buyer_type||"")+"\nLocation: "+(d.location||"")+"\nStarting volume: "+(d.cases||"")+"\nPlease confirm trade terms and next steps.";return "https://wa.me/"+WHATSAPP_NUMBER+"?text="+encodeURIComponent(msg);}
 function postLead(d){if(LEAD_WEBHOOK.indexOf("http")!==0)return;try{fetch(LEAD_WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(d)});}catch(e){}}
-document.getElementById("waBtn").addEventListener("click",function(){if(!valid())return;var d=collect();postLead(d);if(window.fbq)fbq('track','Lead',{content_name:'Wholesale enquiry'});document.getElementById("okMsg").style.display="block";window.open(waLink(d),"_blank");});
+document.getElementById("waBtn").addEventListener("click",function(){if(!valid())return;var d=collect();postLead(d);if(window.fbq)fbq('track','Lead',{content_name:'Wholesale enquiry'});if(window.gtag)gtag('event','generate_lead',{business_type:d.buyer_type||'',location:d.location||''});document.getElementById("okMsg").style.display="block";window.open(waLink(d),"_blank");});
 </script>
 <script src="/assets/js/analytics.js"></script>
 </body>

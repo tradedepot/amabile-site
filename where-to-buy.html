@@ -443,9 +443,11 @@ if(GOOGLE_MAPS_KEY){loadGoogleMaps(GOOGLE_MAPS_KEY,initPlacesAutocomplete);}
 
 /* Meta Pixel: fire OrderOnline when a retailer link is clicked */
 (function(){var sg=document.getElementById("shopGrid");if(!sg)return;
-  sg.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a||!window.fbq)return;
+  sg.addEventListener("click",function(e){var a=e.target.closest("a[href]");if(!a)return;
     var card=a.closest(".shop-card"),r=card&&card.querySelector("h3")?card.querySelector("h3").textContent.trim():"";
-    fbq("trackCustom","OrderOnline",{retailer:r,colour:a.textContent.trim(),market:(ACTIVE&&ACTIVE.label)||""});});
+    var p={retailer:r,colour:a.textContent.trim(),market:(ACTIVE&&ACTIVE.label)||""};
+    if(window.fbq)fbq("trackCustom","OrderOnline",p);
+    if(window.gtag)gtag("event","order_online",p);});
 })();
 </script>
 <script src="/assets/js/analytics.js"></script>
