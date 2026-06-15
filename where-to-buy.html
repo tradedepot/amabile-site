@@ -411,8 +411,17 @@ function geo(){
   if(!navigator.geolocation){setLocMsg("Location isn’t available on this device — search your area instead.");return;}
   setLocMsg("Finding your location…");
   navigator.geolocation.getCurrentPosition(function(p){
-    centerOn(p.coords.latitude,p.coords.longitude); /* recenters map AND re-sorts the sidebar list by distance */
-    setLocMsg(ACTIVE.stores.length?"Showing stockists nearest to you.":"Found you — but there are no listed stockists here yet. Try ordering online above.");
+    var la=p.coords.latitude, ln=p.coords.longitude, b=ACTIVE.bounds;
+    var inMarket = b && la>=b[0] && la<=b[1] && ln>=b[2] && ln<=b[3];
+    centerOn(la,ln); /* drop the "you are here" pin so they see where they are */
+    if(inMarket && ACTIVE.stores.length){
+      setLocMsg("Showing stockists nearest to you.");
+    } else if(ACTIVE.stores.length){
+      renderList(ACTIVE.map.center[0],ACTIVE.map.center[1]); /* don't present a 4,000km store as "nearest" */
+      setLocMsg("No stockists near you yet.");
+    } else {
+      setLocMsg("No stockists near you yet.");
+    }
   },function(){setLocMsg("We couldn’t get your location. Check your browser permissions, or search your area instead.");});
 }
 
