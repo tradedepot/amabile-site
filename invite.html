@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>You're invited 🍷 — Amabile di Rosa</title>
+<meta name="description" content="You're invited. Tap to RSVP — Friends. Wine. Good Times.">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:title" content="You're invited 🍷">
+<meta property="og:description" content="Tap to let them know you're in. Friends. Wine. Good Times.">
+<meta property="og:image" content="https://www.amabiledirosa.com/og-image.jpg">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--lime:#C6FF4D;--pink:#FF4D8D;--orange:#FF8A3D;--purple:#7A2FF2;--night:#1A1030;--ink:#2a1207}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:radial-gradient(125% 95% at 50% 0%,#FF9A4D 0%,#E74529 30%,#9c2444 66%,#2c0f2c 100%);min-height:100vh;overflow-x:hidden}
+.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.92}
+canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
+.wrap{max-width:560px;margin:0 auto;padding:26px 18px 60px}
+.brand{display:block;width:140px;margin:6px auto 18px;opacity:.96}
+/* invite card */
+.card{position:relative;aspect-ratio:4/5;border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.3);overflow:hidden;background:#2c0f2c;color:var(--cream)}
+.bg{position:absolute;inset:0;background-size:cover;background-position:center}
+.veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.15) 0%,rgba(20,5,15,.32) 42%,rgba(20,5,15,.88) 100%)}
+.cont{position:relative;z-index:2;height:100%;display:flex;flex-direction:column;padding:26px}
+.stamp{align-self:flex-start;background:var(--cream);color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.15em;font-size:10px;padding:6px 12px;border-radius:999px}
+.card h1{font-size:clamp(34px,9vw,50px);margin:auto 0 4px;color:var(--cream);text-shadow:2px 3px 0 rgba(0,0,0,.4)}
+.host{font-weight:600;color:#ffe9d9;margin:0 0 14px}
+.meta{display:flex;gap:24px;flex-wrap:wrap}
+.meta .ln{display:flex;gap:8px;font-size:13px;align-items:baseline}
+.meta .ln b{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:12px}
+.note{margin-top:12px;font-style:italic;font-size:13px;color:#ffe9d9}
+.clogo{height:20px;width:auto;margin-top:18px;opacity:.95;align-self:flex-start}
+/* rsvp panel */
+.panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
+.panel h2{font-family:"Bagel Fat One",cursive;font-size:26px;color:var(--ink);text-align:center;line-height:1}
+.proof{text-align:center;color:#7a5c49;font-weight:600;font-size:13px;margin-top:6px;min-height:18px}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.big{cursor:pointer;border:3px solid var(--ink);border-radius:16px;padding:18px 10px;font-family:"Bagel Fat One",cursive;font-size:18px;background:#fff;transition:transform .12s,background .12s;box-shadow:4px 4px 0 rgba(0,0,0,.18)}
+.big:hover{transform:translate(-2px,-2px)}
+.big.yes{background:var(--lime)}
+.big.no{background:#fff}
+.big.sel{outline:4px solid var(--red);outline-offset:2px}
+.more{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .35s ease}
+.more.open{max-height:640px;opacity:1;margin-top:16px}
+label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:#6a4634;margin:14px 0 6px}
+input[type=text],input[type=email]{width:100%;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
+input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:4px}
+.chip{cursor:pointer;border:2px solid var(--ink);background:#fff;border-radius:999px;padding:9px 14px;font-size:13px;font-weight:700;transition:transform .1s,background .1s}
+.chip:hover{transform:scale(1.04)}
+.chip.on{background:var(--orange);color:#3a1a00}
+.optin{display:flex;gap:9px;align-items:flex-start;margin-top:14px;font-size:13px;color:#6a4634;font-weight:500;text-transform:none;letter-spacing:0}
+.optin input{margin-top:2px;width:18px;height:18px;accent-color:var(--red)}
+.go{margin-top:18px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:19px;padding:16px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
+.go:hover{transform:translate(-2px,-2px)}
+.go:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.done{text-align:center}
+.done .em{font-size:54px;line-height:1}
+.done h2{margin-top:8px}
+.done p{color:#6a4634;font-weight:600;margin-top:8px}
+.secondary{display:block;text-align:center;margin-top:22px;color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:16px;text-decoration:none;border-bottom:3px solid rgba(255,243,224,.5);width:fit-content;margin-left:auto;margin-right:auto;padding-bottom:2px}
+.legal{text-align:center;color:rgba(255,243,224,.78);font-size:12px;margin-top:26px}
+.legal a{color:var(--lime)}
+.err{text-align:center;color:var(--cream);padding:50px 10px}
+.err h1{font-family:"Bagel Fat One",cursive;font-size:30px;margin-bottom:10px}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+<div class="wrap">
+  <img class="brand" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+  <div id="app">
+    <div class="err"><h1>Loading your invite…</h1></div>
+  </div>
+  <a class="secondary" href="/where-to-buy.html">🍷 Pour the wine — find a bottle</a>
+  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="/privacy.html">Privacy</a></div>
+</div>
+
+<script>
+var VPHOTO={beach:"assets/images/occasions/golden_hour.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
+var BRING=[{k:"wine",e:"🍷",t:"the wine"},{k:"playlist",e:"🔊",t:"the playlist"},{k:"energy",e:"💃",t:"the energy"},{k:"snacks",e:"🍿",t:"snacks"},{k:"ice",e:"🧊",t:"the ice"},{k:"justme",e:"🙋",t:"just me"}];
+
+/* confetti */
+var cv=document.getElementById("fx"),cx=cv.getContext("2d"),P=[],W,H;
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;}size();addEventListener("resize",size);
+var COLS=["#FFC24D","#FF4D8D","#C6FF4D","#7A2FF2","#E74529","#fff","#82B28C","#4D7396"];
+function burst(x,y,n,big){for(var i=0;i<(n||30);i++){P.push({x:x,y:y,vx:(Math.random()-.5)*(big?12:8),vy:(Math.random()-1)*(big?12:9)-2,g:.26,r:(big?6:3)+Math.random()*5,c:COLS[i%COLS.length],a:1,rot:Math.random()*6,vr:(Math.random()-.5)*.4,sq:Math.random()>.4});}}
+function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.a-=.012;p.rot+=p.vr;if(p.a<=0||p.y>H+40){P.splice(i,1);continue;}cx.globalAlpha=Math.max(p.a,0);cx.fillStyle=p.c;if(p.sq){cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillRect(-p.r,-p.r,p.r*2,p.r*2.3);cx.restore();}else{cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();}}cx.globalAlpha=1;requestAnimationFrame(tick);}tick();
+
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function qs(k){return new URLSearchParams(location.search).get(k)||"";}
+var CODE=qs("c").toLowerCase().replace(/[^a-z0-9-]/g,"");
+var app=document.getElementById("app");
+var INVITE=null;
+
+if(!CODE){fail("That invite link looks incomplete.");}
+else{
+  fetch("/.netlify/functions/invite-data?c="+encodeURIComponent(CODE))
+    .then(function(r){return r.json();})
+    .then(function(d){if(!d||!d.ok){fail("We couldn't find that invite — it may have expired.");return;}INVITE=d;render(d);})
+    .catch(function(){fail("Something went wrong loading the invite. Try again in a moment.");});
+}
+
+function fail(msg){app.innerHTML='<div class="err"><h1>Hmm.</h1><p>'+esc(msg)+'</p></div>';}
+
+function render(d){
+  var iv=d.invite||{}, c=d.counts||{in:0,maybe:0,out:0};
+  var photo=VPHOTO[iv.vibe]||"";
+  var bg=photo?"background-image:url('"+photo+"')":"background:linear-gradient(160deg,#FF8A3D,#E74529 55%,#9c2444)";
+  var meta="";
+  if(iv.when)meta+='<div class="ln"><b>When</b><span>'+esc(iv.when)+'</span></div>';
+  if(iv.where)meta+='<div class="ln"><b>Where</b><span>'+esc(iv.where)+'</span></div>';
+  var note=iv.note?'<p class="note">“'+esc(iv.note)+'”</p>':"";
+  var proof=c.in>0?(c.in===1?"1 friend's already in 🎉":c.in+" already in 🎉"):"Be the first to say you're in.";
+  var chips=BRING.map(function(b){return '<button type="button" class="chip" data-k="'+b.k+'">'+b.e+' '+b.t+'</button>';}).join("");
+
+  app.innerHTML=
+   '<div class="card"><div class="bg" style="'+bg+'"></div><div class="veil"></div><div class="cont">'+
+     '<span class="stamp">You\'re invited</span>'+
+     '<h1 class="disp">'+esc(iv.vibeLabel||"Good times")+'</h1>'+
+     '<p class="host">'+(iv.host?esc(iv.host)+" is pouring":"You're invited")+'</p>'+
+     '<div class="meta">'+meta+'</div>'+note+
+     '<img class="clogo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
+   '</div></div>'+
+   '<div class="panel" id="panel">'+
+     '<h2>Are you in?</h2>'+
+     '<div class="proof" id="proof">'+proof+'</div>'+
+     '<div class="yesno">'+
+       '<button class="big yes" id="bYes">I\'m in 🎉</button>'+
+       '<button class="big no" id="bNo">Can\'t make it</button>'+
+     '</div>'+
+     '<div class="more" id="more">'+
+       '<label for="rName">Your name</label><input type="text" id="rName" placeholder="e.g. Tunde" autocomplete="name">'+
+       '<div id="bringWrap"><label>What are you bringing?</label><div class="chips" id="chips">'+chips+'</div></div>'+
+       '<label class="optin"><input type="checkbox" id="rOptin"><span>Send me Amabile playlists &amp; drops (optional)</span></label>'+
+       '<input type="email" id="rEmail" placeholder="your@email.com" style="display:none;margin-top:8px">'+
+       '<button class="go" id="rGo">Lock it in 🔒</button>'+
+     '</div>'+
+   '</div>';
+
+  var resp="in", bring="";
+  var bYes=document.getElementById("bYes"),bNo=document.getElementById("bNo"),more=document.getElementById("more");
+  var bringWrap=document.getElementById("bringWrap"),go=document.getElementById("rGo");
+  function choose(r){resp=r;bYes.classList.toggle("sel",r==="in");bNo.classList.toggle("sel",r==="out");
+    more.classList.add("open");bringWrap.style.display=r==="in"?"block":"none";
+    go.textContent=r==="in"?"Lock it in 🔒":"Send my reply";
+    var x=(r==="in"?bYes:bNo).getBoundingClientRect();burst(x.left+x.width/2,x.top+x.height/2,18);
+    setTimeout(function(){document.getElementById("rName").focus();},120);}
+  bYes.addEventListener("click",function(){choose("in");});
+  bNo.addEventListener("click",function(){choose("out");});
+  document.getElementById("chips").addEventListener("click",function(e){var ch=e.target.closest(".chip");if(!ch)return;
+    document.querySelectorAll("#chips .chip").forEach(function(c){c.classList.remove("on");});ch.classList.add("on");bring=ch.dataset.k;});
+  document.getElementById("rOptin").addEventListener("change",function(){document.getElementById("rEmail").style.display=this.checked?"block":"none";if(this.checked)document.getElementById("rEmail").focus();});
+
+  go.addEventListener("click",function(){
+    var name=document.getElementById("rName");
+    if(!name.value.trim()){name.style.boxShadow="0 0 0 3px var(--red)";name.focus();return;}
+    var optin=document.getElementById("rOptin").checked, email=document.getElementById("rEmail").value.trim();
+    go.disabled=true;go.textContent="Sending…";
+    var body={code:CODE,name:name.value.trim(),response:resp,bringing:resp==="in"?bring:"",optin:optin,email:email};
+    fetch("/.netlify/functions/rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(r){return r.json().catch(function(){return{};});})
+      .then(function(d){thanks(resp,d&&d.counts,name.value.trim());})
+      .catch(function(){thanks(resp,null,name.value.trim());});
+    /* analytics */
+    try{if(window.fbq)fbq('trackCustom','InviteRSVP',{vibe:(INVITE&&INVITE.invite&&INVITE.invite.vibe)||"",response:resp});}catch(e){}
+    try{if(window.gtag)gtag('event','invite_rsvp',{vibe:(INVITE&&INVITE.invite&&INVITE.invite.vibe)||"",response:resp});}catch(e){}
+    try{if(window.ttq)ttq.track('SubmitForm',{content_name:'RSVP '+resp});}catch(e){}
+  });
+}
+
+function thanks(resp,counts,name){
+  var panel=document.getElementById("panel");
+  var n=(name||"").split(" ")[0];
+  if(resp==="in"){
+    burst(innerWidth/2,innerHeight*0.4,90,true);burst(innerWidth*0.2,innerHeight*0.5,40,true);burst(innerWidth*0.8,innerHeight*0.5,40,true);
+    var line=counts&&counts.in?("That's "+counts.in+" of you so far 🍷"):"See you there 🍷";
+    panel.innerHTML='<div class="done"><div class="em">🔒</div><h2 class="disp">Locked in'+(n?", "+esc(n):"")+'!</h2><p>'+line+'</p></div>';
+  }else{
+    panel.innerHTML='<div class="done"><div class="em">🍷</div><h2 class="disp">No worries'+(n?", "+esc(n):"")+'</h2><p>We\'ll catch you at the next one.</p></div>';
+  }
+}
+</script>
+<script src="/assets/js/analytics.js"></script>
+</body>
+</html>

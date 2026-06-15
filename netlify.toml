@@ -1,3 +1,9 @@
 # Netlify — serverless functions live here (publish dir left as configured in the Netlify UI)
 [functions]
   directory = "netlify/functions"
+
+# Pretty invite links: /i/<code> serves the RSVP page (URL stays pretty; query string is preserved)
+[[redirects]]
+  from = "/i/:code"
+  to = "/invite.html?c=:code"
+  status = 200

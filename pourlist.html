@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Your Pour List — Amabile di Rosa</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--lime:#C6FF4D;--pink:#FF4D8D;--orange:#FF8A3D;--night:#1A1030;--ink:#2a1207}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:radial-gradient(125% 95% at 50% 0%,#FF9A4D 0%,#E74529 30%,#9c2444 66%,#2c0f2c 100%);min-height:100vh}
+.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.92}
+.wrap{max-width:600px;margin:0 auto;padding:26px 18px 60px}
+.brand{display:block;width:140px;margin:6px auto 16px;opacity:.96}
+.head{text-align:center;color:var(--cream);margin-bottom:18px}
+.head .eyebrow{display:inline-block;background:var(--night);color:var(--lime);font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:11px;padding:8px 16px;border-radius:999px}
+.head h1{font-size:clamp(34px,8vw,52px);margin:12px 0 6px;text-shadow:4px 4px 0 rgba(0,0,0,.25)}
+.head .ev{color:#ffe9d9;font-weight:600;font-size:15px}
+.tally{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:20px 0}
+.tally .t{background:var(--cream);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 rgba(0,0,0,.22);text-align:center;padding:16px 6px}
+.tally .t .num{font-family:"Bagel Fat One",cursive;font-size:38px;line-height:1;color:var(--red)}
+.tally .t.maybe .num{color:var(--orange)}
+.tally .t.out .num{color:#9a8576}
+.tally .t .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#6a4634;margin-top:4px}
+.nudge{background:var(--lime);border:3px solid var(--ink);border-radius:18px;box-shadow:5px 5px 0 rgba(0,0,0,.22);padding:16px 18px;margin-bottom:20px;display:flex;align-items:center;gap:12px;flex-wrap:wrap;justify-content:space-between}
+.nudge .txt{font-weight:600;color:#1a2e00;font-size:14px}
+.nudge a{font-family:"Bagel Fat One",cursive;font-size:15px;color:var(--cream);background:var(--red);padding:10px 18px;border-radius:999px;text-decoration:none;white-space:nowrap}
+.list{background:var(--cream);border:3px solid var(--ink);border-radius:20px;box-shadow:8px 8px 0 rgba(0,0,0,.25);overflow:hidden}
+.list .row{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:2px solid rgba(42,18,7,.1)}
+.list .row:last-child{border-bottom:0}
+.list .av{width:40px;height:40px;border-radius:999px;background:var(--orange);color:#3a1a00;font-family:"Bagel Fat One",cursive;font-size:18px;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.list .row.maybe .av{background:#ffd27a}
+.list .row.out .av{background:#e3d8cf;color:#9a8576}
+.list .who{flex:1;min-width:0}
+.list .who .nm{font-weight:700;color:var(--ink)}
+.list .who .sub{font-size:12px;color:#7a5c49}
+.list .badge{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.05em;padding:5px 11px;border-radius:999px;background:var(--lime);color:#1a2e00}
+.list .row.maybe .badge{background:#ffd27a;color:#5a3a00}
+.list .row.out .badge{background:#e3d8cf;color:#7a5c49}
+.empty{text-align:center;color:#7a5c49;padding:34px 20px}
+.empty .em{font-size:40px}
+.bar{display:flex;align-items:center;justify-content:space-between;margin:16px 2px 0;color:rgba(255,243,224,.85);font-size:13px}
+.bar button{cursor:pointer;border:0;background:var(--night);color:var(--lime);font-weight:700;border-radius:999px;padding:9px 15px;font-size:12px}
+.share{display:flex;gap:8px;margin:18px 0 0}
+.share input{flex:1;min-width:0;padding:11px 13px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:13px;background:#fff;color:var(--ink)}
+.share button{cursor:pointer;border:0;background:var(--cream);color:var(--red);font-family:"Bagel Fat One",cursive;font-size:14px;padding:0 16px;border-radius:12px}
+.err{text-align:center;color:var(--cream);padding:50px 10px}
+.err h1{font-family:"Bagel Fat One",cursive;font-size:30px;margin-bottom:10px}
+.legal{text-align:center;color:rgba(255,243,224,.78);font-size:12px;margin-top:26px}
+.legal a{color:var(--lime)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <img class="brand" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+  <div id="app"><div class="err"><h1>Loading your Pour List…</h1></div></div>
+  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="/privacy.html">Privacy</a></div>
+</div>
+<script>
+var BRINGMAP={wine:"🍷 wine",playlist:"🔊 playlist",energy:"💃 energy",snacks:"🍿 snacks",ice:"🧊 ice",justme:"🙋 just them"};
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function qs(k){return new URLSearchParams(location.search).get(k)||"";}
+var CODE=qs("c").toLowerCase().replace(/[^a-z0-9-]/g,""),KEY=qs("k");
+var app=document.getElementById("app");
+var SHARE=location.origin+"/i/"+CODE;
+
+if(!CODE||!KEY){fail("This Pour List link looks incomplete. Use the link from your invite or email.");}
+else{load();setInterval(load,20000);}
+
+function fail(msg){app.innerHTML='<div class="err"><h1>Hmm.</h1><p>'+esc(msg)+'</p></div>';}
+
+function load(){
+  fetch("/.netlify/functions/invite-data?c="+encodeURIComponent(CODE)+"&k="+encodeURIComponent(KEY))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.ok){fail("We couldn't find that invite.");return;}
+      if(!d.rsvps){fail("This link can't open the guest list — check you're using the full Pour List link from your email.");return;}
+      render(d);
+    })
+    .catch(function(){/* keep last view on transient errors */});
+}
+
+function bottles(n){return Math.max(1,Math.ceil(n/2));}
+
+function render(d){
+  var iv=d.invite||{},c=d.counts||{in:0,maybe:0,out:0},rs=(d.rsvps||[]).slice().reverse();
+  var ev=[iv.vibeLabel||"Good times"];if(iv.when)ev.push(iv.when);if(iv.where)ev.push(iv.where);
+  var rows="";
+  var coming=rs.filter(function(r){return r.response!=="out"||true;});
+  if(!rs.length){
+    rows='<div class="empty"><div class="em">🍷</div><p>No replies yet. Share your link and watch the crew roll in.</p></div>';
+  }else{
+    rows=rs.map(function(r){
+      var cls=r.response==="maybe"?"maybe":r.response==="out"?"out":"";
+      var badge=r.response==="in"?"In":r.response==="maybe"?"Maybe":"Out";
+      var init=(r.name||"?").trim().charAt(0).toUpperCase()||"?";
+      var sub=r.response==="in"&&r.bringing&&BRINGMAP[r.bringing]?("Bringing "+BRINGMAP[r.bringing]):"";
+      return '<div class="row '+cls+'"><div class="av">'+esc(init)+'</div><div class="who"><div class="nm">'+esc(r.name||"A friend")+'</div>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div><span class="badge">'+badge+'</span></div>';
+    }).join("");
+  }
+  var nudge=c.in>0?'<div class="nudge"><div class="txt">'+c.in+' coming? That\'s about '+bottles(c.in)+' bottle'+(bottles(c.in)>1?"s":"")+' 🍷</div><a href="/where-to-buy.html">Find a bottle →</a></div>':"";
+
+  app.innerHTML=
+    '<div class="head"><span class="eyebrow">Your Pour List</span>'+
+      '<h1 class="disp">'+esc(iv.vibeLabel||"Good times")+'</h1>'+
+      '<div class="ev">'+esc(ev.join(" · "))+'</div></div>'+
+    '<div class="tally">'+
+      '<div class="t in"><div class="num">'+c.in+'</div><div class="lab">In</div></div>'+
+      '<div class="t maybe"><div class="num">'+c.maybe+'</div><div class="lab">Maybe</div></div>'+
+      '<div class="t out"><div class="num">'+c.out+'</div><div class="lab">Out</div></div>'+
+    '</div>'+
+    nudge+
+    '<div class="list">'+rows+'</div>'+
+    '<div class="share"><input id="sl" readonly value="'+esc(SHARE)+'"><button id="cp">Copy link</button></div>'+
+    '<div class="bar"><span>Updates live · refreshes automatically</span><button id="rf">Refresh now</button></div>';
+
+  document.getElementById("rf").addEventListener("click",load);
+  document.getElementById("cp").addEventListener("click",function(){
+    var inp=document.getElementById("sl");inp.select();
+    try{navigator.clipboard.writeText(inp.value);}catch(e){try{document.execCommand("copy");}catch(_){}}
+    var b=document.getElementById("cp");b.textContent="Copied ✓";setTimeout(function(){b.textContent="Copy link";},1600);
+  });
+}
+</script>
+</body>
+</html>

@@ -228,6 +228,12 @@ section{position:relative;padding:9vh 0}
 .iv-download{display:block;margin:12px auto 0;cursor:pointer;border:0;background:none;color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;border-bottom:3px solid rgba(255,243,224,.5);padding:0 0 2px}
 .iv-download:hover{border-color:var(--cream)}
 .iv-hint{color:rgba(255,243,224,.8);font-size:12px;text-align:center;margin-top:12px}
+.iv-result{margin-top:16px}
+.iv-res-head{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:18px;text-align:center;margin-bottom:4px}
+.iv-res-label{display:block;color:rgba(255,243,224,.92);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.04em;margin:14px 0 5px}
+.iv-copyrow{display:flex;gap:8px}
+.iv-copyrow input{flex:1;min-width:0;padding:11px 13px;border:3px solid var(--ink);border-radius:11px;font-family:inherit;font-size:13px;background:var(--cream);color:var(--ink)}
+.iv-copyrow button{cursor:pointer;border:0;background:var(--lime);color:#1a2e00;font-family:"Bagel Fat One",cursive;font-size:14px;padding:0 16px;border-radius:11px}
 .invite-card{position:relative;aspect-ratio:4/5;border:3px solid var(--ink);border-radius:20px;box-shadow:9px 9px 0 rgba(0,0,0,.25);overflow:hidden;background:#2c0f2c;color:var(--cream)}
 .iv-bg{position:absolute;inset:0;background-size:cover;background-position:center}
 .iv-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.15) 0%,rgba(20,5,15,.3) 42%,rgba(20,5,15,.86) 100%)}
@@ -366,12 +372,20 @@ section{position:relative;padding:9vh 0}
           <label for="iv-when">When</label><input id="iv-when" placeholder="e.g. Saturday, from 6pm" autocomplete="off">
           <label for="iv-where">Where</label><input id="iv-where" placeholder="e.g. mine — Lekki Phase 1" autocomplete="off">
           <label for="iv-note">A note <span style="opacity:.6">(optional)</span></label><input id="iv-note" placeholder="e.g. Bring your dancing shoes" autocomplete="off">
+          <label for="iv-email">Your email <span style="opacity:.6">(optional — we'll send the RSVPs here)</span></label><input id="iv-email" type="email" placeholder="you@email.com" autocomplete="email">
           <button class="wa-share" id="iv-share">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="#06311a" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.52 13.99c-.25.7-1.47 1.34-2.02 1.39-.52.05-1.18.27-3.97-.83-3.34-1.32-5.46-4.74-5.62-4.96-.16-.22-1.35-1.8-1.35-3.43s.86-2.43 1.16-2.76c.3-.33.66-.41.88-.41l.63.01c.2.01.47-.08.74.56.27.66.92 2.28 1 2.45.08.16.13.36.03.58-.1.22-.16.36-.31.55-.16.2-.33.44-.47.59-.16.16-.32.34-.14.66.18.32.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.5 1.54.32.16.5.13.69-.08.18-.22.79-.92 1-1.24.21-.32.42-.27.71-.16.29.11 1.84.87 2.16 1.03.32.16.53.24.61.37.08.13.08.76-.17 1.46Z"/></svg>
             <span id="iv-share-label">Create &amp; share invite</span>
           </button>
-          <button class="iv-download" id="iv-download">↓ Download image</button>
-          <p class="iv-hint">Share opens your apps (WhatsApp, etc. on phone). Or download to post anywhere.</p>
+          <p class="iv-hint">Creates a link your friends can RSVP to — share it anywhere.</p>
+          <div class="iv-result" id="iv-result" style="display:none">
+            <div class="iv-res-head">✅ Invite ready</div>
+            <label class="iv-res-label">Share this so they can RSVP</label>
+            <div class="iv-copyrow"><input id="iv-rsvp-link" readonly aria-label="RSVP link"><button type="button" id="iv-copy-rsvp">Copy</button></div>
+            <label class="iv-res-label" id="iv-host-label">Your Pour List — bookmark to see who's coming</label>
+            <div class="iv-copyrow"><input id="iv-host-link" readonly aria-label="Your Pour List link"><button type="button" id="iv-copy-host">Copy</button></div>
+            <button class="iv-download" id="iv-dl2" style="margin-top:14px">↓ Download the invite image too</button>
+          </div>
         </div>
         <div class="invite-card" id="iv-card">
           <div class="iv-bg" id="ivc-bg"></div>
@@ -591,36 +605,66 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  }
  function downloadIt(blob,cv,fname){var url=blob?URL.createObjectURL(blob):cv.toDataURL("image/png");var a=document.createElement("a");a.href=url;a.download=fname||"amabile-invite.png";a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);if(url.indexOf("blob:")===0)URL.revokeObjectURL(url);},4000);}
  var shareBtn=document.getElementById("iv-share");
+ var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+ if(!isTouch){var _svg=document.querySelector("#iv-share svg");if(_svg)_svg.style.display="none";}
+
+ function rid(n){var s="",a="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
+ var ADJ=["glow","spark","fizz","sunset","disco","golden","cherry","peach","rosso","amabile","fiesta","bloom"];
+ function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000);}
+ function flash(id){var el=document.getElementById(id);if(el){el.style.boxShadow="0 0 0 3px var(--lime)";el.focus();setTimeout(function(){el.style.boxShadow="";},1400);}}
+ function wireCopy(btnId,inputId){var b=document.getElementById(btnId);if(!b)return;b.onclick=function(){var inp=document.getElementById(inputId);inp.select();try{navigator.clipboard.writeText(inp.value);}catch(e){try{document.execCommand("copy");}catch(_){}}b.textContent="Copied ✓";setTimeout(function(){b.textContent="Copy";},1600);};}
+
+ function trackInvite(action){
+   var vibe=curVibe();
+   try{if(window.fbq)fbq('trackCustom','InviteCreated',{vibe:vibe,action:action});}catch(e){}
+   try{if(window.gtag)gtag('event','invite_'+action,{vibe:vibe,has_when:!!v("iv-when"),has_where:!!v("iv-where"),has_note:!!v("iv-note"),has_email:!!v("iv-email")});}catch(e){}
+   try{if(window.ttq)ttq.track('ClickButton',{content_name:'Invite '+action+' – '+vibe});}catch(e){}
+ }
+
+ function showResult(rsvp,host,emailed,blob,cv,fn){
+   document.getElementById("iv-rsvp-link").value=rsvp;
+   document.getElementById("iv-host-link").value=host;
+   var hl=document.getElementById("iv-host-label");if(hl)hl.textContent=emailed?"Your Pour List (we've emailed you this link too)":"Your Pour List — bookmark to see who's coming";
+   var box=document.getElementById("iv-result");if(box)box.style.display="block";
+   var hint=document.querySelector(".iv-hint");if(hint)hint.style.display="none";
+   var dl2=document.getElementById("iv-dl2");if(dl2)dl2.onclick=function(){downloadIt(blob,cv,fn);burst(innerWidth/2,innerHeight*0.6,40,true);};
+   wireCopy("iv-copy-rsvp","iv-rsvp-link");wireCopy("iv-copy-host","iv-host-link");
+   if(box)box.scrollIntoView({behavior:"smooth",block:"nearest"});
+ }
+
  if(shareBtn) shareBtn.addEventListener("click",function(){
-   shareBtn.disabled=true;
+   var host=v("iv-host");
+   if(!host){flash("iv-host");return;}
+   var email=v("iv-email");
+   if(email&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){flash("iv-email");return;}
+   var lbl=document.getElementById("iv-share-label"),prev=lbl?lbl.textContent:"";
+   shareBtn.disabled=true;if(lbl)lbl.textContent="Creating…";
+   var k=curVibe(),vibeLabel=VIBES[k]||"Good times";
+   var code=mintCode(),token=rid(18),origin=location.origin;
+   var rsvpLink=origin+"/i/"+code,hostLink=origin+"/pourlist.html?c="+code+"&k="+token;
+   var payload={code:code,token:token,host:host,vibe:k,vibeLabel:vibeLabel,when:v("iv-when"),where:v("iv-where"),note:v("iv-note"),email:email};
+   try{fetch("/.netlify/functions/create-invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});}catch(e){}
+   trackInvite("create");
    withImage(function(blob,cv){
-     shareBtn.disabled=false;
+     shareBtn.disabled=false;if(lbl)lbl.textContent=prev;
      var fn=fileName();
-     var _vibe=VIBES[curVibe()]||"good times",_when=v("iv-when"),_where=v("iv-where"),_note=v("iv-note");
-     var txt="You're invited 🍷 "+_vibe;
-     if(_when)txt+=" — "+_when;
-     if(_where)txt+=" at "+_where;
-     txt+=".";
-     if(_note)txt+=" "+_note;
+     var txt="You're invited 🍷 "+vibeLabel;
+     if(v("iv-when"))txt+=" — "+v("iv-when");
+     if(v("iv-where"))txt+=" at "+v("iv-where");
+     txt+=". RSVP 👉 "+rsvpLink;
+     showResult(rsvpLink,hostLink,!!email,blob,cv,fn);
      try{
        var file=blob?new File([blob],fn,{type:"image/png"}):null;
-       var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
-       if(isTouch&&file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:txt}).then(function(){burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});return;}
+       if(isTouch&&navigator.share){
+         var sd={text:txt,url:rsvpLink};
+         if(file&&navigator.canShare&&navigator.canShare({files:[file]}))sd.files=[file];
+         navigator.share(sd).then(function(){trackInvite("share");burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});
+         return;
+       }
      }catch(e){}
-     downloadIt(blob,cv,fn);burst(innerWidth/2,innerHeight*0.6,70,true);
+     burst(innerWidth/2,innerHeight*0.6,70,true);
    });
  });
- var dlBtn=document.getElementById("iv-download");
- if(dlBtn) dlBtn.addEventListener("click",function(){dlBtn.disabled=true;withImage(function(blob,cv){dlBtn.disabled=false;downloadIt(blob,cv,fileName());burst(innerWidth/2,innerHeight*0.6,50,true);});});
- /* Desktop: native share isn't useful, so the one button just downloads — drop the redundant link + relabel */
- (function(){
-   var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
-   if(isTouch)return;
-   var lbl=document.getElementById("iv-share-label");if(lbl)lbl.textContent="Download invite";
-   var ic=document.querySelector("#iv-share svg");if(ic)ic.style.display="none";
-   if(dlBtn)dlBtn.style.display="none";
-   var hint=document.querySelector(".iv-hint");if(hint)hint.textContent="Downloads a ready-to-post invite image — share it anywhere.";
- })();
 })();
 addEventListener("scroll",function(){document.getElementById("nav").classList.toggle("show",scrollY>innerHeight*0.7);});
 
