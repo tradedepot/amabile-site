@@ -257,7 +257,7 @@ var MARKETS={
       {kind:"colours",name:"booze.ng",badge:"Nationwide",blurb:"Sweet red, rosé and white — delivered across Nigeria.",links:{red:"https://booze.ng/product/amabile-di-rosa-sweet-red/",rose:"https://booze.ng/product/amabile-di-rosa-sweet-rose/",white:"https://booze.ng/product/amabile-di-rosa-sweet-white/"}},
       {kind:"colours",name:"drinks.ng",badge:"Nationwide",blurb:"Pick your colour and check out in a tap.",links:{red:"https://drinks.ng/product/amabile-di-rosa",rose:"https://drinks.ng/product/amabile-di-rosa-rose-wine-12-75cl",white:"https://drinks.ng/product/amabile-di-rosa-white-wine-12-75cl"}}
     ],
-    map:{center:[6.5244,3.3792],zoom:11}, geocc:"ng",
+    map:{center:[6.5244,3.3792],zoom:11}, geocc:"ng", bounds:[4,14,2,15],
     placeholder:"Your area — e.g. Lekki, Lagos",
     stores:[]  /* populated at runtime from live BigQuery data (assets/js/stockists.js) */
   },
@@ -430,7 +430,21 @@ function loadMarket(code){
   }
   renderShops(ACTIVE);
   drawMarket(ACTIVE);
-  renderList(null);
+  /* default (before any search): sort the list by distance from the market centre
+     (Lagos for NG), not alphabetically. defaultGeo() may refine to the real location. */
+  if(ACTIVE.stores.length && ACTIVE.map && ACTIVE.map.center){renderList(ACTIVE.map.center[0],ACTIVE.map.center[1]);}
+  else{renderList(null);}
+}
+/* On first load, try the visitor's real location: if they're inside the selected market,
+   centre on them; otherwise keep the market-centre (Lagos) default. */
+function defaultGeo(){
+  if(!navigator.geolocation || !ACTIVE || !ACTIVE.stores.length) return;
+  navigator.geolocation.getCurrentPosition(function(p){
+    var la=p.coords.latitude, ln=p.coords.longitude, b=ACTIVE.bounds;
+    if(b && la>=b[0] && la<=b[1] && ln>=b[2] && ln<=b[3]){
+      centerOn(la,ln); setLocMsg("Showing stockists nearest to you.");
+    }
+  }, function(){}, {maximumAge:600000, timeout:8000});
 }
 
 document.getElementById("searchBtn").addEventListener("click",search);
@@ -439,6 +453,7 @@ document.getElementById("geoBtn").addEventListener("click",geo);
 
 startMap();
 loadMarket(detectMarket());
+defaultGeo();
 if(GOOGLE_MAPS_KEY){loadGoogleMaps(GOOGLE_MAPS_KEY,initPlacesAutocomplete);}
 
 /* Meta Pixel: fire OrderOnline when a retailer link is clicked */
