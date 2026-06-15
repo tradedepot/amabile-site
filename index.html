@@ -368,7 +368,7 @@ section{position:relative;padding:9vh 0}
           <label for="iv-note">A note <span style="opacity:.6">(optional)</span></label><input id="iv-note" placeholder="e.g. Bring your dancing shoes" autocomplete="off">
           <button class="wa-share" id="iv-share">
             <svg viewBox="0 0 24 24" width="22" height="22" fill="#06311a" aria-hidden="true"><path d="M12.04 2C6.58 2 2.13 6.45 2.13 11.91c0 1.75.46 3.45 1.32 4.95L2 22l5.25-1.38c1.45.79 3.08 1.21 4.79 1.21h.01c5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.82 9.82 0 0 0 12.04 2Zm5.52 13.99c-.25.7-1.47 1.34-2.02 1.39-.52.05-1.18.27-3.97-.83-3.34-1.32-5.46-4.74-5.62-4.96-.16-.22-1.35-1.8-1.35-3.43s.86-2.43 1.16-2.76c.3-.33.66-.41.88-.41l.63.01c.2.01.47-.08.74.56.27.66.92 2.28 1 2.45.08.16.13.36.03.58-.1.22-.16.36-.31.55-.16.2-.33.44-.47.59-.16.16-.32.34-.14.66.18.32.8 1.32 1.72 2.14 1.18 1.05 2.18 1.38 2.5 1.54.32.16.5.13.69-.08.18-.22.79-.92 1-1.24.21-.32.42-.27.71-.16.29.11 1.84.87 2.16 1.03.32.16.53.24.61.37.08.13.08.76-.17 1.46Z"/></svg>
-            Create &amp; share invite
+            <span id="iv-share-label">Create &amp; share invite</span>
           </button>
           <button class="iv-download" id="iv-download">↓ Download image</button>
           <p class="iv-hint">Share opens your apps (WhatsApp, etc. on phone). Or download to post anywhere.</p>
@@ -589,7 +589,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
    var ready=document.fonts?Promise.all([document.fonts.load('400 108px "Bagel Fat One"'),document.fonts.load('600 36px "Space Grotesk"'),document.fonts.load('500 30px "Space Grotesk"'),document.fonts.load('italic 30px "Space Grotesk"')]).catch(function(){}):Promise.resolve();
    ready.then(function(){genImage(cb);});
  }
- function downloadIt(blob,cv,fname){var a=document.createElement("a");a.download=fname||"amabile-invite.png";a.href=blob?URL.createObjectURL(blob):cv.toDataURL("image/png");a.click();if(a.href.indexOf("blob:")===0)setTimeout(function(){URL.revokeObjectURL(a.href);},5000);}
+ function downloadIt(blob,cv,fname){var url=blob?URL.createObjectURL(blob):cv.toDataURL("image/png");var a=document.createElement("a");a.href=url;a.download=fname||"amabile-invite.png";a.rel="noopener";a.style.display="none";document.body.appendChild(a);a.click();setTimeout(function(){if(a.parentNode)a.parentNode.removeChild(a);if(url.indexOf("blob:")===0)URL.revokeObjectURL(url);},4000);}
  var shareBtn=document.getElementById("iv-share");
  if(shareBtn) shareBtn.addEventListener("click",function(){
    shareBtn.disabled=true;
@@ -604,13 +604,23 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
      if(_note)txt+=" "+_note;
      try{
        var file=blob?new File([blob],fn,{type:"image/png"}):null;
-       if(file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:txt}).then(function(){burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});return;}
+       var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+       if(isTouch&&file&&navigator.canShare&&navigator.canShare({files:[file]})){navigator.share({files:[file],text:txt}).then(function(){burst(innerWidth/2,innerHeight*0.6,70,true);}).catch(function(){});return;}
      }catch(e){}
      downloadIt(blob,cv,fn);burst(innerWidth/2,innerHeight*0.6,70,true);
    });
  });
  var dlBtn=document.getElementById("iv-download");
  if(dlBtn) dlBtn.addEventListener("click",function(){dlBtn.disabled=true;withImage(function(blob,cv){dlBtn.disabled=false;downloadIt(blob,cv,fileName());burst(innerWidth/2,innerHeight*0.6,50,true);});});
+ /* Desktop: native share isn't useful, so the one button just downloads — drop the redundant link + relabel */
+ (function(){
+   var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+   if(isTouch)return;
+   var lbl=document.getElementById("iv-share-label");if(lbl)lbl.textContent="Download invite";
+   var ic=document.querySelector("#iv-share svg");if(ic)ic.style.display="none";
+   if(dlBtn)dlBtn.style.display="none";
+   var hint=document.querySelector(".iv-hint");if(hint)hint.textContent="Downloads a ready-to-post invite image — share it anywhere.";
+ })();
 })();
 addEventListener("scroll",function(){document.getElementById("nav").classList.toggle("show",scrollY>innerHeight*0.7);});
 
