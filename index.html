@@ -360,7 +360,7 @@ section{position:relative;padding:9vh 0}
             <option value="beach">🌅 Beach day</option>
             <option value="dinner">🍝 Dinner party</option>
             <option value="dance">🪩 Dancefloor</option>
-            <option value="cosy">🎲 Game night</option>
+            <option value="cosy">🎲 Games night</option>
             <option value="just">🥂 Just because</option>
           </select>
           <label for="iv-when">When</label><input id="iv-when" placeholder="e.g. Saturday, from 6pm" autocomplete="off">
@@ -537,9 +537,9 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
 });
 /* Invite generator — builds a shareable invite graphic */
 (function(){
- var VIBES={beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Game night",just:"Good times"};
+ var VIBES={beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
  var VPHOTO={beach:"assets/images/occasions/golden_hour.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
- var VIBEFILE={beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"game-night",just:"good-times"};
+ var VIBEFILE={beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
  function slugify(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
  function fileName(){return (slugify(v("iv-host"))||"my")+"-"+(VIBEFILE[curVibe()]||"event")+"-invite.png";}
  function v(id){var el=document.getElementById(id);return el?el.value.trim():"";}
