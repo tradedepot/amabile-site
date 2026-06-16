@@ -399,7 +399,6 @@ section{position:relative;padding:9vh 0}
             <p id="ivc-host" class="ivc-host">Your name is pouring</p>
             <div class="iv-meta"><div class="iv-line"><b>When</b><span id="ivc-when">—</span></div><div class="iv-line"><b>Where</b><span id="ivc-where">—</span></div></div>
             <p class="iv-note" id="ivc-note" style="display:none"></p>
-            <img class="iv-logo" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
           </div>
         </div>
         <div class="iv-actions" id="iv-actions" style="display:none">
@@ -563,7 +562,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
 /* Invite generator — builds a shareable invite graphic */
 (function(){
  var VIBES={beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
- var VPHOTO={beach:"assets/images/occasions/golden_hour.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
+ var VPHOTO={beach:"assets/images/occasions/just_because.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
  var VIBEFILE={beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
  function slugify(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
  function fileName(){return (slugify(v("iv-host"))||"my")+"-"+(VIBEFILE[curVibe()]||"event")+"-invite.png";}
@@ -597,8 +596,6 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
      var vg=x.createLinearGradient(0,0,0,H);vg.addColorStop(0,"rgba(20,5,15,.12)");vg.addColorStop(.4,"rgba(20,5,15,.28)");vg.addColorStop(1,"rgba(20,5,15,.92)");x.fillStyle=vg;x.fillRect(0,0,W,H);
      x.textAlign="left";x.textBaseline="middle";x.font='700 30px "Space Grotesk"';
      var st="YOU'RE INVITED",stw=x.measureText(st).width;x.fillStyle="#FFF3E0";rr(x,pad,pad,stw+56,62,31);x.fill();x.fillStyle="#E74529";x.fillText(st,pad+28,pad+31);
-     var logoH=46,logoW=80;if(logoImg.complete&&logoImg.naturalWidth){logoW=logoImg.naturalWidth*(logoH/logoImg.naturalHeight);x.globalAlpha=.96;x.drawImage(logoImg,pad,H-pad-logoH,logoW,logoH);x.globalAlpha=1;}
-     x.globalAlpha=.82;x.fillStyle="#FFF3E0";x.font='500 24px "Space Grotesk"';x.fillText("Friends. Wine. Good Times.",pad+logoW+22,H-pad-logoH/2+1);x.globalAlpha=1;
      x.textBaseline="alphabetic";var y=795;
      x.fillStyle="rgba(0,0,0,.4)";x.font='400 108px "Bagel Fat One"';x.fillText(vibe,pad+3,y+4);x.fillStyle="#FFF3E0";x.fillText(vibe,pad,y);
      y+=56;x.font='600 36px "Space Grotesk"';x.fillStyle="#ffe9d9";x.fillText("Hosted by "+host,pad,y);
@@ -619,11 +616,11 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
  if(!isTouch){var _svg=document.querySelector("#iv-share svg");if(_svg)_svg.style.display="none";}
 
- /* Short, anonymous invite domain. Leave "" to use this site's domain.
-    Once a short domain is pointed at this Netlify site, set e.g. "https://ynvi.te" */
- var INVITE_HOST="";
+ /* Short, anonymous invite domain (must be a domain alias on this same Netlify site). */
+ var INVITE_HOST="https://wya.to";
  function rid(n){var s="",a="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
- function mintCode(){return rid(6);}
+ var ADJ=["glow","spark","fizz","sunset","disco","golden","cherry","peach","mango","fiesta","bloom","groove"];
+ function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000);}
  function flash(id){var el=document.getElementById(id);if(el){el.style.boxShadow="0 0 0 3px var(--lime)";el.focus();setTimeout(function(){el.style.boxShadow="";},1400);}}
  function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){try{var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");document.body.removeChild(i);}catch(_){}}}
  function shareText(){var vibeLabel=VIBES[curVibe()]||"Good times";var txt="You're invited 🍷 "+vibeLabel;if(v("iv-when"))txt+=" — "+v("iv-when");if(v("iv-where"))txt+=" at "+v("iv-where");txt+=". Tap to RSVP 👇";return txt;}
