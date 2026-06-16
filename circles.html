@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Circles — Amabile Invites</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--cream:#FFF3E0;--lime:#C6FF4D;--orange:#FF8A3D;--night:#1A1030;--ink:#2a1207}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:28px 18px 70px}
+.wrap{max-width:920px;margin:0 auto}
+h1{font-family:"Bagel Fat One",cursive;font-size:34px;color:var(--red);margin-bottom:4px}
+.sub{color:#7a5c49;margin-bottom:22px}
+.gate{display:flex;gap:8px;max-width:420px}
+.gate input{flex:1;padding:12px 14px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px}
+.gate button{cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;padding:0 18px;border-radius:12px}
+.cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin:18px 0}
+.card{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 rgba(40,16,7,.14);padding:16px;text-align:center}
+.card .num{font-family:"Bagel Fat One",cursive;font-size:32px;color:var(--red);line-height:1}
+.card .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#6a4634;margin-top:5px}
+h2{font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--ink);margin:26px 0 10px}
+table{width:100%;border-collapse:collapse;background:#fff;border:3px solid var(--ink);border-radius:14px;overflow:hidden}
+th,td{text-align:left;padding:10px 12px;font-size:14px;border-bottom:1px solid rgba(42,18,7,.12)}
+th{background:var(--night);color:var(--lime);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+tr:last-child td{border-bottom:0}
+.pill{display:inline-block;background:var(--lime);color:#1a2e00;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:700}
+.muted{color:#9a8576;font-size:13px}
+.err{color:var(--red);font-weight:700;margin-top:10px}
+.note{margin-top:24px;font-size:13px;color:#6a5343;background:#fff;border:2px solid rgba(42,18,7,.15);border-radius:12px;padding:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Circles</h1>
+  <div class="sub">Your invite network at a glance. The full, queryable data lives in BigQuery.</div>
+  <div class="gate" id="gate">
+    <input type="password" id="key" placeholder="Admin key" autocomplete="off">
+    <button id="go">View</button>
+  </div>
+  <div id="err" class="err"></div>
+  <div id="out"></div>
+</div>
+<script>
+function qs(k){return new URLSearchParams(location.search).get(k)||"";}
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+var out=document.getElementById("out"),err=document.getElementById("err");
+
+function load(k){
+  err.textContent="";
+  fetch("/.netlify/functions/circles-data?k="+encodeURIComponent(k))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.ok){err.textContent="Wrong key or no access.";return;}
+      try{localStorage.setItem("adr_circles_k",k);}catch(e){}
+      render(d);
+    })
+    .catch(function(){err.textContent="Couldn't load. Try again.";});
+}
+function row(cells,head){var t=head?"th":"td";return "<tr>"+cells.map(function(c){return "<"+t+">"+c+"</"+t+">";}).join("")+"</tr>";}
+
+function render(d){
+  var t=d.totals||{},bv=d.byVibe||{};
+  var vibes=Object.keys(bv).map(function(k){return esc(k)+" <span class=\"muted\">("+bv[k]+")</span>";}).join(" · ")||"—";
+  var html=""+
+   '<div class="cards">'+
+     '<div class="card"><div class="num">'+(t.invites||0)+'</div><div class="lab">Invites</div></div>'+
+     '<div class="card"><div class="num">'+(t.rsvps||0)+'</div><div class="lab">RSVPs</div></div>'+
+     '<div class="card"><div class="num">'+(t.in||0)+'</div><div class="lab">Coming</div></div>'+
+     '<div class="card"><div class="num">'+(t.maybe||0)+'</div><div class="lab">Maybe</div></div>'+
+   '</div>'+
+   '<h2>Vibes</h2><div class="muted">'+vibes+'</div>';
+
+  html+='<h2>Top hosts (by reach)</h2><table>'+row(["Host","Invites","Responders","Coming"],true);
+  (d.topHosts||[]).forEach(function(h){html+=row([esc(h.host),h.invites,h.responders,h.in]);});
+  if(!(d.topHosts||[]).length)html+=row(["<span class=\"muted\">No data yet</span>","","",""]);
+  html+='</table>';
+
+  html+='<h2>Repeat guests (super-connectors)</h2><table>'+row(["Name","Times RSVP’d"],true);
+  (d.topResponders||[]).forEach(function(x){html+=row([esc(x.name),"<span class=\"pill\">"+x.count+"</span>"]);});
+  if(!(d.topResponders||[]).length)html+=row(["<span class=\"muted\">Nobody’s repeated yet</span>",""]);
+  html+='</table>';
+
+  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","When","In/Maybe/Out"],true);
+  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.when||"—"),c.in+" / "+c.maybe+" / "+c.out]);});
+  if(!(d.recent||[]).length)html+=row(["<span class=\"muted\">No invites yet</span>","","",""]);
+  html+='</table>';
+
+  html+='<div class="note">This is the quick view. For real analysis — cohorts, joins to stockist data, time series — query the <b>invites</b> and <b>rsvps</b> tables in BigQuery.</div>';
+
+  document.getElementById("gate").style.display="none";
+  out.innerHTML=html;
+}
+
+document.getElementById("go").addEventListener("click",function(){var k=document.getElementById("key").value.trim();if(k)load(k);});
+document.getElementById("key").addEventListener("keydown",function(e){if(e.key==="Enter"){var k=this.value.trim();if(k)load(k);}});
+(function(){var k=qs("k")||(function(){try{return localStorage.getItem("adr_circles_k")||"";}catch(e){return "";}})();if(k){document.getElementById("key").value=k;load(k);}})();
+</script>
+</body>
+</html>

@@ -2,6 +2,7 @@
 // send them their private "Pour List" link so RSVPs find their way back.
 import { getStore } from "@netlify/blobs";
 import { INVITE_SITE, json, isEmail, clean, sendEmail, shell } from "./_lib.mjs";
+import { bqInsert } from "./_bq.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
@@ -29,6 +30,19 @@ export default async (req) => {
   await store.setJSON("inv:" + code, meta);
   const existing = await store.get("rsvps:" + code, { type: "json" }).catch(() => null);
   if (!existing) await store.setJSON("rsvps:" + code, []);
+
+  // Mirror to BigQuery for analysis (best-effort).
+  await bqInsert("invites", {
+    code: meta.code,
+    host: meta.host || null,
+    host_email: meta.email || null,
+    vibe: meta.vibe || null,
+    vibe_label: meta.vibeLabel || null,
+    event_when: meta.when || null,
+    event_where: meta.where || null,
+    has_email: !!meta.email,
+    created_at: new Date(meta.createdAt).toISOString()
+  });
 
   // Email the host their Pour List link (the tie-back).
   const apiKey = process.env.BREVO_API_KEY;

@@ -3,6 +3,7 @@
   "private": true,
   "type": "module",
   "dependencies": {
+    "@google-cloud/bigquery": "^7.9.1",
     "@netlify/blobs": "^8.1.0"
   }
 }

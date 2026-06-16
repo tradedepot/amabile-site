@@ -2,6 +2,7 @@
 // add the responder to the Brevo newsletter list if they opted in.
 import { getStore } from "@netlify/blobs";
 import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, countRsvps } from "./_lib.mjs";
+import { bqInsert } from "./_bq.mjs";
 
 const RESPONSES = ["in", "out", "maybe"];
 
@@ -32,6 +33,16 @@ export default async (req) => {
 
   // Optional: responder opts into the newsletter.
   const rEmail = clean(d.email, 160);
+
+  // Mirror to BigQuery for analysis (best-effort).
+  await bqInsert("rsvps", {
+    code,
+    name: entry.name || null,
+    response,
+    bringing: entry.bringing || null,
+    responder_email: d.optin && isEmail(rEmail) ? rEmail : null,
+    created_at: new Date(entry.at).toISOString()
+  });
   if (apiKey && d.optin && isEmail(rEmail)) {
     try {
       const body = { email: rEmail, attributes: { FIRSTNAME: entry.name }, updateEnabled: true };
