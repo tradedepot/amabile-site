@@ -37,7 +37,7 @@ canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
 .meta .ln{display:flex;gap:8px;font-size:13px;align-items:baseline}
 .meta .ln b{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:12px}
 .note{margin-top:12px;font-style:italic;font-size:13px;color:#ffe9d9}
-.clogo{height:20px;width:auto;margin-top:18px;opacity:.95;align-self:flex-start}
+.clogo{height:15px;width:auto;margin-top:18px;opacity:.55;align-self:flex-start}
 /* rsvp panel */
 .panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
 .panel h2{font-family:"Bagel Fat One",cursive;font-size:26px;color:var(--ink);text-align:center;line-height:1}
@@ -129,6 +129,7 @@ function render(d){
      '<h1 class="disp">'+esc(iv.vibeLabel||"Good times")+'</h1>'+
      '<p class="host">'+(iv.host?esc(iv.host)+" is pouring":"You're invited")+'</p>'+
      '<div class="meta">'+meta+'</div>'+note+
+     '<img class="clogo" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
    '</div></div>'+
    '<div class="panel" id="panel">'+
      '<h2>Are you in?</h2>'+
