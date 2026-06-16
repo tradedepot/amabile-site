@@ -1,7 +1,7 @@
 // Store a new invite (keyed by its short code) and, if the host gave an email,
 // send them their private "Pour List" link so RSVPs find their way back.
 import { getStore } from "@netlify/blobs";
-import { SITE, json, isEmail, clean, sendEmail, shell } from "./_lib.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell } from "./_lib.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
@@ -33,8 +33,8 @@ export default async (req) => {
   // Email the host their Pour List link (the tie-back).
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey && isEmail(meta.email)) {
-    const hostLink = `${SITE}/pourlist.html?c=${encodeURIComponent(code)}&k=${encodeURIComponent(token)}`;
-    const shareLink = `${SITE}/i/${encodeURIComponent(code)}`;
+    const hostLink = `${INVITE_SITE}/pourlist.html?c=${encodeURIComponent(code)}&k=${encodeURIComponent(token)}`;
+    const shareLink = `${INVITE_SITE}/i/${encodeURIComponent(code)}`;
     const html = shell(`
       <h2 style="font-family:Arial;margin:10px 0 6px;font-size:22px">Your Pour List is live 🍷</h2>
       <p style="margin:0 0 14px;color:#ffe9d9">Every time a friend RSVPs to <b>${meta.vibeLabel || "your invite"}</b>, you'll get an email — and they all collect here:</p>

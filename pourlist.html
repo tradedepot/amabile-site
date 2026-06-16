@@ -61,7 +61,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);backgroun
 <div class="wrap">
   <img class="brand" src="assets/images/logo/brand_white.png" alt="Amabile di Rosa">
   <div id="app"><div class="err"><h1>Loading your Pour List…</h1></div></div>
-  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="/privacy.html">Privacy</a></div>
+  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
 </div>
 <script>
 var BRINGMAP={wine:"🍷 wine",playlist:"🔊 playlist",energy:"💃 energy",snacks:"🍿 snacks",ice:"🧊 ice",justme:"🙋 just them"};
@@ -105,7 +105,7 @@ function render(d){
       return '<div class="row '+cls+'"><div class="av">'+esc(init)+'</div><div class="who"><div class="nm">'+esc(r.name||"A friend")+'</div>'+(sub?'<div class="sub">'+esc(sub)+'</div>':'')+'</div><span class="badge">'+badge+'</span></div>';
     }).join("");
   }
-  var nudge=c.in>0?'<div class="nudge"><div class="txt">'+c.in+' coming? That\'s about '+bottles(c.in)+' bottle'+(bottles(c.in)>1?"s":"")+' 🍷</div><a href="/where-to-buy.html">Find a bottle →</a></div>':"";
+  var nudge=c.in>0?'<div class="nudge"><div class="txt">'+c.in+' coming? That\'s about '+bottles(c.in)+' bottle'+(bottles(c.in)>1?"s":"")+' 🍷</div><a href="https://www.amabiledirosa.com/where-to-buy.html">Find a bottle →</a></div>':"";
 
   app.innerHTML=
     '<div class="head"><span class="eyebrow">Your Pour List</span>'+

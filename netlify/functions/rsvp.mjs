@@ -1,7 +1,7 @@
 // Record an RSVP against an invite code, email the host about it, and (optionally)
 // add the responder to the Brevo newsletter list if they opted in.
 import { getStore } from "@netlify/blobs";
-import { SITE, json, isEmail, clean, sendEmail, shell, countRsvps } from "./_lib.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, countRsvps } from "./_lib.mjs";
 
 const RESPONSES = ["in", "out", "maybe"];
 
@@ -48,7 +48,7 @@ export default async (req) => {
   // Email the host about this RSVP (the tie-back).
   const meta = await store.get("inv:" + code, { type: "json" }).catch(() => null);
   if (apiKey && meta && isEmail(meta.email)) {
-    const hostLink = `${SITE}/pourlist.html?c=${encodeURIComponent(code)}&k=${encodeURIComponent(meta.token || "")}`;
+    const hostLink = `${INVITE_SITE}/pourlist.html?c=${encodeURIComponent(code)}&k=${encodeURIComponent(meta.token || "")}`;
     const verb = response === "in" ? "is IN 🎉" : response === "maybe" ? "might come 🤔" : "can't make it 😢";
     const bringLine = response === "in" && entry.bringing ? `<p style="margin:0 0 12px;color:#ffd9c9">Bringing: <b>${entry.bringing}</b></p>` : "";
     const html = shell(`

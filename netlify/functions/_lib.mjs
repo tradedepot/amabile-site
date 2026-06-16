@@ -1,7 +1,9 @@
 // Shared helpers for the invite / RSVP functions (filename starts with _ so Netlify
 // does not expose it as its own endpoint).
 
+// Public site (for store/find-a-bottle links). Invite/RSVP links use the short domain.
 export const SITE = "https://www.amabiledirosa.com";
+export const INVITE_SITE = "https://wya.to";
 export const FROM = { email: "vibes@amabiledirosa.com", name: "Amabile di Rosa" };
 
 export function json(obj, status = 200) {
