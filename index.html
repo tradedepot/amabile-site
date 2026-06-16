@@ -234,7 +234,8 @@ section{position:relative;padding:9vh 0}
 .invite-grid.created .invite-card{max-width:none;margin:0;animation:ivpop .55s cubic-bezier(.2,1.15,.35,1)}
 @keyframes ivpop{0%{transform:scale(.9) rotate(-1.5deg);opacity:.45}60%{transform:scale(1.025)}100%{transform:scale(1) rotate(0)}}
 .iv-actions{margin-top:18px;text-align:center}
-.iv-ready{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:20px;margin-bottom:12px}
+.iv-ready{font-family:"Bagel Fat One",cursive;color:var(--lime);font-size:22px;text-align:center;margin:0 0 14px}
+.invite-grid.created #iv-ready{display:block!important}
 .iv-bigshare{width:100%;display:flex;align-items:center;justify-content:center;gap:10px;cursor:pointer;border:0;background:#1ED760;color:#06311a;font-family:"Bagel Fat One",cursive;font-size:21px;padding:18px;border-radius:999px;box-shadow:6px 6px 0 var(--ink);transition:transform .12s}
 .iv-bigshare:hover{transform:translate(-2px,-2px)}
 .iv-bigshare:active{transform:translate(3px,3px);box-shadow:2px 2px 0 var(--ink)}
@@ -388,6 +389,7 @@ section{position:relative;padding:9vh 0}
           </button>
           <p class="iv-hint">Creates a link your friends can RSVP to — share it anywhere.</p>
         </div>
+        <div class="iv-ready" id="iv-ready" style="display:none">🎉 Your invite is ready!</div>
         <div class="invite-card" id="iv-card">
           <div class="iv-bg" id="ivc-bg"></div>
           <div class="iv-veil"></div>
@@ -401,7 +403,6 @@ section{position:relative;padding:9vh 0}
           </div>
         </div>
         <div class="iv-actions" id="iv-actions" style="display:none">
-          <div class="iv-ready">🎉 Your invite is ready!</div>
           <button class="iv-bigshare" id="iv-bigshare"><span id="iv-bigshare-label">Share invite</span></button>
           <div class="iv-sub">
             <button type="button" id="iv-act-dl">↓ Save image</button>
@@ -641,8 +642,17 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
    }catch(e){return Promise.reject(e);}
  }
 
+ function celebrate(){
+   var fx=document.getElementById("fx");if(fx)fx.style.zIndex="200";
+   burst(innerWidth/2,innerHeight*0.42,90,true);
+   setTimeout(function(){burst(innerWidth*0.24,innerHeight*0.52,55,true);},140);
+   setTimeout(function(){burst(innerWidth*0.76,innerHeight*0.52,55,true);},280);
+   setTimeout(function(){burst(innerWidth/2,innerHeight*0.3,70,true);try{fizz();}catch(e){}},440);
+   setTimeout(function(){if(fx)fx.style.zIndex="";},2700);
+ }
  function showSuccess(rsvp,host,emailed,blob,cv,fn){
    var grid=document.querySelector(".invite-grid");if(grid)grid.classList.add("created");
+   var rdy=document.getElementById("iv-ready");if(rdy)rdy.style.display="block";
    var acts=document.getElementById("iv-actions");if(acts)acts.style.display="block";
    document.getElementById("iv-linkmini-url").textContent=rsvp.replace(/^https?:\/\//,"");
    var pour=document.getElementById("iv-act-pour");if(pour)pour.href=host;
@@ -676,11 +686,11 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
      /* save the card as this invite's link-preview image (so the share shows their event) */
      try{var dataUrl=cv?cv.toDataURL("image/png"):null;if(dataUrl)fetch("/.netlify/functions/invite-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code,dataUrl:dataUrl})});}catch(e){}
      showSuccess(rsvpLink,hostLink,!!email,blob,cv,fn);
-     burst(innerWidth/2,innerHeight*0.5,80,true);
+     celebrate();
      if(isTouch&&navigator.share){nativeShare(rsvpLink,blob,fn).then(function(){trackInvite("share");}).catch(function(){});}
    });
  });
- window.resetInvite=function(){var g=document.querySelector(".invite-grid");if(g)g.classList.remove("created");var a=document.getElementById("iv-actions");if(a)a.style.display="none";};
+ window.resetInvite=function(){var g=document.querySelector(".invite-grid");if(g)g.classList.remove("created");var a=document.getElementById("iv-actions");if(a)a.style.display="none";var r=document.getElementById("iv-ready");if(r)r.style.display="none";var fx=document.getElementById("fx");if(fx)fx.style.zIndex="";};
 })();
 addEventListener("scroll",function(){document.getElementById("nav").classList.toggle("show",scrollY>innerHeight*0.7);});
 

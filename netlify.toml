@@ -2,9 +2,6 @@
 [functions]
   directory = "netlify/functions"
 
-# Pretty invite links: /i/<code> is served by the SSR function, which injects per-invite
-# link-preview tags (host, vibe, when/where, card image) then returns the RSVP page.
-[[redirects]]
-  from = "/i/:code"
-  to = "/.netlify/functions/invite-ssr?c=:code"
-  status = 200
+# Pretty invite links /i/<code> are owned directly by the invite-ssr function
+# (see `export const config = { path: "/i/:code" }` in netlify/functions/invite-ssr.mjs),
+# which injects per-invite preview tags (host, vibe, when/where, card image).

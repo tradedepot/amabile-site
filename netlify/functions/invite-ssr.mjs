@@ -18,9 +18,13 @@ function injectOG(html, { title, desc, img }) {
   return html;
 }
 
+// Bind this function directly to the pretty invite URL.
+export const config = { path: "/i/:code" };
+
 export default async (req) => {
   const url = new URL(req.url);
-  const code = clean(url.searchParams.get("c"), 40).toLowerCase();
+  const m = url.pathname.match(/\/i\/([^\/?#]+)/);
+  const code = clean(url.searchParams.get("c") || (m && m[1]) || "", 40).toLowerCase();
   const origin = url.origin;
 
   let html;
