@@ -59,9 +59,11 @@ export default async (req) => {
     } catch (_) {}
 
     const purl = playlistUrl(meta ? meta.vibe : "beach");
+    const evt = meta && meta.host ? `${meta.host}'s ${vlabel}` : vlabel;
+    const whenBit = meta && meta.when ? ` — ${meta.when}` : "";
     const phtml = shell(`
       <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">You're in — here's the soundtrack 🎶</h2>
-      <p style="margin:0 0 18px;color:#6a4634">Press play and get in the mood for <b>${vlabel}</b>. See you there.</p>
+      <p style="margin:0 0 18px;color:#6a4634">Get in the mood for <b>${evt}</b>${whenBit}. See you there 🍷</p>
       <p style="margin:0 0 6px">${button(purl, "▶ Play on Spotify", "#1DB954")}</p>
     `);
     await sendEmail(apiKey, rEmail, `Your ${vlabel} playlist 🎶`, phtml);
