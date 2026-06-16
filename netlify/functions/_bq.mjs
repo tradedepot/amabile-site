@@ -3,7 +3,7 @@
 //
 // Required Netlify env vars (Site config → Environment variables):
 //   GCP_PROJECT_ID   e.g. tradedepot-retail-167113
-//   BQ_DATASET       e.g. amabile_invites
+//   BQ_DATASET       e.g. amabile
 //   GCP_SA_KEY       the FULL service-account JSON key (paste as one value)
 import { BigQuery } from "@google-cloud/bigquery";
 

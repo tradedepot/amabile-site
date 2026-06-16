@@ -34,13 +34,32 @@ export function countRsvps(list) {
   return c;
 }
 
-// Simple branded email shell
+// Occasion playlists (Spotify). Games night + Just because reuse the closest mood.
+export const PLAYLIST = {
+  beach:  "6na6gvlPZ5mMNIs73zviV8",
+  dinner: "2riRKe0E1qVRYoh3onIGQr",
+  dance:  "5UicJ37BPuqc11E30NU1xI",
+  cosy:   "2riRKe0E1qVRYoh3onIGQr", // Games night → dinner-party soundtrack
+  just:   "6na6gvlPZ5mMNIs73zviV8"  // Just because → golden-hour soundtrack
+};
+export const playlistUrl = (vibe) => "https://open.spotify.com/playlist/" + (PLAYLIST[vibe] || PLAYLIST.beach);
+
+// Branded pill button for emails
+export function button(href, label, color = "#E74529") {
+  return `<a href="${href}" style="display:inline-block;background:${color};color:#FFF3E0;text-decoration:none;font-family:Arial,Helvetica,sans-serif;font-weight:700;font-size:15px;padding:13px 24px;border-radius:999px">${label}</a>`;
+}
+
+// Clean, readable email shell: red header strip + light body.
 export function shell(inner) {
-  return `<div style="font-family:Arial,Helvetica,sans-serif;max-width:520px;margin:0 auto;color:#2a1207">
-    <div style="background:#E74529;border-radius:18px;padding:22px 24px;color:#FFF3E0">
-      <div style="font-weight:800;letter-spacing:.12em;text-transform:uppercase;font-size:12px;color:#C6FF4D">Amabile di Rosa</div>
-      ${inner}
+  return `<div style="background:#FBFAEB;padding:26px 14px;font-family:Arial,Helvetica,sans-serif">
+    <div style="max-width:520px;margin:0 auto;background:#ffffff;border:2px solid #2a1207;border-radius:20px;overflow:hidden">
+      <div style="background:#E74529;padding:18px 26px">
+        <div style="font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:#FFF3E0">Amabile di Rosa</div>
+      </div>
+      <div style="padding:26px;color:#2a1207;font-size:15px;line-height:1.5">
+        ${inner}
+      </div>
     </div>
-    <p style="font-size:12px;color:#9a8576;text-align:center;margin:14px 0">Friends. Wine. Good Times.</p>
+    <p style="font-size:12px;color:#b09a8c;text-align:center;margin:16px 0 0">Friends · Wine · Good Times</p>
   </div>`;
 }

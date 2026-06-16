@@ -1,7 +1,7 @@
 // Store a new invite (keyed by its short code) and, if the host gave an email,
 // send them their private "Pour List" link so RSVPs find their way back.
 import { getStore } from "@netlify/blobs";
-import { INVITE_SITE, json, isEmail, clean, sendEmail, shell } from "./_lib.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button } from "./_lib.mjs";
 import { bqInsert } from "./_bq.mjs";
 
 export default async (req) => {
@@ -50,10 +50,10 @@ export default async (req) => {
     const hostLink = `${INVITE_SITE}/pourlist.html?c=${encodeURIComponent(code)}&k=${encodeURIComponent(token)}`;
     const shareLink = `${INVITE_SITE}/i/${encodeURIComponent(code)}`;
     const html = shell(`
-      <h2 style="font-family:Arial;margin:10px 0 6px;font-size:22px">Your Pour List is live 🍷</h2>
-      <p style="margin:0 0 14px;color:#ffe9d9">Every time a friend RSVPs to <b>${meta.vibeLabel || "your invite"}</b>, you'll get an email — and they all collect here:</p>
-      <p style="margin:0 0 18px"><a href="${hostLink}" style="background:#C6FF4D;color:#15260a;text-decoration:none;font-weight:700;padding:12px 20px;border-radius:999px;display:inline-block">See who's coming →</a></p>
-      <p style="margin:0;color:#ffd9c9;font-size:13px">Bookmark that link. To invite people, share this one: <a href="${shareLink}" style="color:#C6FF4D">${shareLink}</a></p>
+      <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">Your Pour List is live 🍷</h2>
+      <p style="margin:0 0 18px;color:#6a4634">Every time a friend RSVPs to <b>${meta.vibeLabel || "your invite"}</b>, you'll get an email — and they all collect in one place:</p>
+      <p style="margin:0 0 18px">${button(hostLink, "See who's coming →")}</p>
+      <p style="margin:0;color:#9a8576;font-size:13px">Bookmark that link. To invite people, share this one:<br><a href="${shareLink}" style="color:#E74529">${shareLink}</a></p>
     `);
     await sendEmail(apiKey, meta.email, `Your Pour List is live 🍷 ${meta.vibeLabel || "Good times"}`, html);
   }
