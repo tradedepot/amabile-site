@@ -619,12 +619,14 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  var isTouch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
  if(!isTouch){var _svg=document.querySelector("#iv-share svg");if(_svg)_svg.style.display="none";}
 
+ /* Short, anonymous invite domain. Leave "" to use this site's domain.
+    Once a short domain is pointed at this Netlify site, set e.g. "https://ynvi.te" */
+ var INVITE_HOST="";
  function rid(n){var s="",a="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
- var ADJ=["glow","spark","fizz","sunset","disco","golden","cherry","peach","rosso","amabile","fiesta","bloom"];
- function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000);}
+ function mintCode(){return rid(6);}
  function flash(id){var el=document.getElementById(id);if(el){el.style.boxShadow="0 0 0 3px var(--lime)";el.focus();setTimeout(function(){el.style.boxShadow="";},1400);}}
  function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){try{var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");document.body.removeChild(i);}catch(_){}}}
- function shareText(rsvp){var vibeLabel=VIBES[curVibe()]||"Good times";var txt="You're invited 🍷 "+vibeLabel;if(v("iv-when"))txt+=" — "+v("iv-when");if(v("iv-where"))txt+=" at "+v("iv-where");txt+=". Tap to RSVP 👉 "+rsvp;return txt;}
+ function shareText(){var vibeLabel=VIBES[curVibe()]||"Good times";var txt="You're invited 🍷 "+vibeLabel;if(v("iv-when"))txt+=" — "+v("iv-when");if(v("iv-where"))txt+=" at "+v("iv-where");txt+=". Tap to RSVP 👇";return txt;}
 
  function trackInvite(action){
    var vibe=curVibe();
@@ -636,7 +638,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  function nativeShare(rsvp,blob,fn){
    try{
      var file=blob?new File([blob],fn,{type:"image/png"}):null;
-     var sd={text:shareText(rsvp),url:rsvp};
+     var sd={text:shareText(),url:rsvp};
      if(file&&navigator.canShare&&navigator.canShare({files:[file]}))sd.files=[file];
      return navigator.share(sd);
    }catch(e){return Promise.reject(e);}
@@ -675,7 +677,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
    var lbl=document.getElementById("iv-share-label"),prev=lbl?lbl.textContent:"";
    shareBtn.disabled=true;if(lbl)lbl.textContent="Creating…";
    var k=curVibe(),vibeLabel=VIBES[k]||"Good times";
-   var code=mintCode(),token=rid(18),origin=location.origin;
+   var code=mintCode(),token=rid(18),origin=(INVITE_HOST||location.origin);
    var rsvpLink=origin+"/i/"+code,hostLink=origin+"/pourlist.html?c="+code+"&k="+token;
    var payload={code:code,token:token,host:host,vibe:k,vibeLabel:vibeLabel,when:v("iv-when"),where:v("iv-where"),note:v("iv-note"),email:email};
    try{fetch("/.netlify/functions/create-invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});}catch(e){}
@@ -684,7 +686,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
      shareBtn.disabled=false;if(lbl)lbl.textContent=prev;
      var fn=fileName();
      /* save the card as this invite's link-preview image (so the share shows their event) */
-     try{var dataUrl=cv?cv.toDataURL("image/png"):null;if(dataUrl)fetch("/.netlify/functions/invite-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code,dataUrl:dataUrl})});}catch(e){}
+     try{var dataUrl=cv?cv.toDataURL("image/jpeg",0.85):null;if(dataUrl)fetch("/.netlify/functions/invite-image",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({code:code,dataUrl:dataUrl})});}catch(e){}
      showSuccess(rsvpLink,hostLink,!!email,blob,cv,fn);
      celebrate();
      if(isTouch&&navigator.share){nativeShare(rsvpLink,blob,fn).then(function(){trackInvite("share");}).catch(function(){});}

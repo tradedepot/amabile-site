@@ -1,6 +1,6 @@
 // Stores and serves the per-invite card image (used as the link-preview image).
-// POST {code, dataUrl}  → save the PNG for that invite
-// GET  ?c=<code>        → stream the saved PNG (falls back to a neutral image)
+// POST {code, dataUrl}  → save the JPEG/PNG for that invite
+// GET  ?c=<code>        → stream the saved image (falls back to a neutral image)
 import { getStore } from "@netlify/blobs";
 import { json, clean } from "./_lib.mjs";
 
@@ -14,11 +14,12 @@ export default async (req) => {
     try { d = await req.json(); } catch { return json({ ok: false, error: "bad_json" }, 400); }
     const code = clean(d.code, 40).toLowerCase();
     const dataUrl = String(d.dataUrl || "");
-    if (!code || !/^data:image\/png;base64,/.test(dataUrl)) return json({ ok: false, error: "bad" }, 400);
+    const m = dataUrl.match(/^data:(image\/(?:png|jpeg));base64,/);
+    if (!code || !m) return json({ ok: false, error: "bad" }, 400);
     try {
-      const b64 = dataUrl.split(",")[1];
+      const b64 = dataUrl.slice(m[0].length);
       const bytes = Uint8Array.from(atob(b64), (c) => c.charCodeAt(0));
-      await store.set("img:" + code, bytes.buffer);
+      await store.set("img:" + code, bytes.buffer, { metadata: { ct: m[1] } });
     } catch (e) {
       return json({ ok: false, error: "store" }, 500);
     }
@@ -28,9 +29,10 @@ export default async (req) => {
   const url = new URL(req.url);
   const code = clean(url.searchParams.get("c"), 40).toLowerCase();
   if (code) {
-    const buf = await store.get("img:" + code, { type: "arrayBuffer" }).catch(() => null);
-    if (buf) {
-      return new Response(buf, { headers: { "content-type": "image/png", "cache-control": "public, max-age=86400" } });
+    const res = await store.getWithMetadata("img:" + code, { type: "arrayBuffer" }).catch(() => null);
+    if (res && res.data) {
+      const ct = (res.metadata && res.metadata.ct) || "image/jpeg";
+      return new Response(res.data, { headers: { "content-type": ct, "cache-control": "public, max-age=86400" } });
     }
   }
   return Response.redirect(FALLBACK, 302);
