@@ -5,3 +5,9 @@
 # Pretty invite links /i/<code> are owned directly by the invite-ssr function
 # (see `export const config = { path: "/i/:code" }` in netlify/functions/invite-ssr.mjs),
 # which injects per-invite preview tags (host, vibe, when/where, card image).
+
+# Clean URL for the venue tool: /venue (query string like ?v=Bamboa is preserved)
+[[redirects]]
+  from = "/venue"
+  to = "/venue.html"
+  status = 200
