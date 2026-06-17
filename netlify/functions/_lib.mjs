@@ -36,11 +36,14 @@ export function countRsvps(list) {
 
 // Occasion playlists (Spotify). Games night + Just because reuse the closest mood.
 export const PLAYLIST = {
-  beach:  "6na6gvlPZ5mMNIs73zviV8",
-  dinner: "2riRKe0E1qVRYoh3onIGQr",
-  dance:  "5UicJ37BPuqc11E30NU1xI",
-  cosy:   "2riRKe0E1qVRYoh3onIGQr", // Games night → dinner-party soundtrack
-  just:   "6na6gvlPZ5mMNIs73zviV8"  // Just because → golden-hour soundtrack
+  linkup:   "6na6gvlPZ5mMNIs73zviV8", // casual link-up → golden-hour soundtrack
+  drinks:   "5UicJ37BPuqc11E30NU1xI", // drinks tonight → dancefloor soundtrack
+  matchday: "5UicJ37BPuqc11E30NU1xI", // matchday → dancefloor soundtrack
+  beach:    "6na6gvlPZ5mMNIs73zviV8",
+  dinner:   "2riRKe0E1qVRYoh3onIGQr",
+  dance:    "5UicJ37BPuqc11E30NU1xI",
+  cosy:     "2riRKe0E1qVRYoh3onIGQr", // Games night → dinner-party soundtrack
+  just:     "6na6gvlPZ5mMNIs73zviV8"  // Just because → golden-hour soundtrack
 };
 export const playlistUrl = (vibe) => "https://open.spotify.com/playlist/" + (PLAYLIST[vibe] || PLAYLIST.beach);
 

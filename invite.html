@@ -66,6 +66,9 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)}
 .done .em{font-size:54px;line-height:1}
 .done h2{margin-top:8px}
 .done p{color:#6a4634;font-weight:600;margin-top:8px}
+.throwown{display:inline-block;margin-top:20px;cursor:pointer;background:var(--lime);color:#1a2e00;font-family:"Bagel Fat One",cursive;font-size:17px;text-decoration:none;padding:14px 22px;border-radius:999px;box-shadow:4px 4px 0 var(--ink);transition:transform .12s}
+.throwown:hover{transform:translate(-2px,-2px)}
+.throwown:active{transform:translate(2px,2px);box-shadow:1px 1px 0 var(--ink)}
 .secondary{display:block;text-align:center;margin-top:22px;color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:16px;text-decoration:none;border-bottom:3px solid rgba(255,243,224,.5);width:fit-content;margin-left:auto;margin-right:auto;padding-bottom:2px}
 .legal{text-align:center;color:rgba(255,243,224,.78);font-size:12px;margin-top:26px}
 .legal a{color:var(--lime)}
@@ -85,7 +88,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)}
 </div>
 
 <script>
-var VPHOTO={beach:"/assets/images/occasions/just_because.jpg",dinner:"/assets/images/occasions/dinner.jpg",dance:"/assets/images/occasions/dancefloor.jpg",cosy:"/assets/images/occasions/game_night.jpg",just:"/assets/images/occasions/just_because.jpg"};
+var VPHOTO={linkup:"/assets/images/occasions/just_because.jpg",drinks:"/assets/images/occasions/dancefloor.jpg",matchday:"/assets/images/occasions/game_night.jpg",beach:"/assets/images/occasions/just_because.jpg",dinner:"/assets/images/occasions/dinner.jpg",dance:"/assets/images/occasions/dancefloor.jpg",cosy:"/assets/images/occasions/game_night.jpg",just:"/assets/images/occasions/just_because.jpg"};
 var BRING=[{k:"wine",e:"🍷",t:"the wine"},{k:"playlist",e:"🔊",t:"the playlist"},{k:"energy",e:"💃",t:"the energy"},{k:"snacks",e:"🍿",t:"snacks"},{k:"ice",e:"🧊",t:"the ice"},{k:"justme",e:"🙋",t:"just me"}];
 
 /* confetti */
@@ -181,12 +184,15 @@ function render(d){
 function thanks(resp,counts,name){
   var panel=document.getElementById("panel");
   var n=(name||"").split(" ")[0];
+  var vibe=(INVITE&&INVITE.invite&&INVITE.invite.vibe)||"";
+  var mk="https://www.amabiledirosa.com/?invite=1"+(vibe?"&v="+encodeURIComponent(vibe):"");
+  var own='<a class="throwown" href="'+mk+'">🍷 Now round up your own crew — 10 seconds</a>';
   if(resp==="in"){
     burst(innerWidth/2,innerHeight*0.4,90,true);burst(innerWidth*0.2,innerHeight*0.5,40,true);burst(innerWidth*0.8,innerHeight*0.5,40,true);
     var line=counts&&counts.in?("That's "+counts.in+" of you so far 🍷"):"See you there 🍷";
-    panel.innerHTML='<div class="done"><div class="em">🔒</div><h2 class="disp">Locked in'+(n?", "+esc(n):"")+'!</h2><p>'+line+'</p></div>';
+    panel.innerHTML='<div class="done"><div class="em">🔒</div><h2 class="disp">Locked in'+(n?", "+esc(n):"")+'!</h2><p>'+line+'</p>'+own+'</div>';
   }else{
-    panel.innerHTML='<div class="done"><div class="em">🍷</div><h2 class="disp">No worries'+(n?", "+esc(n):"")+'</h2><p>We\'ll catch you at the next one.</p></div>';
+    panel.innerHTML='<div class="done"><div class="em">🍷</div><h2 class="disp">No worries'+(n?", "+esc(n):"")+'</h2><p>We\'ll catch you at the next one.</p>'+own+'</div>';
   }
 }
 </script>

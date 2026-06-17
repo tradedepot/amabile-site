@@ -244,6 +244,7 @@ section{position:relative;padding:9vh 0}
 .iv-sub button:hover,.iv-sub a:hover{border-color:var(--cream)}
 .iv-linkmini{margin-top:14px;color:rgba(255,243,224,.7);font-size:12px;word-break:break-all}
 .iv-linkmini button{background:none;border:0;color:var(--lime);cursor:pointer;font-size:12px;font-weight:700;text-decoration:underline;padding:0}
+.iv-statushint{margin-top:12px;color:rgba(255,243,224,.72);font-size:12px}
 .invite-card{position:relative;aspect-ratio:4/5;border:3px solid var(--ink);border-radius:20px;box-shadow:9px 9px 0 rgba(0,0,0,.25);overflow:hidden;background:#2c0f2c;color:var(--cream)}
 .iv-bg{position:absolute;inset:0;background-size:cover;background-position:center}
 .iv-veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.15) 0%,rgba(20,5,15,.3) 42%,rgba(20,5,15,.86) 100%)}
@@ -303,7 +304,7 @@ section{position:relative;padding:9vh 0}
   <input type="checkbox" id="navtog" class="nav-cb">
   <label for="navtog" class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></label>
   <div class="pills">
-    <a href="#cast">Wines</a><a href="#mood">Your Pour</a><a href="#join">Join the Party</a><a href="trade.html">Become a Wholesaler</a>
+    <a href="#" onclick="if(window.openInvite){openInvite();}return false;">Round up the crew</a><a href="#cast">Wines</a><a href="#mood">Your Pour</a><a href="#join">Join the Party</a><a href="trade.html">Become a Wholesaler</a>
     <a href="where-to-buy.html" class="cta">Find a Bottle</a>
   </div>
 </nav>
@@ -316,8 +317,8 @@ section{position:relative;padding:9vh 0}
     <h1 class="disp"><span>Friends.</span> <span>Wine.</span> <span>Good&nbsp;Times.</span></h1>
     <p class="sub">The sweet, fizzy Italian wine,<br>best served with your favourite people.</p>
     <div class="hero-cta">
-      <button class="btn a" onclick="document.getElementById('mood').scrollIntoView()">Pour me something →</button>
       <button class="btn b" onclick="document.getElementById('cast').scrollIntoView()">Meet the wines</button>
+      <button class="btn a" onclick="openInvite()">Round up the crew 🍷</button>
     </div>
     <button class="film-link" onclick="openVid('ENsxmrOlFHo')">▶ Watch the film</button>
   </section>
@@ -367,12 +368,15 @@ section{position:relative;padding:9vh 0}
   <div id="inviteModal" class="inv-modal" onclick="closeInvite(event)">
     <div class="inv-box">
       <button class="inv-close" onclick="closeInvite()" aria-label="Close">✕</button>
-      <div class="inv-modal-head"><span class="eyebrow">Round up the crew</span><h3 class="disp">Send a good-times invite</h3><p>Fill it in, fire it into the group chat. Sorted.</p></div>
+      <div class="inv-modal-head"><span class="eyebrow">Round up the crew</span><h3 class="disp">Who's pulling up?</h3><p>Fill it in, fire it into the group chat. Sorted.</p></div>
       <div class="invite-grid">
         <div class="invite-form">
           <label for="iv-host">Your name</label><input id="iv-host" placeholder="e.g. Emilia" autocomplete="off">
           <label for="iv-vibe">The vibe</label>
           <select id="iv-vibe">
+            <option value="linkup">✨ Link up</option>
+            <option value="drinks">🍷 Drinks tonight</option>
+            <option value="matchday">⚽ Matchday</option>
             <option value="beach">🌅 Beach day</option>
             <option value="dinner">🍝 Dinner party</option>
             <option value="dance">🪩 Dancefloor</option>
@@ -409,6 +413,7 @@ section{position:relative;padding:9vh 0}
             <a id="iv-act-pour" href="#" target="_blank" rel="noopener">See who's coming →</a>
           </div>
           <div class="iv-linkmini"><span id="iv-linkmini-url"></span> · <button type="button" id="iv-linkcopy">copy link</button></div>
+          <div class="iv-statushint">Tip: drop it on your WhatsApp <b>Status</b> 👀 so the whole crew sees it</div>
         </div>
       </div>
     </div>
@@ -562,9 +567,9 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
 });
 /* Invite generator — builds a shareable invite graphic */
 (function(){
- var VIBES={beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
- var VPHOTO={beach:"assets/images/occasions/just_because.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
- var VIBEFILE={beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
+ var VIBES={linkup:"Link-up",drinks:"Drinks tonight",matchday:"Matchday",beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
+ var VPHOTO={linkup:"assets/images/occasions/just_because.jpg",drinks:"assets/images/occasions/dancefloor.jpg",matchday:"assets/images/occasions/game_night.jpg",beach:"assets/images/occasions/just_because.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
+ var VIBEFILE={linkup:"link-up",drinks:"drinks",matchday:"matchday",beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
  function slugify(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
  function fileName(){return (slugify(v("iv-host"))||"my")+"-"+(VIBEFILE[curVibe()]||"event")+"-invite.png";}
  function v(id){var el=document.getElementById(id);return el?el.value.trim():"";}
@@ -718,6 +723,16 @@ if(document.documentElement.classList.contains("ama-entered")){setMood("aperitiv
     window.scrollTo(0,y); document.documentElement.style.scrollBehavior=prev;}
   setTimeout(jump,120);
   window.addEventListener("load",function(){jump(); setTimeout(jump,250);});
+})();
+/* Deep link straight into the invite generator (?invite=1[&v=vibe] or #invite) — powers ads + the "throw your own" nudge */
+(function(){
+  var want=/[?&]invite=1\b/.test(location.search)||location.hash.toLowerCase()==="#invite";
+  if(!want)return;
+  var splash=document.getElementById("splash"); if(splash){splash.classList.add("gone");splash.style.display="none";}
+  document.documentElement.classList.add("ama-entered");
+  try{setMood("aperitivo",true);}catch(e){}
+  var v=(location.search.match(/[?&]v=([a-z]+)/i)||[])[1]||"";
+  setTimeout(function(){ if(window.openInvite) window.openInvite(v||undefined); },220);
 })();
 function openVid(id){var m=document.getElementById("vidModal");
  document.getElementById("vidFrame").innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1" title="Amabile di Rosa film" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
