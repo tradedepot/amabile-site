@@ -587,6 +587,7 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  ["iv-host","iv-vibe","iv-when","iv-where","iv-note"].forEach(function(id){var el=document.getElementById(id);if(el){el.addEventListener("input",paint);el.addEventListener("change",paint);}});
  paint();
  window.openInvite=function(vibe){if(window.resetInvite)window.resetInvite();var sel=document.getElementById("iv-vibe");if(vibe&&sel.querySelector('option[value="'+vibe+'"]'))sel.value=vibe;paint();document.getElementById("inviteModal").classList.add("open");setTimeout(function(){document.getElementById("iv-host").focus();},150);};
+ window.openInvitePrefill=function(o){o=o||{};if(window.resetInvite)window.resetInvite();var sel=document.getElementById("iv-vibe");if(o.vibe&&sel.querySelector('option[value="'+o.vibe+'"]'))sel.value=o.vibe;if(o.host)document.getElementById("iv-host").value=o.host;if(o.when)document.getElementById("iv-when").value=o.when;if(o.where)document.getElementById("iv-where").value=o.where;if(o.note)document.getElementById("iv-note").value=o.note;paint();document.getElementById("inviteModal").classList.add("open");setTimeout(function(){document.getElementById("iv-host").focus();},150);};
  window.closeInvite=function(e){if(e&&e.target&&e.target.id!=="inviteModal")return;document.getElementById("inviteModal").classList.remove("open");};
  addEventListener("keydown",function(e){if(e.key==="Escape")window.closeInvite();});
 
@@ -724,15 +725,17 @@ if(document.documentElement.classList.contains("ama-entered")){setMood("aperitiv
   setTimeout(jump,120);
   window.addEventListener("load",function(){jump(); setTimeout(jump,250);});
 })();
-/* Deep link straight into the invite generator (?invite=1[&v=vibe] or #invite) — powers ads + the "throw your own" nudge */
+/* Deep link straight into the invite generator (?invite=1 plus optional host/when/where/note/v) —
+   powers ads, the "throw your own" nudge, and venue pre-filled reservation links. */
 (function(){
   var want=/[?&]invite=1\b/.test(location.search)||location.hash.toLowerCase()==="#invite";
   if(!want)return;
   var splash=document.getElementById("splash"); if(splash){splash.classList.add("gone");splash.style.display="none";}
   document.documentElement.classList.add("ama-entered");
   try{setMood("aperitivo",true);}catch(e){}
-  var v=(location.search.match(/[?&]v=([a-z]+)/i)||[])[1]||"";
-  setTimeout(function(){ if(window.openInvite) window.openInvite(v||undefined); },220);
+  var q=new URLSearchParams(location.search);
+  var o={vibe:q.get("v")||q.get("vibe")||"",host:q.get("host")||q.get("name")||"",when:q.get("when")||"",where:q.get("where")||"",note:q.get("note")||""};
+  setTimeout(function(){ if(window.openInvitePrefill) window.openInvitePrefill(o); else if(window.openInvite) window.openInvite(o.vibe||undefined); },240);
 })();
 function openVid(id){var m=document.getElementById("vidModal");
  document.getElementById("vidFrame").innerHTML='<iframe src="https://www.youtube-nocookie.com/embed/'+id+'?autoplay=1&rel=0&playsinline=1" title="Amabile di Rosa film" allow="autoplay; encrypted-media; picture-in-picture; fullscreen" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>';
