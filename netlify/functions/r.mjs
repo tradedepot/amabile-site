@@ -6,7 +6,7 @@ import { clean } from "./_lib.mjs";
 
 export const config = { path: "/r/:code" };
 
-const GEN = "https://www.amabiledirosa.com/";
+const GEN = "https://wya.to/";
 const IMG = "https://www.amabiledirosa.com/assets/images/occasions/just_because.jpg";
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 const slug = (s) => String(s || "").toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
