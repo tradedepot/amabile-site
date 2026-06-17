@@ -13,29 +13,24 @@
 :root{--red:#E74529;--cream:#FFF3E0;--lime:#C6FF4D;--ink:#2a1207}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:26px 16px 70px}
-.wrap{max-width:540px;margin:0 auto}
+.wrap{max-width:500px;margin:0 auto}
 h1{font-family:"Bagel Fat One",cursive;font-size:30px;color:var(--red);line-height:1;margin-bottom:6px}
-.sub{color:#7a5c49;margin-bottom:22px;font-size:15px}
+.sub{color:#7a5c49;margin-bottom:20px;font-size:15px}
 .venue-tag{display:inline-block;background:var(--ink);color:var(--cream);font-weight:700;border-radius:999px;padding:7px 15px;font-size:13px;margin-bottom:18px}
 label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#6a4634;margin:14px 0 6px}
-input,select{width:100%;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
-input:focus,select:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
-.msg{margin-top:22px;background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:6px 6px 0 rgba(40,16,7,.16);padding:16px 18px}
-.msg .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9a8576;margin-bottom:8px}
-.msg .body{font-size:15px;line-height:1.5;color:var(--ink);white-space:pre-wrap;word-break:break-word}
-.msg .body a{color:var(--red)}
-.row{display:flex;gap:10px;margin-top:14px;flex-wrap:wrap}
-.btn{cursor:pointer;border:0;border-radius:999px;font-family:"Bagel Fat One",cursive;font-size:15px;padding:13px 20px}
-.btn.go{background:var(--red);color:var(--cream);flex:1}
-.btn.alt{background:var(--lime);color:#1a2e00}
+input{width:100%;padding:14px 16px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:16px;background:#fff;color:var(--ink)}
+input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
+.copy{margin-top:24px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:19px;padding:17px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
+.copy:hover{transform:translate(-2px,-2px)}
+.copy:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.copy:disabled{opacity:.6;cursor:default;transform:none}
 .hint{margin-top:18px;font-size:13px;color:#6a5343;background:#fff;border:2px solid rgba(42,18,7,.14);border-radius:12px;padding:14px}
-.case{margin-top:14px;font-size:13px;color:#7a5c49}
 </style>
 </head>
 <body>
 <div class="wrap">
   <h1>Round-up link builder</h1>
-  <div class="sub">Add this to your booking confirmation. Guests tap it to rally their crew — which fills your room on the night. No app, no signup.</div>
+  <div class="sub">Pop this into your booking confirmation. Guests tap it to rally their crew — which fills your room on the night. No app, no signup.</div>
   <div id="venueTag" class="venue-tag" style="display:none"></div>
 
   <div id="venueField">
@@ -44,70 +39,63 @@ input:focus,select:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
   </div>
 
   <label for="guest">Guest's name</label>
-  <input id="guest" placeholder="e.g. Kachi" autocomplete="off">
+  <input id="guest" placeholder="e.g. Emilia" autocomplete="off">
 
   <label for="when">When (date / time)</label>
   <input id="when" placeholder="e.g. Sat, 8pm" autocomplete="off">
 
-  <div class="msg">
-    <div class="lab">Paste this into your confirmation message</div>
-    <div class="body" id="preview"></div>
-    <div class="row">
-      <button class="btn go" id="copyMsg">Copy message</button>
-      <button class="btn alt" id="copyLink">Copy link only</button>
-    </div>
-  </div>
+  <button class="copy" id="copyBtn">Copy invite message</button>
 
-  <div class="case">The link comes pre-filled with the booking, so the guest just hits “Round up the crew” and shares it to their group chat.</div>
+  <div class="hint">Paste it straight into your WhatsApp confirmation. The guest taps it, hits “Round up the crew”, and shares it to their group chat.</div>
 </div>
 
 <script>
-var BASE="https://www.amabiledirosa.com/?invite=1";
 function qp(k){return new URLSearchParams(location.search).get(k)||"";}
 function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
-
-// Venue can be locked via ?v=Bamboa (staff bookmark their own builder), else typed.
 var lockedVenue=qp("v")||qp("venue");
 var venueInput=document.getElementById("venue");
 if(lockedVenue){
   document.getElementById("venueField").style.display="none";
   var tag=document.getElementById("venueTag");tag.style.display="inline-block";tag.textContent="📍 "+lockedVenue;
 }
+function venueName(){return (lockedVenue||venueInput.value.trim());}
+var guest=document.getElementById("guest"),when=document.getElementById("when"),btn=document.getElementById("copyBtn");
 
-function venueName(){return lockedVenue||venueInput.value.trim();}
-
-function buildLink(){
-  var v=venueName();
-  var p=[];
-  p.push("v=linkup");
-  var g=document.getElementById("guest").value.trim(); if(g)p.push("host="+encodeURIComponent(g));
-  var w=document.getElementById("when").value.trim(); if(w)p.push("when="+encodeURIComponent(w));
+function longLink(){
+  var p=["invite=1","v=linkup"],v=venueName();
+  if(guest.value.trim())p.push("host="+encodeURIComponent(guest.value.trim()));
+  if(when.value.trim())p.push("when="+encodeURIComponent(when.value.trim()));
   if(v)p.push("where="+encodeURIComponent(v));
-  // attribution so creates can be traced back to the venue in analytics
-  p.push("utm_source=venue");p.push("utm_medium=reservation");
+  p.push("utm_source=venue","utm_medium=reservation");
   if(v)p.push("utm_campaign="+encodeURIComponent(slug(v)));
-  return BASE+"&"+p.join("&");
+  return "https://www.amabiledirosa.com/?"+p.join("&");
 }
-
-function message(){
-  var v=venueName()||"us";
-  var w=document.getElementById("when").value.trim();
-  var lead="Your table at "+v+(w?" for "+w:"")+" is confirmed 🎉";
-  return lead+"\nNow round up your crew — they RSVP in one tap 👉 "+buildLink();
+function shortLink(){
+  return fetch("/.netlify/functions/shorten",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({host:guest.value.trim(),when:when.value.trim(),where:venueName(),venue:venueName()})})
+    .then(function(r){return r.json();})
+    .then(function(d){return (d&&d.ok&&d.code)?("https://wya.to/r/"+d.code):longLink();})
+    .catch(function(){return longLink();});
 }
-
-function render(){
-  document.getElementById("preview").textContent=message();
+function message(link){
+  var v=venueName()||"us", w=when.value.trim();
+  return "Your table at "+v+(w?" for "+w:"")+" is confirmed 🎉\nNow round up your crew — they RSVP in one tap 👉 "+link;
 }
-["guest","when","venue"].forEach(function(id){var el=document.getElementById(id);if(el){el.addEventListener("input",render);el.addEventListener("change",render);}});
-render();
-
-function copy(text,btn,label){
-  try{navigator.clipboard.writeText(text);}catch(e){var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(_){}document.body.removeChild(t);}
-  var o=btn.textContent;btn.textContent="Copied ✓";setTimeout(function(){btn.textContent=o;},1600);
+function doCopy(text){
+  try{return navigator.clipboard.writeText(text);}catch(e){}
+  try{var t=document.createElement("textarea");t.value=text;document.body.appendChild(t);t.select();document.execCommand("copy");document.body.removeChild(t);}catch(_){}
+  return Promise.resolve();
 }
-document.getElementById("copyMsg").addEventListener("click",function(){copy(message(),this);});
-document.getElementById("copyLink").addEventListener("click",function(){copy(buildLink(),this);});
+btn.addEventListener("click",function(){
+  if(!guest.value.trim()){guest.focus();guest.style.boxShadow="0 0 0 3px var(--red)";setTimeout(function(){guest.style.boxShadow="";},1400);return;}
+  btn.disabled=true;var o=btn.textContent;btn.textContent="Building…";
+  shortLink().then(function(link){
+    return doCopy(message(link));
+  }).then(function(){
+    btn.textContent="Copied ✓ — paste into your confirmation";
+    setTimeout(function(){btn.disabled=false;btn.textContent=o;},2200);
+  });
+});
 </script>
 </body>
 </html>
