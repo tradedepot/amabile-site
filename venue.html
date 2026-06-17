@@ -79,7 +79,7 @@ function shortLink(){
 }
 function message(link){
   var v=venueName()||"us", w=when.value.trim();
-  return "Your table at "+v+(w?" for "+w:"")+" is confirmed 🎉\nNow round up your crew — they RSVP in one tap 👉 "+link;
+  return "Your table at "+v+(w?" for "+w:"")+" is confirmed 🎉\nNow round up your crew 👉 "+link;
 }
 function doCopy(text){
   try{return navigator.clipboard.writeText(text);}catch(e){}
