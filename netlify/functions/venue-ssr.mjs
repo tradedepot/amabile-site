@@ -20,7 +20,7 @@ export default async (req) => {
   if (v) {
     const title = "Guest list — " + v;
     html = html.replace(/<title>[\s\S]*?<\/title>/,
-      `<title>${esc(title)}</title>\n<meta property="og:title" content="${esc(title)}">\n<meta property="og:description" content="Round-up links for ${esc(v)} bookings.">`);
+      `<title>${esc(title)}</title>\n<meta property="og:title" content="${esc(title)}">\n<meta property="og:description" content="Turn booking confirmations into fuller tables.">`);
   }
 
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "no-cache" } });
