@@ -378,6 +378,7 @@ section{position:relative;padding:9vh 0}
             <option value="drinks">🍷 Drinks tonight</option>
             <option value="matchday">⚽ Matchday</option>
             <option value="beach">🌅 Beach day</option>
+            <option value="brunch">🍳 Brunch</option>
             <option value="dinner">🍝 Dinner party</option>
             <option value="dance">🪩 Dancefloor</option>
             <option value="cosy">🎲 Games night</option>
@@ -567,9 +568,9 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
 });
 /* Invite generator — builds a shareable invite graphic */
 (function(){
- var VIBES={linkup:"Link-up",drinks:"Drinks tonight",matchday:"Matchday",beach:"Beach day",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
- var VPHOTO={linkup:"assets/images/occasions/just_because.jpg",drinks:"assets/images/occasions/dancefloor.jpg",matchday:"assets/images/occasions/game_night.jpg",beach:"assets/images/occasions/just_because.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
- var VIBEFILE={linkup:"link-up",drinks:"drinks",matchday:"matchday",beach:"beach",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
+ var VIBES={linkup:"Link-up",drinks:"Drinks tonight",matchday:"Matchday",beach:"Beach day",brunch:"Brunch",dinner:"Dinner party",dance:"Dancefloor",cosy:"Games night",just:"Good times"};
+ var VPHOTO={linkup:"assets/images/occasions/just_because.jpg",drinks:"assets/images/occasions/dancefloor.jpg",matchday:"assets/images/occasions/game_night.jpg",beach:"assets/images/occasions/just_because.jpg",brunch:"assets/images/occasions/dinner.jpg",dinner:"assets/images/occasions/dinner.jpg",dance:"assets/images/occasions/dancefloor.jpg",cosy:"assets/images/occasions/game_night.jpg",just:"assets/images/occasions/just_because.jpg"};
+ var VIBEFILE={linkup:"link-up",drinks:"drinks",matchday:"matchday",beach:"beach",brunch:"brunch",dinner:"dinner",dance:"dancefloor",cosy:"games-night",just:"good-times"};
  function slugify(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
  function fileName(){return (slugify(v("iv-host"))||"my")+"-"+(VIBEFILE[curVibe()]||"event")+"-invite.png";}
  function v(id){var el=document.getElementById(id);return el?el.value.trim():"";}
