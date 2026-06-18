@@ -184,9 +184,7 @@ function render(d){
 function thanks(resp,counts,name){
   var panel=document.getElementById("panel");
   var n=(name||"").split(" ")[0];
-  var vibe=(INVITE&&INVITE.invite&&INVITE.invite.vibe)||"";
-  var mk="https://www.amabiledirosa.com/?invite=1"+(vibe?"&v="+encodeURIComponent(vibe):"");
-  var own='<a class="throwown" href="'+mk+'">🍷 Now round up your own crew — 10 seconds</a>';
+  var own='<a class="throwown" href="https://wya.to/pullup">🍷 Now round up your own crew — 10 seconds</a>';
   if(resp==="in"){
     burst(innerWidth/2,innerHeight*0.4,90,true);burst(innerWidth*0.2,innerHeight*0.5,40,true);burst(innerWidth*0.8,innerHeight*0.5,40,true);
     var line=counts&&counts.in?("That's "+counts.in+" of you so far 🍷"):"See you there 🍷";

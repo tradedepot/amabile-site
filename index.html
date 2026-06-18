@@ -728,7 +728,7 @@ if(document.documentElement.classList.contains("ama-entered")){setMood("aperitiv
 /* Deep link straight into the invite generator (?invite=1 plus optional host/when/where/note/v) —
    powers ads, the "throw your own" nudge, and venue pre-filled reservation links. */
 (function(){
-  var want=/[?&]invite=1\b/.test(location.search)||location.hash.toLowerCase()==="#invite";
+  var want=/[?&]invite=1\b/.test(location.search)||location.hash.toLowerCase()==="#invite"||/^\/(new|pullup|host)\/?$/i.test(location.pathname);
   if(!want)return;
   var splash=document.getElementById("splash"); if(splash){splash.classList.add("gone");splash.style.display="none";}
   document.documentElement.classList.add("ama-entered");

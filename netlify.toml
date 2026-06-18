@@ -8,3 +8,17 @@
 
 # /venue is owned by the venue-ssr function (config.path "/venue"), which injects a
 # venue-coded title ("Guest list — <venue>") then serves the static venue.html body.
+
+# Clean shortcuts: /new, /pullup, /host all serve the homepage, which auto-opens the generator.
+[[redirects]]
+  from = "/new"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/pullup"
+  to = "/index.html"
+  status = 200
+[[redirects]]
+  from = "/host"
+  to = "/index.html"
+  status = 200
