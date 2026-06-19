@@ -62,6 +62,7 @@ function load(k){
 }
 function row(cells,head){var t=head?"th":"td";return "<tr>"+cells.map(function(c){return "<"+t+">"+c+"</"+t+">";}).join("")+"</tr>";}
 function pct(x){return Math.round((x||0)*100)+"%";}
+function fmtTime(ms){if(!ms)return"—";try{return new Date(ms).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return"—";}}
 function objTable(obj,h1,h2){obj=obj||{};var keys=Object.keys(obj).sort(function(a,b){return obj[b]-obj[a];});var html='<table>'+row([h1,h2],true);keys.forEach(function(k){html+=row([esc(k),obj[k]]);});if(!keys.length)html+=row(['<span class="muted">No data yet</span>','']);return html+'</table>';}
 
 function render(d){
@@ -106,9 +107,9 @@ function render(d){
   html+='<h2>Devices</h2><div class="muted">'+(Object.keys(dev).map(function(k){return esc(k)+": "+dev[k];}).join(" · ")||"—")+'</div>';
 
   // Recent
-  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","Source","In/Maybe/Out"],true);
-  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.source||"(direct)"),c.in+" / "+c.maybe+" / "+c.out]);});
-  if(!(d.recent||[]).length)html+=row(["<span class=\"muted\">No invites yet</span>","","",""]);
+  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","Source","In/Maybe/Out","Created"],true);
+  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.source||"(direct)"),c.in+" / "+c.maybe+" / "+c.out,fmtTime(r.createdAt)]);});
+  if(!(d.recent||[]).length)html+=row(["<span class=\"muted\">No invites yet</span>","","","",""]);
   html+='</table>';
 
   html+='<div class="note"><b>From the loop</b> is your flywheel health — the share of invites created by someone who first RSVP’d to another invite. Aim to push it up. The deeper, joinable cut lives in BigQuery.</div>';
