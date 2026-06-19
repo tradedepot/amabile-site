@@ -23,6 +23,11 @@ export default async (req) => {
     where: clean(d.where, 160),
     note: clean(d.note, 240),
     email: clean(d.email, 160),
+    source: clean(d.source, 60),
+    medium: clean(d.medium, 60),
+    campaign: clean(d.campaign, 80),
+    parent: clean(d.parent, 40).toLowerCase(),
+    device: clean(d.device, 16),
     createdAt: Date.now()
   };
 
@@ -41,6 +46,11 @@ export default async (req) => {
     event_when: meta.when || null,
     event_where: meta.where || null,
     has_email: !!meta.email,
+    source: meta.source || null,
+    medium: meta.medium || null,
+    campaign: meta.campaign || null,
+    parent_code: meta.parent || null,
+    device: meta.device || null,
     created_at: new Date(meta.createdAt).toISOString()
   });
 

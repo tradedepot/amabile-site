@@ -631,6 +631,10 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  function rid(n){var s="",a="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
  var ADJ=["glow","spark","fizz","sunset","disco","golden","cherry","peach","mango","fiesta","bloom","groove"];
  function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000);}
+ /* attribution + context captured at load (campaign metadata + device + referral chain — no personal identity) */
+ var ADR_ATTR=(function(){var q=new URLSearchParams(location.search);
+   var touch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+   return {source:q.get("utm_source")||"",medium:q.get("utm_medium")||"",campaign:q.get("utm_campaign")||"",parent:q.get("ref")||"",device:touch?"mobile":"desktop"};})();
  function flash(id){var el=document.getElementById(id);if(el){el.style.boxShadow="0 0 0 3px var(--lime)";el.focus();setTimeout(function(){el.style.boxShadow="";},1400);}}
  function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){try{var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");document.body.removeChild(i);}catch(_){}}}
  function shareText(){var vibeLabel=VIBES[curVibe()]||"Good times";var txt="You're invited 🍷 "+vibeLabel;if(v("iv-when"))txt+=" — "+v("iv-when");if(v("iv-where"))txt+=" at "+v("iv-where");txt+=". Tap to RSVP 👇";return txt;}
@@ -686,7 +690,8 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
    var k=curVibe(),vibeLabel=VIBES[k]||"Good times";
    var code=mintCode(),token=rid(18),origin=(INVITE_HOST||location.origin);
    var rsvpLink=origin+"/i/"+code,hostLink=origin+"/pourlist.html?c="+code+"&k="+token;
-   var payload={code:code,token:token,host:host,vibe:k,vibeLabel:vibeLabel,when:v("iv-when"),where:v("iv-where"),note:v("iv-note"),email:email};
+   var payload={code:code,token:token,host:host,vibe:k,vibeLabel:vibeLabel,when:v("iv-when"),where:v("iv-where"),note:v("iv-note"),email:email,
+     source:ADR_ATTR.source,medium:ADR_ATTR.medium,campaign:ADR_ATTR.campaign,parent:ADR_ATTR.parent,device:ADR_ATTR.device};
    try{fetch("/.netlify/functions/create-invite",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(payload)});}catch(e){}
    trackInvite("create");
    withImage(function(blob,cv){
