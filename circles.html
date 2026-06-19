@@ -61,35 +61,57 @@ function load(k){
     .catch(function(){err.textContent="Couldn't load. Try again.";});
 }
 function row(cells,head){var t=head?"th":"td";return "<tr>"+cells.map(function(c){return "<"+t+">"+c+"</"+t+">";}).join("")+"</tr>";}
+function pct(x){return Math.round((x||0)*100)+"%";}
+function objTable(obj,h1,h2){obj=obj||{};var keys=Object.keys(obj).sort(function(a,b){return obj[b]-obj[a];});var html='<table>'+row([h1,h2],true);keys.forEach(function(k){html+=row([esc(k),obj[k]]);});if(!keys.length)html+=row(['<span class="muted">No data yet</span>','']);return html+'</table>';}
 
 function render(d){
-  var t=d.totals||{},bv=d.byVibe||{};
+  var t=d.totals||{},lp=d.loop||{},bv=d.byVibe||{},dev=d.byDevice||{};
   var vibes=Object.keys(bv).map(function(k){return esc(k)+" <span class=\"muted\">("+bv[k]+")</span>";}).join(" · ")||"—";
+
   var html=""+
    '<div class="cards">'+
      '<div class="card"><div class="num">'+(t.invites||0)+'</div><div class="lab">Invites</div></div>'+
      '<div class="card"><div class="num">'+(t.rsvps||0)+'</div><div class="lab">RSVPs</div></div>'+
      '<div class="card"><div class="num">'+(t.in||0)+'</div><div class="lab">Coming</div></div>'+
-     '<div class="card"><div class="num">'+(t.maybe||0)+'</div><div class="lab">Maybe</div></div>'+
-   '</div>'+
-   '<h2>Vibes</h2><div class="muted">'+vibes+'</div>';
+     '<div class="card"><div class="num">'+pct(lp.loopShare)+'</div><div class="lab">From the loop</div></div>'+
+   '</div>';
 
+  // Flywheel — is the loop compounding?
+  html+='<h2>Flywheel</h2>';
+  html+='<div class="muted" style="margin-bottom:10px"><b>'+(lp.loopCreates||0)+'</b> invites spawned by another invite · <b>'+(lp.seeded||0)+'</b> seeded/fresh — <b>'+pct(lp.loopShare)+'</b> of all invites came from the loop.</div>';
+  html+='<table>'+row(["Top spawners (host)","Invites they sparked"],true);
+  (d.topSpawners||[]).forEach(function(s){html+=row([esc(s.host||s.code),s.spawned]);});
+  if(!(d.topSpawners||[]).length)html+=row(['<span class="muted">No chains yet — nobody has hosted off an invite they received</span>','']);
+  html+='</table>';
+
+  // Where invites come from
+  html+='<h2>Where invites come from</h2>'+objTable(d.bySource,"Source","Invites");
+
+  // Vibes
+  html+='<h2>Vibes</h2><div class="muted">'+vibes+'</div>';
+
+  // Top hosts
   html+='<h2>Top hosts (by reach)</h2><table>'+row(["Host","Invites","Responders","Coming"],true);
   (d.topHosts||[]).forEach(function(h){html+=row([esc(h.host),h.invites,h.responders,h.in]);});
   if(!(d.topHosts||[]).length)html+=row(["<span class=\"muted\">No data yet</span>","","",""]);
   html+='</table>';
 
+  // Repeat guests
   html+='<h2>Repeat guests (super-connectors)</h2><table>'+row(["Name","Times RSVP’d"],true);
   (d.topResponders||[]).forEach(function(x){html+=row([esc(x.name),"<span class=\"pill\">"+x.count+"</span>"]);});
   if(!(d.topResponders||[]).length)html+=row(["<span class=\"muted\">Nobody’s repeated yet</span>",""]);
   html+='</table>';
 
-  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","When","In/Maybe/Out"],true);
-  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.when||"—"),c.in+" / "+c.maybe+" / "+c.out]);});
+  // Devices
+  html+='<h2>Devices</h2><div class="muted">'+(Object.keys(dev).map(function(k){return esc(k)+": "+dev[k];}).join(" · ")||"—")+'</div>';
+
+  // Recent
+  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","Source","In/Maybe/Out"],true);
+  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.source||"(direct)"),c.in+" / "+c.maybe+" / "+c.out]);});
   if(!(d.recent||[]).length)html+=row(["<span class=\"muted\">No invites yet</span>","","",""]);
   html+='</table>';
 
-  html+='<div class="note">This is the quick view. For real analysis — cohorts, joins to stockist data, time series — query the <b>invites</b> and <b>rsvps</b> tables in BigQuery.</div>';
+  html+='<div class="note"><b>From the loop</b> is your flywheel health — the share of invites created by someone who first RSVP’d to another invite. Aim to push it up. The deeper, joinable cut lives in BigQuery.</div>';
 
   document.getElementById("gate").style.display="none";
   out.innerHTML=html;
