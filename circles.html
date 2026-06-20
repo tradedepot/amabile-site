@@ -63,6 +63,9 @@ function load(k){
 function row(cells,head){var t=head?"th":"td";return "<tr>"+cells.map(function(c){return "<"+t+">"+c+"</"+t+">";}).join("")+"</tr>";}
 function pct(x){return Math.round((x||0)*100)+"%";}
 function fmtTime(ms){if(!ms)return"—";try{return new Date(ms).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return"—";}}
+var BRINGMAP={wine:"🍷 wine",playlist:"🔊 playlist",energy:"💃 energy",snacks:"🍿 snacks",ice:"🧊 ice",justme:"🙋 just them"};
+function reply(r){return r==="in"?'<span class="pill">In</span>':r==="maybe"?'<span class="pill" style="background:#ffd27a;color:#5a3a00">Maybe</span>':'<span class="pill" style="background:#e3d8cf;color:#7a5c49">Out</span>';}
+function toggleDet(i){var el=document.getElementById("det-"+i);if(el)el.style.display=el.style.display==="none"?"":"none";}
 function objTable(obj,h1,h2){obj=obj||{};var keys=Object.keys(obj).sort(function(a,b){return obj[b]-obj[a];});var html='<table>'+row([h1,h2],true);keys.forEach(function(k){html+=row([esc(k),obj[k]]);});if(!keys.length)html+=row(['<span class="muted">No data yet</span>','']);return html+'</table>';}
 
 function render(d){
@@ -107,8 +110,16 @@ function render(d){
   html+='<h2>Devices</h2><div class="muted">'+(Object.keys(dev).map(function(k){return esc(k)+": "+dev[k];}).join(" · ")||"—")+'</div>';
 
   // Recent
-  html+='<h2>Recent invites</h2><table>'+row(["Host","Vibe","Source","In/Maybe/Out","Created"],true);
-  (d.recent||[]).forEach(function(r){var c=r.counts||{};html+=row([esc(r.host),esc(r.vibe),esc(r.source||"(direct)"),c.in+" / "+c.maybe+" / "+c.out,fmtTime(r.createdAt)]);});
+  html+='<h2>Recent invites <span class="muted" style="font-size:13px;font-weight:400">— tap a row to see who replied</span></h2><table>'+row(["Host","Vibe","Source","In/Maybe/Out","Created"],true);
+  (d.recent||[]).forEach(function(r,i){
+    var c=r.counts||{};
+    var det;
+    if(r.rsvps&&r.rsvps.length){
+      det=r.rsvps.map(function(p){return '<div style="padding:6px 0;border-bottom:1px solid rgba(42,18,7,.08)">'+esc(p.name)+' — '+reply(p.response)+(p.bringing&&BRINGMAP[p.bringing]?' · '+esc(BRINGMAP[p.bringing]):'')+'<span class="muted" style="float:right">'+fmtTime(p.at)+'</span></div>';}).join('');
+    }else{det='<span class="muted">No replies yet</span>';}
+    html+='<tr style="cursor:pointer" onclick="toggleDet('+i+')"><td>'+esc(r.host)+'</td><td>'+esc(r.vibe)+'</td><td>'+esc(r.source||"(direct)")+'</td><td>'+c.in+" / "+c.maybe+" / "+c.out+'</td><td>'+fmtTime(r.createdAt)+' <span class="muted">▸</span></td></tr>';
+    html+='<tr id="det-'+i+'" style="display:none"><td colspan="5" style="background:#fff7ec">'+det+'</td></tr>';
+  });
   if(!(d.recent||[]).length)html+=row(["<span class=\"muted\">No invites yet</span>","","","",""]);
   html+='</table>';
 

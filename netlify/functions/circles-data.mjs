@@ -50,7 +50,8 @@ export default async (req) => {
       responders[key].count++;
     });
 
-    if (recent.length < 25) recent.push({ code: inv.code, host: inv.host, vibe: inv.vibeLabel, source: inv.source, counts: c, createdAt: inv.createdAt });
+    if (recent.length < 25) recent.push({ code: inv.code, host: inv.host, vibe: inv.vibeLabel, source: inv.source, counts: c, createdAt: inv.createdAt,
+      rsvps: r.map((x) => ({ name: x.name || "A friend", response: x.response, bringing: x.bringing || "", at: x.at })) });
   }
 
   const topHosts = Object.values(hosts).sort((a, b) => b.responders - a.responders).slice(0, 15);
