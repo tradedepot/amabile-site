@@ -9,6 +9,29 @@
 # /venue is owned by the venue-ssr function (config.path "/venue"), which injects a
 # venue-coded title ("Guest list — <venue>") then serves the static venue.html body.
 
+# Short "join the community" bio links (adr.wine/ig, /fb, /tt) → the site's join section,
+# skipping the age splash, each carrying its platform's UTM for attribution.
+[[redirects]]
+  from = "/join"
+  to = "https://www.amabiledirosa.com/?utm_source=offline&utm_medium=campaign&utm_campaign=join&utm_content=join_community&join=1#join"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/join-ig"
+  to = "https://www.amabiledirosa.com/?utm_source=instagram&utm_medium=profile&utm_campaign=link_in_bio&utm_content=join_community&join=1#join"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/join-fb"
+  to = "https://www.amabiledirosa.com/?utm_source=facebook&utm_medium=profile&utm_campaign=link_in_bio&utm_content=join_community&join=1#join"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/join-tt"
+  to = "https://www.amabiledirosa.com/?utm_source=tiktok&utm_medium=profile&utm_campaign=link_in_bio&utm_content=join_community&join=1#join"
+  status = 302
+  force = true
+
 # Clean shortcuts /new, /pullup, /host are owned by the generator-ssr function
 # (config.path), which serves the homepage with a behaviour-led link preview
 # ("Round up your crew") and auto-opens the generator on those paths.

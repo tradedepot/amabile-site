@@ -718,7 +718,9 @@ document.getElementById("cork").addEventListener("click",enter);
 if(document.documentElement.classList.contains("ama-entered")){setMood("aperitivo",true);}
 /* Deep link (e.g. Instagram bio → #join) — skip the cork-pop intro and land on the section */
 (function(){
-  var id=(location.hash||"").slice(1); if(!id||!document.getElementById(id))return;
+  var id=(location.hash||"").slice(1);
+  if(!id&&new URLSearchParams(location.search).get("join"))id="join"; /* short links like adr.wine/ig use ?join=1 */
+  if(!id||!document.getElementById(id))return;
   if("scrollRestoration" in history) history.scrollRestoration="manual";
   var sp=document.getElementById("splash"); if(sp){sp.classList.add("gone");sp.style.display="none";}
   document.documentElement.classList.add("ama-entered");
