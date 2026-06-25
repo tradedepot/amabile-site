@@ -32,6 +32,28 @@
   status = 302
   force = true
 
+# Short "find a bottle" links (adr.wine/buy + per-platform) → the where-to-buy page, with UTMs.
+[[redirects]]
+  from = "/buy"
+  to = "https://www.amabiledirosa.com/where-to-buy.html?utm_source=offline&utm_medium=campaign&utm_campaign=buy&utm_content=find_a_bottle"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/buy-ig"
+  to = "https://www.amabiledirosa.com/where-to-buy.html?utm_source=instagram&utm_medium=profile&utm_campaign=link_in_bio&utm_content=find_a_bottle"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/buy-fb"
+  to = "https://www.amabiledirosa.com/where-to-buy.html?utm_source=facebook&utm_medium=profile&utm_campaign=link_in_bio&utm_content=find_a_bottle"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/buy-tt"
+  to = "https://www.amabiledirosa.com/where-to-buy.html?utm_source=tiktok&utm_medium=profile&utm_campaign=link_in_bio&utm_content=find_a_bottle"
+  status = 302
+  force = true
+
 # Clean shortcuts /new, /pullup, /host are owned by the generator-ssr function
 # (config.path), which serves the homepage with a behaviour-led link preview
 # ("Round up your crew") and auto-opens the generator on those paths.
