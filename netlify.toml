@@ -32,6 +32,13 @@
   status = 302
   force = true
 
+# TikTok's single bio link → the homepage hub, tagged for TikTok.
+[[redirects]]
+  from = "/tt"
+  to = "https://www.amabiledirosa.com/?utm_source=tiktok&utm_medium=profile&utm_campaign=link_in_bio&utm_content=bio_home"
+  status = 302
+  force = true
+
 # Short "find a bottle" links (adr.wine/buy + per-platform) → the where-to-buy page, with UTMs.
 [[redirects]]
   from = "/buy"
