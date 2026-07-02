@@ -16,6 +16,9 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);backgroun
 .wrap{max-width:520px;margin:0 auto}
 h1{font-family:"Bagel Fat One",cursive;font-size:30px;color:var(--red);line-height:1;margin-bottom:6px}
 .sub{color:#7a5c49;margin-bottom:20px;font-size:15px}
+.gate{display:flex;gap:8px;max-width:420px}
+.gate input{flex:1;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px}
+.gate button{cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;padding:0 20px;border-radius:12px}
 label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#6a4634;margin:14px 0 6px}
 input{width:100%;padding:14px 16px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:16px;background:#fff;color:var(--ink)}
 input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
@@ -41,55 +44,84 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
   <h1>Sampling link + QR</h1>
   <div class="sub">Generate a venue-specific link and QR for in-store sampling. Consumers scan → land on the join form → their sign-up is tagged with this venue.</div>
 
-  <label for="pw">Team password</label>
-  <input id="pw" type="password" placeholder="••••••••" autocomplete="off">
-
-  <label for="store">Venue</label>
-  <input id="store" placeholder="e.g. Ebeano Lekki" autocomplete="off">
-
-  <label for="loc">City</label>
-  <input id="loc" placeholder="e.g. Lagos" autocomplete="off">
-
-  <label for="camp">Campaign <span class="opt">(optional)</span></label>
-  <input id="camp" placeholder="e.g. detty-december" autocomplete="off">
-
-  <button class="go" id="gen">Generate link + QR</button>
-  <div class="err" id="err"></div>
-
-  <div class="result" id="result">
-    <div class="lab">Store link</div>
-    <div class="url" id="url"></div>
-    <div id="qr"></div>
-    <div class="row">
-      <button class="btn copy" id="copy">Copy link</button>
-      <button class="btn dl" id="dl">Download QR</button>
+  <!-- Password gate -->
+  <div id="gate">
+    <div class="gate">
+      <input type="password" id="pw" placeholder="Team password" autocomplete="off">
+      <button id="enter">Enter</button>
     </div>
+    <div class="err" id="gateErr"></div>
   </div>
 
-  <div class="hint">Print the QR on the sampling stand. Each venue gets its own — so in GA4 and Brevo you can see exactly which venue drove which sign-ups.</div>
+  <!-- Form (revealed after password) -->
+  <div id="form" style="display:none">
+    <label for="store">Venue</label>
+    <input id="store" placeholder="e.g. Ebeano Lekki" autocomplete="off">
+
+    <label for="loc">City</label>
+    <input id="loc" placeholder="e.g. Lagos" autocomplete="off">
+
+    <label for="camp">Campaign <span class="opt">(optional)</span></label>
+    <input id="camp" placeholder="e.g. detty-december" autocomplete="off">
+
+    <button class="go" id="gen">Generate link + QR</button>
+    <div class="err" id="err"></div>
+
+    <div class="result" id="result">
+      <div class="lab">Store link</div>
+      <div class="url" id="url"></div>
+      <div id="qr"></div>
+      <div class="row">
+        <button class="btn copy" id="copy">Copy link</button>
+        <button class="btn dl" id="dl">Download QR</button>
+      </div>
+    </div>
+
+    <div class="hint">Print the QR on the sampling stand. Each venue gets its own — so in GA4 and Brevo you can see exactly which venue drove which sign-ups.</div>
+  </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script>
-var pw=document.getElementById("pw"),store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
-try{var sk=localStorage.getItem("adr_sampling_k");if(sk)pw.value=sk;}catch(e){}
+var KEYVAL="";
+var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gateErr=document.getElementById("gateErr");
+var store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
 var qrObj=null,curUrl="",curName="qr",curVenue="",curCity="";
-
 function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+
+function unlock(k){
+  KEYVAL=k;try{localStorage.setItem("adr_sampling_k",k);}catch(e){}
+  document.getElementById("gate").style.display="none";
+  document.getElementById("form").style.display="block";
+  store.focus();
+}
+function tryKey(k,onFail){
+  return fetch("/.netlify/functions/store-link",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:k,verify:true})})
+    .then(function(r){return r.json().then(function(d){return {status:r.status,d:d};});})
+    .then(function(x){if(x.status!==401&&x.d&&x.d.ok){unlock(k);}else if(onFail){onFail();}})
+    .catch(function(){if(onFail)onFail();});
+}
+enter.addEventListener("click",function(){
+  gateErr.textContent="";
+  var k=pw.value.trim();if(!k){gateErr.textContent="Enter the team password.";return;}
+  enter.disabled=true;enter.textContent="…";
+  tryKey(k,function(){gateErr.textContent="Wrong password.";}).then(function(){enter.disabled=false;enter.textContent="Enter";});
+});
+pw.addEventListener("keydown",function(e){if(e.key==="Enter")enter.click();});
+// auto-unlock if a valid key is already saved
+(function(){var sk="";try{sk=localStorage.getItem("adr_sampling_k")||"";}catch(e){}if(sk)tryKey(sk);})();
 
 gen.addEventListener("click",function(){
   err.textContent="";
-  if(!pw.value.trim()){err.textContent="Enter the team password.";return;}
-  if(!store.value.trim()){err.textContent="Store name is required.";store.focus();return;}
+  if(!store.value.trim()){err.textContent="Venue is required.";store.focus();return;}
   gen.disabled=true;var o=gen.textContent;gen.textContent="Generating…";
   fetch("/.netlify/functions/store-link",{method:"POST",headers:{"Content-Type":"application/json"},
-    body:JSON.stringify({key:pw.value.trim(),store:store.value.trim(),location:loc.value.trim(),campaign:camp.value.trim()})})
+    body:JSON.stringify({key:KEYVAL,store:store.value.trim(),location:loc.value.trim(),campaign:camp.value.trim()})})
     .then(function(r){return r.json().then(function(d){return {status:r.status,d:d};});})
     .then(function(x){
       gen.disabled=false;gen.textContent=o;
-      if(x.status===401){err.textContent="Wrong password.";return;}
+      if(x.status===401){err.textContent="Session expired — refresh and re-enter the password.";return;}
       if(!x.d||!x.d.ok||!x.d.url){err.textContent="Couldn't generate. Try again.";return;}
-      try{localStorage.setItem("adr_sampling_k",pw.value.trim());}catch(e){}
       curUrl=x.d.url;curVenue=store.value.trim();curCity=loc.value.trim();curName="amabile-"+(slug(store.value)||"venue")+"-qr";
       document.getElementById("url").textContent=curUrl;
       var box=document.getElementById("qr");box.innerHTML="";
@@ -108,7 +140,7 @@ function fitFont(x,text,maxW,size,weight){x.font=weight+" "+size+'px Arial,Helve
 document.getElementById("dl").addEventListener("click",function(){
   var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");
   if(!src)return;
-  var S=3, qr=200*S, pad=34*S, gap=24*S;                 // 3x for crisp print
+  var S=3, qr=200*S, pad=34*S, gap=24*S;
   var W=qr+pad*2, venueF=32*S, cityF=22*S;
   var textH=curCity?(venueF+12*S+cityF):venueF;
   var H=pad+qr+gap+textH+pad;

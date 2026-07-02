@@ -13,6 +13,9 @@ export default async (req) => {
   const KEY = process.env.SAMPLING_KEY || "";
   if (!KEY || clean(d.key, 80) !== KEY) return json({ ok: false, error: "unauthorized" }, 401);
 
+  // Password-check only (used by the gate before revealing the form).
+  if (d.verify) return json({ ok: true });
+
   const rec = {
     store: clean(d.store, 80),
     location: clean(d.location, 120),
