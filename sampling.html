@@ -109,6 +109,7 @@ var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gate
 var store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
 var qrObj=null,curUrl="",curName="qr",curVenue="",curCity="";
 var logoImg=new Image();logoImg.src="/favicon-256.png";
+var brandImg=new Image();brandImg.src="/assets/images/logo/brand_red_plain.png";
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
 function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
 
@@ -161,15 +162,19 @@ document.getElementById("copy").addEventListener("click",function(){
 
 function fitFont(x,text,maxW,size,weight){x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';while(x.measureText(text).width>maxW&&size>16){size-=2;x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';}return size;}
 function composeCard(src,venue,city){
-  var S=3, qr=200*S, pad=34*S, gap=24*S, W=qr+pad*2, venueF=32*S, cityF=22*S;
-  var textH=city?(venueF+12*S+cityF):venueF, H=pad+qr+gap+textH+pad;
+  var S=3, qr=200*S, pad=34*S, gap=24*S, W=qr+pad*2, venueF=32*S, cityF=22*S, logoGap=22*S;
+  var lw=0,lh=0;
+  if(brandImg.complete&&brandImg.naturalWidth){lw=qr*0.85;lh=lw*(brandImg.naturalHeight/brandImg.naturalWidth);}
+  var textH=city?(venueF+12*S+cityF):venueF, H=pad+(lh?lh+logoGap:0)+qr+gap+textH+pad;
   var c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
   x.fillStyle="#ffffff";x.fillRect(0,0,W,H);
-  x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,pad,qr,qr);x.imageSmoothingEnabled=true;
+  var qy=pad;
+  if(lh){x.drawImage(brandImg,(W-lw)/2,pad,lw,lh);qy=pad+lh+logoGap;}
+  x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,qy,qr,qr);x.imageSmoothingEnabled=true;
   // center Amabile mark (a white ring keeps it clear of the QR modules)
-  if(logoImg.complete&&logoImg.naturalWidth){var ls=qr*0.22,cx=W/2,cy=pad+qr/2,bgs=ls*1.18;x.fillStyle="#ffffff";rr(x,cx-bgs/2,cy-bgs/2,bgs,bgs,bgs*0.24);x.fill();x.drawImage(logoImg,cx-ls/2,cy-ls/2,ls,ls);}
+  if(logoImg.complete&&logoImg.naturalWidth){var ls=qr*0.22,cx=W/2,cy=qy+qr/2,bgs=ls*1.18;x.fillStyle="#ffffff";rr(x,cx-bgs/2,cy-bgs/2,bgs,bgs,bgs*0.24);x.fill();x.drawImage(logoImg,cx-ls/2,cy-ls/2,ls,ls);}
   x.textAlign="center";x.textBaseline="alphabetic";
-  var maxW=W-pad, ty=pad+qr+gap+venueF;
+  var maxW=W-pad, ty=qy+qr+gap+venueF;
   var vf=fitFont(x,venue||"",maxW,venueF,"700");x.fillStyle="#2a1207";x.font="700 "+vf+'px Arial,Helvetica,sans-serif';x.fillText(venue||"",W/2,ty);
   if(city){var cf=fitFont(x,city,maxW,cityF,"400");x.fillStyle="#6a4634";x.font="400 "+cf+'px Arial,Helvetica,sans-serif';x.fillText(city,W/2,ty+12*S+cityF);}
   return c;
