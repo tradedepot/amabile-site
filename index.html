@@ -762,7 +762,7 @@ function joinStep(e){e.preventDefault();
  var name=document.getElementById("jName"), loc=document.getElementById("jLoc"), ok=true;
  [name,loc].forEach(function(f){if(!f.value.trim()){f.style.boxShadow="0 0 0 3px var(--red)";ok=false;}else f.style.boxShadow="";});
  if(!ok)return false;
- try{var _q=new URLSearchParams(location.search);fetch("/.netlify/functions/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.value,name:name.value,city:loc.value,source:_q.get("utm_source")||"",campaign:_q.get("utm_campaign")||"",store:_q.get("utm_content")||"",location:_q.get("utm_term")||""})});}catch(e){}
+ try{var _q=new URLSearchParams(location.search);fetch("/.netlify/functions/subscribe",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({email:email.value,name:name.value,city:loc.value,source:_q.get("utm_source")||"",medium:_q.get("utm_medium")||"",campaign:_q.get("utm_campaign")||"",store:_q.get("utm_content")||"",location:_q.get("utm_term")||""})});}catch(e){}
  if(window.fbq)fbq('track','Subscribe');
  if(window.gtag)gtag('event','subscribe',{method:'newsletter'});
  if(window.ttq)ttq.track('Subscribe');

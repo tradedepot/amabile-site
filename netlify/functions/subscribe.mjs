@@ -21,7 +21,7 @@ export async function handler(event) {
   const base = { FIRSTNAME: clean(data.name, 80), CITY: clean(data.city, 80) };
   const extra = {};
   if (data.source) extra.SOURCE = clean(data.source, 60);
-  if (data.store) extra.VENUE = clean(data.store, 80);
+  if (data.store && data.medium === "sampling") extra.VENUE = clean(data.store, 80); // only samplings have a real venue
   if (data.location) extra.CITY = clean(data.location, 80); // sampling city overrides the typed city
   if (data.campaign) extra.CAMPAIGN = clean(data.campaign, 80);
 

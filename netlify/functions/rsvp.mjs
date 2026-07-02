@@ -45,17 +45,28 @@ export default async (req) => {
     created_at: new Date(entry.at).toISOString()
   });
 
-  // Responder opted in → add to the list AND send them the playlist they asked for.
+  // Responder opted in → add to the list (tagged with who invited them + the event) AND send the playlist.
   if (apiKey && optedIn) {
-    try {
-      const body = { email: rEmail, attributes: { FIRSTNAME: entry.name }, updateEnabled: true };
-      const lid = process.env.BREVO_LIST_ID;
-      if (lid) body.listIds = [Number(lid)];
-      await fetch("https://api.brevo.com/v3/contacts", {
+    const lid = process.env.BREVO_LIST_ID;
+    const attrs = { FIRSTNAME: entry.name, SOURCE: "invite" };
+    if (meta) {
+      if (meta.host) attrs.HOST = clean(meta.host, 80);          // the inviter
+      if (meta.vibeLabel) attrs.CAMPAIGN = clean(meta.vibeLabel, 80); // the event type
+      if (meta.where) attrs.VENUE = clean(meta.where, 80);       // the event location
+    }
+    async function addContact(a) {
+      const b = { email: rEmail, attributes: a, updateEnabled: true };
+      if (lid) b.listIds = [Number(lid)];
+      const r = await fetch("https://api.brevo.com/v3/contacts", {
         method: "POST",
         headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify(body)
+        body: JSON.stringify(b)
       });
+      return { ok: r.ok || r.status === 204, text: r.ok ? "" : await r.text() };
+    }
+    try {
+      const res = await addContact(attrs);
+      if (!res.ok && /attribute/i.test(res.text)) await addContact({ FIRSTNAME: entry.name }); // fallback if attrs missing
     } catch (_) {}
 
     const purl = playlistUrl(meta ? meta.vibe : "beach");
