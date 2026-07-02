@@ -3,7 +3,7 @@
 //   BREVO_API_KEY  (required)
 //   BREVO_LIST_ID  (optional — numeric list ID)
 // To capture in-store sampling tags, create these TEXT attributes in Brevo
-// (Contacts → Settings → Contact attributes): SOURCE, STORE, STORE_AREA, CAMPAIGN.
+// (Contacts → Settings → Contact attributes): SOURCE, VENUE, CAMPAIGN. (CITY already exists.)
 // If they don't exist, signup still succeeds — the tags are just skipped.
 export async function handler(event) {
   if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method not allowed" };
@@ -21,8 +21,8 @@ export async function handler(event) {
   const base = { FIRSTNAME: clean(data.name, 80), CITY: clean(data.city, 80) };
   const extra = {};
   if (data.source) extra.SOURCE = clean(data.source, 60);
-  if (data.store) extra.STORE = clean(data.store, 80);
-  if (data.location) extra.STORE_AREA = clean(data.location, 120);
+  if (data.store) extra.VENUE = clean(data.store, 80);
+  if (data.location) extra.CITY = clean(data.location, 80); // sampling city overrides the typed city
   if (data.campaign) extra.CAMPAIGN = clean(data.campaign, 80);
 
   const listId = process.env.BREVO_LIST_ID;

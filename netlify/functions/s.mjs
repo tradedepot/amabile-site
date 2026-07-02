@@ -18,7 +18,7 @@ export default async (req) => {
   if (!rec) return Response.redirect(fallback, 302);
 
   const p = [
-    "utm_source=in_store",
+    "utm_source=offline",
     "utm_medium=sampling",
     "utm_campaign=" + encodeURIComponent(slug(rec.campaign) || "offline_sampling")
   ];
