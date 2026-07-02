@@ -32,6 +32,12 @@
   status = 302
   force = true
 
+# Clean URL for the team sampling tool.
+[[redirects]]
+  from = "/sampling"
+  to = "/sampling.html"
+  status = 200
+
 # TikTok's single bio link → the homepage hub, tagged for TikTok.
 [[redirects]]
   from = "/tt"

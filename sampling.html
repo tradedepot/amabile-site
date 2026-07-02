@@ -1,0 +1,115 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sampling link + QR — Amabile</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--cream:#FFF3E0;--lime:#C6FF4D;--ink:#2a1207}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:26px 16px 70px}
+.wrap{max-width:520px;margin:0 auto}
+h1{font-family:"Bagel Fat One",cursive;font-size:30px;color:var(--red);line-height:1;margin-bottom:6px}
+.sub{color:#7a5c49;margin-bottom:20px;font-size:15px}
+label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:12px;color:#6a4634;margin:14px 0 6px}
+input{width:100%;padding:14px 16px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:16px;background:#fff;color:var(--ink)}
+input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
+.opt{font-weight:400;text-transform:none;letter-spacing:0;color:#9a8576}
+.go{margin-top:22px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:19px;padding:16px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
+.go:hover{transform:translate(-2px,-2px)}
+.go:disabled{opacity:.6;cursor:default;transform:none}
+.err{color:var(--red);font-weight:700;margin-top:12px;min-height:18px}
+.result{display:none;margin-top:24px;background:#fff;border:3px solid var(--ink);border-radius:18px;box-shadow:6px 6px 0 rgba(40,16,7,.18);padding:20px;text-align:center}
+.result .lab{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;color:#9a8576;margin-bottom:8px}
+.result .url{font-size:18px;font-weight:700;color:var(--ink);word-break:break-all;margin-bottom:14px}
+#qr{display:inline-block;padding:12px;background:#fff;border:2px solid var(--ink);border-radius:12px}
+#qr img,#qr canvas{display:block}
+.row{display:flex;gap:10px;margin-top:16px}
+.btn{flex:1;cursor:pointer;border:0;border-radius:999px;font-family:"Bagel Fat One",cursive;font-size:15px;padding:13px}
+.btn.copy{background:var(--lime);color:#1a2e00}
+.btn.dl{background:var(--ink);color:var(--cream)}
+.hint{margin-top:18px;font-size:13px;color:#6a5343;background:#fff;border:2px solid rgba(42,18,7,.14);border-radius:12px;padding:14px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Sampling link + QR</h1>
+  <div class="sub">Generate a store-specific link and QR for in-store sampling. Consumers scan → land on the join form → their sign-up is tagged with this store.</div>
+
+  <label for="pw">Team password</label>
+  <input id="pw" type="password" placeholder="••••••••" autocomplete="off">
+
+  <label for="store">Store name</label>
+  <input id="store" placeholder="e.g. Ebeano Lekki" autocomplete="off">
+
+  <label for="loc">Store location / area</label>
+  <input id="loc" placeholder="e.g. Lekki Phase 1, Lagos" autocomplete="off">
+
+  <label for="camp">Campaign <span class="opt">(optional)</span></label>
+  <input id="camp" placeholder="e.g. detty-december" autocomplete="off">
+
+  <button class="go" id="gen">Generate link + QR</button>
+  <div class="err" id="err"></div>
+
+  <div class="result" id="result">
+    <div class="lab">Store link</div>
+    <div class="url" id="url"></div>
+    <div id="qr"></div>
+    <div class="row">
+      <button class="btn copy" id="copy">Copy link</button>
+      <button class="btn dl" id="dl">Download QR</button>
+    </div>
+  </div>
+
+  <div class="hint">Print the QR on the sampling stand. Each store gets its own — so in GA4 and Brevo you can see exactly which store drove which sign-ups.</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var pw=document.getElementById("pw"),store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
+try{var sk=localStorage.getItem("adr_sampling_k");if(sk)pw.value=sk;}catch(e){}
+var qrObj=null,curUrl="",curName="qr";
+
+function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
+
+gen.addEventListener("click",function(){
+  err.textContent="";
+  if(!pw.value.trim()){err.textContent="Enter the team password.";return;}
+  if(!store.value.trim()){err.textContent="Store name is required.";store.focus();return;}
+  gen.disabled=true;var o=gen.textContent;gen.textContent="Generating…";
+  fetch("/.netlify/functions/store-link",{method:"POST",headers:{"Content-Type":"application/json"},
+    body:JSON.stringify({key:pw.value.trim(),store:store.value.trim(),location:loc.value.trim(),campaign:camp.value.trim()})})
+    .then(function(r){return r.json().then(function(d){return {status:r.status,d:d};});})
+    .then(function(x){
+      gen.disabled=false;gen.textContent=o;
+      if(x.status===401){err.textContent="Wrong password.";return;}
+      if(!x.d||!x.d.ok||!x.d.url){err.textContent="Couldn't generate. Try again.";return;}
+      try{localStorage.setItem("adr_sampling_k",pw.value.trim());}catch(e){}
+      curUrl=x.d.url;curName="amabile-"+(slug(store.value)||"store")+"-qr";
+      document.getElementById("url").textContent=curUrl;
+      var box=document.getElementById("qr");box.innerHTML="";
+      qrObj=new QRCode(box,{text:curUrl,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+      document.getElementById("result").style.display="block";
+    })
+    .catch(function(){gen.disabled=false;gen.textContent=o;err.textContent="Network error. Try again.";});
+});
+
+document.getElementById("copy").addEventListener("click",function(){
+  var b=this;try{navigator.clipboard.writeText(curUrl);}catch(e){var t=document.createElement("textarea");t.value=curUrl;document.body.appendChild(t);t.select();try{document.execCommand("copy");}catch(_){}document.body.removeChild(t);}
+  b.textContent="Copied ✓";setTimeout(function(){b.textContent="Copy link";},1600);
+});
+
+document.getElementById("dl").addEventListener("click",function(){
+  var box=document.getElementById("qr");var cv=box.querySelector("canvas");var img=box.querySelector("img");
+  var dataUrl=cv?cv.toDataURL("image/png"):(img?img.src:"");
+  if(!dataUrl)return;
+  var a=document.createElement("a");a.href=dataUrl;a.download=curName+".png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+});
+</script>
+</body>
+</html>
