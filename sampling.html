@@ -73,7 +73,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
 <script>
 var pw=document.getElementById("pw"),store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
 try{var sk=localStorage.getItem("adr_sampling_k");if(sk)pw.value=sk;}catch(e){}
-var qrObj=null,curUrl="",curName="qr";
+var qrObj=null,curUrl="",curName="qr",curVenue="",curCity="";
 
 function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
 
@@ -90,7 +90,7 @@ gen.addEventListener("click",function(){
       if(x.status===401){err.textContent="Wrong password.";return;}
       if(!x.d||!x.d.ok||!x.d.url){err.textContent="Couldn't generate. Try again.";return;}
       try{localStorage.setItem("adr_sampling_k",pw.value.trim());}catch(e){}
-      curUrl=x.d.url;curName="amabile-"+(slug(store.value)||"store")+"-qr";
+      curUrl=x.d.url;curVenue=store.value.trim();curCity=loc.value.trim();curName="amabile-"+(slug(store.value)||"venue")+"-qr";
       document.getElementById("url").textContent=curUrl;
       var box=document.getElementById("qr");box.innerHTML="";
       qrObj=new QRCode(box,{text:curUrl,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
@@ -104,11 +104,22 @@ document.getElementById("copy").addEventListener("click",function(){
   b.textContent="Copied ✓";setTimeout(function(){b.textContent="Copy link";},1600);
 });
 
+function fitFont(x,text,maxW,size,weight){x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';while(x.measureText(text).width>maxW&&size>16){size-=2;x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';}return size;}
 document.getElementById("dl").addEventListener("click",function(){
-  var box=document.getElementById("qr");var cv=box.querySelector("canvas");var img=box.querySelector("img");
-  var dataUrl=cv?cv.toDataURL("image/png"):(img?img.src:"");
-  if(!dataUrl)return;
-  var a=document.createElement("a");a.href=dataUrl;a.download=curName+".png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+  var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");
+  if(!src)return;
+  var S=3, qr=200*S, pad=34*S, gap=24*S;                 // 3x for crisp print
+  var W=qr+pad*2, venueF=32*S, cityF=22*S;
+  var textH=curCity?(venueF+12*S+cityF):venueF;
+  var H=pad+qr+gap+textH+pad;
+  var c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
+  x.fillStyle="#ffffff";x.fillRect(0,0,W,H);
+  x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,pad,qr,qr);x.imageSmoothingEnabled=true;
+  x.textAlign="center";x.textBaseline="alphabetic";
+  var maxW=W-pad;var ty=pad+qr+gap+venueF;
+  var vf=fitFont(x,curVenue||"",maxW,venueF,"700");x.fillStyle="#2a1207";x.font="700 "+vf+'px Arial,Helvetica,sans-serif';x.fillText(curVenue||"",W/2,ty);
+  if(curCity){var cf=fitFont(x,curCity,maxW,cityF,"400");x.fillStyle="#6a4634";x.font="400 "+cf+'px Arial,Helvetica,sans-serif';x.fillText(curCity,W/2,ty+12*S+cityF);}
+  var a=document.createElement("a");a.href=c.toDataURL("image/png");a.download=curName+".png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
 });
 </script>
 </body>
