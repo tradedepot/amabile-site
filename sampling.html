@@ -37,6 +37,13 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
 .btn.copy{background:var(--lime);color:#1a2e00}
 .btn.dl{background:var(--ink);color:var(--cream)}
 .hint{margin-top:18px;font-size:13px;color:#6a5343;background:#fff;border:2px solid rgba(42,18,7,.14);border-radius:12px;padding:14px}
+.bulk{margin-top:30px;padding-top:24px;border-top:3px dashed rgba(42,18,7,.18)}
+.bulk-title{font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--ink)}
+.bulk-help{font-size:13px;color:#7a5c49;margin:6px 0 14px}
+.bulk-help a{color:var(--red);font-weight:700}
+textarea{width:100%;min-height:110px;padding:12px 14px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:14px;background:#fff;color:var(--ink);resize:vertical}
+textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
+.prog{margin-top:12px;font-size:13px;color:#6a4634;font-weight:700;min-height:18px}
 </style>
 </head>
 <body>
@@ -78,15 +85,31 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
     </div>
 
     <div class="hint">Print the QR on the sampling stand. Each venue gets its own — so in GA4 and Brevo you can see exactly which venue drove which sign-ups.</div>
+
+    <!-- Bulk -->
+    <div class="bulk">
+      <div class="bulk-title">Bulk — many venues at once</div>
+      <p class="bulk-help">Upload a CSV or paste one venue per line as <b>Venue, City</b> (city optional). <a href="#" id="tmpl">Download template</a></p>
+      <input type="file" id="csv" accept=".csv,.tsv,.txt">
+      <textarea id="paste" placeholder="Or paste here, e.g.&#10;Ebeano Lekki, Lagos&#10;Spar Ikeja, Lagos&#10;Justrite Ikorodu, Lagos"></textarea>
+      <label for="bcamp">Default campaign <span class="opt">(optional)</span></label>
+      <input id="bcamp" placeholder="e.g. detty-december">
+      <button class="go" id="bgen">Generate all + download ZIP</button>
+      <div class="err" id="berr"></div>
+      <div class="prog" id="prog"></div>
+    </div>
   </div>
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script>
 var KEYVAL="";
 var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gateErr=document.getElementById("gateErr");
 var store=document.getElementById("store"),loc=document.getElementById("loc"),camp=document.getElementById("camp"),gen=document.getElementById("gen"),err=document.getElementById("err");
 var qrObj=null,curUrl="",curName="qr",curVenue="",curCity="";
+var logoImg=new Image();logoImg.src="/favicon-256.png";
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
 function slug(s){return (s||"").toLowerCase().trim().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"");}
 
 function unlock(k){
@@ -125,7 +148,7 @@ gen.addEventListener("click",function(){
       curUrl=x.d.url;curVenue=store.value.trim();curCity=loc.value.trim();curName="amabile-"+(slug(store.value)||"venue")+"-qr";
       document.getElementById("url").textContent=curUrl;
       var box=document.getElementById("qr");box.innerHTML="";
-      qrObj=new QRCode(box,{text:curUrl,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});
+      qrObj=new QRCode(box,{text:curUrl,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});
       document.getElementById("result").style.display="block";
     })
     .catch(function(){gen.disabled=false;gen.textContent=o;err.textContent="Network error. Try again.";});
@@ -137,21 +160,94 @@ document.getElementById("copy").addEventListener("click",function(){
 });
 
 function fitFont(x,text,maxW,size,weight){x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';while(x.measureText(text).width>maxW&&size>16){size-=2;x.font=weight+" "+size+'px Arial,Helvetica,sans-serif';}return size;}
-document.getElementById("dl").addEventListener("click",function(){
-  var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");
-  if(!src)return;
-  var S=3, qr=200*S, pad=34*S, gap=24*S;
-  var W=qr+pad*2, venueF=32*S, cityF=22*S;
-  var textH=curCity?(venueF+12*S+cityF):venueF;
-  var H=pad+qr+gap+textH+pad;
+function composeCard(src,venue,city){
+  var S=3, qr=200*S, pad=34*S, gap=24*S, W=qr+pad*2, venueF=32*S, cityF=22*S;
+  var textH=city?(venueF+12*S+cityF):venueF, H=pad+qr+gap+textH+pad;
   var c=document.createElement("canvas");c.width=W;c.height=H;var x=c.getContext("2d");
   x.fillStyle="#ffffff";x.fillRect(0,0,W,H);
   x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,pad,qr,qr);x.imageSmoothingEnabled=true;
+  // center Amabile mark (a white ring keeps it clear of the QR modules)
+  if(logoImg.complete&&logoImg.naturalWidth){var ls=qr*0.22,cx=W/2,cy=pad+qr/2,bgs=ls*1.18;x.fillStyle="#ffffff";rr(x,cx-bgs/2,cy-bgs/2,bgs,bgs,bgs*0.24);x.fill();x.drawImage(logoImg,cx-ls/2,cy-ls/2,ls,ls);}
   x.textAlign="center";x.textBaseline="alphabetic";
-  var maxW=W-pad;var ty=pad+qr+gap+venueF;
-  var vf=fitFont(x,curVenue||"",maxW,venueF,"700");x.fillStyle="#2a1207";x.font="700 "+vf+'px Arial,Helvetica,sans-serif';x.fillText(curVenue||"",W/2,ty);
-  if(curCity){var cf=fitFont(x,curCity,maxW,cityF,"400");x.fillStyle="#6a4634";x.font="400 "+cf+'px Arial,Helvetica,sans-serif';x.fillText(curCity,W/2,ty+12*S+cityF);}
+  var maxW=W-pad, ty=pad+qr+gap+venueF;
+  var vf=fitFont(x,venue||"",maxW,venueF,"700");x.fillStyle="#2a1207";x.font="700 "+vf+'px Arial,Helvetica,sans-serif';x.fillText(venue||"",W/2,ty);
+  if(city){var cf=fitFont(x,city,maxW,cityF,"400");x.fillStyle="#6a4634";x.font="400 "+cf+'px Arial,Helvetica,sans-serif';x.fillText(city,W/2,ty+12*S+cityF);}
+  return c;
+}
+document.getElementById("dl").addEventListener("click",function(){
+  var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");
+  if(!src)return;
+  var c=composeCard(src,curVenue,curCity);
   var a=document.createElement("a");a.href=c.toDataURL("image/png");a.download=curName+".png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+});
+
+/* ---- Bulk: upload/paste → mint all → labelled QRs → ZIP ---- */
+var berr=document.getElementById("berr"),prog=document.getElementById("prog"),bgen=document.getElementById("bgen");
+function splitCsv(line){var out=[],cur="",q=false;for(var i=0;i<line.length;i++){var ch=line[i];if(q){if(ch=='"'){if(line[i+1]=='"'){cur+='"';i++;}else q=false;}else cur+=ch;}else{if(ch=='"')q=true;else if(ch==','){out.push(cur);cur="";}else cur+=ch;}}out.push(cur);return out;}
+function parseRows(text){
+  var lines=(text||"").split(/\r?\n/).filter(function(l){return l.trim();});
+  if(!lines.length)return [];
+  if(/venue|store|name/i.test(lines[0])&&/city|location/i.test(lines[0]))lines.shift();
+  return lines.map(function(l){var p=l.indexOf("\t")>=0?l.split("\t"):splitCsv(l);return {venue:(p[0]||"").trim(),city:(p[1]||"").trim(),campaign:(p[2]||"").trim()};}).filter(function(r){return r.venue;});
+}
+function getListText(){var f=document.getElementById("csv").files[0];if(f){return f.text?f.text():new Promise(function(res){var r=new FileReader();r.onload=function(){res(r.result);};r.readAsText(f);});}return Promise.resolve(document.getElementById("paste").value||"");}
+document.getElementById("tmpl").addEventListener("click",function(e){e.preventDefault();
+  var csv="Venue,City,Campaign\nEbeano Lekki,Lagos,detty-december\nSpar Ikeja,Lagos,detty-december\n";
+  var a=document.createElement("a");a.href="data:text/csv;charset=utf-8,"+encodeURIComponent(csv);a.download="amabile-venues-template.csv";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+});
+function makeCardBlob(url,venue,city){
+  return new Promise(function(resolve){
+    var div=document.createElement("div");div.style.cssText="position:absolute;left:-9999px;top:-9999px";document.body.appendChild(div);
+    new QRCode(div,{text:url,width:200,height:200,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});
+    function done(src){var card=composeCard(src,venue,city);document.body.removeChild(div);card.toBlob(function(b){resolve(b);},"image/png");}
+    var cv=div.querySelector("canvas");if(cv){done(cv);return;}
+    var img=div.querySelector("img");
+    if(img){if(img.complete&&img.naturalWidth)done(img);else img.onload=function(){done(img);};return;}
+    setTimeout(function(){var s=div.querySelector("canvas")||div.querySelector("img");if(!s){document.body.removeChild(div);resolve(null);}else if(s.tagName==="IMG"&&!s.complete)s.onload=function(){done(s);};else done(s);},80);
+  });
+}
+function mintAll(rows,defCamp){
+  var CH=20,chunks=[];for(var i=0;i<rows.length;i+=CH)chunks.push(rows.slice(i,i+CH));
+  var out=[],idx=0;
+  function next(){
+    if(idx>=chunks.length)return Promise.resolve(out);
+    prog.textContent="Minting links… "+Math.min(idx*CH,rows.length)+"/"+rows.length;
+    return fetch("/.netlify/functions/store-link",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({key:KEYVAL,items:chunks[idx],campaign:defCamp})})
+      .then(function(r){return r.json();}).then(function(d){if(d&&d.ok&&d.items)out=out.concat(d.items);idx++;return next();});
+  }
+  return next();
+}
+function zipAll(items){
+  var zip=new JSZip(),manifest="venue,city,link\n",used={},i=0;
+  function step(){
+    if(i>=items.length){
+      zip.file("links.csv",manifest);prog.textContent="Zipping…";
+      return zip.generateAsync({type:"blob"}).then(function(blob){
+        var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="amabile-sampling-qrcodes.zip";document.body.appendChild(a);a.click();setTimeout(function(){URL.revokeObjectURL(a.href);a.remove();},2000);
+      });
+    }
+    var it=items[i];prog.textContent="Making QR codes… "+(i+1)+"/"+items.length;
+    var base=slug(it.venue)||"venue",name=base,n=1;while(used[name]){name=base+"-"+(++n);}used[name]=1;
+    manifest+='"'+(it.venue||"").replace(/"/g,'""')+'","'+(it.city||"").replace(/"/g,'""')+'",'+it.url+"\n";
+    return makeCardBlob(it.url,it.venue,it.city).then(function(blob){if(blob)zip.file(name+".png",blob);i++;return step();});
+  }
+  return step();
+}
+document.getElementById("bgen").addEventListener("click",function(){
+  berr.textContent="";prog.textContent="";
+  if(!KEYVAL){berr.textContent="Enter the password first.";return;}
+  bgen.disabled=true;var o=bgen.textContent;bgen.textContent="Working…";
+  getListText().then(function(text){
+    var rows=parseRows(text);
+    if(!rows.length)throw new Error("empty");
+    if(rows.length>500)throw new Error("toomany");
+    return mintAll(rows,document.getElementById("bcamp").value.trim()).then(zipAll);
+  }).then(function(){
+    bgen.disabled=false;bgen.textContent=o;prog.textContent="Done — ZIP downloaded ✓";
+  }).catch(function(e){
+    bgen.disabled=false;bgen.textContent=o;prog.textContent="";
+    berr.textContent=(e&&e.message==="empty")?"Add a CSV file or paste at least one venue.":(e&&e.message==="toomany")?"Keep it under 500 at a time.":"Something failed — try again.";
+  });
 });
 </script>
 </body>

@@ -1,5 +1,6 @@
-// Team-only: mint a short adr.wine/s/<code> link for an in-store sampling.
-// Protected by SAMPLING_KEY. The link lands on the join form carrying store + campaign UTMs.
+// Team-only: mint short adr.wine/s/<code> link(s) for in-store sampling.
+// Protected by SAMPLING_KEY. Links land on the join form carrying store + campaign UTMs.
+// Supports a single link, a password-check (verify), and a batch (items[]) for bulk upload.
 import { getStore } from "@netlify/blobs";
 import { json, clean } from "./_lib.mjs";
 
@@ -16,16 +17,27 @@ export default async (req) => {
   // Password-check only (used by the gate before revealing the form).
   if (d.verify) return json({ ok: true });
 
-  const rec = {
-    store: clean(d.store, 80),
-    location: clean(d.location, 120),
-    campaign: clean(d.campaign, 80) || "offline_sampling",
-    createdAt: Date.now()
-  };
-  if (!rec.store) return json({ ok: false, error: "store_required" }, 400);
-
   const store = getStore("amabile-invites");
-  const code = rid(6);
-  await store.setJSON("s:" + code, rec);
-  return json({ ok: true, code, url: "https://adr.wine/s/" + code });
+
+  async function mint(venue, city, campaign) {
+    const rec = { store: clean(venue, 80), location: clean(city, 80), campaign: clean(campaign, 80) || "offline_sampling", createdAt: Date.now() };
+    const code = rid(6);
+    await store.setJSON("s:" + code, rec);
+    return { venue: rec.store, city: rec.location, url: "https://adr.wine/s/" + code };
+  }
+
+  // Batch (bulk uploader): mint many at once.
+  if (Array.isArray(d.items)) {
+    const out = [];
+    for (const it of d.items) {
+      if (!clean(it.venue, 80)) continue;
+      out.push(await mint(it.venue, it.city, it.campaign || d.campaign));
+    }
+    return json({ ok: true, items: out });
+  }
+
+  // Single.
+  if (!clean(d.store, 80)) return json({ ok: false, error: "venue_required" }, 400);
+  const one = await mint(d.store, d.location, d.campaign);
+  return json({ ok: true, code: one.url.split("/s/")[1], url: one.url });
 };
