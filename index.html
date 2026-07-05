@@ -499,7 +499,7 @@ function setMood(m,silent){var d=MOODS[m];document.body.dataset.mood=m;applyThem
  document.getElementById("mc-desc").textContent=d.desc;document.getElementById("mc-em").textContent=d.em;
  document.getElementById("mc-go").style.display="inline-block";
  if(!silent){burst(innerWidth/2,innerHeight*0.35,44,true);fizz();}}
-document.getElementById("moodbtns").addEventListener("click",function(e){var b=e.target.closest("button");if(b){setMood(b.dataset.m);pop();}});
+document.getElementById("moodbtns").addEventListener("click",function(e){var b=e.target.closest("button");if(b){setMood(b.dataset.m);}});
 /* "Meet this wine →" → go to that wine and flip it */
 function moodGotoWine(){
  var d=MOODS[document.body.dataset.mood]; if(!d)return;
@@ -507,13 +507,12 @@ function moodGotoWine(){
  if(!card){document.getElementById("cast").scrollIntoView({behavior:"smooth"});return;}
  card.scrollIntoView({behavior:"smooth",block:"center"});
  setTimeout(function(){cards.forEach(function(c){c.classList.remove("on");});card.classList.add("on");},650);
- pop();
 }
 document.getElementById("mc-go").addEventListener("click",function(e){e.stopPropagation();moodGotoWine();});
 /* tapping elsewhere on the card → that vibe's occasion on the page */
 document.getElementById("moodcard").addEventListener("click",function(){
  var scene=document.querySelector('.scene[data-scene="'+document.body.dataset.mood+'"]');
- if(scene){scene.scrollIntoView({behavior:"smooth",block:"start"});pop();}
+ if(scene){scene.scrollIntoView({behavior:"smooth",block:"start"});}
  else{moodGotoWine();}
 });
 
@@ -539,7 +538,7 @@ WINES.forEach(function(w){
   '</div>';
  el.addEventListener("click",function(e){
    if(e.target.closest("a,button"))return;
-   el.classList.toggle("on");pop();
+   el.classList.toggle("on");
    if(el.classList.contains("on")){var r=el.getBoundingClientRect();burst(r.left+r.width/2,r.top+r.height/2,18);}
  });
  grid.appendChild(el);
