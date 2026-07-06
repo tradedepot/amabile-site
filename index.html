@@ -489,7 +489,7 @@ function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];
 
 /* native cursor stays visible; bubbles trail it */
 addEventListener("pointermove",function(e){ if(Math.random()>.5)bub(e.clientX,e.clientY); });
-addEventListener("pointerdown",function(e){ if(document.getElementById("splash").classList.contains("gone")){burst(e.clientX,e.clientY,20);fizz();} });
+addEventListener("pointerdown",function(e){ if(document.getElementById("splash").classList.contains("gone")){burst(e.clientX,e.clientY,20);} });
 
 /* THEME */
 function applyTheme(d){var r=document.documentElement.style;r.setProperty("--bg1",d.bg[0]);r.setProperty("--bg2",d.bg[1]);r.setProperty("--bg3",d.bg[2]);r.setProperty("--shadow",d.sh);r.setProperty("--btnA",d.a);r.setProperty("--btnB",d.b);}
@@ -498,7 +498,7 @@ function setMood(m,silent){var d=MOODS[m];document.body.dataset.mood=m;applyThem
  document.getElementById("mc-title").textContent=d.title;document.getElementById("mc-tag").textContent=d.tag;
  document.getElementById("mc-desc").textContent=d.desc;document.getElementById("mc-em").textContent=d.em;
  document.getElementById("mc-go").style.display="inline-block";
- if(!silent){burst(innerWidth/2,innerHeight*0.35,44,true);fizz();}}
+ if(!silent){burst(innerWidth/2,innerHeight*0.35,44,true);}}
 document.getElementById("moodbtns").addEventListener("click",function(e){var b=e.target.closest("button");if(b){setMood(b.dataset.m);}});
 /* "Meet this wine →" → go to that wine and flip it */
 function moodGotoWine(){
