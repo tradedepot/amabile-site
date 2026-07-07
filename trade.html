@@ -131,22 +131,28 @@
 
 <script>
 document.getElementById("yr").textContent=new Date().getFullYear();
-/* CONFIG — Google Sheet lead webhook */
-var LEAD_WEBHOOK="https://script.google.com/macros/s/AKfycbwQPpN1tMc_GIz1Q6yK847J79nwnfZTrocpsAcQHGRaH5a7StOSZLqWy4Kl7QAYba2afg/exec";
+/* Leads route through a serverless function → Google Sheet + Meta CAPI + GA4 (server-side, ad-block-proof) */
+var LEAD_ENDPOINT="/.netlify/functions/trade-lead";
+function cookie(n){var m=document.cookie.match(new RegExp("(?:^|; )"+n.replace(/([.*+?^${}()|[\]\\])/g,"\\$1")+"=([^;]*)"));return m?decodeURIComponent(m[1]):"";}
+function gaClientId(){var m=document.cookie.match(/_ga=GA\d\.\d\.(\d+\.\d+)/);return m?m[1]:"";}
 var form=document.getElementById("leadForm");
 function qp(k){return new URLSearchParams(location.search).get(k)||"";}
 var tracking={utm_source:qp("utm_source"),utm_medium:qp("utm_medium"),utm_campaign:qp("utm_campaign"),utm_content:qp("utm_content"),fbclid:qp("fbclid"),gclid:qp("gclid"),referrer:document.referrer,ts:new Date().toISOString()};
 function collect(){var d={};new FormData(form).forEach(function(v,k){d[k]=v;});Object.assign(d,tracking);return d;}
 function valid(){var ok=true;["name","business","phone","location","buyer_type","cases","email"].forEach(function(n){var el=form[n];if(!el.value){el.style.borderColor="#c0392b";ok=false;}else{el.style.borderColor="";}});var em=form.email.value;if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){form.email.style.borderColor="#c0392b";ok=false;}return ok;}
-function postLead(d){if(LEAD_WEBHOOK.indexOf("http")!==0)return;try{fetch(LEAD_WEBHOOK,{method:"POST",mode:"no-cors",headers:{"Content-Type":"text/plain;charset=utf-8"},body:JSON.stringify(d)});}catch(e){}}
+function postLead(d){try{fetch(LEAD_ENDPOINT,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});}catch(e){}}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 document.getElementById("waBtn").addEventListener("click",function(){
   if(!valid())return;
   var d=collect();
-  postLead(d);                                   /* still POST the lead to the Google Sheet */
-  if(window.fbq)fbq('track','Lead',{content_name:'Wholesale enquiry'});          /* Meta ads optimise for this */
-  if(window.gtag)gtag('event','generate_lead',{business_type:d.buyer_type||'',location:d.location||''});
+  var eid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(String(Date.now())+Math.random().toString(16).slice(2));
+  /* browser pixels (real-time) — deduped with the server events via event_id */
+  if(window.fbq)fbq('track','Lead',{content_name:'Wholesale enquiry'},{eventID:eid});
   if(window.ttq)ttq.track('SubmitForm',{content_name:'Wholesale enquiry'});
+  /* server-side capture (ad-block-proof): Google Sheet + Meta CAPI Lead + GA4 generate_lead */
+  var fbc=cookie("_fbc"); if(!fbc&&d.fbclid)fbc="fb.1."+Date.now()+"."+d.fbclid;
+  d.event_id=eid; d.fbp=cookie("_fbp"); d.fbc=fbc; d.ga_client_id=gaClientId(); d.page_url=location.href;
+  postLead(d);
   var name=((d.name||"").trim().split(" ")[0])||"there";
   var city=((d.location||"").split(",")[0]||"").trim();
   var msg="Thanks, "+name+"! Our trade team will call you shortly to confirm pricing and next steps"+(city?(" for "+city):"")+". Prefer email? We'll follow up there too.";
