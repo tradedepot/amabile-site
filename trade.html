@@ -159,6 +159,8 @@ document.getElementById("waBtn").addEventListener("click",function(){
   var t=document.getElementById("thanks");
   t.innerHTML='<h2 class="disp" style="font-size:24px;color:var(--ink);margin:0 0 8px">You\'re in 🎉</h2><p style="color:#4a3a2c;font-size:15px;line-height:1.5;margin:0">'+esc(msg)+'</p>';
   form.style.display="none";
+  var card=document.querySelector(".trade-card");
+  if(card){var h=card.querySelector("h2");if(h)h.style.display="none";var fs=card.querySelector(".form-sub");if(fs)fs.style.display="none";}
   t.style.display="block";
   t.scrollIntoView({behavior:"smooth",block:"nearest"});
 });
