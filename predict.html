@@ -170,8 +170,8 @@ function pickBanter(h,a){
   if(h+a>=5)sp.push(R(BANT.high));
   if(h-a>=3)sp.push(R(BANT.bigS));
   if(a-h>=3)sp.push(R(BANT.bigA));
-  if(a>=3&&a>h)sp.push(R(BANT.mHat));
-  if(h>=3&&h>a)sp.push(R(BANT.sHat));
+  if(a===3&&a>h)sp.push(R(BANT.mHat));
+  if(h===3&&h>a)sp.push(R(BANT.sHat));
   if(sp.length)sub=R(sp);
   return {main:main,sub:sub};
 }
