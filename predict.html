@@ -197,7 +197,19 @@ function reveal(n,h,a){
   confetti(t.querySelector(".confetti"));
   t.scrollIntoView({behavior:"smooth",block:"center"});
 }
+var KICKOFF=Date.parse("2026-07-19T19:00:00Z"); // 8pm WAT (GMT+1) kick-off
+function isClosed(){return Date.now()>=KICKOFF;}
+function showClosed(){
+  var t=document.getElementById("thanks");
+  document.getElementById("predForm").style.display="none";
+  var lede=document.querySelector(".lede");if(lede)lede.style.display="none";
+  t.innerHTML='<div class="em">⚽</div><h2>Kick-off — the game is on! 🔥</h2><p class="ack-foot">Predictions are now closed.</p><p class="ack-foot" style="margin-top:8px">Pour yourself an Amabile, raise a glass, and enjoy the final. 🍷</p>';
+  t.style.display="block";
+}
+if(isClosed())showClosed();
+setInterval(function(){var f=document.getElementById("predForm");if(isClosed()&&f&&f.style.display!=="none")showClosed();},10000);
 btn.addEventListener("click",function(){
+  if(isClosed()){showClosed();return;}
   err.textContent="";
   var n=nameEl.value.trim(), e=email.value.trim(), h=home.value.trim(), a=away.value.trim();
   if(!n){err.textContent="Add your name.";nameEl.focus();return;}
@@ -209,7 +221,9 @@ btn.addEventListener("click",function(){
   function ack(){ if(shown)return; shown=true; reveal(n,h,a); }
   try{
     fetch("/.netlify/functions/predict",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,email:e,home:h,away:a,source:SRC})})
-      .then(ack).catch(ack);
+      .then(function(r){return r.json().catch(function(){return {};});})
+      .then(function(res){ if(res&&res.error==="closed"){shown=true;showClosed();return;} ack(); })
+      .catch(ack);
   }catch(_){ }
   setTimeout(ack,1800);
 });

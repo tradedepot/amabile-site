@@ -6,9 +6,12 @@ import { json, clean, isEmail } from "./_lib.mjs";
 const CAMPAIGN = "bamboa-spain-argentina";
 const VENUE = "Bamboa";
 const KEY = "predict:" + CAMPAIGN;
+// Kick-off: 8pm WAT (GMT+1) on 19 July 2026. Predictions close at kick-off.
+const KICKOFF = Date.parse("2026-07-19T19:00:00Z");
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
+  if (Date.now() >= KICKOFF) return json({ ok: false, error: "closed" }, 403);
   let d;
   try { d = await req.json(); } catch { return json({ ok: false, error: "bad_json" }, 400); }
 
@@ -21,9 +24,19 @@ export default async (req) => {
   const prediction = "Spain " + home + "–" + away + " Argentina";
 
   // Store the entry (source of truth for winner selection).
+  // One entry per person, keyed by email: a repeat submission UPDATES the existing
+  // record (last prediction wins) instead of adding a second shot at the draw.
   const store = getStore("amabile-invites");
   const list = (await store.get(KEY, { type: "json" }).catch(() => null)) || [];
-  list.push({ name, email, home: Number(home), away: Number(away), prediction, at: Date.now() });
+  const key = email.toLowerCase();
+  const i = list.findIndex((e) => (e.email || "").toLowerCase() === key);
+  const rec = {
+    name, email, home: Number(home), away: Number(away), prediction,
+    at: i >= 0 ? list[i].at : Date.now(),
+    updatedAt: Date.now(),
+  };
+  const updated = i >= 0;
+  if (updated) list[i] = rec; else list.push(rec);
   await store.setJSON(KEY, list);
 
   // Brevo contact (tagged), with graceful fallback if attributes don't exist.
@@ -45,5 +58,5 @@ export default async (req) => {
     } catch (_) {}
   }
 
-  return json({ ok: true, prediction });
+  return json({ ok: true, prediction, updated });
 };
