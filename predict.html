@@ -26,7 +26,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--cream);
 .cobrand{display:flex;align-items:center;justify-content:center;gap:16px;margin:4px 0 22px}
 .cobrand img.bamboa{height:52px}
 .cobrand .x{color:var(--gold);font-size:20px;opacity:.7}
-.cobrand img.ama{height:22px}
+.cobrand img.ama{height:32px}
 .eyebrow{display:block;text-align:center;color:var(--gold);font-weight:700;text-transform:uppercase;letter-spacing:.18em;font-size:11px}
 h1{text-align:center;font-size:clamp(32px,8vw,46px);color:var(--cream);text-shadow:2px 3px 0 rgba(0,0,0,.5);margin:12px 0 14px}
 .match{text-align:center;font-family:"Bagel Fat One",cursive;font-size:clamp(20px,5vw,26px);color:var(--gold);margin-bottom:6px}
@@ -46,11 +46,26 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
 .go:hover{transform:translate(-2px,-2px)}.go:disabled{opacity:.6}
 .err{color:var(--red);font-weight:700;margin-top:12px;min-height:18px;text-align:center}
 .note{text-align:center;color:#9c8f77;font-size:12px;margin-top:18px}
-.thanks{display:none;text-align:center;padding:8px 4px}
-.thanks .em{font-size:52px}
-.thanks h2{font-family:"Bagel Fat One",cursive;font-size:26px;color:var(--ink);margin:6px 0}
-.thanks p{color:#4a3a2c;font-size:15px;line-height:1.5}
-.thanks .pred{display:inline-block;margin-top:12px;background:var(--gold);color:#241a06;font-family:"Bagel Fat One",cursive;font-size:18px;padding:8px 18px;border-radius:999px}
+.thanks{display:none;text-align:center;padding:6px 2px;position:relative;overflow:hidden}
+.thanks .em{font-size:56px;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes pop{0%{transform:scale(0) rotate(-25deg)}100%{transform:scale(1) rotate(0)}}
+.thanks h2{font-family:"Bagel Fat One",cursive;font-size:26px;color:var(--ink);margin:4px 0 2px}
+.ack-sub{color:#6a4634;font-size:14px;font-weight:600;margin-bottom:16px}
+.scoreboard{background:var(--ink);border-radius:18px;padding:16px 12px;display:flex;align-items:center;justify-content:center;gap:10px;margin:0 auto 16px;max-width:340px;box-shadow:inset 0 0 0 2px rgba(201,161,90,.35)}
+.sb-col{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1}
+.sb-flag{font-size:24px}
+.sb-name{font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.03em;color:#e9ddc4}
+.sb-num{font-family:"Bagel Fat One",cursive;font-size:44px;color:var(--gold);line-height:1;animation:count .5s .15s both}
+@keyframes count{0%{transform:translateY(10px);opacity:0}100%{transform:translateY(0);opacity:1}}
+.sb-dash{font-family:"Bagel Fat One",cursive;font-size:30px;color:#6b5636;padding-bottom:14px}
+.banter{background:#FFF6E4;border:2px solid #EAD59B;border-radius:16px;padding:14px 16px;margin:0 auto 14px;max-width:360px;text-align:left}
+.bant-main{color:#3a2410;font-size:15.5px;line-height:1.45;font-weight:600}
+.bant-sub{color:#7a5a34;font-size:13.5px;line-height:1.4;margin-top:8px}
+.ack-foot{color:#4a3a2c;font-size:14px;line-height:1.5;font-weight:600}
+.ack-hint{margin-top:10px;color:#9c8f77;font-size:12.5px;font-weight:600}
+.confetti{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.confetti i{position:absolute;top:-12px;width:8px;height:13px;border-radius:2px;opacity:.9;animation:fall linear forwards}
+@keyframes fall{to{transform:translateY(560px) rotate(540deg);opacity:0}}
 </style>
 </head>
 <body>
@@ -58,7 +73,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
   <div class="cobrand">
     <img class="bamboa" src="/assets/event/bamboa/bamboa_gold.png" alt="Bamboa">
     <span class="x">×</span>
-    <img class="ama" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+    <img class="ama" src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa">
   </div>
 
   <span class="eyebrow">FIFA 2026 World Cup Final · Watch Party</span>
@@ -70,7 +85,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
   <div class="card" id="card">
     <form id="predForm" novalidate>
       <label for="name">Your name</label>
-      <input id="name" type="text" placeholder="e.g. Kachi" autocomplete="name">
+      <input id="name" type="text" placeholder="e.g. Gbemi" autocomplete="name">
       <label for="email">Email</label>
       <input id="email" type="email" placeholder="you@email.com" autocomplete="email">
       <label style="text-align:center">Your predicted final score</label>
@@ -93,23 +108,105 @@ var q=new URLSearchParams(location.search);
 var SRC=q.get("utm_source")||"watchparty";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 var name=document.getElementById("name"),email=document.getElementById("email"),home=document.getElementById("home"),away=document.getElementById("away"),btn=document.getElementById("submit"),err=document.getElementById("err");
+
+function confetti(box){
+  var cols=["#E74529","#C9A15A","#C6FF4D","#ffffff","#f2b705"];
+  for(var i=0;i<26;i++){var s=document.createElement("i");
+    s.style.left=(Math.random()*100)+"%";
+    s.style.background=cols[i%cols.length];
+    s.style.animationDuration=(1.6+Math.random()*1.4)+"s";
+    s.style.animationDelay=(Math.random()*.5)+"s";
+    s.style.transform="translateY(-12px) rotate("+(Math.random()*360)+"deg)";
+    box.appendChild(s);}
+}
+function R(a){return a[Math.floor(Math.random()*a.length)];}
+var BANT={
+  spain:[
+    "Spain to win? Say it with your chest — you just want Messi to cry on his last dance. Pure villain behaviour. We stan. 🐐💔",
+    "Backing 8 Barça boys in red to end the GOAT’s fairytale. Cold. Calculated. We’ll see if it’s correct. 🇪🇸",
+    "CR7 loyalist detected. Portugal packed up in the round of 16 and now you’re rooting for Spain out of pure spite. The pain IS the point. 😮‍💨",
+    "You want Lamine Yamal — the same baby Messi literally bathed in that 2007 photo — to send Grandpa home. Diabolical. Respect. 🛁🐐",
+    "‘Tiki-taka is art’ — bro you just can’t stand Messi. Say the truth and shame the devil. 🎨",
+    "Real Madrid got ZERO players in this Spain squad and Madridistas STILL dey support them to spite Messi. The hate is undefeated. 😭",
+    "Choosing Spain = choosing violence against a 39-year-old man’s happy ending. Bamboa sees you. Bamboa judges you. 🍷"
+  ],
+  arg:[
+    "Messi to win it AGAIN? The GOAT debate ended in Qatar but keep typing paragraphs, we love the commitment. 🐐",
+    "Argentina it is — somewhere a Ronaldo fan just quietly left the group chat. 👋",
+    "Backing Leo, but be honest: do you watch club football or you only show up for finals and national anthems? 👀",
+    "Predicting Messi magic. If it flops you’ll blame the ref, the grass, the DSTV signal — anything but Leo. We know you. 📡",
+    "You picked Argentina so you can scream ‘GREATEST OF ALL TIIIME’ in a Lagos bar at 11pm. Iconic. Do it loud. 📣",
+    "Messi over a Barça-stacked Spain — bold, considering half his old ball boys are lining up against him. 🍼",
+    "Argentina to win = you’ve had the ‘I told you so’ broadcast drafted since the group stage. Slippery. Respected. 📲"
+  ],
+  draw:[
+    "A draw?? The diplomat has entered the chat. You’re just scared of both fanbases at this table. Cowardly. Iconic. 🤝",
+    "Level scoreline so you can claim you ‘saw it either way’. Penalties go expose your whole life sha. 🎯",
+    "Predicting a tie — the Switzerland of watch-party guests. Neutral, safe, deeply suspicious. 👀"
+  ],
+  zz:[
+    "0-0?? You came to a WORLD CUP FINAL watch party to predict a NAP. Bold. Bamboa will not be serving you for this. 😴",
+    "Nil-nil — the one soul in Lagos praying this final is boring. Wicked. 🙅"
+  ],
+  bigS:["Spain by a landslide? You didn’t come to predict, you came to HUMBLE the GOAT on his farewell. Ice in the veins. 🥶"],
+  bigA:["Argentina to batter them? Messi’s last dance and you booked the FIREWORKS. Every CR7 fan just looked away. 🎆"],
+  high:["That many goals? You’re not predicting a final, you’re predicting NBA. We admire the delusion. 🏀"],
+  mHat:["Messi hat-trick energy — if he actually does it, you’re legally required to buy the whole table a round. We have witnesses. 🍷"],
+  sHat:["Three for Spain — Yamal about to end grown men’s careers and you’re front row for it. Youthful chaos, we allow it. ⚡"]
+};
+var CLOSERS=[
+  "Screenshot this before you chicken out and change it. 📸",
+  "One prediction per person — no edits, no excuses. ⏱️",
+  "Predictions close at kickoff. Choose your fighter wisely. 🥊",
+  "See you at Bamboa — bring your voice and your receipts. 🔊"
+];
+function pickBanter(h,a){
+  h=+h;a=+a;var main,sub=null,sp=[];
+  if(h>a)main=R(BANT.spain); else if(a>h)main=R(BANT.arg); else main=(h===0?R(BANT.zz):R(BANT.draw));
+  if(h+a>=5)sp.push(R(BANT.high));
+  if(h-a>=3)sp.push(R(BANT.bigS));
+  if(a-h>=3)sp.push(R(BANT.bigA));
+  if(a>=3&&a>h)sp.push(R(BANT.mHat));
+  if(h>=3&&h>a)sp.push(R(BANT.sHat));
+  if(sp.length)sub=R(sp);
+  return {main:main,sub:sub};
+}
+function reveal(n,h,a){
+  var t=document.getElementById("thanks");
+  var b=pickBanter(h,a);
+  t.innerHTML=
+    '<div class="confetti"></div>'+
+    '<div class="em">🏆</div>'+
+    '<h2>You\'re in, '+esc(n.split(" ")[0])+'!</h2>'+
+    '<div class="ack-sub">Prediction locked 🔒</div>'+
+    '<div class="scoreboard">'+
+      '<div class="sb-col"><span class="sb-flag">🇪🇸</span><span class="sb-name">Spain</span><span class="sb-num">'+esc(h)+'</span></div>'+
+      '<span class="sb-dash">–</span>'+
+      '<div class="sb-col"><span class="sb-flag">🇦🇷</span><span class="sb-name">Argentina</span><span class="sb-num">'+esc(a)+'</span></div>'+
+    '</div>'+
+    '<div class="banter"><p class="bant-main">'+b.main+'</p>'+(b.sub?'<p class="bant-sub">'+b.sub+'</p>':'')+'</div>'+
+    '<p class="ack-foot">Nail the <b>exact</b> score and you\'re in the draw.</p>'+
+    '<p class="ack-hint">'+R(CLOSERS)+'</p>';
+  document.getElementById("predForm").style.display="none";
+  t.style.display="block";
+  confetti(t.querySelector(".confetti"));
+  t.scrollIntoView({behavior:"smooth",block:"center"});
+}
 btn.addEventListener("click",function(){
   err.textContent="";
   var n=name.value.trim(), e=email.value.trim(), h=home.value.trim(), a=away.value.trim();
   if(!n){err.textContent="Add your name.";name.focus();return;}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){err.textContent="Add a valid email.";email.focus();return;}
   if(h===""||a===""){err.textContent="Enter both scores.";(h===""?home:away).focus();return;}
-  btn.disabled=true;var o=btn.textContent;btn.textContent="Locking in…";
-  fetch("/.netlify/functions/predict",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,email:e,home:h,away:a,source:SRC})})
-    .then(function(r){return r.json().catch(function(){return{};});})
-    .then(function(d){
-      var pred=(d&&d.prediction)||("Spain "+h+"–"+a+" Argentina");
-      var t=document.getElementById("thanks");
-      t.innerHTML='<div class="em">🏆</div><h2>You\'re in, '+esc(n.split(" ")[0])+'!</h2><p>Your prediction is locked in. If you nail the exact score, you\'re in the draw. See you at Bamboa 🍷</p><div class="pred">'+esc(pred)+'</div>';
-      document.getElementById("predForm").style.display="none";
-      t.style.display="block";
-    })
-    .catch(function(){btn.disabled=false;btn.textContent=o;err.textContent="Something went wrong — try again.";});
+  btn.disabled=true;btn.textContent="Locking in…";
+  // Save in the background; the acknowledgement shows regardless of network so the button is never dead.
+  var shown=false;
+  function ack(){ if(shown)return; shown=true; reveal(n,h,a); }
+  try{
+    fetch("/.netlify/functions/predict",{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify({name:n,email:e,home:h,away:a,source:SRC})})
+      .then(ack).catch(ack);
+  }catch(_){ }
+  setTimeout(ack,1800);
 });
 </script>
 </body>

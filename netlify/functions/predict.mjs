@@ -29,7 +29,7 @@ export default async (req) => {
   // Brevo contact (tagged), with graceful fallback if attributes don't exist.
   const apiKey = process.env.BREVO_API_KEY;
   if (apiKey) {
-    const base = { FIRSTNAME: name, PREDICTION: prediction };
+    const base = { FIRSTNAME: name };
     const extra = { SOURCE: clean(d.source, 60) || "watchparty", CAMPAIGN, VENUE };
     async function add(attrs) {
       const body = { email, attributes: attrs, updateEnabled: true };

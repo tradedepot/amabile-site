@@ -22,7 +22,15 @@ h1{font-family:"Bagel Fat One",cursive;font-size:28px;color:var(--red)}
 .err{color:var(--red);font-weight:700;margin-top:10px;min-height:16px}
 .panel{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 rgba(40,16,7,.16);padding:18px;margin-top:18px}
 h2{font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--ink);margin-bottom:10px}
-#qr{display:inline-block;padding:10px;background:#fff;border:2px solid var(--ink);border-radius:12px}
+.qrcard{width:320px;margin:0 auto;background:#fff;border:2px solid #E4CF9B;border-radius:26px;padding:26px 24px 24px;box-shadow:0 12px 30px rgba(42,18,7,.14)}
+.qrcard .brand{height:54px;margin:0 auto 20px;display:block}
+.qrcard .qrbox{position:relative;display:inline-block}
+.qrcard .qrbox #qr img,.qrcard .qrbox #qr canvas{display:block;width:200px;height:200px}
+.qrcard .amark{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:44px;height:44px;background:#fff;border-radius:11px;padding:3px;box-sizing:border-box}
+.qrcard .scan{font-weight:700;font-size:20px;margin-top:20px;color:#2a1207}
+.qrcard .match{color:#B8933F;font-weight:500;font-size:13px;margin-top:4px}
+.qrcard .url{font-weight:700;font-size:19px;margin-top:14px;color:#2a1207}
+.qrcard .ama{height:26px;margin-top:16px}
 .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
 .btn.alt{background:var(--lime);color:#1a2e00}.btn.dk{background:var(--ink);color:var(--cream)}
 .score-in{width:70px;text-align:center;font-family:"Bagel Fat One",cursive;font-size:22px;padding:8px;border:3px solid var(--ink);border-radius:12px}
@@ -46,11 +54,18 @@ tr.match td{background:#eaffcf}
   </div>
 
   <div id="app" style="display:none">
-    <div class="panel">
+    <div class="panel" style="text-align:center">
       <h2>QR code</h2>
-      <div class="muted" style="font-size:13px;margin-bottom:10px">Links to <b>adr.wine/predict</b> (tagged for this event). Print it / drop it on the screens.</div>
-      <div id="qr"></div>
-      <div class="row"><button class="btn dk" id="dl">Download QR</button></div>
+      <div class="muted" style="font-size:13px;margin-bottom:14px">Links to <b>adr.wine/predict</b> (tagged for this event). Print it / drop it on the screens.</div>
+      <div class="qrcard" id="qrCard">
+        <img class="brand" src="/assets/event/bamboa/bamboa_gold.png" alt="Bamboa">
+        <div class="qrbox"><div id="qr"></div><img class="amark" src="/favicon-256.png" alt=""></div>
+        <div class="scan">Scan to predict the final score</div>
+        <div class="match">Spain vs Argentina · watch party at Bamboa</div>
+        <div class="url">adr.wine/predict</div>
+        <img class="ama" src="/assets/images/logo/logo_wine.png" alt="Amabile di Rosa">
+      </div>
+      <div class="row" style="justify-content:center"><button class="btn dk" id="dl">Download QR</button></div>
     </div>
 
     <div class="panel">
@@ -69,14 +84,18 @@ tr.match td{background:#eaffcf}
 </div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script>
 var PREDICT_URL="https://adr.wine/predict";
 var KEYVAL="", ENTRIES=[];
 var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gateErr=document.getElementById("gateErr");
 var logoImg=new Image();logoImg.src="/favicon-256.png";
+var bamImg=new Image();bamImg.src="/assets/event/bamboa/bamboa_gold.png";
+var amaImg=new Image();amaImg.src="/assets/images/logo/logo_wine.png";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
 function fmt(ms){try{return new Date(ms).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return"—";}}
 function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+function fit(x,text,max,weight,px){var s=px;do{x.font=weight+" "+s+"px 'Space Grotesk',Arial";if(x.measureText(text).width<=max)break;s-=2;}while(s>12);return s;}
 
 function load(k){
   return fetch("/.netlify/functions/predict-data?k="+encodeURIComponent(k)).then(function(r){return r.json().then(function(d){return {s:r.status,d:d};});})
@@ -87,18 +106,13 @@ enter.addEventListener("click",function(){gateErr.textContent="";var k=pw.value.
 pw.addEventListener("keydown",function(e){if(e.key==="Enter")enter.click();});
 (function(){var sk="";try{sk=localStorage.getItem("adr_sampling_k")||"";}catch(e){}if(sk){load(sk).then(function(ok){if(ok)unlock(sk);});}})();
 
-function renderQR(){var box=document.getElementById("qr");box.innerHTML="";new QRCode(box,{text:PREDICT_URL,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});}
+function renderQR(){var box=document.getElementById("qr");box.innerHTML="";new QRCode(box,{text:PREDICT_URL,width:200,height:200,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});}
 document.getElementById("dl").addEventListener("click",function(){
-  var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");if(!src)return;
-  var S=3,qr=200*S,pad=30*S,W=qr+pad*2,head=64*S;
-  var c=document.createElement("canvas");c.width=W;c.height=pad+head+qr+pad+40*S;var x=c.getContext("2d");
-  x.fillStyle="#ffffff";x.fillRect(0,0,c.width,c.height);
-  x.textAlign="center";x.fillStyle="#E74529";x.font="700 "+(30*S)+"px Arial";x.fillText("PREDICT & WIN 🏆",W/2,pad+34*S);
-  x.fillStyle="#6a4634";x.font="400 "+(18*S)+"px Arial";x.fillText("Spain vs Argentina · Bamboa",W/2,pad+58*S);
-  var qy=pad+head;x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,qy,qr,qr);x.imageSmoothingEnabled=true;
-  if(logoImg.complete&&logoImg.naturalWidth){var ls=qr*0.22,cx=W/2,cy=qy+qr/2,bgs=ls*1.18;x.fillStyle="#fff";rr(x,cx-bgs/2,cy-bgs/2,bgs,bgs,bgs*0.24);x.fill();x.drawImage(logoImg,cx-ls/2,cy-ls/2,ls,ls);}
-  x.fillStyle="#2a1207";x.font="700 "+(20*S)+"px Arial";x.fillText("adr.wine/predict",W/2,qy+qr+30*S);
-  var a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="bamboa-predict-win-qr.png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+  var card=document.getElementById("qrCard");
+  if(typeof html2canvas!=="function"){alert("Still loading — try again in a second.");return;}
+  html2canvas(card,{scale:4,backgroundColor:"#ffffff",useCORS:true}).then(function(canvas){
+    var a=document.createElement("a");a.href=canvas.toDataURL("image/png");a.download="bamboa-predict-win-qr.png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+  });
 });
 
 function renderRows(){
