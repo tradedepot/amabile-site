@@ -45,6 +45,8 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
 .go{margin-top:22px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:20px;padding:17px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
 .go:hover{transform:translate(-2px,-2px)}.go:disabled{opacity:.6}
 .err{color:var(--red);font-weight:700;margin-top:12px;min-height:18px;text-align:center}
+.ft-note{text-align:center;color:#8a7a63;font-size:11.5px;margin:4px auto 0;max-width:380px;line-height:1.5}
+.sb-cap{text-align:center;color:#6a4634;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.06em;margin:-8px 0 14px}
 .note{text-align:center;color:#9c8f77;font-size:12px;margin-top:18px}
 .thanks{display:none;text-align:center;padding:6px 2px;position:relative;overflow:hidden}
 .thanks .em{font-size:56px;animation:pop .5s cubic-bezier(.2,1.4,.4,1) both}
@@ -80,7 +82,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
   <h1 class="disp">Predict the Final Score &amp; Win 🏆</h1>
   <div class="match">🇪🇸 Spain &nbsp;vs&nbsp; Argentina 🇦🇷</div>
   <div class="meta">Sun 19 July · 8PM · Bamboa, Victoria Island</div>
-  <p class="lede">Think you know how the final ends? Predict the <b>exact score</b> for a chance to win. Drop your name &amp; email to qualify — good luck!</p>
+  <p class="lede">Think you know how the final ends? Predict the <b>exact score at full-time (90 minutes)</b> for a chance to win. Drop your name &amp; email to qualify — good luck!</p>
 
   <div class="card" id="card">
     <form id="predForm" novalidate>
@@ -96,6 +98,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
       </div>
       <button type="button" class="go" id="submit">Lock in my prediction</button>
       <div class="err" id="err"></div>
+      <p class="ft-note">⏱️ Predict the score at full-time (90 minutes) — extra time<br>&amp; penalties don't count.</p>
     </form>
     <div class="thanks" id="thanks"></div>
   </div>
@@ -107,7 +110,7 @@ input:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.3)}
 var q=new URLSearchParams(location.search);
 var SRC=q.get("utm_source")||"watchparty";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
-var name=document.getElementById("name"),email=document.getElementById("email"),home=document.getElementById("home"),away=document.getElementById("away"),btn=document.getElementById("submit"),err=document.getElementById("err");
+var nameEl=document.getElementById("name"),email=document.getElementById("email"),home=document.getElementById("home"),away=document.getElementById("away"),btn=document.getElementById("submit"),err=document.getElementById("err");
 
 function confetti(box){
   var cols=["#E74529","#C9A15A","#C6FF4D","#ffffff","#f2b705"];
@@ -184,6 +187,7 @@ function reveal(n,h,a){
       '<span class="sb-dash">–</span>'+
       '<div class="sb-col"><span class="sb-flag">🇦🇷</span><span class="sb-name">Argentina</span><span class="sb-num">'+esc(a)+'</span></div>'+
     '</div>'+
+    '<div class="sb-cap">score at full-time · 90 mins</div>'+
     '<div class="banter"><p class="bant-main">'+b.main+'</p>'+(b.sub?'<p class="bant-sub">'+b.sub+'</p>':'')+'</div>'+
     '<p class="ack-foot">Nail the <b>exact</b> score and you\'re in the draw.</p>'+
     '<p class="ack-hint">'+R(CLOSERS)+'</p>';
@@ -194,8 +198,8 @@ function reveal(n,h,a){
 }
 btn.addEventListener("click",function(){
   err.textContent="";
-  var n=name.value.trim(), e=email.value.trim(), h=home.value.trim(), a=away.value.trim();
-  if(!n){err.textContent="Add your name.";name.focus();return;}
+  var n=nameEl.value.trim(), e=email.value.trim(), h=home.value.trim(), a=away.value.trim();
+  if(!n){err.textContent="Add your name.";nameEl.focus();return;}
   if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(e)){err.textContent="Add a valid email.";email.focus();return;}
   if(h===""||a===""){err.textContent="Enter both scores.";(h===""?home:away).focus();return;}
   btn.disabled=true;btn.textContent="Locking in…";

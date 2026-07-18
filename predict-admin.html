@@ -76,6 +76,7 @@ tr.match td{background:#eaffcf}
         <button class="btn alt" id="markBtn">Highlight exact matches</button>
         <button class="btn" id="winBtn">Pick random winner</button>
         <button class="btn dk" id="refresh">Refresh</button>
+        <span class="muted" id="refreshMeta" style="font-size:12px"></span>
       </div>
       <div class="winner" id="winner"></div>
       <table><thead><tr><th>Name</th><th>Email</th><th>Prediction</th><th>When</th></tr></thead><tbody id="rows"></tbody></table>
@@ -101,7 +102,7 @@ function load(k){
   return fetch("/.netlify/functions/predict-data?k="+encodeURIComponent(k)).then(function(r){return r.json().then(function(d){return {s:r.status,d:d};});})
     .then(function(x){ if(x.s===401||!x.d||!x.d.ok) return false; ENTRIES=x.d.entries||[]; return true; });
 }
-function unlock(k){KEYVAL=k;try{localStorage.setItem("adr_sampling_k",k);}catch(e){}document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";renderQR();renderRows();}
+function unlock(k){KEYVAL=k;try{localStorage.setItem("adr_sampling_k",k);}catch(e){}document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";renderQR();renderRows();stamp();}
 enter.addEventListener("click",function(){gateErr.textContent="";var k=pw.value.trim();if(!k){gateErr.textContent="Enter the password.";return;}enter.disabled=true;load(k).then(function(ok){enter.disabled=false;if(ok)unlock(k);else gateErr.textContent="Wrong password.";}).catch(function(){enter.disabled=false;gateErr.textContent="Try again.";});});
 pw.addEventListener("keydown",function(e){if(e.key==="Enter")enter.click();});
 (function(){var sk="";try{sk=localStorage.getItem("adr_sampling_k")||"";}catch(e){}if(sk){load(sk).then(function(ok){if(ok)unlock(sk);});}})();
@@ -127,7 +128,12 @@ function renderRows(){
   document.getElementById("rows").innerHTML=html;
 }
 document.getElementById("markBtn").addEventListener("click",renderRows);
-document.getElementById("refresh").addEventListener("click",function(){load(KEYVAL).then(renderRows);});
+function stamp(){var m=document.getElementById("refreshMeta");if(m)m.textContent="Updated "+new Date().toLocaleTimeString()+" · "+ENTRIES.length+" total";}
+document.getElementById("refresh").addEventListener("click",function(){
+  var b=document.getElementById("refresh");b.disabled=true;b.textContent="Refreshing…";
+  load(KEYVAL).then(function(){renderRows();stamp();b.textContent="Refreshed ✓";setTimeout(function(){b.textContent="Refresh";b.disabled=false;},1400);})
+    .catch(function(){b.textContent="Refresh";b.disabled=false;});
+});
 document.getElementById("winBtn").addEventListener("click",function(){
   var fh=document.getElementById("fh").value, fa=document.getElementById("fa").value;
   if(fh===""||fa===""){document.getElementById("winner").textContent="Enter the final score first.";return;}
