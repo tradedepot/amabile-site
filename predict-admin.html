@@ -40,6 +40,18 @@ th{background:var(--ink);color:var(--lime);font-size:12px;text-transform:upperca
 tr.match td{background:#eaffcf}
 .pill{display:inline-block;background:var(--gold);color:#241a06;border-radius:999px;padding:2px 10px;font-weight:700;font-size:12px}
 .winner{margin-top:12px;font-weight:700;color:var(--red);min-height:20px}
+.wtitle{font-family:"Bagel Fat One",cursive;font-size:17px;color:var(--ink);margin:14px 0 8px}
+.wrow{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#FFF6E4;border:2px solid #EAD59B;border-radius:12px;padding:10px 14px;margin-bottom:8px}
+.winfo{display:flex;flex-direction:column;line-height:1.35}
+.winfo b{font-size:15px}
+.winfo span{font-size:12.5px;color:#7a5c49}
+.winfo .wpred{color:#3B6D11;font-weight:700}
+.wrep{flex:none;font-size:12px}
+.wactions{display:flex;align-items:center;gap:12px;margin-top:10px}
+.wacts{display:flex;align-items:center;gap:8px;flex:none}
+.wbadge{font-size:11px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.wbadge.ok{background:#eaffcf;color:#3B6D11}
+.wbadge.pend{background:#FDEBE4;color:#9a3d1e}
 .muted{color:#9a8576}
 </style>
 </head>
@@ -74,11 +86,12 @@ tr.match td{background:#eaffcf}
         <span class="muted">Final score →</span>
         🇪🇸 <input class="score-in" id="fh" type="number" min="0" placeholder="0"> <b>–</b> <input class="score-in" id="fa" type="number" min="0" placeholder="0"> 🇦🇷
         <button class="btn alt" id="markBtn">Highlight exact matches</button>
-        <button class="btn" id="winBtn">Pick random winner</button>
+        <button class="btn" id="pickBtn">Pick 5 winners</button>
         <button class="btn dk" id="refresh">Refresh</button>
         <span class="muted" id="refreshMeta" style="font-size:12px"></span>
       </div>
       <div class="winner" id="winner"></div>
+      <div id="winnersWrap"></div>
       <table><thead><tr><th>Name</th><th>Email</th><th>Prediction</th><th>When</th></tr></thead><tbody id="rows"></tbody></table>
     </div>
   </div>
@@ -134,14 +147,61 @@ document.getElementById("refresh").addEventListener("click",function(){
   load(KEYVAL).then(function(){renderRows();stamp();b.textContent="Refreshed ✓";setTimeout(function(){b.textContent="Refresh";b.disabled=false;},1400);})
     .catch(function(){b.textContent="Refresh";b.disabled=false;});
 });
-document.getElementById("winBtn").addEventListener("click",function(){
-  var fh=document.getElementById("fh").value, fa=document.getElementById("fa").value;
-  if(fh===""||fa===""){document.getElementById("winner").textContent="Enter the final score first.";return;}
-  var matches=ENTRIES.filter(function(e){return Number(e.home)===Number(fh)&&Number(e.away)===Number(fa);});
+var WINNERS=[];
+function exactMatches(){var fh=document.getElementById("fh").value,fa=document.getElementById("fa").value;if(fh===""||fa==="")return null;return ENTRIES.filter(function(e){return Number(e.home)===Number(fh)&&Number(e.away)===Number(fa);});}
+function shuffle(a){a=a.slice();for(var i=a.length-1;i>0;i--){var j=Math.floor(Math.random()*(i+1));var t=a[i];a[i]=a[j];a[j]=t;}return a;}
+function inWinners(email){return WINNERS.some(function(w){return w.email===email;});}
+function clone(w){return {name:w.name,email:w.email,prediction:w.prediction,home:w.home,away:w.away,emailed:!!w.emailed};}
+function renderWinners(){
+  var wrap=document.getElementById("winnersWrap");
+  if(!WINNERS.length){wrap.innerHTML="";return;}
+  var pending=WINNERS.filter(function(w){return !w.emailed;}).length;
+  var html='<div class="wtitle">🏆 Winners ('+WINNERS.length+') — bottle of Amabile + Pour Decisions deck</div>';
+  WINNERS.forEach(function(w,i){
+    var badge=w.emailed?'<span class="wbadge ok">✓ emailed</span>':'<span class="wbadge pend">not emailed</span>';
+    html+='<div class="wrow"><div class="winfo"><b>'+esc(w.name)+'</b><span>'+esc(w.email)+'</span><span class="wpred">'+esc(w.prediction)+'</span></div>'+
+      '<div class="wacts">'+badge+'<button class="btn dk wrep" data-i="'+i+'">Not onsite · replace</button></div></div>';
+  });
+  var lbl=pending?("Email "+pending+" pending winner"+(pending>1?"s":"")):"All winners emailed ✓";
+  html+='<div class="wactions"><button class="btn" id="emailBtn"'+(pending?"":" disabled")+'>'+lbl+'</button><span class="muted" id="emailStatus" style="font-size:12.5px"></span></div>'+
+        '<div class="muted" style="font-size:11.5px;margin-top:6px">Emails go only to winners marked “not emailed”, sent from vibes@amabiledirosa.com.</div>';
+  wrap.innerHTML=html;
+}
+document.getElementById("pickBtn").addEventListener("click",function(){
+  var m=exactMatches();
+  if(m===null){document.getElementById("winner").textContent="Enter the final score first.";return;}
   renderRows();
-  if(!matches.length){document.getElementById("winner").textContent="No exact-score entries for Spain "+fh+"–"+fa+" Argentina.";return;}
-  var w=matches[Math.floor(Math.random()*matches.length)];
-  document.getElementById("winner").innerHTML="🏆 Winner ("+matches.length+" exact match"+(matches.length>1?"es":"")+"): <b>"+esc(w.name)+"</b> — "+esc(w.email);
+  if(!m.length){document.getElementById("winner").textContent="No exact-score entries for Spain "+document.getElementById("fh").value+"–"+document.getElementById("fa").value+" Argentina.";WINNERS=[];renderWinners();return;}
+  WINNERS=shuffle(m).slice(0,5).map(clone);
+  document.getElementById("winner").innerHTML=m.length+" exact match"+(m.length>1?"es":"")+" · drew "+WINNERS.length+" winner"+(WINNERS.length>1?"s":"")+(m.length>5?" of "+m.length:"")+".";
+  renderWinners();
+});
+document.getElementById("winnersWrap").addEventListener("click",function(ev){
+  var t=ev.target;
+  if(t.classList&&t.classList.contains("wrep")){
+    var i=Number(t.getAttribute("data-i"));
+    var m=exactMatches()||[];
+    var pool=m.filter(function(e){return !inWinners(e.email);});
+    if(!pool.length){alert("No other exact-score entries available to replace this winner.");return;}
+    WINNERS[i]=clone(shuffle(pool)[0]);renderWinners();
+    return;
+  }
+  if(t.id==="emailBtn"){
+    var pending=WINNERS.filter(function(w){return !w.emailed;});
+    if(!pending.length)return;
+    if(!confirm("Send a 'you won' email to "+pending.length+" winner"+(pending.length>1?"s":"")+" not yet emailed, from vibes@amabiledirosa.com?"))return;
+    var st=document.getElementById("emailStatus");t.disabled=true;st.textContent="Sending…";
+    fetch("/.netlify/functions/predict-notify",{method:"POST",headers:{"content-type":"application/json"},body:JSON.stringify({k:KEYVAL,winners:pending.map(function(w){return {name:w.name,email:w.email,prediction:w.prediction};})})})
+      .then(function(r){return r.json().catch(function(){return{};});})
+      .then(function(res){
+        if(!res||!res.ok){t.disabled=false;st.textContent="Error: "+((res&&res.error)||"failed");return;}
+        var okset={};res.results.forEach(function(x){if(x.ok)okset[x.email]=1;});
+        WINNERS.forEach(function(w){if(okset[w.email])w.emailed=true;});
+        var okc=Object.keys(okset).length;
+        renderWinners();
+        document.getElementById("emailStatus").textContent="Sent "+okc+"/"+pending.length+(okc<pending.length?" — check sender verified in Brevo":" ✓");
+      }).catch(function(){t.disabled=false;st.textContent="Network error — try again.";});
+  }
 });
 </script>
 </body>
