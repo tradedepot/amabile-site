@@ -53,6 +53,17 @@ tr.match td{background:#eaffcf}
 .wbadge.ok{background:#eaffcf;color:#3B6D11}
 .wbadge.pend{background:#FDEBE4;color:#9a3d1e}
 .muted{color:#9a8576}
+.tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+@media (max-width:600px){
+  .wrow{flex-direction:column;align-items:stretch;gap:10px}
+  .wacts{justify-content:space-between}
+  .wrep{height:38px}
+  table{font-size:12.5px}
+  th,td{padding:7px 8px}
+  td:nth-child(2){word-break:break-all}
+  .score-in{width:58px;font-size:20px}
+  .row{gap:8px}
+}
 </style>
 </head>
 <body>
@@ -92,7 +103,7 @@ tr.match td{background:#eaffcf}
       </div>
       <div class="winner" id="winner"></div>
       <div id="winnersWrap"></div>
-      <table><thead><tr><th>Name</th><th>Email</th><th>Prediction</th><th>When</th></tr></thead><tbody id="rows"></tbody></table>
+      <div class="tablewrap"><table><thead><tr><th>Name</th><th>Email</th><th>Prediction</th><th>When</th></tr></thead><tbody id="rows"></tbody></table></div>
     </div>
   </div>
 </div>
