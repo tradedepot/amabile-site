@@ -1,0 +1,128 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Predict & Win — admin</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--cream:#FFF3E0;--gold:#C9A15A;--lime:#C6FF4D;--ink:#2a1207}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:24px 16px 70px}
+.wrap{max-width:760px;margin:0 auto}
+h1{font-family:"Bagel Fat One",cursive;font-size:28px;color:var(--red)}
+.sub{color:#7a5c49;margin:4px 0 18px;font-size:14px}
+.gate{display:flex;gap:8px;max-width:420px}
+.gate input{flex:1;padding:12px 14px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px}
+.gate button,.btn{cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;padding:0 18px;border-radius:12px}
+.err{color:var(--red);font-weight:700;margin-top:10px;min-height:16px}
+.panel{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 rgba(40,16,7,.16);padding:18px;margin-top:18px}
+h2{font-family:"Bagel Fat One",cursive;font-size:20px;color:var(--ink);margin-bottom:10px}
+#qr{display:inline-block;padding:10px;background:#fff;border:2px solid var(--ink);border-radius:12px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
+.btn.alt{background:var(--lime);color:#1a2e00}.btn.dk{background:var(--ink);color:var(--cream)}
+.score-in{width:70px;text-align:center;font-family:"Bagel Fat One",cursive;font-size:22px;padding:8px;border:3px solid var(--ink);border-radius:12px}
+table{width:100%;border-collapse:collapse;margin-top:12px;font-size:14px}
+th,td{text-align:left;padding:9px 10px;border-bottom:1px solid rgba(42,18,7,.12)}
+th{background:var(--ink);color:var(--lime);font-size:12px;text-transform:uppercase;letter-spacing:.05em}
+tr.match td{background:#eaffcf}
+.pill{display:inline-block;background:var(--gold);color:#241a06;border-radius:999px;padding:2px 10px;font-weight:700;font-size:12px}
+.winner{margin-top:12px;font-weight:700;color:var(--red);min-height:20px}
+.muted{color:#9a8576}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Predict &amp; Win — admin</h1>
+  <div class="sub">Bamboa × Amabile · Spain vs Argentina. QR to print + entries + winner picker.</div>
+
+  <div id="gate">
+    <div class="gate"><input type="password" id="pw" placeholder="Team password" autocomplete="off"><button id="enter">Enter</button></div>
+    <div class="err" id="gateErr"></div>
+  </div>
+
+  <div id="app" style="display:none">
+    <div class="panel">
+      <h2>QR code</h2>
+      <div class="muted" style="font-size:13px;margin-bottom:10px">Links to <b>adr.wine/predict</b> (tagged for this event). Print it / drop it on the screens.</div>
+      <div id="qr"></div>
+      <div class="row"><button class="btn dk" id="dl">Download QR</button></div>
+    </div>
+
+    <div class="panel">
+      <h2>Entries <span class="pill" id="count">0</span></h2>
+      <div class="row">
+        <span class="muted">Final score →</span>
+        🇪🇸 <input class="score-in" id="fh" type="number" min="0" placeholder="0"> <b>–</b> <input class="score-in" id="fa" type="number" min="0" placeholder="0"> 🇦🇷
+        <button class="btn alt" id="markBtn">Highlight exact matches</button>
+        <button class="btn" id="winBtn">Pick random winner</button>
+        <button class="btn dk" id="refresh">Refresh</button>
+      </div>
+      <div class="winner" id="winner"></div>
+      <table><thead><tr><th>Name</th><th>Email</th><th>Prediction</th><th>When</th></tr></thead><tbody id="rows"></tbody></table>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script>
+var PREDICT_URL="https://adr.wine/predict";
+var KEYVAL="", ENTRIES=[];
+var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gateErr=document.getElementById("gateErr");
+var logoImg=new Image();logoImg.src="/favicon-256.png";
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function fmt(ms){try{return new Date(ms).toLocaleString(undefined,{day:"numeric",month:"short",hour:"2-digit",minute:"2-digit"});}catch(e){return"—";}}
+function rr(x,X,Y,w,h,r){x.beginPath();x.moveTo(X+r,Y);x.arcTo(X+w,Y,X+w,Y+h,r);x.arcTo(X+w,Y+h,X,Y+h,r);x.arcTo(X,Y+h,X,Y,r);x.arcTo(X,Y,X+w,Y,r);x.closePath();}
+
+function load(k){
+  return fetch("/.netlify/functions/predict-data?k="+encodeURIComponent(k)).then(function(r){return r.json().then(function(d){return {s:r.status,d:d};});})
+    .then(function(x){ if(x.s===401||!x.d||!x.d.ok) return false; ENTRIES=x.d.entries||[]; return true; });
+}
+function unlock(k){KEYVAL=k;try{localStorage.setItem("adr_sampling_k",k);}catch(e){}document.getElementById("gate").style.display="none";document.getElementById("app").style.display="block";renderQR();renderRows();}
+enter.addEventListener("click",function(){gateErr.textContent="";var k=pw.value.trim();if(!k){gateErr.textContent="Enter the password.";return;}enter.disabled=true;load(k).then(function(ok){enter.disabled=false;if(ok)unlock(k);else gateErr.textContent="Wrong password.";}).catch(function(){enter.disabled=false;gateErr.textContent="Try again.";});});
+pw.addEventListener("keydown",function(e){if(e.key==="Enter")enter.click();});
+(function(){var sk="";try{sk=localStorage.getItem("adr_sampling_k")||"";}catch(e){}if(sk){load(sk).then(function(ok){if(ok)unlock(sk);});}})();
+
+function renderQR(){var box=document.getElementById("qr");box.innerHTML="";new QRCode(box,{text:PREDICT_URL,width:220,height:220,colorDark:"#2a1207",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.H});}
+document.getElementById("dl").addEventListener("click",function(){
+  var box=document.getElementById("qr");var src=box.querySelector("canvas")||box.querySelector("img");if(!src)return;
+  var S=3,qr=200*S,pad=30*S,W=qr+pad*2,head=64*S;
+  var c=document.createElement("canvas");c.width=W;c.height=pad+head+qr+pad+40*S;var x=c.getContext("2d");
+  x.fillStyle="#ffffff";x.fillRect(0,0,c.width,c.height);
+  x.textAlign="center";x.fillStyle="#E74529";x.font="700 "+(30*S)+"px Arial";x.fillText("PREDICT & WIN 🏆",W/2,pad+34*S);
+  x.fillStyle="#6a4634";x.font="400 "+(18*S)+"px Arial";x.fillText("Spain vs Argentina · Bamboa",W/2,pad+58*S);
+  var qy=pad+head;x.imageSmoothingEnabled=false;x.drawImage(src,(W-qr)/2,qy,qr,qr);x.imageSmoothingEnabled=true;
+  if(logoImg.complete&&logoImg.naturalWidth){var ls=qr*0.22,cx=W/2,cy=qy+qr/2,bgs=ls*1.18;x.fillStyle="#fff";rr(x,cx-bgs/2,cy-bgs/2,bgs,bgs,bgs*0.24);x.fill();x.drawImage(logoImg,cx-ls/2,cy-ls/2,ls,ls);}
+  x.fillStyle="#2a1207";x.font="700 "+(20*S)+"px Arial";x.fillText("adr.wine/predict",W/2,qy+qr+30*S);
+  var a=document.createElement("a");a.href=c.toDataURL("image/png");a.download="bamboa-predict-win-qr.png";document.body.appendChild(a);a.click();setTimeout(function(){a.remove();},1000);
+});
+
+function renderRows(){
+  document.getElementById("count").textContent=ENTRIES.length;
+  var fh=document.getElementById("fh").value, fa=document.getElementById("fa").value, has=(fh!==""&&fa!=="");
+  var html="";
+  ENTRIES.forEach(function(e){
+    var m=has&&Number(e.home)===Number(fh)&&Number(e.away)===Number(fa);
+    html+='<tr class="'+(m?"match":"")+'"><td>'+esc(e.name)+'</td><td>'+esc(e.email)+'</td><td>'+esc(e.prediction)+'</td><td class="muted">'+fmt(e.at)+'</td></tr>';
+  });
+  if(!ENTRIES.length)html='<tr><td colspan="4" class="muted">No entries yet</td></tr>';
+  document.getElementById("rows").innerHTML=html;
+}
+document.getElementById("markBtn").addEventListener("click",renderRows);
+document.getElementById("refresh").addEventListener("click",function(){load(KEYVAL).then(renderRows);});
+document.getElementById("winBtn").addEventListener("click",function(){
+  var fh=document.getElementById("fh").value, fa=document.getElementById("fa").value;
+  if(fh===""||fa===""){document.getElementById("winner").textContent="Enter the final score first.";return;}
+  var matches=ENTRIES.filter(function(e){return Number(e.home)===Number(fh)&&Number(e.away)===Number(fa);});
+  renderRows();
+  if(!matches.length){document.getElementById("winner").textContent="No exact-score entries for Spain "+fh+"–"+fa+" Argentina.";return;}
+  var w=matches[Math.floor(Math.random()*matches.length)];
+  document.getElementById("winner").innerHTML="🏆 Winner ("+matches.length+" exact match"+(matches.length>1?"es":"")+"): <b>"+esc(w.name)+"</b> — "+esc(w.email);
+});
+</script>
+</body>
+</html>

@@ -67,6 +67,19 @@
   status = 302
   force = true
 
+# Bamboa × Amabile "Predict & Win" watch-party subsite (adr.wine/predict on the QR).
+[[redirects]]
+  from = "/predict"
+  to = "https://www.amabiledirosa.com/predict.html?utm_source=watchparty&utm_medium=qr&utm_campaign=bamboa-spain-argentina&utm_content=bamboa"
+  status = 302
+  force = true
+
+# Password-gated admin / winner-picker (same-domain rewrite, keeps the clean URL).
+[[redirects]]
+  from = "/predict-admin"
+  to = "/predict-admin.html"
+  status = 200
+
 # Clean shortcuts /new, /pullup, /host are owned by the generator-ssr function
 # (config.path), which serves the homepage with a behaviour-led link preview
 # ("Round up your crew") and auto-opens the generator on those paths.
