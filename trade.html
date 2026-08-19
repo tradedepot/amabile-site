@@ -8,7 +8,7 @@
 <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
 <link rel="apple-touch-icon" href="/apple-touch-icon.png">
 <title>Become a Wholesaler — Amabile di Rosa</title>
-<meta name="description" content="Stock Amabile di Rosa. For bars, shops, venues and distributors. Share your details and message our trade team on WhatsApp to confirm pricing and terms.">
+<meta name="description" content="Stock Amabile di Rosa. For bars, shops, venues and distributors. Share your location and starting volume and our trade team will call you back to confirm terms.">
 <link rel="canonical" href="https://www.amabiledirosa.com/trade.html">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="Amabile di Rosa">
@@ -109,8 +109,8 @@
           </div>
         </div>
         <div class="field"><label>Email <span class="req">*</span></label><input name="email" type="email" placeholder="you@business.com" required></div>
-        <button type="button" class="wa-btn" id="waBtn"><span id="waLabel">Continue on WhatsApp</span></button>
-        <p class="cta-note">We’ll open WhatsApp with your details ready — just hit send to reach our trade team.</p>
+        <button type="button" class="wa-btn" id="waBtn"><span id="waLabel">Get Started</span></button>
+        <p class="cta-note">Submit your details and our trade team will call you back to confirm terms.</p>
       </form>
       <div class="trade-thanks" id="thanks" style="display:none"></div>
     </div>
@@ -141,22 +141,27 @@ var tracking={utm_source:qp("utm_source"),utm_medium:qp("utm_medium"),utm_campai
 function collect(){var d={};new FormData(form).forEach(function(v,k){d[k]=v;});Object.assign(d,tracking);return d;}
 function valid(){var ok=true;["name","business","phone","location","buyer_type","cases","email"].forEach(function(n){var el=form[n];if(!el.value){el.style.borderColor="#c0392b";ok=false;}else{el.style.borderColor="";}});var em=form.email.value;if(em&&!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(em)){form.email.style.borderColor="#c0392b";ok=false;}return ok;}
 function postLead(d){try{fetch(LEAD_ENDPOINT,{method:"POST",keepalive:true,headers:{"Content-Type":"application/json"},body:JSON.stringify(d)});}catch(e){}}
-var WA_NUMBER="2347047002617";
-function waLink(d){
-  var msg="Hi Amabile team! I'd like to stock Amabile di Rosa.\n\n"+
-    "Name: "+(d.name||"")+"\n"+
-    "Business: "+(d.business||"")+"\n"+
-    "Location: "+(d.location||"")+"\n"+
-    "Type: "+(d.buyer_type||"")+"\n"+
-    "Starting volume: "+(d.cases||"")+"\n"+
-    "Phone: "+(d.phone||"")+"\n"+
-    "Email: "+(d.email||"");
-  return "https://wa.me/"+WA_NUMBER+"?text="+encodeURIComponent(msg);
-}
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+
+/* ---- Online-buying group: LOCATION-ONLY. When enabled, buyers in a city we serve online route to the
+   self-serve order flow (trade-order.html); everyone else uses the callback lead flow below.
+   Currently dormant (enabled:false) while WhatsApp is down and trade-order.html/Firebase go live.
+   No volume or store-type limit. Add cities here as coverage expands. ---- */
+var ONLINE={ enabled:false, cities:["lagos","enugu"] };   // enabled:false = dormant until trade-order.html + Firebase are live. Flip true to switch these cities to self-serve ordering.
+function qualifiesForOnline(d){
+  if(!ONLINE.enabled)return false;
+  var loc=(d.location||"").toLowerCase();
+  return ONLINE.cities.some(function(c){return loc.indexOf(c)>-1;});
+}
 document.getElementById("waBtn").addEventListener("click",function(){
   if(!valid())return;
   var d=collect();
+  /* qualifying buyers → self-serve order flow (details carried over); non-qualifiers continue below unchanged */
+  if(qualifiesForOnline(d)){
+    try{sessionStorage.setItem("adr_trade",JSON.stringify(d));}catch(e){}
+    window.location.href="trade-order.html"+(location.search||"");
+    return;
+  }
   var eid=(window.crypto&&crypto.randomUUID)?crypto.randomUUID():(String(Date.now())+Math.random().toString(16).slice(2));
   /* browser pixels (real-time) — deduped with the server events via event_id */
   if(window.fbq)fbq('track','Lead',{content_name:'Wholesale enquiry'},{eventID:eid});
@@ -165,16 +170,16 @@ document.getElementById("waBtn").addEventListener("click",function(){
   var fbc=cookie("_fbc"); if(!fbc&&d.fbclid)fbc="fb.1."+Date.now()+"."+d.fbclid;
   d.event_id=eid; d.fbp=cookie("_fbp"); d.fbc=fbc; d.ga_client_id=gaClientId(); d.page_url=location.href;
   postLead(d);
-  var link=waLink(d);
+  var first=((d.name||"").trim().split(" ")[0])||"there";
+  var city=((d.location||"").split(",")[0]||"").trim();
+  var msg="Thanks, "+first+"! Our trade team will call you shortly to confirm pricing and next steps"+(city?(" for "+city):"")+". Prefer email? We'll follow up there too.";
   var t=document.getElementById("thanks");
-  t.innerHTML='<h2 class="disp" style="font-size:24px;color:var(--ink);margin:0 0 8px">Opening WhatsApp… 💬</h2><p style="color:#4a3a2c;font-size:15px;line-height:1.5;margin:0">We’re opening a chat with your details ready — just hit send. If nothing happens, <a href="'+link+'" style="color:var(--red);font-weight:700">tap here to message our trade team</a>.</p>';
+  t.innerHTML='<h2 class="disp" style="font-size:24px;color:var(--ink);margin:0 0 8px">You\'re in 🎉</h2><p style="color:#4a3a2c;font-size:15px;line-height:1.5;margin:0">'+esc(msg)+'</p>';
   form.style.display="none";
   var card=document.querySelector(".trade-card");
   if(card){var h=card.querySelector("h2");if(h)h.style.display="none";var fs=card.querySelector(".form-sub");if(fs)fs.style.display="none";}
   t.style.display="block";
   t.scrollIntoView({behavior:"smooth",block:"nearest"});
-  /* small delay lets the pixels/beacons flush before we leave the page */
-  setTimeout(function(){window.location.href=link;},500);
 });
 </script>
 <script src="/assets/js/analytics.js"></script>
