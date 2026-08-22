@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex,nofollow">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<title>Trade Ordering — Amabile di Rosa</title>
+<meta name="description" content="Order Amabile di Rosa for your business.">
+<link rel="stylesheet" href="assets/css/party.css?v=2">
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+  .ord{max-width:940px;margin:0 auto;padding:26px 24px 70px}
+  .ord-head{text-align:center;margin:6px 0 22px}
+  .ord-head h1{font-size:clamp(30px,5vw,52px);color:var(--red);margin:8px 0 6px}
+  .ord-head p{color:#6a5343;font-weight:600;max-width:52ch;margin:0 auto}
+  .badges{display:flex;justify-content:center;gap:8px;flex-wrap:wrap;margin-top:16px}
+  .badges span{background:#fff;border:2.5px solid var(--ink);border-radius:999px;padding:6px 13px;font-size:12.5px;font-weight:700}
+  .grid2{display:grid;grid-template-columns:1.12fr .88fr;gap:22px;align-items:start;margin-top:8px}
+  .card{background:#fff;border:3px solid var(--ink);border-radius:22px;box-shadow:8px 8px 0 rgba(0,0,0,.24);padding:22px 22px 20px}
+  .card h2{font-family:"Bagel Fat One",cursive;font-size:22px;color:var(--ink);line-height:1;margin-bottom:2px}
+  .card .cap{color:#6a5343;font-size:13px;margin:2px 0 14px}
+  .var{display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:2px solid #f0e2d5}
+  .var:last-of-type{border-bottom:none}
+  .vinfo{display:flex;align-items:center;gap:12px}
+  .swatch{width:36px;height:36px;border-radius:10px;border:2.5px solid var(--ink);flex:none}
+  .vname{font-weight:700;font-size:15px}.vname small{display:block;color:#6a5343;font-weight:600;font-size:11.5px}
+  .step{display:flex;align-items:center;gap:10px}
+  .step button{width:36px;height:36px;border-radius:10px;border:2.5px solid var(--ink);background:var(--cream);font-size:20px;font-weight:800;color:var(--red);cursor:pointer;line-height:1}
+  .step button:disabled{opacity:.35;cursor:not-allowed}
+  .step .q{width:22px;text-align:center;font-weight:800;font-size:17px}
+  .capline{font-size:12px;color:#6a5343;margin-top:12px;text-align:center}.capline b{color:var(--red)}
+  .earn{background:#f2faf0;border:2.5px solid var(--sage);border-radius:14px;padding:12px 14px;margin:14px 0 0;font-size:13px;color:#3f6a4c;font-weight:700;line-height:1.5}.earn b{color:var(--ink)}
+  .sumbox{background:var(--kitcream);border:2.5px solid var(--ink);border-radius:14px;padding:13px 15px;margin-top:14px}
+  .sumrow{display:flex;justify-content:space-between;align-items:baseline;font-size:14px;padding:5px 0;color:#6a5343;gap:12px}
+  .sumrow b{color:var(--ink);font-weight:700;white-space:nowrap}
+  .sumrow.tot{border-top:2px solid #e4d6c6;margin-top:8px;padding-top:11px;font-size:15px;color:var(--ink);font-weight:800}
+  .sumrow.tot b{color:var(--red);font-size:21px}
+  .sumrow.disc b{color:var(--sage)}
+  .pay-opts{display:grid;gap:10px;margin-top:14px}
+  .pay{border:2.5px solid var(--ink);border-radius:14px;padding:12px 14px;cursor:pointer;display:flex;align-items:center;gap:12px}
+  .pay.sel{border-color:var(--red);background:#fdeee9}
+  .pay input{width:auto;margin:0;flex:none;accent-color:var(--red)}
+  .pay .t{font-weight:700;font-size:14px;display:flex;align-items:center;gap:7px;flex-wrap:wrap}
+  .pay .s{font-size:11.5px;color:#6a5343;display:block;margin-top:2px}
+  .pay .amt{margin-left:auto;font-weight:800;font-size:15px;white-space:nowrap}
+  .save-badge{background:var(--sage);color:#08351a;font-size:10px;font-weight:800;padding:3px 8px;border-radius:999px;white-space:nowrap}
+  .note{font-size:12px;color:#6a5343;font-weight:600;margin-top:10px}.note:empty{display:none}
+  .orderingas{background:var(--kitcream);border:2.5px solid var(--ink);border-radius:12px;padding:9px 13px;font-size:12.5px;color:#6a5343;margin:16px 0 4px;display:flex;align-items:center;gap:8px}
+  .orderingas b{color:var(--ink)}.orderingas a{color:var(--blue);cursor:pointer;font-weight:700;margin-left:auto}
+  .place{width:100%;margin-top:18px;border:0;cursor:pointer;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:20px;padding:16px;border-radius:16px;box-shadow:6px 6px 0 var(--ink);transition:transform .12s}
+  .place:hover{transform:translate(-2px,-2px)}.place:disabled{opacity:.55;cursor:default;transform:none}
+  .fineprint{font-size:11.5px;color:#8a7565;text-align:center;margin-top:11px;line-height:1.5}
+  .big-buyer{text-align:center;margin-top:20px;font-size:13.5px;color:#6a5343}.big-buyer a{color:var(--blue);font-weight:700}
+  .center-card{max-width:460px;margin:20px auto 0;text-align:center}
+  .ico{width:72px;height:72px;border-radius:999px;border:3px solid var(--ink);background:#f2faf0;font-size:32px;display:flex;align-items:center;justify-content:center;margin:0 auto 16px}
+  .ico.t{background:var(--sage);color:#fff}
+  .oref{display:inline-block;background:var(--kitcream);border:2.5px dashed var(--red);color:var(--red);font-weight:800;padding:7px 16px;border-radius:12px;margin:12px 0;letter-spacing:1px}
+  .osum{border:2.5px solid var(--ink);border-radius:14px;padding:16px;max-width:430px;margin:12px auto;text-align:left;font-size:14px}
+  .osum .r{display:flex;justify-content:space-between;padding:5px 0;color:#6a5343;gap:14px}.osum .r b{color:var(--ink);text-align:right}
+  .wallet{background:var(--kitcream);border:2.5px dashed var(--red);border-radius:14px;padding:16px;max-width:430px;margin:12px auto;text-align:left}
+  .wallet .k{font-size:10.5px;color:#6a5343;text-transform:uppercase;letter-spacing:.5px;font-weight:800}
+  .wallet .v{font-size:16px;font-weight:800;margin:2px 0 11px}.wallet .v.acct{font-size:23px;letter-spacing:2px;color:var(--red)}
+  .copy{background:var(--red);color:#fff;border:0;border-radius:10px;padding:8px 14px;font-weight:800;cursor:pointer;font-family:inherit}
+  .msg{font-size:13px;text-align:center;margin-top:10px;min-height:16px}.msg.e{color:#c0392b}.msg.k{color:#1d7a44}
+  .altlink{text-align:center;margin-top:16px;font-size:13px;color:#6a5343}.altlink a{color:var(--blue);font-weight:700;cursor:pointer}
+  @media(max-width:820px){.grid2{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<nav class="site-nav">
+  <a class="logo" href="index.html"><img src="assets/images/logo/brand_red_plain.png" alt="Amabile di Rosa"></a>
+  <input type="checkbox" id="navtog" class="nav-cb">
+  <label for="navtog" class="nav-toggle" aria-label="Toggle menu"><span></span><span></span><span></span></label>
+  <div class="pills">
+    <a href="index.html">Home</a>
+    <a href="index.html#cast">Wines</a>
+    <a href="trade.html">Become a Wholesaler</a>
+    <a href="where-to-buy.html" class="cta">Find a Bottle</a>
+  </div>
+</nav>
+
+<main class="ord">
+  <div class="ord-head">
+    <span class="eyebrow">Trade Ordering</span>
+    <h1 class="disp">Build your order</h1>
+    <p>Order 1–5 cases to start. Pay on delivery — no payment now. We deliver to your door.</p>
+    <div class="badges"><span>✅ Pay on delivery</span><span>🚚 24–48 hr delivery</span><span>🍷 Sells fast</span></div>
+  </div>
+
+  <!-- LOGIN (only when arriving without trade-form details) -->
+  <div id="loginView" style="display:none">
+    <div class="card center-card">
+      <div class="ico">🔑</div>
+      <h2 style="text-align:center">Trade account</h2>
+      <p class="cap" style="text-align:center">Log in with your work email to reorder.</p>
+      <div class="field"><label>Work email <span class="req">*</span></label><input id="l-email" type="email" placeholder="you@business.com"></div>
+      <button class="place" id="loginBtn">Email me a sign-in link →</button>
+      <div class="msg" id="loginMsg"></div>
+      <div class="altlink">New here? <a href="trade.html">Start on Become a Wholesaler →</a></div>
+    </div>
+  </div>
+
+  <!-- ORDER BUILDER -->
+  <div id="orderView" style="display:none">
+    <div class="grid2">
+      <div class="card">
+        <h2>Your mix</h2>
+        <p class="cap">A case = 12 bottles · ₦85,000/case. Pick 1–5 cases total.</p>
+        <div class="var"><div class="vinfo"><div class="swatch" style="background:#E74529"></div><div class="vname">Sweet Red<small>Rich & fruity — fastest mover</small></div></div>
+          <div class="step"><button data-v="red" data-d="-1">−</button><span class="q" id="q-red">2</span><button data-v="red" data-d="1">+</button></div></div>
+        <div class="var"><div class="vinfo"><div class="swatch" style="background:#4D7396"></div><div class="vname">Sweet Rosé<small>Crowd-pleaser</small></div></div>
+          <div class="step"><button data-v="rose" data-d="-1">−</button><span class="q" id="q-rose">2</span><button data-v="rose" data-d="1">+</button></div></div>
+        <div class="var"><div class="vinfo"><div class="swatch" style="background:#82B28C"></div><div class="vname">Sweet White<small>Crisp & light</small></div></div>
+          <div class="step"><button data-v="white" data-d="-1">−</button><span class="q" id="q-white">1</span><button data-v="white" data-d="1">+</button></div></div>
+        <div class="capline">Total: <b id="capTotal">5</b> of 5 cases · minimum 1</div>
+        <div class="earn" id="earnLine"></div>
+      </div>
+
+      <div class="card">
+        <h2>Your order</h2>
+        <p class="cap">Choose how you'd like to pay.</p>
+        <div class="pay-opts">
+          <label class="pay sel" id="payPODbox"><input type="radio" name="pay" value="POD" checked>
+            <span class="pay-txt"><span class="t">Pay on delivery</span><span class="s">Cash or transfer when it arrives</span></span>
+            <span class="amt" id="amtPOD">₦425,000</span></label>
+          <label class="pay" id="payTRbox" style="display:none"><input type="radio" name="pay" value="TRANSFER">
+            <span class="pay-txt"><span class="t">Prepay by transfer<span class="save-badge" id="prepaySaveBadge" style="display:none">SAVE</span></span><span class="s">Pay before delivery — we send your account details</span></span>
+            <span class="amt" id="amtTR">₦416,500</span></label>
+        </div>
+        <div class="note" id="podNote" style="display:none"></div>
+        <div class="sumbox">
+          <div class="sumrow"><span id="sumCases">5 cases × ₦85,000</span><b id="sumSub">₦425,000</b></div>
+          <div class="sumrow disc" id="discRow" style="display:none"><span>Prepay saving</span><b id="sumDisc">−₦0</b></div>
+          <div class="sumrow"><span><span id="delCity">Delivery</span> <small id="delNote"></small></span><b id="sumDel">Free</b></div>
+          <div class="sumrow tot"><span>Total</span><b id="sumTot">₦425,000</b></div>
+        </div>
+        <div class="orderingas" id="orderingAs"></div>
+        <form id="orderForm" novalidate>
+          <div class="field"><label id="addrLabel">Delivery address <span class="req">*</span></label><input id="f-addr" placeholder="Start typing your address…" autocomplete="off"></div>
+          <div class="note" id="addrHint"></div>
+          <div class="field"><label>Landmark / delivery notes</label><input id="f-note" placeholder="e.g. opposite the filling station"></div>
+          <div class="field"><label>Preferred delivery</label><select id="f-when"><option>As soon as possible</option><option>Tomorrow</option><option>This weekend</option><option>Pick a day when you call me</option></select></div>
+          <button type="submit" class="place" id="placeBtn">Place order →</button>
+          <p class="fineprint">You'll confirm with a one-tap link sent to your email. We'll contact you before dispatch.</p>
+        </form>
+        <div class="big-buyer">Buying 20+ cases or want distributor pricing? <a id="bigWa" href="#">Chat with our trade desk →</a></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- LINK SENT -->
+  <div id="linkView" style="display:none"><div class="card center-card"><div class="ico">✉️</div>
+    <h2 style="text-align:center">Check your email</h2>
+    <p class="cap" style="text-align:center">We sent a one-tap confirmation link to <b id="linkEmail">you</b>. Open it on this device to place your order.</p>
+    <div class="msg" id="linkMsg"></div><div class="altlink"><a id="linkResend">Resend link</a></div></div></div>
+
+  <!-- COMPLETING -->
+  <div id="completingView" style="display:none"><div class="card center-card"><div class="ico">⏳</div><h2 style="text-align:center">Confirming…</h2><p class="cap" style="text-align:center">Signing you in and placing your order.</p></div></div>
+
+  <!-- CONFIRMATION -->
+  <div id="confirmView" style="display:none"><div style="text-align:center;padding:14px 0">
+    <div class="ico t">✓</div>
+    <h1 class="disp" style="font-size:34px;color:var(--red)">Order confirmed!</h1>
+    <p class="cap" id="confirmSub" style="font-size:15px">We'll call you shortly to arrange delivery.</p>
+    <div class="oref" id="orefOut">ADR-LAG-0000</div>
+    <div class="osum" id="osumOut"></div>
+    <div id="walletBox" style="display:none"><p class="cap" style="font-size:15px">Transfer <b id="payAmt"></b> to your Amabile account before delivery:</p><div class="wallet" id="walletInner"></div></div>
+    <a class="wa-btn" id="waConfirm" href="#" style="max-width:340px;margin:10px auto 0">💬 Message us on WhatsApp</a>
+    <p class="fineprint" id="confirmFine" style="max-width:430px;margin:14px auto 0">Keep your reference. Pay on delivery — cash or transfer to the driver.</p>
+  </div></div>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div><div class="footer-logo"><img src="assets/images/logo/brand_white.png" alt="Amabile di Rosa"></div>
+        <p style="max-width:32ch;color:rgba(255,243,224,.8)">Juicy Italian wines, best served with your favourite people.</p></div>
+      <div><h4>Explore</h4><ul><li><a href="index.html">Home</a></li><li><a href="index.html#cast">Wines</a></li><li><a href="where-to-buy.html">Find a Bottle</a></li><li><a href="trade.html">Become a Wholesaler</a></li></ul></div>
+      <div><h4>Say hi</h4><ul><li><a href="https://www.instagram.com/amabiledirosa" target="_blank" rel="noopener">Instagram</a></li><li><a href="https://www.tiktok.com/@amabiledirosa" target="_blank" rel="noopener">TikTok</a></li></ul></div>
+    </div>
+    <div class="footer-bottom"><span>© <span id="yr"></span> Amabile di Rosa · Juicy Italian Wines</span><span><a href="responsible-drinking.html">Responsible drinking</a></span></div>
+  </div>
+</footer>
+
+<script>
+document.getElementById("yr").textContent=new Date().getFullYear();
+/* ================= CONFIG — fill Firebase config + function URLs after deploy ================= */
+var CONFIG={
+  firebase:{ apiKey:'AIzaSyBEmdvbnJHUB7BO7ZzFiUGwxzrfpfurBy8', authDomain:'amabile-trade.firebaseapp.com', projectId:'amabile-trade',
+    storageBucket:'amabile-trade.firebasestorage.app', messagingSenderId:'80608722809', appId:'1:80608722809:web:7ca11a0828a5e08771b9a8' },
+  googleMapsKey:'AIzaSyBxemxS0Um38S8_7fuHk1Lcmapn3DKxMhQ', // restrict to amabiledirosa.com + Maps JS + Places
+  waPhone:'2347047002617',
+  waEnabled:false,          // WhatsApp is DOWN (Aug 2026). false → call-back capture replaces every wa.me CTA. Flip true to restore WhatsApp everywhere.
+  callbackEndpoint:'/.netlify/functions/trade-lead', // used only when waEnabled:false (same Netlify lead fn as trade.html → Sheet + Meta CAPI + GA4)
+  eligibilityEndpoint:'https://podeligibility-4c2f3oa66q-ue.a.run.app',   // podEligibility Cloud Function (us-east1)
+  pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
+  sheetEndpoint:'',
+  pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:5, minCases:1,
+  prepayEnabled:false,      // POD-first; flip true once TD's prepay price list is live
+  cities:[
+    {name:'Lagos',state:'Lagos',sw:[6.35,3.05],ne:[6.75,3.75]},
+    {name:'Enugu',state:'Enugu',sw:[6.35,7.42],ne:[6.56,7.60]},
+    {name:'Abuja',state:'FCT',sw:[8.98,7.30],ne:[9.15,7.55]},
+    {name:'Port Harcourt',state:'Rivers',sw:[4.75,6.95],ne:[4.90,7.10]}
+  ]
+};
+/* ============================================================================================= */
+var firebaseReady=false;
+try{ firebase.initializeApp(CONFIG.firebase); firebaseReady=true; }catch(e){}
+var auth=firebaseReady?firebase.auth():null, db=firebaseReady?firebase.firestore():null;
+var $=function(id){return document.getElementById(id);};
+var fmt=function(n){return '₦'+Math.round(n).toLocaleString('en-NG');};
+var LS=window.localStorage;
+function utms(){var p=new URLSearchParams(location.search),o={};['utm_source','utm_medium','utm_campaign','utm_content','utm_term'].forEach(function(k){o[k]=p.get(k)||'';});return o;}
+function track(name,params,fb){ try{if(window.gtag)gtag('event',name,params||{});}catch(e){}
+  try{if(window.fbq){if(fb&&fb.standard)fbq('track',fb.standard,fb.params||params||{});else fbq('trackCustom',(fb&&fb.name)||name,params||{});}}catch(e){}
+  try{if(window.ttq&&fb&&fb.ttq)ttq.track(fb.ttq,fb.params||{});}catch(e){} }
+function postSheet(p){ if(CONFIG.sheetEndpoint){try{fetch(CONFIG.sheetEndpoint,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(p)});}catch(e){}} }
+function waLink(text){ return 'https://wa.me/'+CONFIG.waPhone+'?text='+encodeURIComponent(text); }
+/* When WhatsApp is off, capture the enquiry exactly like trade.html does (Netlify lead fn → Sheet + Meta CAPI + GA4). */
+function requestCallback(context,extra){
+  var d=Object.assign({source:'trade-order',context:context,name:account.name,business:account.business,
+    phone:account.phone,email:account.email,buyer_type:account.type,location:account.area||account.city,
+    page_url:location.href,ts:new Date().toISOString()},utms(),extra||{});
+  try{fetch(CONFIG.callbackEndpoint,{method:'POST',keepalive:true,headers:{'Content-Type':'application/json'},body:JSON.stringify(d)});}catch(e){}
+}
+
+/* buyer_type from the trade form → our TD outlet-type keys */
+var TYPE_MAP={"Distributor / Wholesaler":"Wholesaler","Wine shop":"Wine shop","Liquor store":"Liquor store",
+  "Supermarket / retail":"Supermarket / retail chain","Bar / lounge / nightlife":"Bar / lounge / nightclub",
+  "Restaurant":"Restaurant / hotel","Event supplier":"Event supplier / caterer","Other":"Other trade"};
+function detectCity(loc){loc=(loc||'').toLowerCase();
+  if(loc.indexOf('lagos')>-1)return 'Lagos'; if(loc.indexOf('enugu')>-1)return 'Enugu';
+  if(loc.indexOf('abuja')>-1)return 'Abuja'; if(loc.indexOf('harcourt')>-1||loc.indexOf('phc')>-1)return 'Port Harcourt'; return '';}
+function cityCfg(n){return CONFIG.cities.filter(function(c){return c.name===n;})[0]||null;}
+function cityCode(n){var m={'Lagos':'LAG','Enugu':'ENU','Abuja':'ABJ','Port Harcourt':'PHC'};return m[n]||(n||'NG').replace(/[^A-Za-z]/g,'').slice(0,3).toUpperCase();}
+
+var account={email:'',name:'',business:'',type:'',phone:'',area:'',city:''};
+var signedIn=false, pendingOrder=null, addressMeta=null, walletUnsub=null, podEligible=true;
+
+/* prefill from the trade form (qualifying buyers arrive with details in sessionStorage) */
+(function initFromTrade(){
+  var d=null; try{d=JSON.parse(sessionStorage.getItem('adr_trade')||'null');}catch(e){}
+  if(d&&d.email){
+    account.name=d.name||''; account.business=d.business||''; account.phone=d.phone||''; account.email=d.email||'';
+    account.type=TYPE_MAP[d.buyer_type]||'Other trade';
+    account.city=detectCity(d.location)||''; account.area=d.location||'';
+  }
+})();
+
+function show(v){['loginView','orderView','linkView','completingView','confirmView'].forEach(function(x){$(x).style.display=x===v?'block':'none';});window.scrollTo({top:0,behavior:'smooth'});}
+function setCityUI(){var c=account.city||'your city';
+  var al=$('addrLabel'); if(al)al.innerHTML='Delivery address in '+c+' <span class="req">*</span>';
+  var dc=$('delCity'); if(dc)dc.textContent=c+' delivery';
+  var fa=$('f-addr'); if(fa)fa.placeholder='Start typing your '+c+' address…';}
+function enterOrder(){
+  $('orderingAs').innerHTML='Ordering as <b>'+(account.business||account.email)+'</b>'+(signedIn?' · <span style="color:var(--sage)">✓ verified</span>':'')+' <a id="signOut">Not you?</a>';
+  var so=$('orderingAs').querySelector('#signOut'); if(so)so.onclick=doSignOut;
+  setCityUI(); show('orderView'); loadPlaces(); fetchPricing();
+  podEligible=true; updatePayVisibility(); if(signedIn)checkPodEligibility();
+  track('view_order_builder',{funnel_step:3,signed_in:signedIn,city:account.city});
+  try{if(window.gtag)gtag('event','view_item_list',{item_list_name:'Amabile Trade Starter',items:ga4Items()});}catch(e){}
+}
+function doSignOut(){ if(auth)auth.signOut().finally(go); else go();
+  function go(){account={email:'',name:'',business:'',type:'',phone:'',area:'',city:''};signedIn=false;LS.removeItem('adr_pending');sessionStorage.removeItem('adr_trade');show('loginView');} }
+
+var actionCodeSettings={url:location.origin+location.pathname,handleCodeInApp:true};
+
+/* on load: complete email-link, restore session, or route to builder/login */
+(function boot(){
+  track('view_trade_order',{funnel_step:2},{standard:'ViewContent',params:{content_name:'Trade Order'}});
+  if(!firebaseReady){ if(account.email)enterOrder(); else show('loginView'); return; }
+  if(auth.isSignInWithEmailLink(window.location.href)){
+    show('completingView');
+    var email=LS.getItem('adr_email'); if(!email)email=window.prompt('Confirm your email to finish placing your order:')||'';
+    auth.signInWithEmailLink(email,window.location.href).then(function(res){
+      history.replaceState({},document.title,location.origin+location.pathname);
+      signedIn=true; account.email=res.user.email;
+      track('email_verified',{funnel_step:9,method:'email_link'});
+      var pend=LS.getItem('adr_pending');
+      if(pend){var p=JSON.parse(pend);account=Object.assign(account,p.account,{email:res.user.email});pendingOrder=p.order;LS.removeItem('adr_pending');bookOrder();}
+      else{ loadProfile(res.user).then(enterOrder); }
+    }).catch(function(){alert('That link didn’t work — please try again.');show(account.email?'orderView':'loginView'); if(account.email)enterOrder();});
+    return;
+  }
+  auth.onAuthStateChanged(function(user){
+    if(user&&!signedIn){ signedIn=true; account.email=user.email; loadProfile(user).then(enterOrder); }
+    else if(!user){ if(account.email)enterOrder(); else show('loginView'); }
+  });
+})();
+function loadProfile(user){ if(!db)return Promise.resolve();
+  return db.collection('accounts').doc(user.uid).get().then(function(doc){ if(doc.exists){var d=doc.data();
+    account={email:user.email,name:d.name||account.name,business:d.business||account.business,type:d.type||account.type,phone:d.phone||account.phone,area:d.area||account.area,city:d.city||account.city};}}).catch(function(){});
+}
+
+/* LOGIN (returning buyers with no session) */
+$('loginBtn').addEventListener('click',function(e){e.preventDefault();
+  var email=$('l-email').value.trim();
+  if(!/^\S+@\S+\.\S+$/.test(email)){$('loginMsg').className='msg e';$('loginMsg').textContent='Enter a valid email.';return;}
+  if(!auth){$('loginMsg').className='msg e';$('loginMsg').textContent='Ordering is not configured yet.';return;}
+  $('loginBtn').disabled=true;$('loginMsg').className='msg';$('loginMsg').textContent='Sending link…';
+  LS.setItem('adr_email',email);LS.removeItem('adr_pending');
+  auth.sendSignInLinkToEmail(email,actionCodeSettings).then(function(){$('linkEmail').textContent=email;show('linkView');})
+    .catch(function(err){$('loginBtn').disabled=false;$('loginMsg').className='msg e';$('loginMsg').textContent=err.message;});
+});
+
+/* Google Places */
+var placesLoaded=false;
+function loadPlaces(){ if(placesLoaded||!CONFIG.googleMapsKey||CONFIG.googleMapsKey.indexOf('YOUR_')===0)return; placesLoaded=true;
+  var s=document.createElement('script'); s.src='https://maps.googleapis.com/maps/api/js?key='+CONFIG.googleMapsKey+'&libraries=places'; s.async=true; s.onload=initPlaces; document.head.appendChild(s); }
+function initPlaces(){ try{
+  var input=$('f-addr');
+  var ac=new google.maps.places.Autocomplete(input,{componentRestrictions:{country:'ng'},fields:['formatted_address','geometry','place_id','address_components'],types:['geocode']});
+  var cc=cityCfg(account.city); if(cc&&cc.sw&&cc.ne){ac.setBounds(new google.maps.LatLngBounds(new google.maps.LatLng(cc.sw[0],cc.sw[1]),new google.maps.LatLng(cc.ne[0],cc.ne[1])));}
+  ac.addListener('place_changed',function(){var p=ac.getPlace(); if(!p||!p.geometry)return; var area='';
+    (p.address_components||[]).forEach(function(c){if(c.types.indexOf('administrative_area_level_2')>-1||c.types.indexOf('sublocality_level_1')>-1||c.types.indexOf('locality')>-1){if(!area)area=c.long_name;}});
+    addressMeta={formatted:p.formatted_address,place_id:p.place_id,lat:p.geometry.location.lat(),lng:p.geometry.location.lng(),area_auto:area};
+    input.value=p.formatted_address; $('addrHint').textContent='✓ Address confirmed'+(area?' · '+area:''); track('address_selected',{funnel_step:6,area:area||''}); });
+  input.addEventListener('keydown',function(e){if(e.key==='Enter')e.preventDefault();});
+}catch(e){} }
+
+/* ORDER BUILDER */
+var qty={red:2,rose:2,white:1};
+var prices={red:CONFIG.pricePerCase,rose:CONFIG.pricePerCase,white:CONFIG.pricePerCase};
+var prepayPrices=null;
+function total(){return qty.red+qty.rose+qty.white;}
+function payMethod(){var el=document.querySelector('input[name="pay"]:checked');return el?el.value:'POD';}
+function activePrices(){return (payMethod()==='TRANSFER'&&prepayPrices)?prepayPrices:prices;}
+function subFor(s){return qty.red*s.red+qty.rose*s.rose+qty.white*s.white;}
+function goodsSubtotal(){return subFor(activePrices());}
+function uniformPrice(){var p=activePrices();return (p.red===p.rose&&p.rose===p.white)?p.red:null;}
+function deliveryFee(){return total()>=CONFIG.freeDeliveryFrom?0:CONFIG.deliveryFee;}
+function mixText(){return [qty.red&&qty.red+' Red',qty.rose&&qty.rose+' Rosé',qty.white&&qty.white+' White'].filter(Boolean).join(', ');}
+function money(){var t=total(),sub=goodsSubtotal(),del=deliveryFee();return {t:t,sub:sub,del:del,grand:sub+del};}
+function ga4Items(){var p=activePrices();return [['AMB-RED','Amabile Sweet Red',qty.red,p.red],['AMB-ROSE','Amabile Sweet Rosé',qty.rose,p.rose],['AMB-WHITE','Amabile Sweet White',qty.white,p.white]].filter(function(x){return x[2]>0;}).map(function(x){return {item_id:x[0],item_name:x[1],quantity:x[2],price:x[3]};});}
+function fetchPricing(){ if(!CONFIG.pricingEndpoint)return; var cc=cityCfg(account.city),st=(cc&&cc.state)||'';
+  fetch(CONFIG.pricingEndpoint+'?state='+encodeURIComponent(st)).then(function(r){return r.json();}).then(function(d){
+    if(d&&d.prices){prices={red:+d.prices.red||prices.red,rose:+d.prices.rose||prices.rose,white:+d.prices.white||prices.white};}
+    if(d&&d.prepayPrices){prepayPrices={red:+d.prepayPrices.red||null,rose:+d.prepayPrices.rose||null,white:+d.prepayPrices.white||null};}
+    render();
+  }).catch(function(){}); }
+function updatePayVisibility(){
+  var podBox=$('payPODbox'),trBox=$('payTRbox'),note=$('podNote'),place=$('placeBtn'); if(!podBox)return;
+  var prepayOn=CONFIG.prepayEnabled!==false;
+  podBox.style.display=podEligible?'flex':'none'; trBox.style.display=prepayOn?'flex':'none';
+  var podR=document.querySelector('input[name="pay"][value="POD"]'), trR=document.querySelector('input[name="pay"][value="TRANSFER"]');
+  if(podEligible){if(podR)podR.checked=true;}else if(prepayOn){if(trR)trR.checked=true;}
+  var none=!podEligible&&!prepayOn; if(place)place.disabled=none;
+  var msg=''; if(!podEligible&&prepayOn)msg='Pay-on-delivery is for your first order. Reorders prepay by transfer.';
+  else if(none)msg=CONFIG.waEnabled
+    ? 'Reorders open soon — <a href="'+waLink('Hi Amabile, I want to reorder Amabile di Rosa.')+'" style="color:var(--blue);font-weight:700">message us to restock</a>.'
+    : 'Reorders open soon — we\'ll reach out to help you restock.';
+  if(note){note.style.display=msg?'block':'none';note.innerHTML=msg;} render();
+}
+function checkPodEligibility(){ if(!db)return;
+  var u=auth&&auth.currentUser; if(u){ db.collection('orders').where('uid','==',u.uid).limit(1).get().then(function(s){ if(!s.empty){podEligible=false;updatePayVisibility();} }).catch(function(){}); }
+  if(CONFIG.eligibilityEndpoint){ fetch(CONFIG.eligibilityEndpoint+'?phone='+encodeURIComponent(account.phone)).then(function(r){return r.json();}).then(function(d){ if(d&&d.podEligible===false){podEligible=false;updatePayVisibility();} }).catch(function(){}); }
+}
+function render(){
+  var m=money(),t=m.t,sub=m.sub,del=m.del,grand=m.grand;
+  $('q-red').textContent=qty.red;$('q-rose').textContent=qty.rose;$('q-white').textContent=qty.white;$('capTotal').textContent=t;
+  var up=uniformPrice();
+  $('sumCases').textContent=up!=null?(t+' case'+(t>1?'s':'')+' × '+fmt(up)):(t+' case'+(t>1?'s':''));
+  $('sumSub').textContent=fmt(sub);
+  $('sumDel').textContent=del===0?'Free':fmt(del);$('delNote').textContent=del===0?'(3+ cases)':'(1–2 cases)';
+  var baseSub=subFor(prices),preSub=subFor(prepayPrices||prices),saving=baseSub-preSub,showSave=payMethod()==='TRANSFER'&&saving>0;
+  $('discRow').style.display=showSave?'flex':'none';$('sumDisc').textContent='−'+fmt(saving);
+  $('sumTot').textContent=fmt(grand);
+  $('amtPOD').textContent=fmt(baseSub+del); $('amtTR').textContent=fmt(preSub+del);
+  var badge=$('prepaySaveBadge'); if(badge){if(saving>0){badge.style.display='inline-block';badge.textContent='SAVE '+fmt(saving);}else badge.style.display='none';}
+  $('payPODbox').classList.toggle('sel',payMethod()==='POD'); $('payTRbox').classList.toggle('sel',payMethod()==='TRANSFER');
+  $('earnLine').innerHTML='💰 Sell at ₦9,500/bottle → <b>'+fmt(t*114000)+'</b> back. You keep about <b>'+fmt(t*114000-sub)+'</b> on '+t+' case'+(t>1?'s':'')+'.';
+  document.querySelectorAll('.step button').forEach(function(b){var v=b.dataset.v,d=+b.dataset.d;if(d>0)b.disabled=t>=CONFIG.maxCases;else b.disabled=qty[v]<=0||t<=CONFIG.minCases;});
+}
+var cartTouched=false;
+document.querySelectorAll('.step button').forEach(function(b){b.onclick=function(){var v=b.dataset.v,d=+b.dataset.d,t=total();
+  if(d>0&&t>=CONFIG.maxCases)return; if(d<0&&(qty[v]<=0||t<=CONFIG.minCases))return; qty[v]=Math.max(0,qty[v]+d); render();
+  var m=money(); if(!cartTouched){cartTouched=true; track('add_to_cart',{funnel_step:4,currency:'NGN',value:m.grand,items:ga4Items()},{standard:'AddToCart',params:{value:m.grand,currency:'NGN'},ttq:'AddToCart'});}
+};});
+document.querySelectorAll('input[name="pay"]').forEach(function(r){r.addEventListener('change',function(){render();var m=money();track('select_payment_method',{funnel_step:5,payment_method:payMethod(),value:m.grand,currency:'NGN'},{standard:'AddPaymentInfo',params:{value:m.grand,currency:'NGN'}});});});
+
+/* PLACE ORDER */
+$('orderForm').addEventListener('submit',function(e){e.preventDefault();
+  var addr=$('f-addr'); if(!addr.value.trim()){addr.style.borderColor='#c0392b';return;} addr.style.borderColor='';
+  if(total()<CONFIG.minCases)return; if(!auth){alert('Ordering is not configured yet.');return;}
+  var m=money();
+  pendingOrder={ref:'ADR-'+cityCode(account.city)+'-'+Math.floor(1000+Math.random()*9000),cases:m.t,mix:mixText(),red:qty.red,rose:qty.rose,white:qty.white,
+    subtotal:m.sub,delivery_fee:m.del,total:m.grand,payment_method:payMethod(),price_source:payMethod()==='TRANSFER'?'prepay_list':'base_list',city:account.city,
+    address:addr.value.trim(),address_place_id:addressMeta?addressMeta.place_id:'',lat:addressMeta?addressMeta.lat:null,lng:addressMeta?addressMeta.lng:null,
+    area_auto:addressMeta?addressMeta.area_auto:'',note:$('f-note').value.trim(),preferred_delivery:$('f-when').value,status:'New'};
+  Object.assign(pendingOrder,utms());
+  track('begin_checkout',{funnel_step:7,currency:'NGN',value:m.grand,items:ga4Items(),payment_method:pendingOrder.payment_method,cases:m.t},{standard:'InitiateCheckout',params:{value:m.grand,currency:'NGN',num_items:m.t},ttq:'InitiateCheckout'});
+  if(signedIn){bookOrder();return;}
+  LS.setItem('adr_email',account.email); LS.setItem('adr_pending',JSON.stringify({account:account,order:pendingOrder}));
+  $('placeBtn').disabled=true;
+  auth.sendSignInLinkToEmail(account.email,actionCodeSettings).then(function(){track('verification_link_sent',{funnel_step:8});$('linkEmail').textContent=account.email;show('linkView');})
+    .catch(function(err){$('placeBtn').disabled=false;alert('Could not send the link: '+err.message);});
+});
+$('linkResend').onclick=function(){var em=LS.getItem('adr_email'); if(!em||!auth)return; $('linkMsg').className='msg';$('linkMsg').textContent='Resending…';
+  auth.sendSignInLinkToEmail(em,actionCodeSettings).then(function(){$('linkMsg').className='msg k';$('linkMsg').textContent='Link resent.';});};
+
+function bookOrder(){
+  var user=auth&&auth.currentUser; if(!user){show('loginView');return;}
+  var acc={email:account.email,name:account.name,business:account.business,type:account.type,phone:account.phone,area:account.area,city:account.city,verified:true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
+  db.collection('accounts').doc(user.uid).set(acc,{merge:true}).catch(function(){});
+  var o=Object.assign({},pendingOrder,{uid:user.uid,userEmail:account.email,name:account.name,business:account.business,type:account.type,phone:account.phone,area:account.area,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
+  var isTransfer0=pendingOrder.payment_method==='TRANSFER';
+  db.collection('orders').add(o).then(function(ref){ if(isTransfer0)watchWallet(ref); }).catch(function(){});
+  postSheet(Object.assign({record:'account'},account,{verified:true,ts:new Date().toISOString()}));
+  postSheet(Object.assign({record:'order'},pendingOrder,{userEmail:account.email,business:account.business,type:account.type,name:account.name,phone:account.phone,area:account.area,ts:new Date().toISOString()}));
+  track('purchase',{funnel_step:10,transaction_id:pendingOrder.ref,currency:'NGN',value:pendingOrder.total,shipping:pendingOrder.delivery_fee,payment_method:pendingOrder.payment_method,price_source:pendingOrder.price_source,cases:pendingOrder.cases,items:ga4Items()},
+    {standard:'Purchase',params:{value:pendingOrder.total,currency:'NGN',content_name:'Amabile Starter Order',num_items:pendingOrder.cases},ttq:'CompletePayment'});
+  var o2=pendingOrder,isTransfer=o2.payment_method==='TRANSFER';
+  $('orefOut').textContent=o2.ref;
+  $('confirmSub').textContent=isTransfer?'Email verified. Transfer the amount below and we\'ll dispatch as soon as it lands.':'Email verified. We\'ll call you shortly to arrange delivery — have payment ready for when it arrives.';
+  $('confirmFine').textContent=isTransfer?'Keep your reference and use it in your transfer narration. Delivery is booked once payment is confirmed.':'Keep your reference. Pay on delivery — cash or bank transfer to the driver.';
+  var rows='<div class="r"><span>Order</span><b>'+o2.mix+' ('+o2.cases+' case'+(o2.cases>1?'s':'')+')</b></div>'+
+    '<div class="r"><span>Business</span><b>'+(account.business||'—')+'</b></div>'+
+    '<div class="r"><span>Subtotal'+(isTransfer?' (prepay price)':'')+'</span><b>'+fmt(o2.subtotal)+'</b></div>'+
+    '<div class="r"><span>Delivery</span><b>'+(o2.delivery_fee===0?'Free':fmt(o2.delivery_fee))+'</b></div>'+
+    '<div class="r"><span>'+(isTransfer?'Total to transfer':'Pay on delivery')+'</span><b style="color:var(--red)">'+fmt(o2.total)+'</b></div>'+
+    '<div class="r"><span>Deliver to</span><b>'+account.name+' · '+account.phone+'</b></div>';
+  $('osumOut').innerHTML=rows;
+  if(isTransfer){ $('payAmt').textContent=fmt(o2.total); $('walletBox').style.display='block';
+    $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">⏳ Generating your payment account…</div>';
+    setTimeout(function(){ if($('walletInner').textContent.indexOf('Generating')>-1){ $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">'+(CONFIG.waEnabled?'We\'ll WhatsApp your account details shortly.':'We\'ll call you with your account details shortly.')+'</div>'; } },30000);
+  }
+  var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+account.business+' ('+account.type+')\n'+o2.mix+' — '+o2.cases+' case(s)\n'+(isTransfer?'Prepay by transfer':'Pay on delivery')+': '+fmt(o2.total)+'\n'+account.name+' · '+account.phone+'\n'+o2.address);
+  if(CONFIG.waEnabled){ $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
+  else { $('waConfirm').style.display='none'; }
+  show('confirmView');
+}
+function watchWallet(ref){ if(!ref)return; if(walletUnsub)walletUnsub();
+  walletUnsub=ref.onSnapshot(function(doc){ var d=doc.data(); if(!d||!d.wallet||!d.wallet.account_number)return; var w=d.wallet;
+    $('walletInner').innerHTML='<div class="k">Bank</div><div class="v">'+(w.bank_name||'')+'</div><div class="k">Account number</div><div class="v acct" id="acctNo">'+w.account_number+'</div><div class="k">Account name</div><div class="v">'+(w.account_name||'')+'</div><button class="copy" id="copyAcct" type="button">Copy account number</button>';
+    var btn=$('copyAcct'); if(btn)btn.onclick=function(){track('copy_account_number',{});navigator.clipboard.writeText(w.account_number).then(function(){btn.textContent='Copied ✓';setTimeout(function(){btn.textContent='Copy account number';},1800);});};
+    if(walletUnsub)walletUnsub();
+  }); }
+
+(function(){ var big=$('bigWa'); if(!big)return;
+  if(CONFIG.waEnabled){
+    big.href=waLink('Hi Amabile, I want to order 20+ cases / distributor pricing.');
+    big.addEventListener('click',function(){track('contact_whatsapp',{context:'big_buyer_20plus'},{standard:'Lead',params:{content_name:'Big buyer enquiry'}});});
+  } else {
+    big.textContent='Request a call from our trade desk →'; big.href='#';
+    big.addEventListener('click',function(e){ e.preventDefault(); if(big.dataset.done)return;
+      requestCallback('big_buyer_20plus',{note:'Wants 20+ cases / distributor pricing'});
+      track('lead_callback_request',{context:'big_buyer_20plus'},{standard:'Lead',params:{content_name:'Big buyer enquiry'}});
+      big.dataset.done='1'; big.textContent='Thanks — we\'ll call you shortly ✓'; big.style.pointerEvents='none';
+    });
+  }
+})();
+if(CONFIG.waEnabled)$('waConfirm').addEventListener('click',function(){track('contact_whatsapp',{context:'order_confirmation'});});
+render();
+</script>
+<script src="/assets/js/analytics.js"></script>
+</body>
+</html>
