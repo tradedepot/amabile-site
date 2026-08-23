@@ -199,6 +199,7 @@ var CONFIG={
   callbackEndpoint:'/.netlify/functions/trade-lead', // used only when waEnabled:false (same Netlify lead fn as trade.html → Sheet + Meta CAPI + GA4)
   eligibilityEndpoint:'https://podeligibility-4c2f3oa66q-ue.a.run.app',   // podEligibility Cloud Function (us-east1)
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
+  signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
   sheetEndpoint:'',
   pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:5, minCases:1,
   prepayEnabled:false,      // POD-first; flip true once TD's prepay price list is live
@@ -270,6 +271,15 @@ function doSignOut(){ if(auth)auth.signOut().finally(go); else go();
   function go(){account={email:'',name:'',business:'',type:'',phone:'',area:'',city:''};signedIn=false;LS.removeItem('adr_pending');sessionStorage.removeItem('adr_trade');show('loginView');} }
 
 var actionCodeSettings={url:location.origin+location.pathname,handleCodeInApp:true};
+/* Send the sign-in link via our branded Resend email (Cloud Function). Falls back to Firebase's
+   default mailer if the endpoint isn't configured. Returns a promise either way. */
+function sendLink(email){
+  if(CONFIG.signinEmailEndpoint){
+    return fetch(CONFIG.signinEmailEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:email,url:actionCodeSettings.url})})
+      .then(function(r){return r.json().catch(function(){return {};}).then(function(j){ if(!r.ok||!j.ok) throw new Error((j&&j.error)||'Could not send the link'); return j; });});
+  }
+  return auth.sendSignInLinkToEmail(email,actionCodeSettings);
+}
 
 /* on load: complete email-link, restore session, or route to builder/login */
 (function boot(){
@@ -305,7 +315,7 @@ $('loginBtn').addEventListener('click',function(e){e.preventDefault();
   if(!auth){$('loginMsg').className='msg e';$('loginMsg').textContent='Ordering is not configured yet.';return;}
   $('loginBtn').disabled=true;$('loginMsg').className='msg';$('loginMsg').textContent='Sending link…';
   LS.setItem('adr_email',email);LS.removeItem('adr_pending');
-  auth.sendSignInLinkToEmail(email,actionCodeSettings).then(function(){$('linkEmail').textContent=email;show('linkView');})
+  sendLink(email).then(function(){$('linkEmail').textContent=email;show('linkView');})
     .catch(function(err){$('loginBtn').disabled=false;$('loginMsg').className='msg e';$('loginMsg').textContent=err.message;});
 });
 
@@ -398,11 +408,11 @@ $('orderForm').addEventListener('submit',function(e){e.preventDefault();
   if(signedIn){bookOrder();return;}
   LS.setItem('adr_email',account.email); LS.setItem('adr_pending',JSON.stringify({account:account,order:pendingOrder}));
   $('placeBtn').disabled=true;
-  auth.sendSignInLinkToEmail(account.email,actionCodeSettings).then(function(){track('verification_link_sent',{funnel_step:8});$('linkEmail').textContent=account.email;show('linkView');})
+  sendLink(account.email).then(function(){track('verification_link_sent',{funnel_step:8});$('linkEmail').textContent=account.email;show('linkView');})
     .catch(function(err){$('placeBtn').disabled=false;alert('Could not send the link: '+err.message);});
 });
-$('linkResend').onclick=function(){var em=LS.getItem('adr_email'); if(!em||!auth)return; $('linkMsg').className='msg';$('linkMsg').textContent='Resending…';
-  auth.sendSignInLinkToEmail(em,actionCodeSettings).then(function(){$('linkMsg').className='msg k';$('linkMsg').textContent='Link resent.';});};
+$('linkResend').onclick=function(){var em=LS.getItem('adr_email'); if(!em)return; $('linkMsg').className='msg';$('linkMsg').textContent='Resending…';
+  sendLink(em).then(function(){$('linkMsg').className='msg k';$('linkMsg').textContent='Link resent.';}).catch(function(err){$('linkMsg').className='msg e';$('linkMsg').textContent=err.message;});};
 
 function bookOrder(){
   var user=auth&&auth.currentUser; if(!user){show('loginView');return;}
