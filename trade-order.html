@@ -88,7 +88,7 @@
   <div class="ord-head">
     <span class="eyebrow">Trade Ordering</span>
     <h1 class="disp">Build your order</h1>
-    <p>Order 1–5 cases to start. Pay on delivery — no payment now. We deliver to your door.</p>
+    <p>Order 1–10 cases to start. Pay on delivery — no payment now. We deliver to your door.</p>
     <div class="badges"><span>✅ Pay on delivery</span><span>🚚 24–48 hr delivery</span><span>🍷 Sells fast</span></div>
   </div>
 
@@ -110,7 +110,7 @@
     <div class="grid2">
       <div class="card">
         <h2>Your mix</h2>
-        <p class="cap">A case = 12 bottles · ₦85,000/case. Pick 1–5 cases total.</p>
+        <p class="cap">A case = 12 bottles · ₦85,000/case. Pick 1–10 cases total.</p>
         <div class="var"><div class="vinfo"><div class="swatch" style="background:#E74529"></div><div class="vname">Sweet Red<small>Rich & fruity — fastest mover</small></div></div>
           <div class="step"><button data-v="red" data-d="-1">−</button><span class="q" id="q-red">2</span><button data-v="red" data-d="1">+</button></div></div>
         <div class="var"><div class="vinfo"><div class="swatch" style="background:#4D7396"></div><div class="vname">Sweet Rosé<small>Crowd-pleaser</small></div></div>
@@ -201,8 +201,8 @@ var CONFIG={
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
   signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
   sheetEndpoint:'',
-  pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:5, minCases:1,
-  prepayEnabled:false,      // POD-first; flip true once TD's prepay price list is live
+  pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:10, minCases:1,
+  prepayEnabled:false,      // POD-only until TD confirms: wallet generation in prod, a cheaper prepayPriceListByState, and the payment-confirmed webhook. Flip true to enable pay-by-transfer.
   cities:[
     {name:'Lagos',state:'Lagos',sw:[6.35,3.05],ne:[6.75,3.75]},
     {name:'Enugu',state:'Enugu',sw:[6.35,7.42],ne:[6.56,7.60]},
