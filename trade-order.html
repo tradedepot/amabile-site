@@ -117,7 +117,7 @@
           <div class="step"><button data-v="rose" data-d="-1">−</button><span class="q" id="q-rose">2</span><button data-v="rose" data-d="1">+</button></div></div>
         <div class="var"><div class="vinfo"><div class="swatch" style="background:#82B28C"></div><div class="vname">Sweet White<small>Crisp & light</small></div></div>
           <div class="step"><button data-v="white" data-d="-1">−</button><span class="q" id="q-white">1</span><button data-v="white" data-d="1">+</button></div></div>
-        <div class="capline">Total: <b id="capTotal">5</b> of 5 cases · minimum 1</div>
+        <div class="capline">Total: <b id="capTotal">5</b> of <span id="capMax">10</span> cases · minimum 1</div>
         <div class="earn" id="earnLine"></div>
       </div>
 
@@ -197,7 +197,7 @@ var CONFIG={
   waPhone:'2347047002617',
   waEnabled:false,          // WhatsApp is DOWN (Aug 2026). false → call-back capture replaces every wa.me CTA. Flip true to restore WhatsApp everywhere.
   callbackEndpoint:'/.netlify/functions/trade-lead', // used only when waEnabled:false (same Netlify lead fn as trade.html → Sheet + Meta CAPI + GA4)
-  eligibilityEndpoint:'https://podeligibility-4c2f3oa66q-ue.a.run.app',   // podEligibility Cloud Function (us-east1)
+  eligibilityEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/podEligibility', // podEligibility Cloud Function (us-east1)
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
   signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
   sheetEndpoint:'',
@@ -373,7 +373,7 @@ function checkPodEligibility(){ if(!db)return;
 }
 function render(){
   var m=money(),t=m.t,sub=m.sub,del=m.del,grand=m.grand;
-  $('q-red').textContent=qty.red;$('q-rose').textContent=qty.rose;$('q-white').textContent=qty.white;$('capTotal').textContent=t;
+  $('q-red').textContent=qty.red;$('q-rose').textContent=qty.rose;$('q-white').textContent=qty.white;$('capTotal').textContent=t;var cm=$('capMax');if(cm)cm.textContent=CONFIG.maxCases;
   var up=uniformPrice();
   $('sumCases').textContent=up!=null?(t+' case'+(t>1?'s':'')+' × '+fmt(up)):(t+' case'+(t>1?'s':''));
   $('sumSub').textContent=fmt(sub);
