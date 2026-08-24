@@ -164,8 +164,8 @@
 
   <!-- CONFIRMATION -->
   <div id="confirmView" style="display:none"><div style="text-align:center;padding:14px 0">
-    <div class="ico t">✓</div>
-    <h1 class="disp" style="font-size:34px;color:var(--red)">Order confirmed!</h1>
+    <div class="ico t" id="confirmIco">✓</div>
+    <h1 class="disp" id="confirmTitle" style="font-size:34px;color:var(--red)">Order confirmed!</h1>
     <p class="cap" id="confirmSub" style="font-size:15px">We'll call you shortly to arrange delivery.</p>
     <div class="oref" id="orefOut">ADR-LAG-0000</div>
     <div class="osum" id="osumOut"></div>
@@ -419,16 +419,39 @@ function bookOrder(){
   var acc={email:account.email,name:account.name,business:account.business,type:account.type,phone:account.phone,area:account.area,city:account.city,verified:true,updatedAt:firebase.firestore.FieldValue.serverTimestamp()};
   db.collection('accounts').doc(user.uid).set(acc,{merge:true}).catch(function(){});
   var o=Object.assign({},pendingOrder,{uid:user.uid,userEmail:account.email,name:account.name,business:account.business,type:account.type,phone:account.phone,area:account.area,createdAt:firebase.firestore.FieldValue.serverTimestamp()});
-  var isTransfer0=pendingOrder.payment_method==='TRANSFER';
-  db.collection('orders').add(o).then(function(ref){ if(isTransfer0)watchWallet(ref); }).catch(function(){});
+  /* server-side lead capture (ad-block-proof) — fine to record regardless of the TD outcome */
   postSheet(Object.assign({record:'account'},account,{verified:true,ts:new Date().toISOString()}));
   postSheet(Object.assign({record:'order'},pendingOrder,{userEmail:account.email,business:account.business,type:account.type,name:account.name,phone:account.phone,area:account.area,ts:new Date().toISOString()}));
-  track('purchase',{funnel_step:10,transaction_id:pendingOrder.ref,currency:'NGN',value:pendingOrder.total,shipping:pendingOrder.delivery_fee,payment_method:pendingOrder.payment_method,price_source:pendingOrder.price_source,cases:pendingOrder.cases,items:ga4Items()},
-    {standard:'Purchase',params:{value:pendingOrder.total,currency:'NGN',content_name:'Amabile Starter Order',num_items:pendingOrder.cases},ttq:'CompletePayment'});
+  show('completingView');   // "placing your order…" until the backend result comes back
+  db.collection('orders').add(o).then(function(ref){ watchOrder(ref); }).catch(function(){ finishOrder(false,null); });
+}
+/* Wait for pushOrderToTradeDepot to report the real result before confirming to the buyer. */
+var orderWatchUnsub=null;
+function watchOrder(ref){
+  var done=false;
+  function settle(ok){ if(done)return; done=true; if(orderWatchUnsub){try{orderWatchUnsub();}catch(e){}orderWatchUnsub=null;} finishOrder(ok,ref); }
+  orderWatchUnsub=ref.onSnapshot(function(doc){
+    var d=doc.data()||{};
+    if(d.integration_status==='ok'||d.oms_order_id) settle(true);
+    else if(d.integration_status==='error'||d.integration_status==='failed') settle(false);
+  },function(){ settle(false); });
+  setTimeout(function(){ settle(false); },25000); // backend slow/unreachable → honest fallback
+}
+function finishOrder(ok,ref){
   var o2=pendingOrder,isTransfer=o2.payment_method==='TRANSFER';
+  if(ok){
+    track('purchase',{funnel_step:10,transaction_id:o2.ref,currency:'NGN',value:o2.total,shipping:o2.delivery_fee,payment_method:o2.payment_method,price_source:o2.price_source,cases:o2.cases,items:ga4Items()},
+      {standard:'Purchase',params:{value:o2.total,currency:'NGN',content_name:'Amabile Starter Order',num_items:o2.cases},ttq:'CompletePayment'});
+    $('confirmIco').textContent='✓'; $('confirmTitle').textContent='Order confirmed!';
+    $('confirmSub').textContent=isTransfer?'Transfer the amount below and we\'ll dispatch as soon as it lands.':'We\'ll call you shortly to arrange delivery — have payment ready for when it arrives.';
+    $('confirmFine').textContent=isTransfer?'Keep your reference and use it in your transfer narration. Delivery is booked once payment is confirmed.':'Keep your reference. Pay on delivery — cash or bank transfer to the driver.';
+  } else {
+    track('order_backend_pending',{transaction_id:o2.ref,value:o2.total,cases:o2.cases}); // ops signal — order captured, TD push not yet confirmed
+    $('confirmIco').textContent='📞'; $('confirmTitle').textContent='Order received';
+    $('confirmSub').textContent='We\'ve got your order — our team will confirm it by phone shortly.';
+    $('confirmFine').textContent='Keep your reference and quote it when we call. No payment needed until delivery.';
+  }
   $('orefOut').textContent=o2.ref;
-  $('confirmSub').textContent=isTransfer?'Email verified. Transfer the amount below and we\'ll dispatch as soon as it lands.':'Email verified. We\'ll call you shortly to arrange delivery — have payment ready for when it arrives.';
-  $('confirmFine').textContent=isTransfer?'Keep your reference and use it in your transfer narration. Delivery is booked once payment is confirmed.':'Keep your reference. Pay on delivery — cash or bank transfer to the driver.';
   var rows='<div class="r"><span>Order</span><b>'+o2.mix+' ('+o2.cases+' case'+(o2.cases>1?'s':'')+')</b></div>'+
     '<div class="r"><span>Business</span><b>'+(account.business||'—')+'</b></div>'+
     '<div class="r"><span>Subtotal'+(isTransfer?' (prepay price)':'')+'</span><b>'+fmt(o2.subtotal)+'</b></div>'+
@@ -436,12 +459,12 @@ function bookOrder(){
     '<div class="r"><span>'+(isTransfer?'Total to transfer':'Pay on delivery')+'</span><b style="color:var(--red)">'+fmt(o2.total)+'</b></div>'+
     '<div class="r"><span>Deliver to</span><b>'+account.name+' · '+account.phone+'</b></div>';
   $('osumOut').innerHTML=rows;
-  if(isTransfer){ $('payAmt').textContent=fmt(o2.total); $('walletBox').style.display='block';
+  if(ok&&isTransfer){ $('payAmt').textContent=fmt(o2.total); $('walletBox').style.display='block';
     $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">⏳ Generating your payment account…</div>';
+    if(ref)watchWallet(ref);
     setTimeout(function(){ if($('walletInner').textContent.indexOf('Generating')>-1){ $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">'+(CONFIG.waEnabled?'We\'ll WhatsApp your account details shortly.':'We\'ll call you with your account details shortly.')+'</div>'; } },30000);
-  }
-  var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+account.business+' ('+account.type+')\n'+o2.mix+' — '+o2.cases+' case(s)\n'+(isTransfer?'Prepay by transfer':'Pay on delivery')+': '+fmt(o2.total)+'\n'+account.name+' · '+account.phone+'\n'+o2.address);
-  if(CONFIG.waEnabled){ $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
+  } else { $('walletBox').style.display='none'; }
+  if(CONFIG.waEnabled&&ok){ var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+account.business+' ('+account.type+')\n'+o2.mix+' — '+o2.cases+' case(s)\n'+(isTransfer?'Prepay by transfer':'Pay on delivery')+': '+fmt(o2.total)+'\n'+account.name+' · '+account.phone+'\n'+o2.address); $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
   else { $('waConfirm').style.display='none'; }
   show('confirmView');
 }
