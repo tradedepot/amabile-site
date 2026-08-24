@@ -145,7 +145,6 @@
           <div class="field"><label id="addrLabel">Delivery address <span class="req">*</span></label><input id="f-addr" placeholder="Start typing your address…" autocomplete="off"></div>
           <div class="note" id="addrHint"></div>
           <div class="field"><label>Landmark / delivery notes</label><input id="f-note" placeholder="e.g. opposite the filling station"></div>
-          <div class="field"><label>Preferred delivery</label><select id="f-when"><option>As soon as possible</option><option>Tomorrow</option><option>This weekend</option><option>Pick a day when you call me</option></select></div>
           <button type="submit" class="place" id="placeBtn">Place order →</button>
           <p class="fineprint">You'll confirm with a one-tap link sent to your email. We'll contact you before dispatch.</p>
         </form>
@@ -403,7 +402,7 @@ $('orderForm').addEventListener('submit',function(e){e.preventDefault();
   pendingOrder={ref:'ADR-'+cityCode(account.city)+'-'+Math.floor(1000+Math.random()*9000),cases:m.t,mix:mixText(),red:qty.red,rose:qty.rose,white:qty.white,
     subtotal:m.sub,delivery_fee:m.del,total:m.grand,payment_method:payMethod(),price_source:payMethod()==='TRANSFER'?'prepay_list':'base_list',city:account.city,
     address:addr.value.trim(),address_place_id:addressMeta?addressMeta.place_id:'',lat:addressMeta?addressMeta.lat:null,lng:addressMeta?addressMeta.lng:null,
-    area_auto:addressMeta?addressMeta.area_auto:'',note:$('f-note').value.trim(),preferred_delivery:$('f-when').value,status:'New'};
+    area_auto:addressMeta?addressMeta.area_auto:'',note:$('f-note').value.trim(),status:'New'};
   Object.assign(pendingOrder,utms());
   track('begin_checkout',{funnel_step:7,currency:'NGN',value:m.grand,items:ga4Items(),payment_method:pendingOrder.payment_method,cases:m.t},{standard:'InitiateCheckout',params:{value:m.grand,currency:'NGN',num_items:m.t},ttq:'InitiateCheckout'});
   if(signedIn){bookOrder();return;}
