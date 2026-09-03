@@ -88,8 +88,10 @@ export default async (req, context) => {
   const apiKey = process.env.BREVO_API_KEY;
   const notifyTo = process.env.TABLE_NOTIFY_EMAIL || "";
   const guestLink = `${INVITE_SITE}/table/${encodeURIComponent(ed)}?g=${encodeURIComponent(token)}`;
-  const whenBits = [after && edition.dateISO ? fmtDate(edition.dateISO) : "", edition.timeLabel || "", edition.venue || ""]
+  const whenBits = [edition.dateISO ? fmtDate(edition.dateISO) : "", edition.timeLabel || "", edition.venue || ""]
     .filter(Boolean).join(" · ");
+  const whenLine = [edition.dateISO ? fmtDate(edition.dateISO) : "", edition.timeLabel || ""].filter(Boolean).join(" · ");
+  const whereLine = clean(edition.venue, 160);
 
   // Promotion: guests who moved into the seated set as a result of this change (a drop-out
   // freed a seat). Email each once. Skip the actor themselves.
@@ -115,8 +117,8 @@ export default async (req, context) => {
       const html = shell(`
         <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">Your seat is saved 🍷</h2>
         <p style="margin:0 0 6px;color:#6a4634">See you at <b>${clean(edition.title, 80)}</b>. This seat is reserved for <b>${clean(guest.name, 80)}</b> — it's a seated lunch planned per person, so there are no plus-ones.</p>
-        <p style="margin:12px 0 6px"><b>When</b> · ${clean(whenBits, 200)}</p>
-        ${edition.address ? `<p style="margin:0 0 12px;color:#6a4634"><b>Where</b> · ${clean(edition.address, 160)}</p>` : ""}
+        <p style="margin:12px 0 4px"><b>When</b> · ${clean(whenLine, 200)}</p>
+        ${whereLine ? `<p style="margin:0 0 12px;color:#6a4634"><b>Where</b> · ${whereLine}</p>` : ""}
         <p style="margin:12px 0 16px;color:#6a4634">Plans change — you can update your answer any time here:</p>
         <p style="margin:0">${button(guestLink, "View or change your RSVP →")}</p>
       `);
