@@ -629,7 +629,9 @@ document.querySelectorAll(".occ-play").forEach(function(btn){
  var INVITE_HOST="https://wya.to";
  function rid(n){var s="",a="abcdefghjkmnpqrstuvwxyz23456789";for(var i=0;i<n;i++)s+=a[Math.floor(Math.random()*a.length)];return s;}
  var ADJ=["glow","spark","fizz","sunset","disco","golden","cherry","peach","mango","fiesta","bloom","groove"];
- function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000);}
+ /* code = adjective + 4 digits + 3 random chars → wide enough that collisions are negligible;
+    create-invite also refuses to overwrite an existing code server-side (belt and braces). */
+ function mintCode(){return ADJ[Math.floor(Math.random()*ADJ.length)]+"-"+Math.floor(1000+Math.random()*9000)+"-"+rid(3);}
  /* attribution + context captured at load (campaign metadata + device + referral chain — no personal identity) */
  var ADR_ATTR=(function(){var q=new URLSearchParams(location.search);
    var touch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);

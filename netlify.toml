@@ -80,6 +80,18 @@
   to = "/predict-admin.html"
   status = 200
 
+# The Amabile Table (invite-only lunch) lives at /table and /table/<edition>?g=<token>,
+# owned by the table-ssr function (config.path), which injects per-edition preview tags
+# (title, date, venue) then serves the static table.html body. Guests reach it via their
+# personal per-guest link; a forwarded link without the token cannot RSVP. table.html is
+# noindex and deliberately kept OUT of sitemap.xml.
+
+# Password-gated Table admin (editions, guest lists, standings, CSV) — same-domain rewrite.
+[[redirects]]
+  from = "/table-admin"
+  to = "/table-admin.html"
+  status = 200
+
 # Clean shortcuts /new, /pullup, /host are owned by the generator-ssr function
 # (config.path), which serves the homepage with a behaviour-led link preview
 # ("Round up your crew") and auto-opens the generator on those paths.

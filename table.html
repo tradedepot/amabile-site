@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<!-- SSR: table-ssr.mjs rewrites the tags below per edition. Keep them EXACTLY in this
+     shape (double quotes, no extra attributes) or the regex replace silently no-ops. -->
+<title>The Amabile Table</title>
+<meta name="description" content="An invitation to our hosted long-table lunch. By invite only.">
+<meta name="robots" content="noindex">
+<meta property="og:type" content="website">
+<meta property="og:title" content="The Amabile Table">
+<meta property="og:description" content="By invite only.">
+<meta property="og:image" content="https://www.amabiledirosa.com/assets/images/occasions/dinner.jpg">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="The Amabile Table">
+<meta name="twitter:description" content="By invite only.">
+<meta name="twitter:image" content="https://www.amabiledirosa.com/assets/images/occasions/dinner.jpg">
+<meta name="theme-color" content="#E74529">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+/* Trimmed :root inline — invite.html, pourlist.html and venue.html follow this same
+   pattern (re-declare tokens rather than linking party.css) for these standalone pages. */
+:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--lime:#C6FF4D;--pink:#FF4D8D;--orange:#FF8A3D;--purple:#7A2FF2;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:radial-gradient(125% 95% at 50% 0%,#E9B45A 0%,#C6532F 34%,#7d1d33 68%,#2c0f2c 100%);min-height:100vh;overflow-x:hidden}
+.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.92}
+canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
+.wrap{max-width:560px;margin:0 auto;padding:22px 18px 60px}
+.brand{display:block;width:132px;margin:6px auto 16px;opacity:.96}
+/* event card */
+.card{position:relative;border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.3);overflow:hidden;background:#2c0f2c;color:var(--cream)}
+.card .bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.5}
+.card .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.35) 0%,rgba(20,5,15,.72) 100%)}
+.card .cont{position:relative;z-index:2;padding:26px}
+.stamp{display:inline-block;background:var(--cream);color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.15em;font-size:10px;padding:6px 12px;border-radius:999px}
+.card h1{font-size:clamp(30px,7.5vw,44px);margin:14px 0 4px;color:var(--cream);text-shadow:2px 3px 0 rgba(0,0,0,.4)}
+.seatfor{font-weight:600;color:#ffe9d9;margin:2px 0 16px;font-size:15px}
+.meta{display:flex;gap:22px;flex-wrap:wrap}
+.meta .ln{display:flex;flex-direction:column;gap:2px;font-size:14px}
+.meta .ln b{font-family:"Bagel Fat One",cursive;color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.clogo{height:15px;width:auto;margin-top:18px;opacity:.6}
+/* panel */
+.panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
+.panel h2{font-family:"Bagel Fat One",cursive;font-size:24px;color:var(--ink);text-align:center;line-height:1.05}
+.sub{text-align:center;color:#7a5c49;font-weight:600;font-size:13px;margin-top:6px;min-height:18px}
+.statusbar{margin-top:12px;text-align:center;font-weight:700;font-size:13px;color:#6a4634;background:#FFF6E4;border:2px solid #EAD59B;border-radius:12px;padding:9px 12px}
+.statusbar.wait{background:#FDEBE4;border-color:#F3C3B2;color:#9a3d1e}
+.statusbar.seated{background:#eaffcf;border-color:#C0DD97;color:#3B6D11}
+.yesno{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
+.big{cursor:pointer;border:3px solid var(--ink);border-radius:16px;padding:18px 10px;font-family:"Bagel Fat One",cursive;font-size:17px;background:#fff;transition:transform .12s,background .12s;box-shadow:4px 4px 0 rgba(0,0,0,.18)}
+.big:hover{transform:translate(-2px,-2px)}
+.big.yes{background:var(--lime)}
+.big.sel{outline:4px solid var(--red);outline-offset:2px}
+.more{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .35s ease}
+.more.open{max-height:900px;opacity:1;margin-top:16px}
+label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:#6a4634;margin:14px 0 6px}
+input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
+textarea{min-height:74px;resize:vertical}
+input:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)}
+.hint{font-size:12px;color:#9a8576;margin-top:5px;font-weight:500;text-transform:none;letter-spacing:0}
+.optin{display:flex;gap:9px;align-items:flex-start;margin-top:16px;font-size:13px;color:#6a4634;font-weight:500;text-transform:none;letter-spacing:0}
+.optin input{margin-top:2px;width:18px;height:18px;accent-color:var(--red)}
+.go{margin-top:18px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:19px;padding:16px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
+.go:hover{transform:translate(-2px,-2px)}.go:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
+.go:disabled{opacity:.6}
+.err{color:var(--red);font-weight:700;font-size:13px;margin-top:10px;text-align:center;min-height:16px}
+.done{text-align:center}
+.done .em{font-size:52px;line-height:1}
+.done h2{margin-top:8px}
+.done p{color:#6a4634;font-weight:600;margin-top:8px}
+.change{display:inline-block;margin-top:18px;cursor:pointer;background:none;border:0;color:#7a5c49;font-weight:700;font-size:13px;text-decoration:underline}
+.legal{text-align:center;color:rgba(255,243,224,.82);font-size:12px;margin-top:26px}
+.legal a{color:var(--gold)}
+.errbox{text-align:center;color:var(--cream);padding:48px 12px}
+.errbox h1{font-family:"Bagel Fat One",cursive;font-size:28px;margin-bottom:10px}
+/* 18+ gate */
+.gate{position:fixed;inset:0;z-index:80;background:radial-gradient(125% 95% at 50% 0%,#E9B45A,#7d1d33 60%,#2c0f2c);display:flex;align-items:center;justify-content:center;padding:24px}
+.gate .box{max-width:420px;text-align:center;color:var(--cream)}
+.gate .box img{width:130px;margin:0 auto 20px}
+.gate h1{font-family:"Bagel Fat One",cursive;font-size:30px;margin-bottom:10px}
+.gate p{color:#ffe9d9;margin-bottom:22px}
+.gate .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.gate button{cursor:pointer;border:3px solid var(--ink);border-radius:14px;padding:16px;font-family:"Bagel Fat One",cursive;font-size:16px;box-shadow:4px 4px 0 var(--ink)}
+.gate .in{background:var(--lime);color:#1a2e00}.gate .out{background:#fff;color:var(--ink)}
+.gate .no{margin-top:16px;color:#ffd9c9;font-size:13px;display:none}
+@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+</style>
+</head>
+<body>
+<canvas id="fx"></canvas>
+
+<div class="gate" id="gate">
+  <div class="box">
+    <img src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+    <h1 class="disp">Before you sit down</h1>
+    <p>The Amabile Table is a lunch where wine is served. Please confirm you're of legal drinking age.</p>
+    <div class="btns">
+      <button class="in" id="ageYes">I'm 18 or older</button>
+      <button class="out" id="ageNo">I'm under 18</button>
+    </div>
+    <p class="no" id="ageNoMsg">Come back when you're of legal drinking age — we'll save you a seat another time. 🍷</p>
+  </div>
+</div>
+
+<div class="wrap">
+  <img class="brand" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
+  <div id="app"><div class="errbox"><h1>Setting the table…</h1></div></div>
+  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
+</div>
+
+<script>
+function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function qs(k){return new URLSearchParams(location.search).get(k)||"";}
+var _pm=(location.pathname||"").match(/\/table\/([A-Za-z0-9-]+)/);
+var ED=(qs("e")||(_pm?_pm[1]:"")).toLowerCase().replace(/[^a-z0-9-]/g,"");
+var TOKEN=qs("g").replace(/[^A-Za-z0-9_-]/g,"");
+var app=document.getElementById("app");
+var DATA=null;
+
+/* attribution — persisted so navigating away and back doesn't lose it */
+var ATTR=(function(){
+  try{var s=sessionStorage.getItem("adr_table_attr");if(s)return s;}catch(e){}
+  var q=new URLSearchParams(location.search);
+  var touch=/Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent)||(window.matchMedia&&matchMedia('(pointer:coarse)').matches);
+  var a=[q.get("utm_source")||"",q.get("utm_medium")||"",q.get("utm_campaign")||"",q.get("ref")||"",touch?"mobile":"desktop"].join("|");
+  try{sessionStorage.setItem("adr_table_attr",a);}catch(e){}
+  return a;
+})();
+
+/* confetti (same engine as invite.html) */
+var cv=document.getElementById("fx"),cx=cv.getContext("2d"),P=[],W,H;
+function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;}size();addEventListener("resize",size);
+var COLS=["#FFC24D","#FF4D8D","#C6FF4D","#7A2FF2","#E74529","#fff","#82B28C","#C9A15A"];
+function burst(x,y,n,big){for(var i=0;i<(n||30);i++){P.push({x:x,y:y,vx:(Math.random()-.5)*(big?12:8),vy:(Math.random()-1)*(big?12:9)-2,g:.26,r:(big?6:3)+Math.random()*5,c:COLS[i%COLS.length],a:1,rot:Math.random()*6,vr:(Math.random()-.5)*.4,sq:Math.random()>.4});}}
+function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.a-=.012;p.rot+=p.vr;if(p.a<=0||p.y>H+40){P.splice(i,1);continue;}cx.globalAlpha=Math.max(p.a,0);cx.fillStyle=p.c;if(p.sq){cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillRect(-p.r,-p.r,p.r*2,p.r*2.3);cx.restore();}else{cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();}}cx.globalAlpha=1;requestAnimationFrame(tick);}tick();
+
+/* 18+ gate */
+var gate=document.getElementById("gate");
+function ageOk(){try{return localStorage.getItem("adr_age_ok")==="1";}catch(e){return false;}}
+function openGate(){gate.style.display="flex";}
+function passGate(){try{localStorage.setItem("adr_age_ok","1");}catch(e){}gate.style.display="none";load();}
+document.getElementById("ageYes").addEventListener("click",passGate);
+document.getElementById("ageNo").addEventListener("click",function(){document.getElementById("ageNoMsg").style.display="block";});
+if(ageOk()){gate.style.display="none";load();}else{openGate();}
+
+function fail(msg,head){app.innerHTML='<div class="errbox"><h1>'+esc(head||"Hmm.")+'</h1><p>'+esc(msg)+'</p></div>';}
+
+function load(){
+  if(!ED){fail("This link is missing its edition.");return;}
+  fetch("/.netlify/functions/table-data?e="+encodeURIComponent(ED)+"&g="+encodeURIComponent(TOKEN))
+    .then(function(r){return r.json();})
+    .then(function(d){
+      if(!d||!d.ok){fail("We couldn't find that Table.");return;}
+      if(!d.invited){
+        fail("The Amabile Table is invite-only, and this link isn't carrying your personal invite. Please open the exact link from your email — a forwarded one won't work.","A closed room");
+        return;
+      }
+      DATA=d;render();
+    })
+    .catch(function(){fail("Something went wrong loading your invite. Try again in a moment.");});
+}
+
+function metaCard(){
+  var e=DATA.edition, g=DATA.guest;
+  var m="";
+  if(e.dateLabel)m+='<div class="ln"><b>When</b><span>'+esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel):"")+'</span></div>';
+  if(e.venue)m+='<div class="ln"><b>Where</b><span>'+esc(e.venue)+'</span></div>';
+  return '<div class="card"><div class="bg" style="background-image:url(\'/assets/images/occasions/dinner.jpg\')"></div><div class="veil"></div><div class="cont">'+
+    '<span class="stamp">The Amabile Table</span>'+
+    '<h1 class="disp">'+esc(e.title||"The Amabile Table")+'</h1>'+
+    '<p class="seatfor">A seat is saved for '+esc((g.name||"you").split(" ")[0])+'. Just for you — no plus-ones.</p>'+
+    '<div class="meta">'+m+'</div>'+
+    '<img class="clogo" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
+  '</div></div>';
+}
+
+function render(){
+  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{};
+  // Closed for the edition.
+  if(e.closed){
+    app.innerHTML=metaCard()+'<div class="panel"><h2>RSVPs are closed</h2><div class="sub">The list for this edition is now set. Thanks for the interest — we\'ll invite you to the next one.</div></div>';
+    return;
+  }
+  // Already answered → show status + let them change.
+  if(y.response==="yes"||y.response==="no"){ return renderStatus(); }
+  renderForm();
+}
+
+function statusLine(){
+  var y=DATA.your||{};
+  if(y.status==="seated")return '<div class="statusbar seated">🍷 Your seat is confirmed.</div>';
+  if(y.status==="wait")return '<div class="statusbar wait">⏳ You\'re on the waitlist — no. '+y.position+'. We\'ll email you if a seat opens.</div>';
+  return "";
+}
+
+function renderStatus(){
+  var y=DATA.your||{};
+  var head,body;
+  if(y.response==="yes"&&y.status==="seated"){head="You're in 🍷";body="Your seat is saved. We can't wait to host you.";burstBig();}
+  else if(y.response==="yes"&&y.status==="wait"){head="You're on the waitlist";body="You're number "+y.position+" in line. If a seat frees up we'll email you automatically — nothing more to do.";}
+  else {head="Noted — thank you";body="Sorry you can't make this one. We'll save you a place at the next edition.";}
+  app.innerHTML=metaCard()+
+    '<div class="panel"><div class="done"><div class="em">'+(y.response==="yes"?(y.status==="wait"?"⏳":"🔒"):"🍷")+'</div>'+
+    '<h2 class="disp">'+esc(head)+'</h2><p>'+esc(body)+'</p>'+
+    '<button class="change" id="changeBtn">Change my answer</button></div></div>';
+  document.getElementById("changeBtn").addEventListener("click",function(){renderForm();});
+}
+
+function renderForm(){
+  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{};
+  var full=s.full && y.status!=="seated";
+  var warn=full?'<div class="statusbar wait">The table is currently full — saying yes adds you to the waitlist, and we\'ll email you the moment a seat opens.</div>':statusLine();
+  app.innerHTML=metaCard()+
+   '<div class="panel" id="panel">'+
+     '<h2>Can you join us?</h2>'+
+     '<div class="sub">One seat, reserved for you.</div>'+
+     warn+
+     '<div class="yesno">'+
+       '<button class="big yes" id="bYes">Yes, I\'ll be there</button>'+
+       '<button class="big no" id="bNo">Can\'t make it</button>'+
+     '</div>'+
+     '<div class="more" id="more">'+
+       '<div id="yesFields">'+
+         '<label for="fEmail">Email</label><input type="email" id="fEmail" placeholder="you@email.com" autocomplete="email" value="'+esc(y.email||"")+'">'+
+         '<label for="fMobile">Mobile <span style="text-transform:none;font-weight:500;color:#9a8576">(for day-of logistics)</span></label><input type="tel" id="fMobile" placeholder="+234…" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
+         '<label for="fRole">What you do, in a few words</label><input type="text" id="fRole" placeholder="e.g. ceramicist / runs a wine bar" value="'+esc(y.role||"")+'"><div class="hint">It helps us seat the table well.</div>'+
+       '</div>'+
+       '<label for="fNotes">Anything we should know?</label><textarea id="fNotes" placeholder="Dietary needs, access, allergies… (optional)">'+esc(y.notes||"")+'</textarea>'+
+       '<label class="optin"><input type="checkbox" id="fOptin"'+(y.optin?" checked":"")+'><span>Send me the next Amabile Table</span></label>'+
+       '<button class="go" id="go">Send my reply</button>'+
+       '<div class="err" id="ferr"></div>'+
+     '</div>'+
+   '</div>';
+
+  var resp=y.response||"", more=document.getElementById("more");
+  var bYes=document.getElementById("bYes"),bNo=document.getElementById("bNo");
+  var yesFields=document.getElementById("yesFields"),go=document.getElementById("go");
+  function choose(r){resp=r;bYes.classList.toggle("sel",r==="yes");bNo.classList.toggle("sel",r==="no");
+    more.classList.add("open");yesFields.style.display=r==="yes"?"block":"none";
+    go.textContent=r==="yes"?(full?"Join the waitlist":"Save my seat 🔒"):"Send my reply";
+    var b=(r==="yes"?bYes:bNo).getBoundingClientRect();burst(b.left+b.width/2,b.top+b.height/2,16);
+    if(r==="yes")setTimeout(function(){document.getElementById("fEmail").focus();},120);}
+  bYes.addEventListener("click",function(){choose("yes");});
+  bNo.addEventListener("click",function(){choose("no");});
+  if(resp)choose(resp);
+
+  go.addEventListener("click",function(){
+    var errEl=document.getElementById("ferr");errEl.textContent="";
+    if(!resp){errEl.textContent="Pick one first.";return;}
+    var body={edition:ED,token:TOKEN,response:resp,attr:ATTR};
+    if(resp==="yes"){
+      var email=document.getElementById("fEmail").value.trim();
+      var mobile=document.getElementById("fMobile").value.trim();
+      var role=document.getElementById("fRole").value.trim();
+      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent="Add a valid email so we can confirm.";return;}
+      if(!mobile){errEl.textContent="Add a mobile for day-of logistics.";return;}
+      if(!role){errEl.textContent="Tell us what you do — it feeds the seating plan.";return;}
+      body.email=email;body.mobile=mobile;body.role=role;
+    }
+    body.notes=document.getElementById("fNotes").value.trim();
+    body.optin=document.getElementById("fOptin").checked;
+    go.disabled=true;go.textContent="Sending…";
+    fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+      .then(function(r){return r.json().catch(function(){return{};});})
+      .then(function(d){
+        if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"RSVPs just closed for this edition.":"Something went wrong — try again.";return;}
+        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",mobile:body.mobile||"",role:body.role||"",notes:body.notes,optin:body.optin};
+        DATA.summary=d.summary||DATA.summary;
+        renderStatus();
+      })
+      .catch(function(){go.disabled=false;go.textContent="Send my reply";errEl.textContent="Network hiccup — try again.";});
+  });
+}
+
+function burstBig(){burst(innerWidth/2,innerHeight*0.4,90,true);burst(innerWidth*0.2,innerHeight*0.5,40,true);burst(innerWidth*0.8,innerHeight*0.5,40,true);}
+</script>
+</body>
+</html>

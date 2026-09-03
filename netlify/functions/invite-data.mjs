@@ -1,7 +1,7 @@
 // Read an invite. Public callers get the card details + RSVP counts.
 // The host (who holds the secret token) additionally gets the full guest list.
 import { getStore } from "@netlify/blobs";
-import { json, clean, countRsvps } from "./_lib.mjs";
+import { json, clean, countRsvps, readRsvps } from "./_lib.mjs";
 
 export default async (req) => {
   const url = new URL(req.url);
@@ -13,7 +13,7 @@ export default async (req) => {
   const meta = await store.get("inv:" + code, { type: "json" }).catch(() => null);
   if (!meta) return json({ ok: false, error: "not_found" }, 404);
 
-  const list = (await store.get("rsvps:" + code, { type: "json" }).catch(() => null)) || [];
+  const list = await readRsvps(store, code);
   const counts = countRsvps(list);
 
   const out = {

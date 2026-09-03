@@ -15,6 +15,10 @@ function injectOG(html, { title, desc, img }) {
   html = html.replace(/(<meta property="og:title" content=")[^"]*(">)/, `$1${esc(title)}$2`);
   html = html.replace(/(<meta property="og:description" content=")[^"]*(">)/, `$1${esc(desc)}$2`);
   html = html.replace(/(<meta property="og:image" content=")[^"]*(">)/, `$1${esc(img)}$2`);
+  // Twitter/X cards: previously not rewritten, so shared invites showed the default tags.
+  html = html.replace(/(<meta name="twitter:title" content=")[^"]*(">)/, `$1${esc(title)}$2`);
+  html = html.replace(/(<meta name="twitter:description" content=")[^"]*(">)/, `$1${esc(desc)}$2`);
+  html = html.replace(/(<meta name="twitter:image" content=")[^"]*(">)/, `$1${esc(img)}$2`);
   return html;
 }
 

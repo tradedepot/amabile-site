@@ -1,7 +1,7 @@
 // Record an RSVP against an invite code, email the host about it, and (optionally)
 // add the responder to the Brevo newsletter list if they opted in.
 import { getStore } from "@netlify/blobs";
-import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button, countRsvps, playlistUrl } from "./_lib.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button, countRsvps, playlistUrl, readRsvps } from "./_lib.mjs";
 import { bqInsert } from "./_bq.mjs";
 
 const RESPONSES = ["in", "out", "maybe"];
@@ -24,9 +24,11 @@ export default async (req) => {
   };
 
   const store = getStore("amabile-invites");
-  const list = (await store.get("rsvps:" + code, { type: "json" }).catch(() => null)) || [];
-  list.push(entry);
-  await store.setJSON("rsvps:" + code, list);
+  // One blob per entry → concurrent replies can never overwrite each other (fixes the
+  // read-modify-write race). Counts are derived by listing the prefix.
+  const entryId = Date.now().toString(36) + "-" + Math.random().toString(36).slice(2, 8);
+  await store.setJSON("rsvps:" + code + ":" + entryId, entry);
+  const list = await readRsvps(store, code);
   const counts = countRsvps(list);
 
   const apiKey = process.env.BREVO_API_KEY;

@@ -32,9 +32,15 @@ export default async (req) => {
   };
 
   const store = getStore("amabile-invites");
+  // Collision guard: never silently overwrite an existing invite that belongs to a
+  // different host (the old client-minted codes had no uniqueness check). A repeat with
+  // the same token is treated as an idempotent update of the same invite.
+  const prior = await store.get("inv:" + code, { type: "json" }).catch(() => null);
+  if (prior && prior.token && prior.token !== token) {
+    return json({ ok: false, error: "collision" }, 409);
+  }
   await store.setJSON("inv:" + code, meta);
-  const existing = await store.get("rsvps:" + code, { type: "json" }).catch(() => null);
-  if (!existing) await store.setJSON("rsvps:" + code, []);
+  // (RSVPs are stored one blob per entry under rsvps:<code>:<id>; no seeding needed.)
 
   // Mirror to BigQuery for analysis (best-effort).
   await bqInsert("invites", {

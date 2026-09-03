@@ -2,7 +2,7 @@
 // Protected by CIRCLES_KEY env var. Reads everything from Blobs and rolls it up,
 // including channel source, device, and the referral chain (parent_code → viral tree).
 import { getStore } from "@netlify/blobs";
-import { json, countRsvps } from "./_lib.mjs";
+import { json, countRsvps, readRsvps } from "./_lib.mjs";
 
 export default async (req) => {
   const url = new URL(req.url);
@@ -36,7 +36,7 @@ export default async (req) => {
     byDevice[inv.device || "unknown"] = (byDevice[inv.device || "unknown"] || 0) + 1;
     if (inv.parent) { loopCreates++; spawn[inv.parent] = (spawn[inv.parent] || 0) + 1; }
 
-    const r = (await store.get("rsvps:" + inv.code, { type: "json" }).catch(() => null)) || [];
+    const r = await readRsvps(store, inv.code);
     const c = countRsvps(r);
     totals.rsvps += r.length; totals.in += c.in; totals.maybe += c.maybe; totals.out += c.out;
 

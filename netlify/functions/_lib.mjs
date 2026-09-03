@@ -34,6 +34,23 @@ export function countRsvps(list) {
   return c;
 }
 
+// Read all RSVPs for a code. Writing ONE blob per entry (rsvps:<code>:<id>) is what
+// makes concurrent replies safe — the old single-array read-modify-write in rsvp.mjs
+// dropped entries when two people replied in the same moment. This merges any legacy
+// single-array blob (rsvps:<code>) with the newer per-entry blobs so nothing is lost.
+export async function readRsvps(store, code) {
+  const out = ((await store.get("rsvps:" + code, { type: "json" }).catch(() => null)) || []).slice();
+  try {
+    const { blobs } = await store.list({ prefix: "rsvps:" + code + ":" });
+    for (const b of blobs) {
+      const e = await store.get(b.key, { type: "json" }).catch(() => null);
+      if (e) out.push(e);
+    }
+  } catch (_) {}
+  out.sort((a, b) => (a.at || 0) - (b.at || 0));
+  return out;
+}
+
 // Occasion playlists (Spotify). Games night + Just because reuse the closest mood.
 export const PLAYLIST = {
   linkup:   "6na6gvlPZ5mMNIs73zviV8", // casual link-up → golden-hour soundtrack
