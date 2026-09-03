@@ -12,88 +12,107 @@
 <style>
 :root{--red:#E74529;--cream:#FFF3E0;--gold:#C9A15A;--lime:#C6FF4D;--ink:#2a1207}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:24px 16px 80px}
-.wrap{max-width:860px;margin:0 auto}
-h1{font-family:"Bagel Fat One",cursive;font-size:28px;color:var(--red)}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:#FBFAEB;padding:24px 16px 90px}
+.wrap{max-width:820px;margin:0 auto}
+h1{font-family:"Bagel Fat One",cursive;font-size:26px;color:var(--red)}
 .sub{color:#7a5c49;margin:4px 0 18px;font-size:14px}
 .gate{display:flex;gap:8px;max-width:440px}
 .gate input{flex:1;padding:12px 14px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px}
 .btn{cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:15px;padding:11px 18px;border-radius:12px}
 .btn.dk{background:var(--ink)}.btn.alt{background:var(--lime);color:#1a2e00}.btn.gd{background:var(--gold);color:#241a06}
+.btn.ghost{background:#fff;color:var(--ink);border:2px solid var(--ink)}
+.btn.sm{font-size:13px;padding:8px 13px}
 .btn:disabled{opacity:.55}
 .err{color:var(--red);font-weight:700;margin-top:10px;min-height:16px}
-.panel{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 rgba(40,16,7,.16);padding:18px;margin-top:18px}
-h2{font-family:"Bagel Fat One",cursive;font-size:20px;margin-bottom:6px}
+.panel{background:#fff;border:3px solid var(--ink);border-radius:16px;box-shadow:5px 5px 0 rgba(40,16,7,.16);padding:20px;margin-top:18px}
+h2{font-family:"Bagel Fat One",cursive;font-size:20px;margin-bottom:4px}
 .muted{color:#9a8576;font-size:13px}
-label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:#6a4634;margin:12px 0 5px}
-input[type=text],input[type=date],input[type=datetime-local],input[type=number],textarea,select{width:100%;padding:11px 13px;border:2px solid var(--ink);border-radius:10px;font-family:inherit;font-size:14px;background:#fff}
+label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:#6a4634;margin:14px 0 5px}
+input[type=text],input[type=date],input[type=datetime-local],input[type=number],textarea,select{width:100%;padding:12px 13px;border:2px solid var(--ink);border-radius:10px;font-family:inherit;font-size:15px;background:#fff}
 textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,monospace;font-size:13px}
-.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:12px}
-.pill{display:inline-block;background:var(--gold);color:#241a06;border-radius:999px;padding:2px 10px;font-weight:700;font-size:12px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-top:16px}
+.linkhint{margin-top:6px;font-size:12.5px;color:#7a5c49}
+.linkhint code{background:#FBFAEB;border:1px solid #EAD59B;border-radius:6px;padding:2px 7px;font-size:12px}
+.pillrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{display:inline-block;background:#FBFAEB;border:2px solid #EAD59B;border-radius:999px;padding:5px 12px;font-size:12.5px;font-weight:700}
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
 th,td{text-align:left;padding:8px 9px;border-bottom:1px solid rgba(42,18,7,.12);vertical-align:top}
 th{background:var(--ink);color:var(--lime);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
 tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{color:#9a8576}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
-.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:12px}
-.kpi{background:#FBFAEB;border-radius:12px;padding:10px 14px;min-width:92px}
+.kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+.kpi{background:#FBFAEB;border-radius:12px;padding:10px 14px;min-width:88px}
 .kpi b{display:block;font-family:"Bagel Fat One",cursive;font-size:22px}
 .kpi span{font-size:11px;text-transform:uppercase;letter-spacing:.05em;color:#7a5c49}
-.links{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;background:#FBFAEB;border-radius:10px;padding:12px;max-height:220px;overflow:auto;margin-top:10px}
+.links{font-family:ui-monospace,Menlo,monospace;font-size:12px;white-space:pre-wrap;word-break:break-all;background:#FBFAEB;border-radius:10px;padding:12px;max-height:220px;overflow:auto;margin-top:12px}
+.eyebrow{font-size:11px;text-transform:uppercase;letter-spacing:.14em;font-weight:700;color:var(--gold)}
+.hide{display:none}
 @media(max-width:620px){.grid2{grid-template-columns:1fr}}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <h1>The Amabile Table — admin</h1>
-  <div class="sub">Editions, guest lists, live standings and export. Gated by the team key (checked server-side on every call).</div>
+  <h1>The Amabile Table</h1>
+  <div class="sub">Set up an edition, invite your guests, watch the seats fill.</div>
 
   <div id="gate">
     <div class="gate"><input type="password" id="pw" placeholder="Team key" autocomplete="off"><button class="btn" id="enter">Enter</button></div>
     <div class="err" id="gateErr"></div>
   </div>
 
-  <div id="appui" style="display:none">
-    <!-- Editions -->
+  <div id="appui" class="hide">
+
+    <!-- STEP 1 — choose or start an edition -->
     <div class="panel">
-      <h2>Editions</h2>
-      <div class="muted">Create or edit an edition — this is data, no deploy needed. Pick one to load its form.</div>
-      <div class="row">
-        <select id="edSelect" style="max-width:340px"><option value="">— new edition —</option></select>
-        <button class="btn dk" id="refreshEds">Refresh</button>
+      <div class="eyebrow">Step 1 · The lunch</div>
+      <div class="row" style="margin-top:8px">
+        <select id="edSelect" style="max-width:360px"><option value="">Choose an edition…</option></select>
+        <button class="btn gd" id="newEd">+ New edition</button>
+        <button class="btn ghost sm" id="refreshEds">Refresh</button>
       </div>
+    </div>
+
+    <!-- Edition form (hidden until you pick/create one) -->
+    <div class="panel hide" id="edPanel">
+      <h2 id="edHead">New edition</h2>
+      <div class="muted" id="edLink"></div>
       <div class="grid2" style="margin-top:8px">
-        <div><label>Edition id (url slug)</label><input type="text" id="fEd" placeholder="no-1"></div>
-        <div><label>Title</label><input type="text" id="fTitle" placeholder="The Amabile Table — No. 1"></div>
+        <div style="grid-column:1/-1"><label>What's it called?</label><input type="text" id="fTitle" placeholder="The Amabile Table — No. 1">
+          <div class="linkhint" id="slugHint"></div></div>
         <div><label>Date</label><input type="date" id="fDate"></div>
-        <div><label>Time (free text)</label><input type="text" id="fTime" placeholder="1:00 PM"></div>
+        <div><label>Start time</label><input type="text" id="fTime" placeholder="1:00 PM"></div>
         <div><label>Venue</label><input type="text" id="fVenue" placeholder="A private dining room, VI"></div>
-        <div><label>Address (shown on confirmation)</label><input type="text" id="fAddr" placeholder="82 Adetokunbo Ademola St, VI"></div>
-        <div><label>Seat cap</label><input type="number" id="fCap" min="1" value="26"></div>
-        <div><label>RSVP deadline</label><input type="datetime-local" id="fDeadline"></div>
+        <div><label>Full address <span style="text-transform:none;font-weight:500;color:#9a8576">(on the confirmation email)</span></label><input type="text" id="fAddr" placeholder="82 Adetokunbo Ademola St, VI"></div>
+        <div><label>How many seats?</label><input type="number" id="fCap" min="1" value="26"></div>
+        <div><label>RSVPs close <span style="text-transform:none;font-weight:500;color:#9a8576">(optional)</span></label><input type="date" id="fDeadline"><div class="linkhint">Leave blank to keep replies open until the lunch date.</div></div>
       </div>
-      <div class="row"><button class="btn" id="saveEd">Save edition</button><span class="muted" id="edMsg"></span></div>
+      <div class="row"><button class="btn" id="saveEd">Save</button><span class="muted" id="edMsg"></span></div>
     </div>
 
-    <!-- Guests -->
-    <div class="panel">
-      <h2>Guest list <span class="muted" id="gCount"></span></h2>
-      <div class="muted">Paste from your spreadsheet: one guest per line, <b>Name</b> then <b>Email</b> (tab or comma separated). A header row is ignored. Each guest gets a unique personal link.</div>
-      <label>Paste guests</label>
-      <textarea id="gPaste" placeholder="Ada Obi	ada@email.com&#10;Tunde Bello	tunde@email.com"></textarea>
-      <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500"><input type="checkbox" id="gReplace" style="width:auto"> Replace the whole list (otherwise append / update by email)</label>
-      <div class="row"><button class="btn" id="importG">Import guests</button><button class="btn gd" id="getLinks">Show all guest links</button><span class="muted" id="gMsg"></span></div>
-      <div class="links" id="linksBox" style="display:none"></div>
-      <div class="row" id="linkActions" style="display:none"><button class="btn dk" id="copyLinks">Copy links</button><button class="btn dk" id="csvLinks">Download links CSV</button></div>
-    </div>
+    <!-- Everything below appears once an edition is active -->
+    <div id="edContext" class="hide">
 
-    <!-- Standings -->
-    <div class="panel">
-      <h2>Standings <span class="muted" id="stMsg"></span></h2>
-      <div class="row"><button class="btn dk" id="loadData">Refresh standings</button><button class="btn alt" id="csvData">Download CSV</button></div>
-      <div class="kpis" id="kpis"></div>
-      <div class="tablewrap"><table id="stTable"><thead><tr><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>What they do</th><th>Dietary / notes</th><th>List</th></tr></thead><tbody id="stRows"></tbody></table></div>
+      <!-- STEP 2 — guests -->
+      <div class="panel">
+        <div class="eyebrow">Step 2 · The guest list</div>
+        <h2 style="margin-top:4px">Invite your guests <span class="chip hide" id="gCount"></span></h2>
+        <div class="muted">Paste straight from your spreadsheet — one guest per line, <b>name then email</b> (tab or comma between them). A header row is ignored. Each guest gets their own private link.</div>
+        <textarea id="gPaste" placeholder="Ada Obi,  ada@email.com&#10;Tunde Bello,  tunde@email.com"></textarea>
+        <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500;margin-top:10px"><input type="checkbox" id="gReplace" style="width:auto;height:16px"> Replace the whole list (otherwise add to it / update by email)</label>
+        <div class="row"><button class="btn" id="importG">Add guests</button><button class="btn gd sm" id="getLinks">Show everyone's links</button><span class="muted" id="gMsg"></span></div>
+        <div class="links hide" id="linksBox"></div>
+        <div class="row hide" id="linkActions"><button class="btn dk sm" id="copyLinks">Copy for mail-merge</button><button class="btn dk sm" id="csvLinks">Download links CSV</button></div>
+      </div>
+
+      <!-- STEP 3 — standings -->
+      <div class="panel">
+        <div class="eyebrow">Step 3 · Who's coming</div>
+        <div class="row" style="margin-top:6px"><button class="btn dk" id="loadData">Refresh</button><button class="btn alt" id="csvData">Download guest list (CSV)</button><span class="muted" id="stMsg"></span></div>
+        <div class="kpis" id="kpis"></div>
+        <div class="tablewrap"><table id="stTable"><thead><tr><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>What they do</th><th>Dietary / notes</th><th>Next?</th></tr></thead><tbody id="stRows"></tbody></table></div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -101,86 +120,120 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
 <script>
 var KEY="";
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+function $(id){return document.getElementById(id);}
+function show(id,on){$(id).classList.toggle("hide",!on);}
 function api(action,extra){return fetch("/.netlify/functions/table-admin",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(Object.assign({k:KEY,action:action},extra||{}))}).then(function(r){return r.json().catch(function(){return{ok:false};});});}
-var pw=document.getElementById("pw"),enter=document.getElementById("enter"),gateErr=document.getElementById("gateErr");
 
-function unlock(k){KEY=k;try{localStorage.setItem("adr_table_k",k);}catch(e){}document.getElementById("gate").style.display="none";document.getElementById("appui").style.display="block";loadEditions();}
+/* ---- gate ---- */
+var pw=$("pw"),enter=$("enter"),gateErr=$("gateErr");
+function unlock(k){KEY=k;try{localStorage.setItem("adr_table_k",k);}catch(e){}show("gate",false);show("appui",true);loadEditions();}
 enter.addEventListener("click",function(){gateErr.textContent="";var k=pw.value.trim();if(!k)return;enter.disabled=true;
   api("auth",{k:k}).then(function(d){enter.disabled=false;if(d&&d.ok)unlock(k);else gateErr.textContent="Wrong key.";}).catch(function(){enter.disabled=false;gateErr.textContent="Try again.";});});
 pw.addEventListener("keydown",function(e){if(e.key==="Enter")enter.click();});
 (function(){var k="";try{k=localStorage.getItem("adr_table_k")||"";}catch(e){}if(k){api("auth",{k:k}).then(function(d){if(d&&d.ok)unlock(k);});}})();
 
-/* editions */
-var EDITIONS=[];
-function loadEditions(){api("editions").then(function(d){EDITIONS=(d&&d.editions)||[];var sel=document.getElementById("edSelect");
-  sel.innerHTML='<option value="">— new edition —</option>'+EDITIONS.map(function(e){return '<option value="'+esc(e.edition)+'">'+esc(e.title)+' ('+e.invited+' invited · '+e.cap+' cap)</option>';}).join("");});}
-document.getElementById("refreshEds").addEventListener("click",loadEditions);
-document.getElementById("edSelect").addEventListener("change",function(){
-  var ed=this.value;var e=EDITIONS.filter(function(x){return x.edition===ed;})[0];
-  if(!e){["fEd","fTitle","fDate","fTime","fVenue","fAddr","fDeadline"].forEach(function(id){document.getElementById(id).value="";});document.getElementById("fCap").value=26;document.getElementById("gCount").textContent="";return;}
-  api("data",{edition:ed}).then(function(d){if(!d||!d.ok)return;var m=d.edition;
-    document.getElementById("fEd").value=m.edition;document.getElementById("fTitle").value=m.title||"";
-    document.getElementById("fDate").value=m.dateISO||"";document.getElementById("fTime").value=m.timeLabel||"";
-    document.getElementById("fVenue").value=m.venue||"";document.getElementById("fAddr").value=m.address||"";
-    document.getElementById("fCap").value=m.cap||26;document.getElementById("fDeadline").value=(m.deadlineISO||"").slice(0,16);
-    document.getElementById("gCount").textContent="· "+d.summary.invited+" invited";
-    renderData(d);
+/* ---- editions ---- */
+var EDITIONS=[], CUR_SLUG="";
+function siteBase(){return "https://wya.to";}
+function slugify(title){var m=String(title||"").match(/no\.?\s*(\d+)/i);if(m)return "no-"+m[1];
+  var s=String(title||"").toLowerCase().replace(/[^a-z0-9]+/g,"-").replace(/^-+|-+$/g,"").slice(0,40);return s||("ed-"+Date.now().toString(36));}
+function curEditionSlug(){return CUR_SLUG||slugify($("fTitle").value);}
+
+function loadEditions(){return api("editions").then(function(d){EDITIONS=(d&&d.editions)||[];
+  $("edSelect").innerHTML='<option value="">Choose an edition…</option>'+EDITIONS.map(function(e){return '<option value="'+esc(e.edition)+'">'+esc(e.title)+'  ('+e.invited+' invited · cap '+e.cap+')</option>';}).join("");
+});}
+$("refreshEds").addEventListener("click",loadEditions);
+
+function openEdition(slug){
+  var e=EDITIONS.filter(function(x){return x.edition===slug;})[0];
+  if(!e){newEdition();return;}
+  CUR_SLUG=slug;show("edPanel",true);show("edContext",true);
+  $("edHead").textContent="Editing "+e.title;
+  $("edLink").innerHTML='Guest links: <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>';
+  api("data",{edition:slug}).then(function(d){if(!d||!d.ok)return;var m=d.edition;
+    $("fTitle").value=m.title||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";
+    $("fVenue").value=m.venue||"";$("fAddr").value=m.address||"";$("fCap").value=m.cap||26;
+    $("fDeadline").value=(m.deadlineISO||"").slice(0,10);
+    updateSlugHint();renderData(d);
+    $("gCount").textContent=d.summary.invited+" invited";show("gCount",d.summary.invited>0);
   });
-});
-document.getElementById("saveEd").addEventListener("click",function(){
-  var body={edition:document.getElementById("fEd").value.trim(),title:document.getElementById("fTitle").value.trim(),
-    dateISO:document.getElementById("fDate").value,timeLabel:document.getElementById("fTime").value.trim(),
-    venue:document.getElementById("fVenue").value.trim(),address:document.getElementById("fAddr").value.trim(),
-    cap:parseInt(document.getElementById("fCap").value,10)||0};
-  var dl=document.getElementById("fDeadline").value;if(dl)body.deadlineISO=new Date(dl).toISOString();
-  var msg=document.getElementById("edMsg");msg.textContent="Saving…";
-  api("save-edition",body).then(function(d){msg.textContent=d&&d.ok?"Saved ✓":("Error: "+((d&&d.error)||"failed"));loadEditions();});
+}
+function newEdition(){
+  CUR_SLUG="";show("edPanel",true);show("edContext",false);
+  $("edHead").textContent="New edition";$("edLink").innerHTML="";
+  var n=(EDITIONS.length||0)+1;
+  $("fTitle").value="The Amabile Table — No. "+n;
+  ["fDate","fTime","fVenue","fAddr","fDeadline"].forEach(function(id){$(id).value="";});
+  $("fCap").value=26;$("edMsg").textContent="";$("gPaste").value="";
+  updateSlugHint();$("fTitle").focus();
+}
+$("newEd").addEventListener("click",newEdition);
+$("edSelect").addEventListener("change",function(){if(this.value)openEdition(this.value);});
+
+function updateSlugHint(){var slug=curEditionSlug();
+  $("slugHint").innerHTML=CUR_SLUG?"":('Their link will be <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>');}
+$("fTitle").addEventListener("input",updateSlugHint);
+
+$("saveEd").addEventListener("click",function(){
+  var title=$("fTitle").value.trim();if(!title){$("edMsg").textContent="Give it a name.";return;}
+  var slug=CUR_SLUG||slugify(title);
+  if(!CUR_SLUG && EDITIONS.some(function(e){return e.edition===slug;})){
+    if(!confirm("An edition with the link /table/"+slug+" already exists. Save will update it — continue?"))return;
+  }
+  var dateISO=$("fDate").value;
+  var body={edition:slug,title:title,dateISO:dateISO,timeLabel:$("fTime").value.trim(),
+    venue:$("fVenue").value.trim(),address:$("fAddr").value.trim(),cap:parseInt($("fCap").value,10)||0};
+  var dl=$("fDeadline").value; // date only
+  if(dl)body.deadlineISO=dl+"T09:00:00"; else if(dateISO)body.deadlineISO=dateISO+"T09:00:00";
+  $("edMsg").textContent="Saving…";
+  api("save-edition",body).then(function(d){
+    if(!d||!d.ok){$("edMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
+    $("edMsg").textContent="Saved ✓";CUR_SLUG=slug;show("edContext",true);
+    $("edHead").textContent="Editing "+title;$("edLink").innerHTML='Guest links: <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>';$("slugHint").innerHTML="";
+    loadEditions().then(function(){$("edSelect").value=slug;});
+  });
 });
 
-/* guests */
-function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){if(!line.trim())return;var parts=line.split(/\t|,/).map(function(s){return s.trim();});
-  var name=parts[0]||"",email=(parts[1]||"");
-  if(/^name$/i.test(name))return; // header
-  if(name)out.push({name:name,email:email});});return out;}
-document.getElementById("importG").addEventListener("click",function(){
-  var ed=document.getElementById("fEd").value.trim();if(!ed){document.getElementById("gMsg").textContent="Save the edition first.";return;}
-  var rows=parseRows(document.getElementById("gPaste").value);if(!rows.length){document.getElementById("gMsg").textContent="Nothing to import.";return;}
-  var msg=document.getElementById("gMsg");msg.textContent="Importing "+rows.length+"…";
-  api("import-guests",{edition:ed,rows:rows,replace:document.getElementById("gReplace").checked}).then(function(d){
-    if(!d||!d.ok){msg.textContent="Error: "+((d&&d.error)||"failed");return;}
-    msg.textContent="Added "+d.added+", updated "+d.updated+" · "+d.total+" invited total ✓";
-    document.getElementById("gCount").textContent="· "+d.total+" invited";
-    showLinks(d.links);loadEditions();
+/* ---- guests ---- */
+function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){if(!line.trim())return;
+  var parts=line.split(/\t|,/).map(function(s){return s.trim();});var name=parts[0]||"",email=(parts[1]||"");
+  if(/^name$/i.test(name))return;if(name)out.push({name:name,email:email});});return out;}
+$("importG").addEventListener("click",function(){
+  var ed=curEditionSlug();if(!CUR_SLUG){$("gMsg").textContent="Save the edition first.";return;}
+  var rows=parseRows($("gPaste").value);if(!rows.length){$("gMsg").textContent="Paste some names first.";return;}
+  $("gMsg").textContent="Adding "+rows.length+"…";
+  api("import-guests",{edition:ed,rows:rows,replace:$("gReplace").checked}).then(function(d){
+    if(!d||!d.ok){$("gMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
+    $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · "+d.total+" invited ✓";
+    $("gCount").textContent=d.total+" invited";show("gCount",true);showLinks(d.links);loadEditions();
   });
 });
-document.getElementById("getLinks").addEventListener("click",function(){var ed=document.getElementById("fEd").value.trim();if(!ed)return;
+$("getLinks").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
   api("guest-links",{edition:ed}).then(function(d){if(d&&d.ok)showLinks(d.links);});});
 var LINKS=[];
-function showLinks(links){LINKS=links||[];var box=document.getElementById("linksBox");
-  box.style.display="block";document.getElementById("linkActions").style.display="flex";
-  box.textContent=LINKS.map(function(l){return l.name+(l.email?" <"+l.email+">":"")+"  "+l.link;}).join("\n");}
-document.getElementById("copyLinks").addEventListener("click",function(){var t=LINKS.map(function(l){return l.name+"\t"+(l.email||"")+"\t"+l.link;}).join("\n");
-  try{navigator.clipboard.writeText(t);}catch(e){var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}});
-document.getElementById("csvLinks").addEventListener("click",function(){downloadCSV("amabile-table-links.csv",[["Name","Email","Link"]].concat(LINKS.map(function(l){return [l.name,l.email||"",l.link];})));});
+function showLinks(links){LINKS=links||[];show("linksBox",true);show("linkActions",true);
+  $("linksBox").textContent=LINKS.map(function(l){return l.name+(l.email?" <"+l.email+">":"")+"  "+l.link;}).join("\n");}
+$("copyLinks").addEventListener("click",function(){var t=LINKS.map(function(l){return l.name+"\t"+(l.email||"")+"\t"+l.link;}).join("\n");
+  try{navigator.clipboard.writeText(t);}catch(e){var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}$("gMsg").textContent="Copied ✓";});
+$("csvLinks").addEventListener("click",function(){downloadCSV("amabile-table-links.csv",[["Name","Email","Link"]].concat(LINKS.map(function(l){return [l.name,l.email||"",l.link];})));});
 
-/* standings */
+/* ---- standings ---- */
 var CUR=null;
-document.getElementById("loadData").addEventListener("click",function(){var ed=document.getElementById("fEd").value.trim();if(!ed){document.getElementById("stMsg").textContent="Pick an edition.";return;}
-  document.getElementById("stMsg").textContent="Loading…";api("data",{edition:ed}).then(function(d){if(d&&d.ok)renderData(d);else document.getElementById("stMsg").textContent="Error.";});});
-function renderData(d){CUR=d;var s=d.summary;document.getElementById("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
-  document.getElementById("kpis").innerHTML=
-    kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
+$("loadData").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG){$("stMsg").textContent="Pick an edition.";return;}
+  $("stMsg").textContent="Loading…";api("data",{edition:ed}).then(function(d){if(d&&d.ok)renderData(d);else $("stMsg").textContent="Error.";});});
+function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
+  $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
   var rows=[].concat(
     d.seated.map(function(r){return tr("seated","Seated",r);}),
     d.wait.map(function(r){return tr("wait","Wait #"+r.position,r);}),
     d.declined.map(function(r){return tr("declined","Declined",r);}),
     d.noReply.map(function(r){return '<tr class="declined"><td>No reply</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td></td><td></td><td></td><td></td></tr>';})
   );
-  document.getElementById("stRows").innerHTML=rows.join("")||'<tr><td colspan="7" class="muted">No data</td></tr>';
+  $("stRows").innerHTML=rows.join("")||'<tr><td colspan="7" class="muted">No replies yet</td></tr>';
 }
 function kpi(v,l){return '<div class="kpi"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>';}
-function tr(cls,label,r){return '<tr class="'+cls+'"><td>'+esc(label)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.mobile||"")+'</td><td>'+esc(r.role||"")+'</td><td>'+esc(r.notes||"")+'</td><td>'+(r.optin?"◎ next":"")+'</td></tr>';}
-document.getElementById("csvData").addEventListener("click",function(){if(!CUR){return;}
+function tr(cls,label,r){return '<tr class="'+cls+'"><td>'+esc(label)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.mobile||"")+'</td><td>'+esc(r.role||"")+'</td><td>'+esc(r.notes||"")+'</td><td>'+(r.optin?"◎":"")+'</td></tr>';}
+$("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Status","Position","Name","Email","Mobile","What they do","Dietary/notes","Wants next"]];
   CUR.seated.forEach(function(r){rows.push(["Seated","",r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
   CUR.wait.forEach(function(r){rows.push(["Waitlist",r.position,r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
