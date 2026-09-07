@@ -39,7 +39,8 @@ export default async () => {
         const html = shell(`
           <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">See you in two days 🍷</h2>
           <p style="margin:0 0 8px;color:#6a4634"><b>${clean(ed.title, 80)}</b></p>
-          <p style="margin:0 0 14px;color:#6a4634">${clean(whenBits, 200)}${ed.address ? " · " + clean(ed.address, 160) : ""}</p>
+          <p style="margin:0 0 10px;color:#6a4634">${clean(whenBits, 200)}${ed.address ? " · " + clean(ed.address, 160) : ""}</p>
+          ${ed.seatedByLabel ? `<p style="margin:0 0 14px;color:#3a2410"><b>⏱️ Please be seated by ${clean(ed.seatedByLabel, 60)}</b> — we start together.</p>` : ""}
           <p style="margin:0 0 14px;color:#6a4634">Your seat is saved. If anything has changed and you can no longer make it, please let us know so we can offer the seat on — one tap:</p>
           <p style="margin:0">${button(link, "View or change your RSVP →")}</p>
         `);

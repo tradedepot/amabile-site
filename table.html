@@ -44,6 +44,8 @@ canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
 .meta{display:flex;gap:22px;flex-wrap:wrap}
 .meta .ln{display:flex;flex-direction:column;gap:2px;font-size:14px}
 .meta .ln b{font-family:"Bagel Fat One",cursive;color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
+.firm{margin-top:16px;background:rgba(201,161,90,.18);border:1.5px solid rgba(201,161,90,.55);border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.45;color:#ffe9d9}
+.firm b{color:var(--gold)}
 .clogo{height:15px;width:auto;margin-top:18px;opacity:.6}
 /* panel */
 .panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
@@ -171,11 +173,13 @@ function metaCard(){
   var m="";
   if(e.dateLabel)m+='<div class="ln"><b>When</b><span>'+esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel):"")+'</span></div>';
   if(e.venue)m+='<div class="ln"><b>Where</b><span>'+esc(e.venue)+'</span></div>';
+  if(e.seatedByLabel)m+='<div class="ln"><b>Seated by</b><span>'+esc(e.seatedByLabel)+'</span></div>';
+  var firm=e.seatedByLabel?'<p class="firm">⏱️ It\'s a hosted long-table lunch, so we start together. Please be in your seat by <b>'+esc(e.seatedByLabel)+'</b> — we can\'t hold seats past then.</p>':'';
   return '<div class="card"><div class="bg" style="background-image:url(\'/assets/images/occasions/dinner.jpg\')"></div><div class="veil"></div><div class="cont">'+
     '<span class="stamp">The Amabile Table</span>'+
     '<h1 class="disp">'+esc(e.title||"The Amabile Table")+'</h1>'+
     '<p class="seatfor">A seat is saved for '+esc((g.name||"you").split(" ")[0])+'. Just for you — no plus-ones.</p>'+
-    '<div class="meta">'+m+'</div>'+
+    '<div class="meta">'+m+'</div>'+firm+
     '<img class="clogo" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
   '</div></div>';
 }

@@ -28,6 +28,7 @@ export default async (req, context) => {
     dateISO: edition.dateISO || "",
     dateLabel: edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || ""),
     timeLabel: edition.timeLabel || "",
+    seatedByLabel: edition.seatedByLabel || "",
     venue: edition.venue || "",
     address: edition.address || "",
     cap: edition.cap || 0,

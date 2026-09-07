@@ -87,7 +87,8 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <div style="grid-column:1/-1"><label>What's it called?</label><input type="text" id="fTitle" placeholder="The Amabile Table — No. 1">
           <div class="linkhint" id="slugHint"></div></div>
         <div><label>Date</label><input type="date" id="fDate"></div>
-        <div><label>Start time</label><input type="text" id="fTime" placeholder="1:00 PM"></div>
+        <div><label>Arrival / start time</label><input type="text" id="fTime" placeholder="3:00 PM"></div>
+        <div><label>Seated by <span style="text-transform:none;font-weight:500;color:#9a8576">(cutoff)</span></label><input type="text" id="fSeatedBy" placeholder="3:30 PM"><div class="linkhint">Shown firmly to guests — we start together, so seats aren't held past this.</div></div>
         <div style="grid-column:1/-1"><label>Where is it?</label><input type="text" id="fVenue" placeholder="e.g. Bottega Ristorante, Victoria Island"><div class="linkhint">Shown on the invite and the confirmation. A recognisable name is enough — add a floor or suite if it helps guests find you.</div></div>
         <div><label>How many seats?</label><input type="number" id="fCap" min="1" value="26"></div>
         <div><label>RSVPs close <span style="text-transform:none;font-weight:500;color:#9a8576">(optional)</span></label><input type="date" id="fDeadline"><div class="linkhint">Leave blank to keep replies open until the lunch date.</div></div>
@@ -167,7 +168,7 @@ function openEdition(slug){
   $("edHead").textContent="Editing "+e.title;
   $("edLink").innerHTML='Guest links: <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>';
   api("data",{edition:slug}).then(function(d){if(!d||!d.ok)return;var m=d.edition;
-    $("fTitle").value=m.title||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";
+    $("fTitle").value=m.title||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";$("fSeatedBy").value=m.seatedByLabel||"";
     $("fVenue").value=m.venue||"";$("fCap").value=m.cap||26;
     $("fDeadline").value=(m.deadlineISO||"").slice(0,10);
     updateSlugHint();renderData(d);
@@ -179,7 +180,7 @@ function newEdition(){
   $("edHead").textContent="New edition";$("edLink").innerHTML="";
   var n=(EDITIONS.length||0)+1;
   $("fTitle").value="The Amabile Table — No. "+n;
-  ["fDate","fTime","fVenue","fDeadline"].forEach(function(id){$(id).value="";});
+  ["fDate","fTime","fSeatedBy","fVenue","fDeadline"].forEach(function(id){$(id).value="";});
   $("fCap").value=26;$("edMsg").textContent="";$("gPaste").value="";
   updateSlugHint();$("fTitle").focus();
 }
@@ -198,7 +199,7 @@ $("saveEd").addEventListener("click",function(){
   }
   var dateISO=$("fDate").value;
   var body={edition:slug,title:title,dateISO:dateISO,timeLabel:$("fTime").value.trim(),
-    venue:$("fVenue").value.trim(),cap:parseInt($("fCap").value,10)||0};
+    seatedByLabel:$("fSeatedBy").value.trim(),venue:$("fVenue").value.trim(),cap:parseInt($("fCap").value,10)||0};
   var dl=$("fDeadline").value; // date only
   if(dl)body.deadlineISO=dl+"T09:00:00"; else if(dateISO)body.deadlineISO=dateISO+"T09:00:00";
   $("edMsg").textContent="Saving…";

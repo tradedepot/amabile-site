@@ -123,7 +123,8 @@ export default async (req, context) => {
         <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">Your seat is saved 🍷</h2>
         <p style="margin:0 0 6px;color:#6a4634">See you at <b>${clean(edition.title, 80)}</b>. This seat is reserved for <b>${clean(guest.name, 80)}</b> — it's a seated lunch planned per person, so there are no plus-ones.</p>
         <p style="margin:12px 0 4px"><b>When</b> · ${clean(whenLine, 200)}</p>
-        ${whereLine ? `<p style="margin:0 0 12px;color:#6a4634"><b>Where</b> · ${whereLine}</p>` : ""}
+        ${whereLine ? `<p style="margin:0 0 4px;color:#6a4634"><b>Where</b> · ${whereLine}</p>` : ""}
+        ${edition.seatedByLabel ? `<p style="margin:6px 0 12px;color:#3a2410;background:#FFF6E4;border:1px solid #EAD59B;border-radius:10px;padding:10px 12px">⏱️ It's a hosted long-table lunch, so we start together — <b>please be seated by ${clean(edition.seatedByLabel, 60)}</b>. We can't hold seats past then.</p>` : ""}
         <p style="margin:12px 0 16px;color:#6a4634">Plans change — you can update your answer any time here:</p>
         <p style="margin:0">${button(guestLink, "View or change your RSVP →")}</p>
       `);

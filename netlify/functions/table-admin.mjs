@@ -85,7 +85,8 @@ export default async (req) => {
       edition: ed,
       title: clean(d.title, 120) || ("The Amabile Table — " + ed),
       dateISO: clean(d.dateISO, 10),           // YYYY-MM-DD
-      timeLabel: clean(d.timeLabel, 60),
+      timeLabel: clean(d.timeLabel, 60),       // arrival / start, e.g. "3:00 PM"
+      seatedByLabel: clean(d.seatedByLabel, 60), // hard seating cutoff, e.g. "3:30 PM"
       venue: clean(d.venue, 120),
       address: clean(d.address, 200),
       cap: Math.max(1, parseInt(d.cap, 10) || 0),
@@ -172,7 +173,8 @@ export default async (req) => {
       edition: {
         edition: ed, title: edition.title, dateISO: edition.dateISO || "",
         dateLabel: edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || ""),
-        timeLabel: edition.timeLabel || "", venue: edition.venue || "", address: edition.address || "",
+        timeLabel: edition.timeLabel || "", seatedByLabel: edition.seatedByLabel || "",
+        venue: edition.venue || "", address: edition.address || "",
         cap, deadlineISO: edition.deadlineISO || "", closed: deadlinePassed(edition)
       },
       summary: {
