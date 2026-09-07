@@ -2,7 +2,7 @@
 // date is two days out and hasn't been reminded yet, emails the currently-seated guests and
 // marks the edition so it never double-sends. Best-effort — a failure never blocks anything.
 import { sendEmail, isEmail, clean, INVITE_SITE } from "./_lib.mjs";
-import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, whenLineOf, seatedByLineOf, TABLE_FROM, tableShell, tableRow, tableBtn } from "./_table.mjs";
+import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, whenCellOf, TABLE_FROM, tableShell, tableRow, tableBtn } from "./_table.mjs";
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export const config = { schedule: "0 9 * * *" }; // 09:00 UTC daily
@@ -32,7 +32,7 @@ export default async () => {
       const guests = await loadGuests(st, ed.edition);
       const tokByGid = {};
       Object.entries(guests).forEach(([tok, g]) => { tokByGid[g.gid] = tok; });
-      const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", esc(whenLineOf(ed)))}${tableRow("Seated by", esc(seatedByLineOf(ed)))}${tableRow("Where", esc(clean(ed.venue, 160)))}</table>`;
+      const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", whenCellOf(ed))}${tableRow("Where", esc(clean(ed.venue, 160)))}</table>`;
 
       for (const r of stand.seated) {
         if (!isEmail(r.email)) continue;

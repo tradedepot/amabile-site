@@ -8,7 +8,7 @@ import { bqInsert } from "./_bq.mjs";
 import {
   tstore, edId, tokenClean, clientIp, rateOk,
   kRsvp, loadEdition, loadGuests, guestByToken, loadRsvps, standings, statusOf,
-  deadlinePassed, whenLineOf, seatedByLineOf, TABLE_FROM, tableShell, tableRow, tableBtn
+  deadlinePassed, whenCellOf, TABLE_FROM, tableShell, tableRow, tableBtn
 } from "./_table.mjs";
 
 function seatedGids(stand) { return new Set(stand.seated.map((r) => r.gid)); }
@@ -93,11 +93,9 @@ export default async (req, context) => {
   const notifyTo = process.env.TABLE_NOTIFY_EMAIL || "";
   const guestLink = `${INVITE_SITE}/table/${encodeURIComponent(ed)}?g=${encodeURIComponent(token)}`;
   const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
-  const whenLine = whenLineOf(edition);
-  const seatedByLine = seatedByLineOf(edition);
   const venueLine = clean(edition.venue, 160);
   const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
-  const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", esc(whenLine))}${tableRow("Seated by", esc(seatedByLine))}${tableRow("Where", esc(venueLine))}</table>`;
+  const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", whenCellOf(edition))}${tableRow("Where", esc(venueLine))}</table>`;
   const plusOnes = `<p style="margin:18px 0 0;font-size:13px;color:#9a8576;font-family:Arial,sans-serif">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>`;
 
   // Promotion: guests who moved into the seated set as a result of this change (a drop-out

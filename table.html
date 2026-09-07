@@ -36,7 +36,7 @@ h1{font-size:30px;line-height:1.15;font-weight:normal;margin:0 0 6px}
 .rule{width:46px;height:2px;background:var(--rule);margin:22px auto 24px}
 p.body{margin:0 0 16px;font-size:16px;line-height:1.7;color:var(--body);text-align:left}
 table.det{border-collapse:collapse;margin:8px auto 28px;text-align:left}
-table.det td{padding:9px 0 0;font-size:16px;line-height:1.3;vertical-align:top}
+table.det td{padding:9px 0 0;font-size:16px;line-height:1.35;vertical-align:top}
 table.det td.l{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:13px 18px 0 0;white-space:nowrap}
 /* reply */
 .yesno{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
@@ -118,7 +118,8 @@ function head(){
   var e=DATA.edition, g=DATA.guest||{};
   var first=((g.name||"").split(" ")[0]);
   var host=e.hostName||"Amabile di Rosa";
-  var when=e.dateLabel?esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel)+" prompt":""):"";
+  var timing=e.timeLabel?esc(e.timeLabel)+" prompt"+(e.seatedByLabel?", seated by "+esc(e.seatedByLabel):""):"";
+  var when=esc(e.dateLabel||"")+(timing?"<br>"+timing:"");
   var row=function(l,v){return v?'<tr><td class="l">'+l+'</td><td>'+v+'</td></tr>':"";};
   var paras=String(e.cardParagraph||"").split(/\n{2,}|\n/).filter(Boolean).map(function(p){return '<p class="body">'+esc(p)+'</p>';}).join("");
   return '<div class="eyebrow">The Amabile Table</div>'+
@@ -126,7 +127,7 @@ function head(){
     '<div class="host">Hosted by '+esc(host)+'</div>'+
     '<div class="rule"></div>'+
     '<p class="body">Ciao '+esc(first||"there")+',</p>'+paras+
-    '<table class="det">'+row("When",when)+row("Seated by",esc(e.seatedByLabel||""))+row("Where",esc(e.venue||""))+'</table>';
+    '<table class="det">'+row("When",when)+row("Where",esc(e.venue||""))+'</table>';
 }
 var PLUS='<p class="note">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>';
 
@@ -165,8 +166,8 @@ function renderForm(){
       '<div id="yesFields">'+
         '<label for="fEmail">Email</label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">'+
         '<label for="fMobile">Mobile <span>(for day-of logistics)</span></label><input type="tel" id="fMobile" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
+        '<label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'">'+
       '</div>'+
-      '<label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'">'+
       '<div class="send"><button class="pill" id="go">Send my reply</button></div>'+
       '<div class="err" id="ferr"></div>'+
     '</div>'+PLUS;
@@ -193,7 +194,7 @@ function renderForm(){
       if(!mobile){errEl.textContent="Add a mobile for day-of logistics.";return;}
       body.email=email;body.mobile=mobile;
     }
-    body.notes=document.getElementById("fNotes").value.trim();
+    body.notes=resp==="yes"?document.getElementById("fNotes").value.trim():"";
     go.disabled=true;go.textContent="Sending…";
     fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
       .then(function(r){return r.json().catch(function(){return{};});})

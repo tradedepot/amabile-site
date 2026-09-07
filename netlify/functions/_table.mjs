@@ -146,16 +146,26 @@ export function fmtDate(iso) {
     });
   } catch (_) { return iso || ""; }
 }
-// Timing copy, defined once. Deliberately terse (owner's call): the time itself carries it.
-//   When:      Sunday 13 September, 3:00pm prompt
-//   Seated by: 3:30pm
-export function whenLineOf(edition) {
-  const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
+// Timing copy, defined once. One WHEN row, two lines, arrival first so it reads as the
+// main time; the cutoff follows it rather than sitting on its own row.
+//   When:  Sunday 13 September
+//          3:00pm prompt, seated by 3:30pm
+export function whenPartsOf(edition) {
+  const date = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
   const t = clean(edition.timeLabel, 60);
-  return dateLabel + (t ? ", " + t + " prompt" : "");
+  const s = clean(edition.seatedByLabel, 60);
+  const time = t ? t + " prompt" + (s ? ", seated by " + s : "") : "";
+  return { date, time };
 }
-export function seatedByLineOf(edition) {
-  return clean(edition.seatedByLabel, 60);
+export function whenLineOf(edition) {
+  const p = whenPartsOf(edition);
+  return p.date + (p.time ? ", " + p.time : "");
+}
+// HTML for the WHEN cell (escaped), date on line one, timing on line two.
+export function whenCellOf(edition) {
+  const e = (x) => String(x == null ? "" : x).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const p = whenPartsOf(edition);
+  return e(p.date) + (p.time ? "<br>" + e(p.time) : "");
 }
 export function deadlinePassed(edition) {
   if (!edition || !edition.deadlineISO) return false;

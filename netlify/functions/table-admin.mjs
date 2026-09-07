@@ -6,7 +6,7 @@ import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "./_
 import {
   tstore, edId, kEdition, kGuests, kRsvp, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM,
-  whenLineOf, seatedByLineOf
+  whenCellOf
 } from "./_table.mjs";
 
 function authed(d) {
@@ -19,11 +19,12 @@ function authed(d) {
 function esc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
-function inviteEmailHtml({ name, hostName, title, whenLine, seatedBy, venue, cardParagraph, link }) {
-  const row = (label, val) => val
+function inviteEmailHtml({ name, hostName, title, whenCell, venue, cardParagraph, link }) {
+  // whenCell arrives as escaped HTML (date <br> timing); venue is escaped here.
+  const row = (label, html) => html
     ? `<tr>
         <td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b08d57;padding:13px 18px 0 0;vertical-align:top;white-space:nowrap">${label}</td>
-        <td style="font-size:16px;color:#2a1207;padding:9px 0 0;line-height:1.3">${esc(val)}</td>
+        <td style="font-size:16px;color:#2a1207;padding:9px 0 0;line-height:1.35">${html}</td>
       </tr>` : "";
   const paras = String(cardParagraph || "").split(/\n{2,}|\n/).filter(Boolean)
     .map((p) => `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">${esc(p)}</p>`).join("");
@@ -40,9 +41,8 @@ function inviteEmailHtml({ name, hostName, title, whenLine, seatedBy, venue, car
           <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">Ciao ${esc(name) || "there"},</p>
           ${paras}
           <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:8px auto 28px;text-align:left">
-            ${row("When", whenLine)}
-            ${row("Seated by", seatedBy)}
-            ${row("Where", venue)}
+            ${row("When", whenCell)}
+            ${row("Where", esc(venue))}
           </table>
           <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr>
             <td style="padding:0 6px"><a href="${link}&amp;r=yes" style="display:inline-block;background:#7d1d1d;border:2px solid #7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:13px 30px;border-radius:999px">Yes, I will be there</a></td>
@@ -165,8 +165,7 @@ export default async (req) => {
     const onlyNew = !only && d.onlyNew !== false;
     const site = INVITE_SITE || "https://wya.to";
     const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
-    const whenLine = whenLineOf(edition);
-    const seatedByLine = seatedByLineOf(edition);
+    const whenCell = whenCellOf(edition);
     const cardDefault = "An intimate lunch. One long table, twenty-eight guests, culture-led conversation over lunch and drinks, with Moses Oyeleye's exhibition, The City People, as the backdrop.";
     const cardParagraph = clean(edition.cardParagraph || edition.invite, 1600) || cardDefault;
     let sent = 0, skipped = 0; const failed = [];
@@ -178,7 +177,7 @@ export default async (req) => {
       const link = `${site}/table/${ed}?g=${tok}`;
       const html = inviteEmailHtml({
         name: clean(g.name, 80).split(" ")[0], hostName, title: clean(edition.title, 80),
-        whenLine, venue: clean(edition.venue, 120), seatedBy: seatedByLine, cardParagraph, link
+        whenCell, venue: clean(edition.venue, 120), cardParagraph, link
       });
       const res = await sendEmail(apiKey, g.email, `You're invited to ${clean(edition.title, 60)}`, html, TABLE_FROM);
       g.inviteResult = { ok: !!(res && res.ok), status: (res && res.status) || null, text: (res && (res.text || res.error) || "").slice(0, 140), at: Date.now() };
