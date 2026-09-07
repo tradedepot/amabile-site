@@ -157,7 +157,8 @@ export default async (req) => {
     const stand = standings(rsvps, cap);
     const shape = (r, extra) => ({
       name: r.name, email: r.email || "", mobile: r.mobile || "", role: r.role || "",
-      notes: r.notes || "", optin: !!r.optin, at: r.updatedAt || r.at || 0, ...extra
+      notes: r.notes || "", optin: !!r.optin, at: r.updatedAt || r.at || 0,
+      emailStatus: r.emailStatus || null, ...extra
     });
     const seated = stand.seated.map((r) => shape(r, { status: "seated" }));
     const wait = stand.wait.map((r, i) => shape(r, { status: "wait", position: i + 1 }));

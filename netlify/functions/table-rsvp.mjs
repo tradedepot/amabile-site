@@ -188,6 +188,13 @@ export default async (req, context) => {
     created_at: new Date(rec.updatedAt).toISOString()
   });
 
+  // Persist the email outcome on the guest record so the admin Standings can show, in plain
+  // language, whether each guest's confirmation actually sent — no devtools or logs needed.
+  try {
+    const cur = await st.get(kRsvp(ed, guest.gid), { type: "json" }).catch(() => null);
+    if (cur) await st.setJSON(kRsvp(ed, guest.gid), { ...cur, emailStatus: emailResult });
+  } catch (_) {}
+
   console.log("table-rsvp", JSON.stringify({ ed, gid: guest.gid, response, status: mine.status, to: rec.email, sender: TABLE_FROM.email, email: emailResult }));
 
   return json({

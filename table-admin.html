@@ -116,7 +116,7 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <div class="eyebrow">Step 3 · Who's coming</div>
         <div class="row" style="margin-top:6px"><button class="btn dk" id="loadData">Refresh</button><button class="btn alt" id="csvData">Download guest list (CSV)</button><span class="muted" id="stMsg"></span></div>
         <div class="kpis" id="kpis"></div>
-        <div class="tablewrap"><table id="stTable"><thead><tr><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>What they do</th><th>Dietary / notes</th><th>Next?</th></tr></thead><tbody id="stRows"></tbody></table></div>
+        <div class="tablewrap"><table id="stTable"><thead><tr><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>What they do</th><th>Dietary / notes</th><th>Next?</th><th>Confirmation</th></tr></thead><tbody id="stRows"></tbody></table></div>
       </div>
 
     </div>
@@ -244,12 +244,17 @@ function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+n
     d.seated.map(function(r){return tr("seated","Seated",r);}),
     d.wait.map(function(r){return tr("wait","Wait #"+r.position,r);}),
     d.declined.map(function(r){return tr("declined","Declined",r);}),
-    d.noReply.map(function(r){return '<tr class="declined"><td>No reply</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td></td><td></td><td></td><td></td></tr>';})
+    d.noReply.map(function(r){return '<tr class="declined"><td>No reply</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td></td><td></td><td></td><td></td><td class="muted">—</td></tr>';})
   );
   $("stRows").innerHTML=rows.join("")||'<tr><td colspan="7" class="muted">No replies yet</td></tr>';
 }
 function kpi(v,l){return '<div class="kpi"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>';}
-function tr(cls,label,r){return '<tr class="'+cls+'"><td>'+esc(label)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.mobile||"")+'</td><td>'+esc(r.role||"")+'</td><td>'+esc(r.notes||"")+'</td><td>'+(r.optin?"◎":"")+'</td></tr>';}
+function emailCell(r){var e=r.emailStatus;
+  if(!e)return '<span class="muted">—</span>';
+  if(e.attempted===false)return e.reason==="no_api_key"?'<span style="color:#c0392b;font-weight:700">No email key</span>':'<span class="muted">—</span>';
+  if(e.ok)return '<span style="color:#3B6D11;font-weight:700">Sent ✓</span>';
+  return '<span style="color:#c0392b;font-weight:700" title="'+esc((e.text||e.error||"").slice(0,140))+'">Failed '+esc(String(e.status||e.error||""))+'</span>';}
+function tr(cls,label,r){return '<tr class="'+cls+'"><td>'+esc(label)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.mobile||"")+'</td><td>'+esc(r.role||"")+'</td><td>'+esc(r.notes||"")+'</td><td>'+(r.optin?"◎":"")+'</td><td>'+emailCell(r)+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Status","Position","Name","Email","Mobile","What they do","Dietary/notes","Wants next"]];
   CUR.seated.forEach(function(r){rows.push(["Seated","",r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
