@@ -106,7 +106,7 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <div class="muted">Paste straight from your spreadsheet — one guest per line, <b>name then email</b> (tab or comma between them). A header row is ignored. Each guest gets their own private link.</div>
         <textarea id="gPaste" placeholder="Ada Obi,  ada@email.com&#10;Tunde Bello,  tunde@email.com"></textarea>
         <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500;margin-top:10px"><input type="checkbox" id="gReplace" style="width:auto;height:16px"> Replace the whole list (otherwise add to it / update by email)</label>
-        <div class="row"><button class="btn" id="importG">Add guests</button><button class="btn gd sm" id="getLinks">Show everyone's links</button><span class="muted" id="gMsg"></span></div>
+        <div class="row"><button class="btn" id="importG">Add guests</button><button class="btn gd sm" id="getLinks">Show everyone's links</button><button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:#c0392b">Clear guest list</button><span class="muted" id="gMsg"></span></div>
         <div class="links hide" id="linksBox"></div>
         <div class="row hide" id="linkActions"><button class="btn dk sm" id="copyLinks">Copy for mail-merge</button><button class="btn dk sm" id="csvLinks">Download links CSV</button></div>
       </div>
@@ -212,9 +212,17 @@ $("saveEd").addEventListener("click",function(){
 });
 
 /* ---- guests ---- */
-function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){if(!line.trim())return;
-  var parts=line.split(/\t|,/).map(function(s){return s.trim();});var name=parts[0]||"",email=(parts[1]||"");
-  if(/^name$/i.test(name))return;if(name)out.push({name:name,email:email});});return out;}
+function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){
+  line=line.trim();if(!line)return;
+  // Pull the email out however it's separated (tab, comma, or just a space); the rest is the name.
+  var em=line.match(/[^\s,;<>()"]+@[^\s,;<>()"]+\.[^\s,;<>()"]+/);
+  var email=em?em[0]:"",name;
+  if(email){name=line.replace(email,"").replace(/[,;<>()"]/g,"").trim();}
+  else{var parts=line.split(/\t|,|;/).map(function(s){return s.trim();});name=parts[0]||"";}
+  if(/^name$/i.test(name))return;
+  if(!name&&email)name=email.split("@")[0];
+  if(name||email)out.push({name:name||"",email:email});
+});return out;}
 $("importG").addEventListener("click",function(){
   var ed=curEditionSlug();if(!CUR_SLUG){$("gMsg").textContent="Save the edition first.";return;}
   var rows=parseRows($("gPaste").value);if(!rows.length){$("gMsg").textContent="Paste some names first.";return;}
@@ -227,6 +235,16 @@ $("importG").addEventListener("click",function(){
 });
 $("getLinks").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
   api("guest-links",{edition:ed}).then(function(d){if(d&&d.ok)showLinks(d.links);});});
+$("clearG").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
+  if(!confirm("Remove ALL invited guests AND their responses for this edition? Use this to clear test data — it can't be undone."))return;
+  $("gMsg").textContent="Clearing…";
+  api("clear-guests",{edition:ed}).then(function(d){
+    if(!d||!d.ok){$("gMsg").textContent="Error.";return;}
+    $("gMsg").textContent="Cleared ✓ (removed "+d.removed+" responses)";
+    $("gCount").textContent="0 invited";show("gCount",false);
+    LINKS=[];$("linksBox").textContent="";show("linksBox",false);show("linkActions",false);
+    loadEditions();api("data",{edition:ed}).then(function(x){if(x&&x.ok)renderData(x);});
+  });});
 var LINKS=[];
 function showLinks(links){LINKS=links||[];show("linksBox",true);show("linkActions",true);
   $("linksBox").textContent=LINKS.map(function(l){return l.name+(l.email?" <"+l.email+">":"")+"  "+l.link;}).join("\n");}

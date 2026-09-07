@@ -4,7 +4,7 @@
 // paste, minting a collision-checked per-guest token for each row.
 import { json, clean, isEmail, INVITE_SITE } from "./_lib.mjs";
 import {
-  tstore, edId, kEdition, kGuests, loadEdition, loadGuests, loadRsvps,
+  tstore, edId, kEdition, kGuests, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM
 } from "./_table.mjs";
 
@@ -133,6 +133,19 @@ export default async (req) => {
       name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`
     }));
     return json({ ok: true, added, updated, total: Object.keys(base).length, links });
+  }
+
+  // ---- clear the guest list + responses (test-data reset) ----------------------------
+  if (action === "clear-guests") {
+    const ed = edId(d.edition || "");
+    if (!ed) return json({ ok: false, error: "bad_edition" }, 400);
+    await st.setJSON(kGuests(ed), {});
+    let removed = 0;
+    try {
+      const { blobs } = await st.list({ prefix: kRsvpPrefix(ed) });
+      for (const b of blobs) { await st.delete(b.key).catch(() => {}); removed++; }
+    } catch (_) {}
+    return json({ ok: true, removed });
   }
 
   // ---- guest links (for a mail-merge) ------------------------------------------------
