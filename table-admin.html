@@ -103,8 +103,8 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
       <div class="panel">
         <div class="eyebrow">Step 2 · The guest list</div>
         <h2 style="margin-top:4px">Invite your guests <span class="chip hide" id="gCount"></span></h2>
-        <div class="muted">Paste straight from your spreadsheet — one guest per line, <b>name then email</b> (tab or comma between them). A header row is ignored. Each guest gets their own private link.</div>
-        <textarea id="gPaste" placeholder="Ada Obi,  ada@email.com&#10;Tunde Bello,  tunde@email.com"></textarea>
+        <div class="muted">One guest per line — <b>name and email</b>, separated however you like: a comma, a tab, or just a space all work. A header row is ignored. Each guest gets their own private link.</div>
+        <textarea id="gPaste" placeholder="Ada Obi  ada@email.com&#10;Tunde Bello, tunde@email.com&#10;Chidi Okeke	chidi@email.com"></textarea>
         <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500;margin-top:10px"><input type="checkbox" id="gReplace" style="width:auto;height:16px"> Replace the whole list (otherwise add to it / update by email)</label>
         <div class="row"><button class="btn" id="importG">Add guests</button><button class="btn gd sm" id="getLinks">Show everyone's links</button><button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:#c0392b">Clear guest list</button><span class="muted" id="gMsg"></span></div>
         <div class="links hide" id="linksBox"></div>
@@ -214,13 +214,18 @@ $("saveEd").addEventListener("click",function(){
 /* ---- guests ---- */
 function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){
   line=line.trim();if(!line)return;
-  // Pull the email out however it's separated (tab, comma, or just a space); the rest is the name.
-  var em=line.match(/[^\s,;<>()"]+@[^\s,;<>()"]+\.[^\s,;<>()"]+/);
+  // Read a line however it's typed: "Name email", "Name, email", "Name<tab>email",
+  // "Name <email>", "email Name", or just a name / just an email. Pull the email out
+  // wherever it sits; whatever's left, cleaned of separators, is the name.
+  var em=line.match(/[^\s,;:<>()"|]+@[^\s,;:<>()"|]+\.[^\s,;:<>()"|]+/);
   var email=em?em[0]:"",name;
-  if(email){name=line.replace(email,"").replace(/[,;<>()"]/g,"").trim();}
-  else{var parts=line.split(/\t|,|;/).map(function(s){return s.trim();});name=parts[0]||"";}
-  if(/^name$/i.test(name))return;
-  if(!name&&email)name=email.split("@")[0];
+  if(email){
+    name=line.replace(email,"").replace(/[,;:<>()"|]+/g," ").replace(/\s+/g," ").replace(/^[\s\-–—]+|[\s\-–—]+$/g,"").trim();
+  }else{
+    var parts=line.split(/\t|,|;/).map(function(s){return s.trim();});name=parts[0]||"";
+  }
+  if(/^name$/i.test(name))return;                 // skip a header row
+  if(!name&&email)name=email.split("@")[0];        // email only → use the local part as a name
   if(name||email)out.push({name:name||"",email:email});
 });return out;}
 $("importG").addEventListener("click",function(){
