@@ -14,9 +14,8 @@ function authed(d) {
   return key && typeof d.k === "string" && d.k === key;
 }
 
-// A real invitation email: written in the host's own voice (first person), the body is a
-// per-edition field so each host writes their own note and backdrop. No wine framing, plus-
-// ones stated once and plainly, single preamble, no em dashes.
+// A real invitation email. The body is a per-edition field (third person, not the host's
+// voice). No wine framing, plus-ones stated once and plainly, single preamble, no em dashes.
 function esc(s) {
   return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 }
@@ -194,7 +193,7 @@ export default async (req) => {
     const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
     const whenLine = whenLineOf(edition);
     const seatedByLine = seatedByLineOf(edition);
-    const cardDefault = "An intimate lunch. One long table, culture-led conversation over lunch and drinks.";
+    const cardDefault = "An intimate lunch. One long table, twenty-eight guests, culture-led conversation over lunch and drinks, with Moses Oyeleye's exhibition, The City People, as the backdrop.";
     const cardParagraph = clean(edition.cardParagraph || edition.invite, 1600) || cardDefault;
     let sent = 0, skipped = 0; const failed = [];
     for (const [tok, g] of Object.entries(guests)) {
