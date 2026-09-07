@@ -51,6 +51,8 @@ canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
 .panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
 .panel h2{font-family:"Bagel Fat One",cursive;font-size:24px;color:var(--ink);text-align:center;line-height:1.05}
 .sub{text-align:center;color:#7a5c49;font-weight:600;font-size:13px;margin-top:6px;min-height:18px}
+.greet{font-weight:700;color:var(--ink);font-size:16px}
+.invitebody{color:#4a3a2c;font-size:15px;line-height:1.62;margin:8px 0 20px;white-space:pre-line}
 .statusbar{margin-top:12px;text-align:center;font-weight:700;font-size:13px;color:#6a4634;background:#FFF6E4;border:2px solid #EAD59B;border-radius:12px;padding:9px 12px}
 .statusbar.wait{background:#FDEBE4;border-color:#F3C3B2;color:#9a3d1e}
 .statusbar.seated{background:#eaffcf;border-color:#C0DD97;color:#3B6D11}
@@ -97,23 +99,10 @@ input:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)
 <body>
 <canvas id="fx"></canvas>
 
-<div class="gate" id="gate">
-  <div class="box">
-    <img src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
-    <h1 class="disp">Before you sit down</h1>
-    <p>The Amabile Table is a lunch where wine is served. Please confirm you're of legal drinking age.</p>
-    <div class="btns">
-      <button class="in" id="ageYes">I'm 18 or older</button>
-      <button class="out" id="ageNo">I'm under 18</button>
-    </div>
-    <p class="no" id="ageNoMsg">Come back when you're of legal drinking age — we'll save you a seat another time. 🍷</p>
-  </div>
-</div>
-
 <div class="wrap">
   <img class="brand" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
   <div id="app"><div class="errbox"><h1>Setting the table…</h1></div></div>
-  <div class="legal">Please drink responsibly · 18+ / legal drinking age · <a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
+  <div class="legal"><a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
 </div>
 
 <script>
@@ -142,14 +131,8 @@ var COLS=["#FFC24D","#FF4D8D","#C6FF4D","#7A2FF2","#E74529","#fff","#82B28C","#C
 function burst(x,y,n,big){for(var i=0;i<(n||30);i++){P.push({x:x,y:y,vx:(Math.random()-.5)*(big?12:8),vy:(Math.random()-1)*(big?12:9)-2,g:.26,r:(big?6:3)+Math.random()*5,c:COLS[i%COLS.length],a:1,rot:Math.random()*6,vr:(Math.random()-.5)*.4,sq:Math.random()>.4});}}
 function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.a-=.012;p.rot+=p.vr;if(p.a<=0||p.y>H+40){P.splice(i,1);continue;}cx.globalAlpha=Math.max(p.a,0);cx.fillStyle=p.c;if(p.sq){cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillRect(-p.r,-p.r,p.r*2,p.r*2.3);cx.restore();}else{cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();}}cx.globalAlpha=1;requestAnimationFrame(tick);}tick();
 
-/* 18+ gate */
-var gate=document.getElementById("gate");
-function ageOk(){try{return localStorage.getItem("adr_age_ok")==="1";}catch(e){return false;}}
-function openGate(){gate.style.display="flex";}
-function passGate(){try{localStorage.setItem("adr_age_ok","1");}catch(e){}gate.style.display="none";load();}
-document.getElementById("ageYes").addEventListener("click",passGate);
-document.getElementById("ageNo").addEventListener("click",function(){document.getElementById("ageNoMsg").style.display="block";});
-if(ageOk()){gate.style.display="none";load();}else{openGate();}
+/* Invited list: no age gate, the footer line is sufficient. */
+load();
 
 function fail(msg,head){app.innerHTML='<div class="errbox"><h1>'+esc(head||"Hmm.")+'</h1><p>'+esc(msg)+'</p></div>';}
 
@@ -170,15 +153,17 @@ function load(){
 
 function metaCard(){
   var e=DATA.edition, g=DATA.guest;
+  var first=((g.name||"you").split(" ")[0]);
+  var host=e.hostName||"Amabile di Rosa";
   var m="";
-  if(e.dateLabel)m+='<div class="ln"><b>When</b><span>'+esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel):"")+'</span></div>';
-  if(e.venue)m+='<div class="ln"><b>Where</b><span>'+esc(e.venue)+'</span></div>';
+  if(e.dateLabel)m+='<div class="ln"><b>When</b><span>'+esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel)+" prompt":"")+'</span></div>';
   if(e.seatedByLabel)m+='<div class="ln"><b>Seated by</b><span>'+esc(e.seatedByLabel)+'</span></div>';
-  var firm=e.seatedByLabel?'<p class="firm">⏱️ It\'s a hosted long-table lunch, so we start together. Please be in your seat by <b>'+esc(e.seatedByLabel)+'</b> — we can\'t hold seats past then.</p>':'';
+  if(e.venue)m+='<div class="ln"><b>Where</b><span>'+esc(e.venue)+'</span></div>';
+  var firm='';
   return '<div class="card"><div class="bg" style="background-image:url(\'/assets/images/occasions/dinner.jpg\')"></div><div class="veil"></div><div class="cont">'+
-    '<span class="stamp">The Amabile Table</span>'+
+    '<span class="stamp">An invitation · The Amabile Table</span>'+
     '<h1 class="disp">'+esc(e.title||"The Amabile Table")+'</h1>'+
-    '<p class="seatfor">A seat is saved for '+esc((g.name||"you").split(" ")[0])+'. Just for you — no plus-ones.</p>'+
+    '<p class="seatfor">Hosted by '+esc(host)+'</p>'+
     '<div class="meta">'+m+'</div>'+firm+
     '<img class="clogo" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
   '</div></div>';
@@ -217,13 +202,16 @@ function renderStatus(){
 }
 
 function renderForm(){
-  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{};
+  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{}, g=DATA.guest||{};
+  var first=((g.name||"you").split(" ")[0]);
   var full=s.full && y.status!=="seated";
   var warn=full?'<div class="statusbar wait">The table is currently full — saying yes adds you to the waitlist, and we\'ll email you the moment a seat opens.</div>':statusLine();
   app.innerHTML=metaCard()+
    '<div class="panel" id="panel">'+
+     '<p class="greet">Ciao '+esc(first)+',</p>'+
+     (e.cardParagraph?'<p class="invitebody">'+esc(e.cardParagraph)+'</p>':'')+
      '<h2>Can you join us?</h2>'+
-     '<div class="sub">One seat, reserved for you.</div>'+
+     '<div class="sub">This invitation is personal to you. Seating is planned per person, so no plus-ones.</div>'+
      warn+
      '<div class="yesno">'+
        '<button class="big yes" id="bYes">Yes, I\'ll be there</button>'+

@@ -37,7 +37,7 @@ export async function sendEmail(apiKey, to, subject, html, from) {
     });
     if (r.status < 200 || r.status >= 300) {
       const t = await r.text().catch(() => "");
-      console.warn("sendEmail failed", r.status, "sender=" + FROM.email, t.slice(0, 200));
+      console.warn("sendEmail failed", r.status, "sender=" + sender.email, t.slice(0, 200));
       return { ok: false, status: r.status, text: t.slice(0, 200) };
     }
     return { ok: true, status: r.status };
@@ -91,7 +91,7 @@ export function button(href, label, color = "#E74529") {
 
 // Clean, readable email shell: red header strip + light body.
 export function shell(inner) {
-  return `<div style="background:#FBFAEB;padding:26px 14px;font-family:Arial,Helvetica,sans-serif">
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body style="margin:0"><div style="background:#FBFAEB;padding:26px 14px;font-family:Arial,Helvetica,sans-serif">
     <div style="max-width:520px;margin:0 auto;background:#ffffff;border:2px solid #2a1207;border-radius:20px;overflow:hidden">
       <div style="background:#E74529;padding:18px 26px">
         <div style="font-weight:800;letter-spacing:.16em;text-transform:uppercase;font-size:12px;color:#FFF3E0">Amabile di Rosa</div>
@@ -101,5 +101,5 @@ export function shell(inner) {
       </div>
     </div>
     <p style="font-size:12px;color:#b09a8c;text-align:center;margin:16px 0 0">Friends · Wine · Good Times</p>
-  </div>`;
+  </div></body></html>`;
 }

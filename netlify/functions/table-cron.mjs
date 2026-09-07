@@ -1,8 +1,9 @@
 // Scheduled: two-days-before reminder to seated guests. Runs daily; for each edition whose
 // date is two days out and hasn't been reminded yet, emails the currently-seated guests and
 // marks the edition so it never double-sends. Best-effort — a failure never blocks anything.
-import { sendEmail, shell, button, isEmail, clean, INVITE_SITE } from "./_lib.mjs";
-import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, TABLE_FROM } from "./_table.mjs";
+import { sendEmail, isEmail, clean, INVITE_SITE } from "./_lib.mjs";
+import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, whenLineOf, seatedByLineOf, TABLE_FROM, tableShell, tableRow, tableBtn } from "./_table.mjs";
+const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export const config = { schedule: "0 9 * * *" }; // 09:00 UTC daily
 
@@ -31,20 +32,19 @@ export default async () => {
       const guests = await loadGuests(st, ed.edition);
       const tokByGid = {};
       Object.entries(guests).forEach(([tok, g]) => { tokByGid[g.gid] = tok; });
-      const whenBits = [fmtDate(ed.dateISO), ed.timeLabel || "", ed.venue || ""].filter(Boolean).join(" · ");
+      const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", esc(whenLineOf(ed)))}${tableRow("Seated by", esc(seatedByLineOf(ed)))}${tableRow("Where", esc(clean(ed.venue, 160)))}</table>`;
 
       for (const r of stand.seated) {
         if (!isEmail(r.email)) continue;
         const link = `${INVITE_SITE}/table/${ed.edition}?g=${encodeURIComponent(tokByGid[r.gid] || "")}`;
-        const html = shell(`
-          <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">See you in two days 🍷</h2>
-          <p style="margin:0 0 8px;color:#6a4634"><b>${clean(ed.title, 80)}</b></p>
-          <p style="margin:0 0 10px;color:#6a4634">${clean(whenBits, 200)}${ed.address ? " · " + clean(ed.address, 160) : ""}</p>
-          ${ed.seatedByLabel ? `<p style="margin:0 0 14px;color:#3a2410"><b>⏱️ Please be seated by ${clean(ed.seatedByLabel, 60)}</b> — we start together.</p>` : ""}
-          <p style="margin:0 0 14px;color:#6a4634">Your seat is saved. If anything has changed and you can no longer make it, please let us know so we can offer the seat on — one tap:</p>
-          <p style="margin:0">${button(link, "View or change your RSVP →")}</p>
+        const html = tableShell(`
+          <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">Two days to go.</h2>
+          <p style="margin:0 0 6px">A reminder that ${esc(clean(ed.title, 80))} is this ${esc(fmtDate(ed.dateISO))}. Your seat is saved.</p>
+          ${details}
+          <p style="margin:0 0 18px">If anything has changed and you can no longer make it, please let us know so we can offer the seat on.</p>
+          <p style="margin:0">${tableBtn(link, "View or change your reply")}</p>
         `);
-        await sendEmail(apiKey, r.email, `Two days to go — ${clean(ed.title, 60)}`, html, TABLE_FROM);
+        await sendEmail(apiKey, r.email, `Two days to go, ${clean(ed.title, 60)}`, html, TABLE_FROM);
         sent++;
       }
       await st.setJSON(kEdition(ed.edition), { ...ed, remindedAt: Date.now() });

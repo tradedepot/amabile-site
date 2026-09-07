@@ -24,7 +24,9 @@ export default async (req, context) => {
 
   const pub = {
     edition: ed,
-    title: edition.title || ("The Amabile Table — " + ed),
+    title: edition.title || ("The Amabile Table No " + ed),
+    hostName: edition.hostName || edition.host || "",
+    cardParagraph: edition.cardParagraph || edition.invite || "",
     dateISO: edition.dateISO || "",
     dateLabel: edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || ""),
     timeLabel: edition.timeLabel || "",

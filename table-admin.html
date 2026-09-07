@@ -84,11 +84,13 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
       <h2 id="edHead">New edition</h2>
       <div class="muted" id="edLink"></div>
       <div class="grid2" style="margin-top:8px">
-        <div style="grid-column:1/-1"><label>What's it called?</label><input type="text" id="fTitle" placeholder="The Amabile Table — No. 1">
+        <div style="grid-column:1/-1"><label>What's it called?</label><input type="text" id="fTitle" placeholder="Table No 1">
           <div class="linkhint" id="slugHint"></div></div>
+        <div style="grid-column:1/-1"><label>Hosted by</label><input type="text" id="fHost" placeholder="Kachi Izukanne"><div class="linkhint">Guests read “Hosted by &lt;name&gt;,” and the invitation comes from them.</div></div>
+        <div style="grid-column:1/-1"><label>Invitation message <span style="text-transform:none;font-weight:500;color:#9a8576">(the host's own words)</span></label><textarea id="fInvite" style="font-family:inherit;font-size:14.5px;min-height:130px" placeholder="I'm hosting the first Amabile Table on Sunday the 13th and I'd like you at it. An intimate lunch at Alliance Française, one long table, twenty-eight people, culture-led conversation over lunch and drinks, with Moses Oyeleye's City People exhibition as the backdrop."></textarea><div class="linkhint">First person, as the host. This is the paragraph guests read in the email and on the page — each edition writes its own.</div></div>
         <div><label>Date</label><input type="date" id="fDate"></div>
-        <div><label>Arrival / start time</label><input type="text" id="fTime" placeholder="3:00 PM"></div>
-        <div><label>Seated by <span style="text-transform:none;font-weight:500;color:#9a8576">(cutoff)</span></label><input type="text" id="fSeatedBy" placeholder="3:30 PM"><div class="linkhint">Shown firmly to guests — we start together, so seats aren't held past this.</div></div>
+        <div><label>Start time</label><input type="text" id="fTime" placeholder="3:00pm"><div class="linkhint">Guests see this as “3:00pm prompt”.</div></div>
+        <div><label>Seated by <span style="text-transform:none;font-weight:500;color:#9a8576">(cutoff)</span></label><input type="text" id="fSeatedBy" placeholder="3:30pm"><div class="linkhint">Shown exactly as typed, e.g. “Seated by 3:30pm”.</div></div>
         <div style="grid-column:1/-1"><label>Where is it?</label><input type="text" id="fVenue" placeholder="e.g. Bottega Ristorante, Victoria Island"><div class="linkhint">Shown on the invite and the confirmation. A recognisable name is enough — add a floor or suite if it helps guests find you.</div></div>
         <div><label>How many seats?</label><input type="number" id="fCap" min="1" value="26"></div>
         <div><label>RSVPs close <span style="text-transform:none;font-weight:500;color:#9a8576">(optional)</span></label><input type="date" id="fDeadline"><div class="linkhint">Leave blank to keep replies open until the lunch date.</div></div>
@@ -106,7 +108,8 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <div class="muted">One guest per line — <b>name and email</b>, separated however you like: a comma, a tab, or just a space all work. A header row is ignored. Each guest gets their own private link.</div>
         <textarea id="gPaste" placeholder="Ada Obi  ada@email.com&#10;Tunde Bello, tunde@email.com&#10;Chidi Okeke	chidi@email.com"></textarea>
         <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500;margin-top:10px"><input type="checkbox" id="gReplace" style="width:auto;height:16px"> Replace the whole list (otherwise add to it / update by email)</label>
-        <div class="row"><button class="btn" id="importG">Add guests</button><button class="btn gd sm" id="getLinks">Show everyone's links</button><button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:#c0392b">Clear guest list</button><span class="muted" id="gMsg"></span></div>
+        <div class="row"><button class="btn" id="importG">Add + email invites</button><button class="btn gd sm" id="sendInvites">Email invites</button><button class="btn gd sm" id="getLinks">Show links</button><button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:#c0392b">Clear list</button><span class="muted" id="gMsg"></span></div>
+        <div class="linkhint">If a guest has an email, adding them sends their invite automatically (from table@amabiledirosa.com). No email on a row? They still get a personal link — use “Show links” to copy and send it; the link RSVPs on its own. “Email invites” re-sends to anyone not yet emailed.</div>
         <div class="links hide" id="linksBox"></div>
         <div class="row hide" id="linkActions"><button class="btn dk sm" id="copyLinks">Copy for mail-merge</button><button class="btn dk sm" id="csvLinks">Download links CSV</button></div>
       </div>
@@ -168,7 +171,7 @@ function openEdition(slug){
   $("edHead").textContent="Editing "+e.title;
   $("edLink").innerHTML='Guest links: <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>';
   api("data",{edition:slug}).then(function(d){if(!d||!d.ok)return;var m=d.edition;
-    $("fTitle").value=m.title||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";$("fSeatedBy").value=m.seatedByLabel||"";
+    $("fTitle").value=m.title||"";$("fHost").value=m.hostName||m.host||"";$("fInvite").value=m.cardParagraph||m.invite||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";$("fSeatedBy").value=m.seatedByLabel||"";
     $("fVenue").value=m.venue||"";$("fCap").value=m.cap||26;
     $("fDeadline").value=(m.deadlineISO||"").slice(0,10);
     updateSlugHint();renderData(d);
@@ -180,7 +183,7 @@ function newEdition(){
   $("edHead").textContent="New edition";$("edLink").innerHTML="";
   var n=(EDITIONS.length||0)+1;
   $("fTitle").value="The Amabile Table — No. "+n;
-  ["fDate","fTime","fSeatedBy","fVenue","fDeadline"].forEach(function(id){$(id).value="";});
+  ["fHost","fInvite","fDate","fTime","fSeatedBy","fVenue","fDeadline"].forEach(function(id){$(id).value="";});
   $("fCap").value=26;$("edMsg").textContent="";$("gPaste").value="";
   updateSlugHint();$("fTitle").focus();
 }
@@ -193,12 +196,14 @@ $("fTitle").addEventListener("input",updateSlugHint);
 
 $("saveEd").addEventListener("click",function(){
   var title=$("fTitle").value.trim();if(!title){$("edMsg").textContent="Give it a name.";return;}
+  var hostVal=$("fHost").value.trim();if(!hostVal){$("edMsg").textContent="Add a host name.";$("fHost").focus();return;}
+  var inviteVal=$("fInvite").value.trim();if(!inviteVal){$("edMsg").textContent="Add the invitation message.";$("fInvite").focus();return;}
   var slug=CUR_SLUG||slugify(title);
   if(!CUR_SLUG && EDITIONS.some(function(e){return e.edition===slug;})){
     if(!confirm("An edition with the link /table/"+slug+" already exists. Save will update it — continue?"))return;
   }
   var dateISO=$("fDate").value;
-  var body={edition:slug,title:title,dateISO:dateISO,timeLabel:$("fTime").value.trim(),
+  var body={edition:slug,title:title,hostName:hostVal,cardParagraph:inviteVal,dateISO:dateISO,timeLabel:$("fTime").value.trim(),
     seatedByLabel:$("fSeatedBy").value.trim(),venue:$("fVenue").value.trim(),cap:parseInt($("fCap").value,10)||0};
   var dl=$("fDeadline").value; // date only
   if(dl)body.deadlineISO=dl+"T09:00:00"; else if(dateISO)body.deadlineISO=dateISO+"T09:00:00";
@@ -234,10 +239,24 @@ $("importG").addEventListener("click",function(){
   $("gMsg").textContent="Adding "+rows.length+"…";
   api("import-guests",{edition:ed,rows:rows,replace:$("gReplace").checked}).then(function(d){
     if(!d||!d.ok){$("gMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
-    $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · "+d.total+" invited ✓";
-    $("gCount").textContent=d.total+" invited";show("gCount",true);showLinks(d.links);loadEditions();
+    $("gCount").textContent=d.total+" invited";show("gCount",true);showLinks(d.links);loadEditions();refreshStandings();
+    // adding a guest emails them their invite link (only those not yet invited)
+    $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · emailing invites…";
+    api("send-invites",{edition:ed,onlyNew:true}).then(function(s){
+      if(!s||!s.ok){$("gMsg").textContent="Added "+d.added+" · invite email error: "+((s&&s.error)||"failed");return;}
+      var f=(s.failed&&s.failed.length)?(" · "+s.failed.length+" failed ("+esc(String(s.failed[0].text||s.failed[0].status||""))+")"):"";
+      $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · invited "+s.sent+f+" ✓";
+    });
   });
 });
+$("sendInvites").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
+  if(!confirm("Email the invite link to everyone not yet invited for this edition?"))return;
+  $("gMsg").textContent="Sending invites…";
+  api("send-invites",{edition:ed,onlyNew:true}).then(function(s){
+    if(!s||!s.ok){$("gMsg").textContent="Error: "+((s&&s.error)||"failed");return;}
+    var f=(s.failed&&s.failed.length)?(" · "+s.failed.length+" failed ("+esc(String(s.failed[0].text||s.failed[0].status||""))+")"):"";
+    $("gMsg").textContent="Invited "+s.sent+" (skipped "+s.skipped+")"+f;
+  });});
 $("getLinks").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
   api("guest-links",{edition:ed}).then(function(d){if(d&&d.ok)showLinks(d.links);});});
 $("clearG").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
@@ -259,8 +278,11 @@ $("csvLinks").addEventListener("click",function(){downloadCSV("amabile-table-lin
 
 /* ---- standings ---- */
 var CUR=null;
-$("loadData").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG){$("stMsg").textContent="Pick an edition.";return;}
-  $("stMsg").textContent="Loading…";api("data",{edition:ed}).then(function(d){if(d&&d.ok)renderData(d);else $("stMsg").textContent="Error.";});});
+function refreshStandings(){if(!CUR_SLUG)return;api("data",{edition:curEditionSlug()}).then(function(d){if(d&&d.ok)renderData(d);});}
+$("loadData").addEventListener("click",function(){if(!CUR_SLUG){$("stMsg").textContent="Pick an edition.";return;}
+  $("stMsg").textContent="Loading…";refreshStandings();});
+/* auto-refresh: keeps "who's coming" live as RSVPs land, without clicking Refresh */
+setInterval(function(){if(CUR_SLUG&&!document.hidden)refreshStandings();},15000);
 function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
   $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
   var rows=[].concat(

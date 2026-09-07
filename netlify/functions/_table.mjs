@@ -23,6 +23,30 @@ export const TABLE_FROM = {
   email: process.env.TABLE_FROM_EMAIL || FROM.email,
   name: process.env.TABLE_FROM_NAME || "The Amabile Table"
 };
+
+// Email shell for Table messages (confirmation, waitlist, promotion, reminder): same visual
+// system as the invitation (cream, wine top bar, serif), UTF-8 charset in the head, and NO
+// tagline. Keep copy free of em dashes.
+export function tableShell(inner) {
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body style="margin:0;background:#efe4cf;font-family:Georgia,'Times New Roman',serif;color:#2a1207">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#efe4cf;padding:32px 14px"><tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fffdf7;border:1px solid #e6d3a8;border-radius:10px;overflow:hidden">
+        <tr><td style="height:6px;background:#7d1d1d"></td></tr>
+        <tr><td style="padding:34px 44px 28px;color:#2a1207;font-size:16px;line-height:1.65">${inner}</td></tr>
+        <tr><td style="padding:20px 44px 24px;border-top:1px solid #efe4cf;text-align:center">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#8a6d4a">Amabile di Rosa</div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8c;margin-top:6px">Lagos, Nigeria</div>
+        </td></tr>
+      </table></td></tr></table></body></html>`;
+}
+export function tableRow(label, val) {
+  return val ? `<tr>
+    <td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b08d57;padding:12px 18px 0 0;vertical-align:top;white-space:nowrap">${label}</td>
+    <td style="font-size:16px;color:#2a1207;padding:8px 0 0;line-height:1.3">${val}</td></tr>` : "";
+}
+export function tableBtn(href, label) {
+  return `<a href="${href}" style="display:inline-block;background:#7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:14px 38px;border-radius:999px">${label}</a>`;
+}
 export function tstore() { return getStore(STORE_NAME); }
 
 export const kEdition = (ed) => "table:" + ed;
@@ -121,6 +145,17 @@ export function fmtDate(iso) {
       weekday: "long", day: "numeric", month: "long", timeZone: "UTC"
     });
   } catch (_) { return iso || ""; }
+}
+// Timing copy, defined once. Deliberately terse (owner's call): the time itself carries it.
+//   When:      Sunday 13 September, 3:00pm prompt
+//   Seated by: 3:30pm
+export function whenLineOf(edition) {
+  const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
+  const t = clean(edition.timeLabel, 60);
+  return dateLabel + (t ? ", " + t + " prompt" : "");
+}
+export function seatedByLineOf(edition) {
+  return clean(edition.seatedByLabel, 60);
 }
 export function deadlinePassed(edition) {
   if (!edition || !edition.deadlineISO) return false;

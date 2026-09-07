@@ -8,7 +8,7 @@ import { bqInsert } from "./_bq.mjs";
 import {
   tstore, edId, tokenClean, clientIp, rateOk,
   kRsvp, loadEdition, loadGuests, guestByToken, loadRsvps, standings, statusOf,
-  fmtDate, deadlinePassed, TABLE_FROM
+  deadlinePassed, whenLineOf, seatedByLineOf, TABLE_FROM, tableShell, tableRow, tableBtn
 } from "./_table.mjs";
 
 function seatedGids(stand) { return new Set(stand.seated.map((r) => r.gid)); }
@@ -93,10 +93,13 @@ export default async (req, context) => {
   const apiKey = process.env.BREVO_API_KEY;
   const notifyTo = process.env.TABLE_NOTIFY_EMAIL || "";
   const guestLink = `${INVITE_SITE}/table/${encodeURIComponent(ed)}?g=${encodeURIComponent(token)}`;
-  const whenBits = [edition.dateISO ? fmtDate(edition.dateISO) : "", edition.timeLabel || "", edition.venue || ""]
-    .filter(Boolean).join(" · ");
-  const whenLine = [edition.dateISO ? fmtDate(edition.dateISO) : "", edition.timeLabel || ""].filter(Boolean).join(" · ");
-  const whereLine = clean(edition.venue, 160);
+  const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const whenLine = whenLineOf(edition);
+  const seatedByLine = seatedByLineOf(edition);
+  const venueLine = clean(edition.venue, 160);
+  const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
+  const details = `<table role="presentation" cellpadding="0" cellspacing="0" style="margin:14px 0 20px">${tableRow("When", esc(whenLine))}${tableRow("Seated by", esc(seatedByLine))}${tableRow("Where", esc(venueLine))}</table>`;
+  const plusOnes = `<p style="margin:18px 0 0;font-size:13px;color:#9a8576;font-family:Arial,sans-serif">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>`;
 
   // Promotion: guests who moved into the seated set as a result of this change (a drop-out
   // freed a seat). Email each once. Skip the actor themselves.
@@ -104,13 +107,15 @@ export default async (req, context) => {
     for (const r of after.seated) {
       if (r.gid === guest.gid) continue;
       if (!beforeSeated.has(r.gid) && afterSeated.has(r.gid) && r.notifiedStatus !== "seated" && isEmail(r.email)) {
-        const html = shell(`
-          <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">A seat just opened — you're in 🎉</h2>
-          <p style="margin:0 0 12px;color:#6a4634">Good news: a place at <b>${clean(edition.title, 80)}</b> has come free and it's yours. This seat is reserved for you specifically — no plus-ones, seating is planned per person.</p>
-          <p style="margin:0 0 16px;color:#6a4634">${whenBits}</p>
-          <p style="margin:0">${button(guestLink, "Confirm you're still coming →")}</p>
+        const html = tableShell(`
+          <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">A seat has opened, and it is yours.</h2>
+          <p style="margin:0 0 6px">A place at ${esc(clean(edition.title, 80))} has come free, so we have moved you from the waitlist to a confirmed seat.</p>
+          ${details}
+          <p style="margin:0 0 18px">Please confirm you can still join us.</p>
+          <p style="margin:0">${tableBtn(guestLink, "Confirm your seat")}</p>
+          ${plusOnes}
         `);
-        await sendEmail(apiKey, r.email, `You're off the waitlist — ${clean(edition.title, 60)}`, html, TABLE_FROM);
+        await sendEmail(apiKey, r.email, `A seat has opened, ${clean(edition.title, 60)}`, html, TABLE_FROM);
         try { await st.setJSON(kRsvp(ed, r.gid), { ...r, notifiedStatus: "seated" }); } catch (_) {}
       }
     }
@@ -121,39 +126,38 @@ export default async (req, context) => {
   let emailResult = apiKey ? { attempted: false } : { attempted: false, reason: "no_api_key" };
   if (apiKey) {
     if (response === "yes" && mine.status === "seated" && isEmail(rec.email)) {
-      const html = shell(`
-        <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">Your seat is saved 🍷</h2>
-        <p style="margin:0 0 6px;color:#6a4634">See you at <b>${clean(edition.title, 80)}</b>. This seat is reserved for <b>${clean(guest.name, 80)}</b> — it's a seated lunch planned per person, so there are no plus-ones.</p>
-        <p style="margin:12px 0 4px"><b>When</b> · ${clean(whenLine, 200)}</p>
-        ${whereLine ? `<p style="margin:0 0 4px;color:#6a4634"><b>Where</b> · ${whereLine}</p>` : ""}
-        ${edition.seatedByLabel ? `<p style="margin:6px 0 12px;color:#3a2410;background:#FFF6E4;border:1px solid #EAD59B;border-radius:10px;padding:10px 12px">⏱️ It's a hosted long-table lunch, so we start together — <b>please be seated by ${clean(edition.seatedByLabel, 60)}</b>. We can't hold seats past then.</p>` : ""}
-        <p style="margin:12px 0 16px;color:#6a4634">Plans change — you can update your answer any time here:</p>
-        <p style="margin:0">${button(guestLink, "View or change your RSVP →")}</p>
+      const html = tableShell(`
+        <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">Your seat is confirmed.</h2>
+        <p style="margin:0 0 6px">We will see you at ${esc(clean(edition.title, 80))}, hosted by ${esc(hostName)}.</p>
+        ${details}
+        <p style="margin:0 0 18px">Plans change, so you can update your reply any time.</p>
+        <p style="margin:0">${tableBtn(guestLink, "View or change your reply")}</p>
+        ${plusOnes}
       `);
-      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `You're in — ${clean(edition.title, 60)} 🍷`, html, TABLE_FROM)) };
+      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `Your seat is confirmed, ${clean(edition.title, 60)}`, html, TABLE_FROM)) };
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "seated" }); } catch (_) {}
     } else if (response === "yes" && mine.status === "wait" && isEmail(rec.email)) {
-      const html = shell(`
-        <h2 style="margin:0 0 8px;font-size:22px;color:#2a1207">You're on the waitlist — no. ${mine.position}</h2>
-        <p style="margin:0 0 12px;color:#6a4634"><b>${clean(edition.title, 80)}</b> is full for now, so we've saved you a place in line at <b>position ${mine.position}</b>. If a seat frees up we'll email you automatically — you don't need to do anything.</p>
-        <p style="margin:0 0 16px;color:#6a4634">${clean(whenBits, 200)}</p>
-        <p style="margin:0">${button(guestLink, "View your status →")}</p>
+      const html = tableShell(`
+        <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">You are on the waitlist, position ${mine.position}.</h2>
+        <p style="margin:0 0 6px">${esc(clean(edition.title, 80))} is full for now, so we have saved you a place in line. If a seat opens we will email you. There is nothing you need to do.</p>
+        ${details}
+        <p style="margin:0">${tableBtn(guestLink, "View your status")}</p>
       `);
-      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `Waitlisted (no. ${mine.position}) — ${clean(edition.title, 60)}`, html, TABLE_FROM)) };
+      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `Waitlisted, position ${mine.position}, ${clean(edition.title, 60)}`, html, TABLE_FROM)) };
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "wait" }); } catch (_) {}
     }
 
     // Internal notification on every response.
     if (isEmail(notifyTo)) {
-      const verb = response === "yes" ? (mine.status === "seated" ? "is IN (seated)" : "is IN (waitlist no. " + mine.position + ")") : "can't make it";
-      const html = shell(`
-        <h2 style="margin:0 0 6px;font-size:20px;color:#2a1207">${clean(guest.name, 80)} ${verb}</h2>
-        <p style="margin:0 0 6px;color:#6a4634">${clean(edition.title, 80)}</p>
-        ${response === "yes" ? `<p style="margin:0 0 4px;color:#6a4634">Does: ${clean(rec.role, 120)}</p>` : ""}
-        ${rec.notes ? `<p style="margin:0 0 4px;color:#6a4634">Notes: ${clean(rec.notes, 400)}</p>` : ""}
-        <p style="margin:8px 0 0;color:#6a4634">Now: <b>${after.seatedCount}/${cap} seated</b> · ${after.waitCount} waiting</p>
+      const verb = response === "yes" ? (mine.status === "seated" ? "is in, seated" : "is in, waitlist position " + mine.position) : "cannot make it";
+      const html = tableShell(`
+        <h2 style="margin:0 0 8px;font-size:20px;font-weight:normal">${esc(clean(guest.name, 80))} ${verb}.</h2>
+        <p style="margin:0 0 6px">${esc(clean(edition.title, 80))}</p>
+        ${response === "yes" && rec.role ? `<p style="margin:0 0 4px">Does: ${esc(clean(rec.role, 120))}</p>` : ""}
+        ${rec.notes ? `<p style="margin:0 0 4px">Notes: ${esc(clean(rec.notes, 400))}</p>` : ""}
+        <p style="margin:8px 0 0">Now: ${after.seatedCount} of ${cap} seated, ${after.waitCount} waiting.</p>
       `);
-      await sendEmail(apiKey, notifyTo, `Table RSVP — ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html, TABLE_FROM);
+      await sendEmail(apiKey, notifyTo, `Table RSVP: ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html, TABLE_FROM);
     }
 
     // Opt-in → newsletter contact (tagged for the Table, never the viral loop).

@@ -2,15 +2,59 @@
 // the POST body (never in the query string) and checked on every action. Handles editions
 // as DATA (create/update without a deploy) and bulk guest-list import from a spreadsheet
 // paste, minting a collision-checked per-guest token for each row.
-import { json, clean, isEmail, INVITE_SITE } from "./_lib.mjs";
+import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "./_lib.mjs";
 import {
   tstore, edId, kEdition, kGuests, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
-  standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM
+  standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM,
+  whenLineOf, seatedByLineOf
 } from "./_table.mjs";
 
 function authed(d) {
   const key = process.env.TABLE_ADMIN_KEY || "";
   return key && typeof d.k === "string" && d.k === key;
+}
+
+// A real invitation email: written in the host's own voice (first person), the body is a
+// per-edition field so each host writes their own note and backdrop. No wine framing, plus-
+// ones stated once and plainly, single preamble, no em dashes.
+function esc(s) {
+  return String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+}
+function inviteEmailHtml({ name, hostName, title, whenLine, seatedBy, venue, cardParagraph, link }) {
+  const row = (label, val) => val
+    ? `<tr>
+        <td style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:#b08d57;padding:13px 18px 0 0;vertical-align:top;white-space:nowrap">${label}</td>
+        <td style="font-size:16px;color:#2a1207;padding:9px 0 0;line-height:1.3">${esc(val)}</td>
+      </tr>` : "";
+  const paras = String(cardParagraph || "").split(/\n{2,}|\n/).filter(Boolean)
+    .map((p) => `<p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">${esc(p)}</p>`).join("");
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body style="margin:0;background:#efe4cf;font-family:Georgia,'Times New Roman',serif;color:#2a1207">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#efe4cf;padding:34px 14px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fffdf7;border:1px solid #e6d3a8;border-radius:10px;overflow:hidden">
+        <tr><td style="height:6px;background:#7d1d1d"></td></tr>
+        <tr><td style="padding:40px 46px 30px;text-align:center">
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#b08d57;margin-bottom:16px">THE AMABILE TABLE</div>
+          <h1 style="margin:0 0 6px;font-size:30px;line-height:1.15;color:#2a1207;font-weight:normal">${esc(title)}</h1>
+          <div style="font-size:15px;font-style:italic;color:#b08d57">Hosted by ${esc(hostName)}</div>
+          <div style="width:46px;height:2px;background:#c9a15a;margin:22px auto 24px"></div>
+          <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">Ciao ${esc(name) || "there"},</p>
+          ${paras}
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:8px auto 28px;text-align:left">
+            ${row("When", whenLine)}
+            ${row("Seated by", seatedBy)}
+            ${row("Where", venue)}
+          </table>
+          <a href="${link}" style="display:inline-block;background:#7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:15px 42px;border-radius:999px">Reply to your invitation</a>
+          <p style="margin:26px 0 0;font-size:13px;color:#9a8576;font-family:Arial,sans-serif;text-align:left">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>
+        </td></tr>
+        <tr><td style="padding:20px 46px 26px;border-top:1px solid #efe4cf;text-align:center">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#8a6d4a">Amabile di Rosa</div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8c;margin-top:6px">Lagos, Nigeria</div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body></html>`;
 }
 
 export default async (req) => {
@@ -42,7 +86,7 @@ export default async (req) => {
         headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify({
           sender: TABLE_FROM, to: [{ email: to }],
-          subject: "Amabile Table — test email",
+          subject: "Amabile Table test email",
           htmlContent: "<p>This is a test from the Amabile Table admin. If you received it, transactional email is working.</p>"
         })
       });
@@ -83,7 +127,9 @@ export default async (req) => {
     const prior = await loadEdition(st, ed);
     const meta = {
       edition: ed,
-      title: clean(d.title, 120) || ("The Amabile Table — " + ed),
+      title: clean(d.title, 120) || ("Table No " + String(ed).replace(/^no-?/i, "")),
+      hostName: clean(d.hostName || d.host, 80),          // who is hosting this edition (shown "Hosted by")
+      cardParagraph: clean(d.cardParagraph || d.invite, 1600), // the host's invitation body (their voice)
       dateISO: clean(d.dateISO, 10),           // YYYY-MM-DD
       timeLabel: clean(d.timeLabel, 60),       // arrival / start, e.g. "3:00 PM"
       seatedByLabel: clean(d.seatedByLabel, 60), // hard seating cutoff, e.g. "3:30 PM"
@@ -133,6 +179,39 @@ export default async (req) => {
       name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`
     }));
     return json({ ok: true, added, updated, total: Object.keys(base).length, links });
+  }
+
+  // ---- send each invitee their personal invite link by email -------------------------
+  if (action === "send-invites") {
+    const ed = edId(d.edition || "");
+    const edition = await loadEdition(st, ed);
+    if (!edition) return json({ ok: false, error: "no_edition" }, 404);
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return json({ ok: false, error: "no_brevo_key" }, 500);
+    const guests = await loadGuests(st, ed);
+    const onlyNew = d.onlyNew !== false; // default: skip anyone already invited (no double-emailing)
+    const site = INVITE_SITE || "https://wya.to";
+    const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
+    const whenLine = whenLineOf(edition);
+    const seatedByLine = seatedByLineOf(edition);
+    const cardDefault = "An intimate lunch. One long table, culture-led conversation over lunch and drinks.";
+    const cardParagraph = clean(edition.cardParagraph || edition.invite, 1600) || cardDefault;
+    let sent = 0, skipped = 0; const failed = [];
+    for (const [tok, g] of Object.entries(guests)) {
+      // Guests without an email on file just keep their link (you send it); we only email those we can.
+      if (!isEmail(g.email)) { skipped++; continue; }
+      if (onlyNew && g.invitedAt) { skipped++; continue; }
+      const link = `${site}/table/${ed}?g=${tok}`;
+      const html = inviteEmailHtml({
+        name: clean(g.name, 80).split(" ")[0], hostName, title: clean(edition.title, 80),
+        whenLine, venue: clean(edition.venue, 120), seatedBy: seatedByLine, cardParagraph, link
+      });
+      const res = await sendEmail(apiKey, g.email, `You're invited to ${clean(edition.title, 60)}`, html, TABLE_FROM);
+      if (res && res.ok) { sent++; g.invitedAt = Date.now(); }
+      else failed.push({ email: g.email, status: (res && res.status) || null, text: (res && (res.text || res.error) || "").slice(0, 140) });
+    }
+    await st.setJSON(kGuests(ed), guests);
+    return json({ ok: true, sent, skipped, failed });
   }
 
   // ---- clear the guest list + responses (test-data reset) ----------------------------
@@ -185,7 +264,7 @@ export default async (req) => {
     return json({
       ok: true,
       edition: {
-        edition: ed, title: edition.title, dateISO: edition.dateISO || "",
+        edition: ed, title: edition.title, hostName: edition.hostName || edition.host || "", cardParagraph: edition.cardParagraph || edition.invite || "", dateISO: edition.dateISO || "",
         dateLabel: edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || ""),
         timeLabel: edition.timeLabel || "", seatedByLabel: edition.seatedByLabel || "",
         venue: edition.venue || "", address: edition.address || "",
