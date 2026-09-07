@@ -116,7 +116,9 @@ export default async (req, context) => {
     }
   }
 
-  // Emails to the responding guest.
+  // Emails to the responding guest. emailResult is surfaced in the response + logged so a
+  // non-delivery is diagnosable in one RSVP (e.g. an unverified sender returns a 400 here).
+  let emailResult = apiKey ? { attempted: false } : { attempted: false, reason: "no_api_key" };
   if (apiKey) {
     if (response === "yes" && mine.status === "seated" && isEmail(rec.email)) {
       const html = shell(`
@@ -128,7 +130,7 @@ export default async (req, context) => {
         <p style="margin:12px 0 16px;color:#6a4634">Plans change — you can update your answer any time here:</p>
         <p style="margin:0">${button(guestLink, "View or change your RSVP →")}</p>
       `);
-      await sendEmail(apiKey, rec.email, `You're in — ${clean(edition.title, 60)} 🍷`, html, TABLE_FROM);
+      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `You're in — ${clean(edition.title, 60)} 🍷`, html, TABLE_FROM)) };
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "seated" }); } catch (_) {}
     } else if (response === "yes" && mine.status === "wait" && isEmail(rec.email)) {
       const html = shell(`
@@ -137,7 +139,7 @@ export default async (req, context) => {
         <p style="margin:0 0 16px;color:#6a4634">${clean(whenBits, 200)}</p>
         <p style="margin:0">${button(guestLink, "View your status →")}</p>
       `);
-      await sendEmail(apiKey, rec.email, `Waitlisted (no. ${mine.position}) — ${clean(edition.title, 60)}`, html, TABLE_FROM);
+      emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `Waitlisted (no. ${mine.position}) — ${clean(edition.title, 60)}`, html, TABLE_FROM)) };
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "wait" }); } catch (_) {}
     }
 
@@ -186,11 +188,14 @@ export default async (req, context) => {
     created_at: new Date(rec.updatedAt).toISOString()
   });
 
+  console.log("table-rsvp", JSON.stringify({ ed, gid: guest.gid, response, status: mine.status, to: rec.email, sender: TABLE_FROM.email, email: emailResult }));
+
   return json({
     ok: true,
     response,
     status: mine.status,
     position: mine.position || null,
+    email: emailResult,
     summary: { seatedCount: after.seatedCount, cap, full: after.full, waitCount: after.waitCount }
   });
 };
