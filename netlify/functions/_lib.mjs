@@ -29,11 +29,21 @@ export async function sendEmail(apiKey, to, subject, html, from) {
   if (!apiKey) { console.warn("sendEmail: BREVO_API_KEY is not set"); return { ok: false, error: "no_key" }; }
   if (!isEmail(to)) return { ok: false, error: "bad_to" };
   const sender = from || FROM;
+  // Plain-text alternative derived from the HTML. A multipart message with a real text part
+  // reads as correspondence to mail clients; HTML-only with a big button reads as a campaign.
+  const text = String(html || "")
+    .replace(/<style[\s\S]*?<\/style>/gi, "")
+    .replace(/<a [^>]*href="([^"]+)"[^>]*>([\s\S]*?)<\/a>/gi, (m, href, label) => `${label.replace(/<[^>]+>/g, "").trim()}: ${href}`)
+    .replace(/<\/(p|div|h[1-6]|tr|li)>/gi, "\n")
+    .replace(/<br\s*\/?>/gi, "\n")
+    .replace(/<[^>]+>/g, "")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#39;/g, "'")
+    .replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
   try {
     const r = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ sender, to: [{ email: to }], subject, htmlContent: html })
+      body: JSON.stringify({ sender, replyTo: sender, to: [{ email: to }], subject, htmlContent: html, textContent: text })
     });
     if (r.status < 200 || r.status >= 300) {
       const t = await r.text().catch(() => "");

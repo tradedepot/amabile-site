@@ -4,7 +4,7 @@
 // paste, minting a collision-checked per-guest token for each row.
 import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "./_lib.mjs";
 import {
-  tstore, edId, kEdition, kGuests, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
+  tstore, edId, kEdition, kGuests, kRsvp, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM,
   whenLineOf, seatedByLineOf
 } from "./_table.mjs";
@@ -44,7 +44,10 @@ function inviteEmailHtml({ name, hostName, title, whenLine, seatedBy, venue, car
             ${row("Seated by", seatedBy)}
             ${row("Where", venue)}
           </table>
-          <a href="${link}" style="display:inline-block;background:#7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:15px 42px;border-radius:999px">Reply to your invitation</a>
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr>
+            <td style="padding:0 6px"><a href="${link}&amp;r=yes" style="display:inline-block;background:#7d1d1d;border:2px solid #7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:13px 30px;border-radius:999px">Yes, I will be there</a></td>
+            <td style="padding:0 6px"><a href="${link}&amp;r=no" style="display:inline-block;background:transparent;border:2px solid #7d1d1d;color:#7d1d1d;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:13px 30px;border-radius:999px">I cannot make it</a></td>
+          </tr></table>
           <p style="margin:26px 0 0;font-size:13px;color:#9a8576;font-family:Arial,sans-serif;text-align:left">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>
         </td></tr>
         <tr><td style="padding:20px 46px 26px;border-top:1px solid #efe4cf;text-align:center">
@@ -67,34 +70,6 @@ export default async (req) => {
 
   // ---- auth check only (admin page login) --------------------------------------------
   if (action === "auth") return json({ ok: true });
-
-  // ---- diagnostics: send a real test email and return Brevo's actual response ---------
-  if (action === "test-email") {
-    const apiKey = process.env.BREVO_API_KEY;
-    const to = clean(d.to, 160);
-    const diag = {
-      hasKey: !!apiKey,
-      sender: TABLE_FROM.email,
-      notifyEmailSet: !!process.env.TABLE_NOTIFY_EMAIL
-    };
-    if (!apiKey) return json({ ok: false, error: "no_brevo_key", ...diag });
-    if (!isEmail(to)) return json({ ok: false, error: "bad_to", ...diag });
-    try {
-      const r = await fetch("https://api.brevo.com/v3/smtp/email", {
-        method: "POST",
-        headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
-        body: JSON.stringify({
-          sender: TABLE_FROM, to: [{ email: to }],
-          subject: "Amabile Table test email",
-          htmlContent: "<p>This is a test from the Amabile Table admin. If you received it, transactional email is working.</p>"
-        })
-      });
-      const body = (await r.text().catch(() => "")).slice(0, 500);
-      return json({ ok: r.status >= 200 && r.status < 300, status: r.status, body, ...diag });
-    } catch (e) {
-      return json({ ok: false, error: "fetch_failed", detail: String(e).slice(0, 200), ...diag });
-    }
-  }
 
   // ---- list editions -----------------------------------------------------------------
   if (action === "editions") {
@@ -173,14 +148,12 @@ export default async (req) => {
       added++;
     }
     await st.setJSON(kGuests(ed), base);
-    const site = INVITE_SITE || "https://wya.to";
-    const links = Object.entries(base).map(([tok, g]) => ({
-      name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`
-    }));
-    return json({ ok: true, added, updated, total: Object.keys(base).length, links });
+    return json({ ok: true, added, updated, total: Object.keys(base).length });
   }
 
-  // ---- send each invitee their personal invite link by email -------------------------
+  // ---- send invitees their personal invite link by email ------------------------------
+  // Default: everyone with an email who has not been emailed yet. Pass gids:[...] to (re)send
+  // to specific guests regardless. The outcome is stored on the guest so the list shows it.
   if (action === "send-invites") {
     const ed = edId(d.edition || "");
     const edition = await loadEdition(st, ed);
@@ -188,7 +161,8 @@ export default async (req) => {
     const apiKey = process.env.BREVO_API_KEY;
     if (!apiKey) return json({ ok: false, error: "no_brevo_key" }, 500);
     const guests = await loadGuests(st, ed);
-    const onlyNew = d.onlyNew !== false; // default: skip anyone already invited (no double-emailing)
+    const only = Array.isArray(d.gids) && d.gids.length ? new Set(d.gids.map((g) => clean(g, 40))) : null;
+    const onlyNew = !only && d.onlyNew !== false;
     const site = INVITE_SITE || "https://wya.to";
     const hostName = clean(edition.hostName || edition.host, 80) || "Amabile di Rosa";
     const whenLine = whenLineOf(edition);
@@ -197,7 +171,8 @@ export default async (req) => {
     const cardParagraph = clean(edition.cardParagraph || edition.invite, 1600) || cardDefault;
     let sent = 0, skipped = 0; const failed = [];
     for (const [tok, g] of Object.entries(guests)) {
-      // Guests without an email on file just keep their link (you send it); we only email those we can.
+      if (only && !only.has(g.gid)) continue;
+      // Guests without an email on file just keep their link (you copy and send it).
       if (!isEmail(g.email)) { skipped++; continue; }
       if (onlyNew && g.invitedAt) { skipped++; continue; }
       const link = `${site}/table/${ed}?g=${tok}`;
@@ -206,11 +181,26 @@ export default async (req) => {
         whenLine, venue: clean(edition.venue, 120), seatedBy: seatedByLine, cardParagraph, link
       });
       const res = await sendEmail(apiKey, g.email, `You're invited to ${clean(edition.title, 60)}`, html, TABLE_FROM);
+      g.inviteResult = { ok: !!(res && res.ok), status: (res && res.status) || null, text: (res && (res.text || res.error) || "").slice(0, 140), at: Date.now() };
       if (res && res.ok) { sent++; g.invitedAt = Date.now(); }
-      else failed.push({ email: g.email, status: (res && res.status) || null, text: (res && (res.text || res.error) || "").slice(0, 140) });
+      else failed.push({ email: g.email, status: g.inviteResult.status, text: g.inviteResult.text });
     }
     await st.setJSON(kGuests(ed), guests);
     return json({ ok: true, sent, skipped, failed });
+  }
+
+  // ---- remove one guest (and their response, if any) ---------------------------------
+  if (action === "remove-guest") {
+    const ed = edId(d.edition || "");
+    const gid = clean(d.gid, 40);
+    if (!ed || !gid) return json({ ok: false, error: "bad_request" }, 400);
+    const guests = await loadGuests(st, ed);
+    const tok = Object.keys(guests).find((t) => guests[t].gid === gid);
+    if (!tok) return json({ ok: false, error: "no_guest" }, 404);
+    delete guests[tok];
+    await st.setJSON(kGuests(ed), guests);
+    await st.delete(kRsvp(ed, gid)).catch(() => {});
+    return json({ ok: true, total: Object.keys(guests).length });
   }
 
   // ---- clear the guest list + responses (test-data reset) ----------------------------
@@ -226,18 +216,7 @@ export default async (req) => {
     return json({ ok: true, removed });
   }
 
-  // ---- guest links (for a mail-merge) ------------------------------------------------
-  if (action === "guest-links") {
-    const ed = edId(d.edition || "");
-    const guests = await loadGuests(st, ed);
-    const site = INVITE_SITE || "https://wya.to";
-    const links = Object.entries(guests).map(([tok, g]) => ({
-      name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`
-    }));
-    return json({ ok: true, links });
-  }
-
-  // ---- full standings for the admin view / CSV ---------------------------------------
+  // ---- the one list: every guest with invite state + reply state ---------------------
   if (action === "data") {
     const ed = edId(d.edition || "");
     const edition = await loadEdition(st, ed);
@@ -246,19 +225,25 @@ export default async (req) => {
     const rsvps = await loadRsvps(st, ed);
     const cap = edition.cap || 0;
     const stand = standings(rsvps, cap);
-    const shape = (r, extra) => ({
-      name: r.name, email: r.email || "", mobile: r.mobile || "", role: r.role || "",
-      notes: r.notes || "", optin: !!r.optin, at: r.updatedAt || r.at || 0,
-      emailStatus: r.emailStatus || null, ...extra
-    });
-    const seated = stand.seated.map((r) => shape(r, { status: "seated" }));
-    const wait = stand.wait.map((r, i) => shape(r, { status: "wait", position: i + 1 }));
-    const declined = stand.declined.map((r) => shape(r, { status: "declined" }));
+    const site = INVITE_SITE || "https://wya.to";
 
-    const respondedGids = new Set(rsvps.map((r) => r.gid));
-    const noReply = Object.values(guests)
-      .filter((g) => !respondedGids.has(g.gid))
-      .map((g) => ({ name: g.name, email: g.email || "", status: "no-reply" }));
+    const byGid = {};
+    stand.seated.forEach((r) => { byGid[r.gid] = { ...r, status: "seated", position: null }; });
+    stand.wait.forEach((r, i) => { byGid[r.gid] = { ...r, status: "wait", position: i + 1 }; });
+    stand.declined.forEach((r) => { byGid[r.gid] = { ...r, status: "declined", position: null }; });
+
+    const order = { seated: 0, wait: 1, declined: 2, "no-reply": 3 };
+    const list = Object.entries(guests).map(([tok, g]) => {
+      const r = byGid[g.gid] || null;
+      return {
+        gid: g.gid, name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`,
+        invitedAt: g.invitedAt || null, inviteResult: g.inviteResult || null,
+        status: r ? r.status : "no-reply", position: r ? r.position : null,
+        mobile: r ? r.mobile || "" : "", role: r ? r.role || "" : "", notes: r ? r.notes || "" : "",
+        optin: r ? !!r.optin : false, emailStatus: r ? r.emailStatus || null : null,
+        at: r ? r.updatedAt || r.at || 0 : 0
+      };
+    }).sort((a, b) => order[a.status] - order[b.status] || (a.position || 0) - (b.position || 0) || String(a.name).localeCompare(String(b.name)));
 
     return json({
       ok: true,
@@ -270,11 +255,11 @@ export default async (req) => {
         cap, deadlineISO: edition.deadlineISO || "", closed: deadlinePassed(edition)
       },
       summary: {
-        invited: Object.keys(guests).length,
+        invited: list.length,
         seated: stand.seatedCount, cap, waitlist: stand.waitCount,
-        declined: declined.length, noReply: noReply.length, full: stand.full
+        declined: stand.declined.length, noReply: list.filter((g) => g.status === "no-reply").length, full: stand.full
       },
-      seated, wait, declined, noReply
+      guests: list
     });
   }
 

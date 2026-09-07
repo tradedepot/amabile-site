@@ -19,91 +19,63 @@
 <meta name="twitter:title" content="The Amabile Table">
 <meta name="twitter:description" content="By invite only.">
 <meta name="twitter:image" content="https://www.amabiledirosa.com/assets/images/occasions/dinner.jpg">
-<meta name="theme-color" content="#E74529">
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<meta name="theme-color" content="#7d1d1d">
 <style>
-/* Trimmed :root inline — invite.html, pourlist.html and venue.html follow this same
-   pattern (re-declare tokens rather than linking party.css) for these standalone pages. */
-:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--lime:#C6FF4D;--pink:#FF4D8D;--orange:#FF8A3D;--purple:#7A2FF2;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A}
+/* This page is the invitation email, rendered live: same palette, same type, same card.
+   Only difference is the reply button becomes Yes / No, and a short form follows. */
+:root{--wine:#7d1d1d;--paper:#fffdf7;--cream:#efe4cf;--line:#e6d3a8;--ink:#2a1207;--body:#4a3a2c;--gold:#b08d57;--rule:#c9a15a;--mute:#9a8576}
 *{box-sizing:border-box;margin:0;padding:0}
-body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--ink);background:radial-gradient(125% 95% at 50% 0%,#E9B45A 0%,#C6532F 34%,#7d1d33 68%,#2c0f2c 100%);min-height:100vh;overflow-x:hidden}
-.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.92}
-canvas#fx{position:fixed;inset:0;z-index:60;pointer-events:none}
-.wrap{max-width:560px;margin:0 auto;padding:22px 18px 60px}
-.brand{display:block;width:132px;margin:6px auto 16px;opacity:.96}
-/* event card */
-.card{position:relative;border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.3);overflow:hidden;background:#2c0f2c;color:var(--cream)}
-.card .bg{position:absolute;inset:0;background-size:cover;background-position:center;opacity:.5}
-.card .veil{position:absolute;inset:0;background:linear-gradient(180deg,rgba(20,5,15,.35) 0%,rgba(20,5,15,.72) 100%)}
-.card .cont{position:relative;z-index:2;padding:26px}
-.stamp{display:inline-block;background:var(--cream);color:var(--red);font-weight:800;text-transform:uppercase;letter-spacing:.15em;font-size:10px;padding:6px 12px;border-radius:999px}
-.card h1{font-size:clamp(30px,7.5vw,44px);margin:14px 0 4px;color:var(--cream);text-shadow:2px 3px 0 rgba(0,0,0,.4)}
-.seatfor{font-weight:600;color:#ffe9d9;margin:2px 0 16px;font-size:15px}
-.meta{display:flex;gap:22px;flex-wrap:wrap}
-.meta .ln{display:flex;flex-direction:column;gap:2px;font-size:14px}
-.meta .ln b{font-family:"Bagel Fat One",cursive;color:var(--gold);font-size:11px;text-transform:uppercase;letter-spacing:.06em}
-.firm{margin-top:16px;background:rgba(201,161,90,.18);border:1.5px solid rgba(201,161,90,.55);border-radius:12px;padding:10px 13px;font-size:13px;line-height:1.45;color:#ffe9d9}
-.firm b{color:var(--gold)}
-.clogo{height:15px;width:auto;margin-top:18px;opacity:.6}
-/* panel */
-.panel{background:var(--cream);border:3px solid var(--ink);border-radius:22px;box-shadow:9px 9px 0 rgba(0,0,0,.25);padding:24px 22px;margin-top:22px}
-.panel h2{font-family:"Bagel Fat One",cursive;font-size:24px;color:var(--ink);text-align:center;line-height:1.05}
-.sub{text-align:center;color:#7a5c49;font-weight:600;font-size:13px;margin-top:6px;min-height:18px}
-.greet{font-weight:700;color:var(--ink);font-size:16px}
-.invitebody{color:#4a3a2c;font-size:15px;line-height:1.62;margin:8px 0 20px;white-space:pre-line}
-.statusbar{margin-top:12px;text-align:center;font-weight:700;font-size:13px;color:#6a4634;background:#FFF6E4;border:2px solid #EAD59B;border-radius:12px;padding:9px 12px}
-.statusbar.wait{background:#FDEBE4;border-color:#F3C3B2;color:#9a3d1e}
-.statusbar.seated{background:#eaffcf;border-color:#C0DD97;color:#3B6D11}
-.yesno{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:18px}
-.big{cursor:pointer;border:3px solid var(--ink);border-radius:16px;padding:18px 10px;font-family:"Bagel Fat One",cursive;font-size:17px;background:#fff;transition:transform .12s,background .12s;box-shadow:4px 4px 0 rgba(0,0,0,.18)}
-.big:hover{transform:translate(-2px,-2px)}
-.big.yes{background:var(--lime)}
-.big.sel{outline:4px solid var(--red);outline-offset:2px}
-.more{max-height:0;opacity:0;overflow:hidden;transition:max-height .45s ease,opacity .35s ease}
-.more.open{max-height:900px;opacity:1;margin-top:16px}
-label{display:block;font-weight:700;text-transform:uppercase;letter-spacing:.04em;font-size:11px;color:#6a4634;margin:14px 0 6px}
-input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:13px 15px;border:3px solid var(--ink);border-radius:12px;font-family:inherit;font-size:15px;background:#fff;color:var(--ink)}
-textarea{min-height:74px;resize:vertical}
-input:focus,textarea:focus{outline:none;box-shadow:0 0 0 3px rgba(231,69,41,.35)}
-.hint{font-size:12px;color:#9a8576;margin-top:5px;font-weight:500;text-transform:none;letter-spacing:0}
-.optin{display:flex;gap:9px;align-items:flex-start;margin-top:16px;font-size:13px;color:#6a4634;font-weight:500;text-transform:none;letter-spacing:0}
-.optin input{margin-top:2px;width:18px;height:18px;accent-color:var(--red)}
-.go{margin-top:18px;width:100%;cursor:pointer;border:0;background:var(--red);color:var(--cream);font-family:"Bagel Fat One",cursive;font-size:19px;padding:16px;border-radius:999px;box-shadow:5px 5px 0 var(--ink);transition:transform .12s}
-.go:hover{transform:translate(-2px,-2px)}.go:active{transform:translate(2px,2px);box-shadow:2px 2px 0 var(--ink)}
-.go:disabled{opacity:.6}
-.err{color:var(--red);font-weight:700;font-size:13px;margin-top:10px;text-align:center;min-height:16px}
-.done{text-align:center}
-.done .em{font-size:52px;line-height:1}
-.done h2{margin-top:8px}
-.done p{color:#6a4634;font-weight:600;margin-top:8px}
-.change{display:inline-block;margin-top:18px;cursor:pointer;background:none;border:0;color:#7a5c49;font-weight:700;font-size:13px;text-decoration:underline}
-.legal{text-align:center;color:rgba(255,243,224,.82);font-size:12px;margin-top:26px}
+html,body{background:var(--cream)}
+body{font-family:Georgia,"Times New Roman",serif;color:var(--ink);min-height:100vh;padding:34px 14px 40px;-webkit-font-smoothing:antialiased}
+.card{max-width:560px;margin:0 auto;background:var(--paper);border:1px solid var(--line);border-radius:10px;overflow:hidden}
+.bar{height:6px;background:var(--wine)}
+.inner{padding:40px 46px 30px;text-align:center}
+.eyebrow{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+h1{font-size:30px;line-height:1.15;font-weight:normal;margin:0 0 6px}
+.host{font-size:15px;font-style:italic;color:var(--gold)}
+.rule{width:46px;height:2px;background:var(--rule);margin:22px auto 24px}
+p.body{margin:0 0 16px;font-size:16px;line-height:1.7;color:var(--body);text-align:left}
+table.det{border-collapse:collapse;margin:8px auto 28px;text-align:left}
+table.det td{padding:9px 0 0;font-size:16px;line-height:1.3;vertical-align:top}
+table.det td.l{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);padding:13px 18px 0 0;white-space:nowrap}
+/* reply */
+.yesno{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+.pill{cursor:pointer;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:15px 34px;border-radius:999px;border:2px solid var(--wine);background:var(--wine);color:var(--paper);transition:opacity .12s,transform .12s}
+.pill.no{background:transparent;color:var(--wine)}
+.pill:hover{transform:translateY(-1px)}
+.pill.sel{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--rule)}
+.pill:disabled{opacity:.55;cursor:default}
+.note{margin:26px 0 0;font-size:13px;color:var(--mute);font-family:Arial,Helvetica,sans-serif;text-align:left;line-height:1.5}
+.more{display:none;text-align:left;margin-top:26px;padding-top:22px;border-top:1px solid var(--cream)}
+.more.open{display:block}
+label{display:block;font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);margin:16px 0 6px}
+label span{text-transform:none;letter-spacing:0;color:var(--mute)}
+input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:6px;font-family:Georgia,"Times New Roman",serif;font-size:16px;background:#fff;color:var(--ink)}
+input:focus,textarea:focus{outline:none;border-color:var(--rule);box-shadow:0 0 0 3px rgba(201,161,90,.25)}
+textarea{min-height:76px;resize:vertical}
+.optin{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:var(--body);line-height:1.4}
+.optin input{margin-top:2px;width:16px;height:16px;accent-color:var(--wine)}
+.send{margin-top:22px;text-align:center}
+.err{font-family:Arial,Helvetica,sans-serif;color:var(--wine);font-size:13px;margin-top:12px;text-align:center;min-height:16px}
+.status{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:var(--body);background:#f7efdc;border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:0 0 22px;text-align:left}
+.status.seated{background:#eef5e2;border-color:#cfe0b5;color:#3b5a1a}
+h2{font-size:22px;font-weight:normal;margin:0 0 10px}
+.change{display:inline-block;margin-top:22px;cursor:pointer;background:none;border:0;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:var(--mute);text-decoration:underline}
+.foot{padding:20px 46px 26px;border-top:1px solid var(--cream);text-align:center}
+.foot .b{font-style:italic;font-size:15px;color:#8a6d4a}
+.foot .c{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8c;margin-top:6px}
+.legal{text-align:center;margin-top:22px;font-family:Arial,Helvetica,sans-serif;font-size:12px}
 .legal a{color:var(--gold)}
-.errbox{text-align:center;color:var(--cream);padding:48px 12px}
-.errbox h1{font-family:"Bagel Fat One",cursive;font-size:28px;margin-bottom:10px}
-/* 18+ gate */
-.gate{position:fixed;inset:0;z-index:80;background:radial-gradient(125% 95% at 50% 0%,#E9B45A,#7d1d33 60%,#2c0f2c);display:flex;align-items:center;justify-content:center;padding:24px}
-.gate .box{max-width:420px;text-align:center;color:var(--cream)}
-.gate .box img{width:130px;margin:0 auto 20px}
-.gate h1{font-family:"Bagel Fat One",cursive;font-size:30px;margin-bottom:10px}
-.gate p{color:#ffe9d9;margin-bottom:22px}
-.gate .btns{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.gate button{cursor:pointer;border:3px solid var(--ink);border-radius:14px;padding:16px;font-family:"Bagel Fat One",cursive;font-size:16px;box-shadow:4px 4px 0 var(--ink)}
-.gate .in{background:var(--lime);color:#1a2e00}.gate .out{background:#fff;color:var(--ink)}
-.gate .no{margin-top:16px;color:#ffd9c9;font-size:13px;display:none}
-@media(prefers-reduced-motion:reduce){*{animation:none!important}}
+@media(max-width:480px){.inner{padding:32px 24px 26px}.foot{padding:18px 24px 22px}.pill{padding:14px 26px;width:100%}}
 </style>
 </head>
 <body>
-<canvas id="fx"></canvas>
-
-<div class="wrap">
-  <img class="brand" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">
-  <div id="app"><div class="errbox"><h1>Setting the table…</h1></div></div>
-  <div class="legal"><a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
+<div class="card">
+  <div class="bar"></div>
+  <div class="inner" id="app"><h2>Setting the table…</h2></div>
+  <div class="foot"><div class="b">Amabile di Rosa</div><div class="c">Lagos, Nigeria</div></div>
 </div>
+<div class="legal"><a href="https://www.amabiledirosa.com/privacy.html">Privacy</a></div>
 
 <script>
 function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
@@ -111,10 +83,13 @@ function qs(k){return new URLSearchParams(location.search).get(k)||"";}
 var _pm=(location.pathname||"").match(/\/table\/([A-Za-z0-9-]+)/);
 var ED=(qs("e")||(_pm?_pm[1]:"")).toLowerCase().replace(/[^a-z0-9-]/g,"");
 var TOKEN=qs("g").replace(/[^A-Za-z0-9_-]/g,"");
+/* Email buttons carry the answer (&r=yes / &r=no). It pre-selects and opens the form; the
+   guest still confirms with one tap, so link pre-fetching by mail scanners cannot reply. */
+var PRE=qs("r")==="yes"?"yes":(qs("r")==="no"?"no":"");
 var app=document.getElementById("app");
 var DATA=null;
 
-/* attribution — persisted so navigating away and back doesn't lose it */
+/* attribution, persisted so navigating away and back doesn't lose it */
 var ATTR=(function(){
   try{var s=sessionStorage.getItem("adr_table_attr");if(s)return s;}catch(e){}
   var q=new URLSearchParams(location.search);
@@ -124,17 +99,9 @@ var ATTR=(function(){
   return a;
 })();
 
-/* confetti (same engine as invite.html) */
-var cv=document.getElementById("fx"),cx=cv.getContext("2d"),P=[],W,H;
-function size(){W=cv.width=innerWidth;H=cv.height=innerHeight;}size();addEventListener("resize",size);
-var COLS=["#FFC24D","#FF4D8D","#C6FF4D","#7A2FF2","#E74529","#fff","#82B28C","#C9A15A"];
-function burst(x,y,n,big){for(var i=0;i<(n||30);i++){P.push({x:x,y:y,vx:(Math.random()-.5)*(big?12:8),vy:(Math.random()-1)*(big?12:9)-2,g:.26,r:(big?6:3)+Math.random()*5,c:COLS[i%COLS.length],a:1,rot:Math.random()*6,vr:(Math.random()-.5)*.4,sq:Math.random()>.4});}}
-function tick(){cx.clearRect(0,0,W,H);for(var i=P.length-1;i>=0;i--){var p=P[i];p.vy+=p.g;p.x+=p.vx;p.y+=p.vy;p.a-=.012;p.rot+=p.vr;if(p.a<=0||p.y>H+40){P.splice(i,1);continue;}cx.globalAlpha=Math.max(p.a,0);cx.fillStyle=p.c;if(p.sq){cx.save();cx.translate(p.x,p.y);cx.rotate(p.rot);cx.fillRect(-p.r,-p.r,p.r*2,p.r*2.3);cx.restore();}else{cx.beginPath();cx.arc(p.x,p.y,p.r,0,7);cx.fill();}}cx.globalAlpha=1;requestAnimationFrame(tick);}tick();
-
-/* Invited list: no age gate, the footer line is sufficient. */
 load();
 
-function fail(msg,head){app.innerHTML='<div class="errbox"><h1>'+esc(head||"Hmm.")+'</h1><p>'+esc(msg)+'</p></div>';}
+function fail(msg,head){app.innerHTML='<div class="eyebrow">The Amabile Table</div><h2>'+esc(head||"Hmm.")+'</h2><p class="body" style="text-align:center">'+esc(msg)+'</p>';}
 
 function load(){
   if(!ED){fail("This link is missing its edition.");return;}
@@ -142,109 +109,81 @@ function load(){
     .then(function(r){return r.json();})
     .then(function(d){
       if(!d||!d.ok){fail("We couldn't find that Table.");return;}
-      if(!d.invited){
-        fail("The Amabile Table is invite-only, and this link isn't carrying your personal invite. Please open the exact link from your email — a forwarded one won't work.","A closed room");
-        return;
-      }
+      if(!d.invited){fail("The Amabile Table is by invitation, and this link is not carrying a personal invite. Please open the exact link from your email.","A closed room");return;}
       DATA=d;render();
     })
     .catch(function(){fail("Something went wrong loading your invite. Try again in a moment.");});
 }
 
-function metaCard(){
-  var e=DATA.edition, g=DATA.guest;
-  var first=((g.name||"you").split(" ")[0]);
+/* The invitation itself: identical to the email, top to the details table. */
+function head(){
+  var e=DATA.edition, g=DATA.guest||{};
+  var first=((g.name||"").split(" ")[0]);
   var host=e.hostName||"Amabile di Rosa";
-  var m="";
-  if(e.dateLabel)m+='<div class="ln"><b>When</b><span>'+esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel)+" prompt":"")+'</span></div>';
-  if(e.seatedByLabel)m+='<div class="ln"><b>Seated by</b><span>'+esc(e.seatedByLabel)+'</span></div>';
-  if(e.venue)m+='<div class="ln"><b>Where</b><span>'+esc(e.venue)+'</span></div>';
-  var firm='';
-  return '<div class="card"><div class="bg" style="background-image:url(\'/assets/images/occasions/dinner.jpg\')"></div><div class="veil"></div><div class="cont">'+
-    '<span class="stamp">An invitation · The Amabile Table</span>'+
-    '<h1 class="disp">'+esc(e.title||"The Amabile Table")+'</h1>'+
-    '<p class="seatfor">Hosted by '+esc(host)+'</p>'+
-    '<div class="meta">'+m+'</div>'+firm+
-    '<img class="clogo" src="/assets/images/logo/brand_white.png" alt="Amabile di Rosa">'+
-  '</div></div>';
+  var when=e.dateLabel?esc(e.dateLabel)+(e.timeLabel?", "+esc(e.timeLabel)+" prompt":""):"";
+  var row=function(l,v){return v?'<tr><td class="l">'+l+'</td><td>'+v+'</td></tr>':"";};
+  var paras=String(e.cardParagraph||"").split(/\n{2,}|\n/).filter(Boolean).map(function(p){return '<p class="body">'+esc(p)+'</p>';}).join("");
+  return '<div class="eyebrow">The Amabile Table</div>'+
+    '<h1>'+esc(e.title||"The Amabile Table")+'</h1>'+
+    '<div class="host">Hosted by '+esc(host)+'</div>'+
+    '<div class="rule"></div>'+
+    '<p class="body">Ciao '+esc(first||"there")+',</p>'+paras+
+    '<table class="det">'+row("When",when)+row("Seated by",esc(e.seatedByLabel||""))+row("Where",esc(e.venue||""))+'</table>';
 }
+var PLUS='<p class="note">This invitation is personal to you. Seating is planned per person, so we are not able to accommodate plus-ones.</p>';
 
 function render(){
-  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{};
-  // Closed for the edition.
-  if(e.closed){
-    app.innerHTML=metaCard()+'<div class="panel"><h2>RSVPs are closed</h2><div class="sub">The list for this edition is now set. Thanks for the interest — we\'ll invite you to the next one.</div></div>';
-    return;
-  }
-  // Already answered → show status + let them change.
-  if(y.response==="yes"||y.response==="no"){ return renderStatus(); }
+  var e=DATA.edition, y=DATA.your||{};
+  if(e.closed){app.innerHTML=head()+'<h2>Replies are closed.</h2><p class="body" style="text-align:center">The list for this edition is now set. We will invite you to the next one.</p>';return;}
+  if((y.response==="yes"||y.response==="no")&&(!PRE||PRE===y.response))return renderStatus();
   renderForm();
 }
 
-function statusLine(){
-  var y=DATA.your||{};
-  if(y.status==="seated")return '<div class="statusbar seated">🍷 Your seat is confirmed.</div>';
-  if(y.status==="wait")return '<div class="statusbar wait">⏳ You\'re on the waitlist — no. '+y.position+'. We\'ll email you if a seat opens.</div>';
-  return "";
-}
-
 function renderStatus(){
-  var y=DATA.your||{};
-  var head,body;
-  if(y.response==="yes"&&y.status==="seated"){head="You're in 🍷";body="Your seat is saved. We can't wait to host you.";burstBig();}
-  else if(y.response==="yes"&&y.status==="wait"){head="You're on the waitlist";body="You're number "+y.position+" in line. If a seat frees up we'll email you automatically — nothing more to do.";}
-  else {head="Noted — thank you";body="Sorry you can't make this one. We'll save you a place at the next edition.";}
-  app.innerHTML=metaCard()+
-    '<div class="panel"><div class="done"><div class="em">'+(y.response==="yes"?(y.status==="wait"?"⏳":"🔒"):"🍷")+'</div>'+
-    '<h2 class="disp">'+esc(head)+'</h2><p>'+esc(body)+'</p>'+
-    '<button class="change" id="changeBtn">Change my answer</button></div></div>';
-  document.getElementById("changeBtn").addEventListener("click",function(){renderForm();});
+  var y=DATA.your||{}, e=DATA.edition;
+  var h,b;
+  if(y.response==="yes"&&y.status==="seated"){h="Your seat is confirmed.";b="We will see you at "+(e.title||"the Table")+".";}
+  else if(y.response==="yes"&&y.status==="wait"){h="You are on the waitlist, position "+y.position+".";b="If a seat opens we will email you. There is nothing you need to do.";}
+  else{h="Noted, thank you.";b="Sorry you cannot make this one. We will keep you in mind for the next edition.";}
+  app.innerHTML=head()+'<h2>'+esc(h)+'</h2><p class="body" style="text-align:center">'+esc(b)+'</p>'+
+    '<button class="change" id="changeBtn">Change my reply</button>'+PLUS;
+  document.getElementById("changeBtn").addEventListener("click",renderForm);
 }
 
 function renderForm(){
-  var e=DATA.edition, y=DATA.your||{}, s=DATA.summary||{}, g=DATA.guest||{};
-  var first=((g.name||"you").split(" ")[0]);
+  var y=DATA.your||{}, s=DATA.summary||{};
   var full=s.full && y.status!=="seated";
-  var warn=full?'<div class="statusbar wait">The table is currently full — saying yes adds you to the waitlist, and we\'ll email you the moment a seat opens.</div>':statusLine();
-  app.innerHTML=metaCard()+
-   '<div class="panel" id="panel">'+
-     '<p class="greet">Ciao '+esc(first)+',</p>'+
-     (e.cardParagraph?'<p class="invitebody">'+esc(e.cardParagraph)+'</p>':'')+
-     '<h2>Can you join us?</h2>'+
-     '<div class="sub">This invitation is personal to you. Seating is planned per person, so no plus-ones.</div>'+
-     warn+
-     '<div class="yesno">'+
-       '<button class="big yes" id="bYes">Yes, I\'ll be there</button>'+
-       '<button class="big no" id="bNo">Can\'t make it</button>'+
-     '</div>'+
-     '<div class="more" id="more">'+
-       '<div id="yesFields">'+
-         '<label for="fEmail">Email</label><input type="email" id="fEmail" placeholder="you@email.com" autocomplete="email" value="'+esc(y.email||"")+'">'+
-         '<label for="fMobile">Mobile <span style="text-transform:none;font-weight:500;color:#9a8576">(for day-of logistics)</span></label><input type="tel" id="fMobile" placeholder="+234…" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
-         '<label for="fRole">What you do, in a few words</label><input type="text" id="fRole" placeholder="e.g. ceramicist / runs a wine bar" value="'+esc(y.role||"")+'"><div class="hint">It helps us seat the table well.</div>'+
-       '</div>'+
-       '<label for="fNotes">Anything we should know?</label><textarea id="fNotes" placeholder="Dietary needs, access, allergies… (optional)">'+esc(y.notes||"")+'</textarea>'+
-       '<label class="optin"><input type="checkbox" id="fOptin"'+(y.optin?" checked":"")+'><span>Send me the next Amabile Table</span></label>'+
-       '<button class="go" id="go">Send my reply</button>'+
-       '<div class="err" id="ferr"></div>'+
-     '</div>'+
-   '</div>';
+  var bar=full?'<div class="status">The table is currently full. Saying yes adds you to the waitlist, and we will email you the moment a seat opens.</div>':
+          (y.status==="seated"?'<div class="status seated">Your seat is confirmed. You can update your reply below.</div>':
+          (y.status==="wait"?'<div class="status">You are on the waitlist, position '+esc(y.position)+'.</div>':""));
+  app.innerHTML=head()+bar+
+    '<div class="yesno"><button class="pill yes" id="bYes">Yes, I will be there</button><button class="pill no" id="bNo">I cannot make it</button></div>'+
+    '<div class="more" id="more">'+
+      '<div id="yesFields">'+
+        '<label for="fEmail">Email</label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">'+
+        '<label for="fMobile">Mobile <span>(for day-of logistics)</span></label><input type="tel" id="fMobile" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
+        '<label for="fRole">What you do, in a few words</label><input type="text" id="fRole" value="'+esc(y.role||"")+'">'+
+      '</div>'+
+      '<label for="fNotes">Anything we should know? <span>(dietary, access; optional)</span></label><textarea id="fNotes">'+esc(y.notes||"")+'</textarea>'+
+      '<label class="optin"><input type="checkbox" id="fOptin"'+(y.optin?" checked":"")+'><span>Keep me in mind for the next Amabile Table</span></label>'+
+      '<div class="send"><button class="pill" id="go">Send my reply</button></div>'+
+      '<div class="err" id="ferr"></div>'+
+    '</div>'+PLUS;
 
-  var resp=y.response||"", more=document.getElementById("more");
+  var resp=PRE||y.response||"", more=document.getElementById("more");PRE="";
   var bYes=document.getElementById("bYes"),bNo=document.getElementById("bNo");
   var yesFields=document.getElementById("yesFields"),go=document.getElementById("go");
   function choose(r){resp=r;bYes.classList.toggle("sel",r==="yes");bNo.classList.toggle("sel",r==="no");
     more.classList.add("open");yesFields.style.display=r==="yes"?"block":"none";
-    go.textContent=r==="yes"?(full?"Join the waitlist":"Save my seat 🔒"):"Send my reply";
-    var b=(r==="yes"?bYes:bNo).getBoundingClientRect();burst(b.left+b.width/2,b.top+b.height/2,16);
-    if(r==="yes")setTimeout(function(){document.getElementById("fEmail").focus();},120);}
+    go.textContent=r==="yes"?(full?"Join the waitlist":"Confirm my seat"):"Send my reply";
+    if(r==="yes")setTimeout(function(){document.getElementById("fEmail").focus();},80);}
   bYes.addEventListener("click",function(){choose("yes");});
   bNo.addEventListener("click",function(){choose("no");});
   if(resp)choose(resp);
 
   go.addEventListener("click",function(){
     var errEl=document.getElementById("ferr");errEl.textContent="";
-    if(!resp){errEl.textContent="Pick one first.";return;}
+    if(!resp){errEl.textContent="Choose yes or no first.";return;}
     var body={edition:ED,token:TOKEN,response:resp,attr:ATTR};
     if(resp==="yes"){
       var email=document.getElementById("fEmail").value.trim();
@@ -252,7 +191,7 @@ function renderForm(){
       var role=document.getElementById("fRole").value.trim();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent="Add a valid email so we can confirm.";return;}
       if(!mobile){errEl.textContent="Add a mobile for day-of logistics.";return;}
-      if(!role){errEl.textContent="Tell us what you do — it feeds the seating plan.";return;}
+      if(!role){errEl.textContent="Tell us what you do. It helps us seat the table.";return;}
       body.email=email;body.mobile=mobile;body.role=role;
     }
     body.notes=document.getElementById("fNotes").value.trim();
@@ -261,16 +200,14 @@ function renderForm(){
     fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
       .then(function(r){return r.json().catch(function(){return{};});})
       .then(function(d){
-        if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"RSVPs just closed for this edition.":"Something went wrong — try again.";return;}
+        if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"Replies just closed for this edition.":"Something went wrong. Please try again.";return;}
         DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",mobile:body.mobile||"",role:body.role||"",notes:body.notes,optin:body.optin};
         DATA.summary=d.summary||DATA.summary;
-        renderStatus();
+        renderStatus();window.scrollTo(0,0);
       })
-      .catch(function(){go.disabled=false;go.textContent="Send my reply";errEl.textContent="Network hiccup — try again.";});
+      .catch(function(){go.disabled=false;go.textContent="Send my reply";errEl.textContent="Network hiccup. Please try again.";});
   });
 }
-
-function burstBig(){burst(innerWidth/2,innerHeight*0.4,90,true);burst(innerWidth*0.2,innerHeight*0.5,40,true);burst(innerWidth*0.8,innerHeight*0.5,40,true);}
 </script>
 </body>
 </html>

@@ -39,8 +39,12 @@ textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,monospa
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
 th,td{text-align:left;padding:8px 9px;border-bottom:1px solid rgba(42,18,7,.12);vertical-align:top}
 th{background:var(--ink);color:var(--lime);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
+td.st,td.nm{white-space:nowrap}td.nm{font-weight:700}td .sub{font-weight:500;font-size:12px;color:#9a8576;margin-top:2px;white-space:normal}
 tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{color:#9a8576}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+td.act{white-space:nowrap;text-align:right}
+.lnk{cursor:pointer;background:none;border:0;font-family:inherit;font-size:12.5px;font-weight:700;color:#6a4634;text-decoration:underline;padding:2px 0;margin-left:12px}
+.lnk.rm{color:#c0392b}.lnk:disabled{opacity:.5}
 .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .kpi{background:#FBFAEB;border-radius:12px;padding:10px 14px;min-width:88px}
 .kpi b{display:block;font-family:"Bagel Fat One",cursive;font-size:22px}
@@ -71,12 +75,6 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <button class="btn gd" id="newEd">+ New edition</button>
         <button class="btn ghost sm" id="refreshEds">Refresh</button>
       </div>
-      <div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(42,18,7,.18)">
-        <span class="muted" style="font-weight:700">Email check:</span>
-        <input type="text" id="testTo" placeholder="you@email.com" style="max-width:240px">
-        <button class="btn ghost sm" id="testEmail">Send test</button>
-        <span class="muted" id="testMsg"></span>
-      </div>
     </div>
 
     <!-- Edition form (hidden until you pick/create one) -->
@@ -101,25 +99,22 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
     <!-- Everything below appears once an edition is active -->
     <div id="edContext" class="hide">
 
-      <!-- STEP 2 — guests -->
+      <!-- STEP 2 — the guest list (one list: who is invited, whether they were emailed, what they replied) -->
       <div class="panel">
         <div class="eyebrow">Step 2 · The guest list</div>
-        <h2 style="margin-top:4px">Invite your guests <span class="chip hide" id="gCount"></span></h2>
-        <div class="muted">One guest per line — <b>name and email</b>, separated however you like: a comma, a tab, or just a space all work. A header row is ignored. Each guest gets their own private link.</div>
-        <textarea id="gPaste" placeholder="Ada Obi  ada@email.com&#10;Tunde Bello, tunde@email.com&#10;Chidi Okeke	chidi@email.com"></textarea>
-        <label class="muted" style="display:flex;gap:8px;align-items:center;text-transform:none;letter-spacing:0;font-weight:500;margin-top:10px"><input type="checkbox" id="gReplace" style="width:auto;height:16px"> Replace the whole list (otherwise add to it / update by email)</label>
-        <div class="row"><button class="btn" id="importG">Add + email invites</button><button class="btn gd sm" id="sendInvites">Email invites</button><button class="btn gd sm" id="getLinks">Show links</button><button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:#c0392b">Clear list</button><span class="muted" id="gMsg"></span></div>
-        <div class="linkhint">If a guest has an email, adding them sends their invite automatically (from table@amabiledirosa.com). No email on a row? They still get a personal link — use “Show links” to copy and send it; the link RSVPs on its own. “Email invites” re-sends to anyone not yet emailed.</div>
-        <div class="links hide" id="linksBox"></div>
-        <div class="row hide" id="linkActions"><button class="btn dk sm" id="copyLinks">Copy for mail-merge</button><button class="btn dk sm" id="csvLinks">Download links CSV</button></div>
-      </div>
-
-      <!-- STEP 3 — standings -->
-      <div class="panel">
-        <div class="eyebrow">Step 3 · Who's coming</div>
-        <div class="row" style="margin-top:6px"><button class="btn dk" id="loadData">Refresh</button><button class="btn alt" id="csvData">Download guest list (CSV)</button><span class="muted" id="stMsg"></span></div>
         <div class="kpis" id="kpis"></div>
-        <div class="tablewrap"><table id="stTable"><thead><tr><th>Status</th><th>Name</th><th>Email</th><th>Mobile</th><th>What they do</th><th>Dietary / notes</th><th>Next?</th><th>Confirmation</th></tr></thead><tbody id="stRows"></tbody></table></div>
+
+        <h2 style="margin-top:22px">Add guests</h2>
+        <div class="muted">One per line, name and email. Each guest is emailed their own private link as soon as you add them. Adding someone already on the list just updates their name.</div>
+        <textarea id="gPaste" style="min-height:84px" placeholder="Ada Obi  ada@email.com&#10;Tunde Bello, tunde@email.com"></textarea>
+        <div class="row" style="margin-top:10px"><button class="btn" id="importG">Add and send invites</button><span class="muted" id="gMsg"></span></div>
+
+        <h2 style="margin-top:26px">Everyone invited <span class="chip hide" id="gCount"></span></h2>
+        <div class="tablewrap"><table id="stTable"><thead><tr><th>Reply</th><th>Name</th><th>Email</th><th>Invite</th><th></th></tr></thead><tbody id="stRows"></tbody></table></div>
+        <div class="row" style="margin-top:14px;justify-content:space-between">
+          <div class="row" style="margin:0"><button class="btn alt sm" id="csvData">Download CSV</button><span class="muted" id="stMsg"></span></div>
+          <button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:transparent;background:transparent">Remove everyone</button>
+        </div>
       </div>
 
     </div>
@@ -153,17 +148,6 @@ function loadEditions(){return api("editions").then(function(d){EDITIONS=(d&&d.e
 });}
 $("refreshEds").addEventListener("click",loadEditions);
 
-/* email diagnostics — surfaces Brevo's real response so a silent non-delivery is explained */
-$("testEmail").addEventListener("click",function(){
-  var to=$("testTo").value.trim();if(!to){$("testMsg").textContent="Enter an email first.";return;}
-  $("testMsg").textContent="Sending…";
-  api("test-email",{to:to}).then(function(d){
-    if(!d.hasKey){$("testMsg").innerHTML='<b style="color:#c0392b">BREVO_API_KEY is not set on this deploy.</b>';return;}
-    if(d.ok){$("testMsg").innerHTML='<b style="color:#3B6D11">Sent ✓ (Brevo '+d.status+', from '+esc(d.sender)+'). Check inbox + spam.</b>';return;}
-    $("testMsg").innerHTML='<b style="color:#c0392b">Failed — Brevo '+esc(String(d.status||d.error||""))+'</b>: '+esc((d.body||d.detail||"").slice(0,200))+' <span class="muted">(sender '+esc(d.sender||"")+')</span>';
-  }).catch(function(){$("testMsg").textContent="Request failed.";});
-});
-
 function openEdition(slug){
   var e=EDITIONS.filter(function(x){return x.edition===slug;})[0];
   if(!e){newEdition();return;}
@@ -175,7 +159,6 @@ function openEdition(slug){
     $("fVenue").value=m.venue||"";$("fCap").value=m.cap||26;
     $("fDeadline").value=(m.deadlineISO||"").slice(0,10);
     updateSlugHint();renderData(d);
-    $("gCount").textContent=d.summary.invited+" invited";show("gCount",d.summary.invited>0);
   });
 }
 function newEdition(){
@@ -210,7 +193,7 @@ $("saveEd").addEventListener("click",function(){
   $("edMsg").textContent="Saving…";
   api("save-edition",body).then(function(d){
     if(!d||!d.ok){$("edMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
-    $("edMsg").textContent="Saved ✓";CUR_SLUG=slug;show("edContext",true);
+    $("edMsg").textContent="Saved ✓";CUR_SLUG=slug;show("edContext",true);refreshStandings();
     $("edHead").textContent="Editing "+title;$("edLink").innerHTML='Guest links: <code>'+esc(siteBase())+'/table/'+esc(slug)+'</code>';$("slugHint").innerHTML="";
     loadEditions().then(function(){$("edSelect").value=slug;});
   });
@@ -235,77 +218,71 @@ function parseRows(text){var out=[];text.split(/\r?\n/).forEach(function(line){
 });return out;}
 $("importG").addEventListener("click",function(){
   var ed=curEditionSlug();if(!CUR_SLUG){$("gMsg").textContent="Save the edition first.";return;}
-  var rows=parseRows($("gPaste").value);if(!rows.length){$("gMsg").textContent="Paste some names first.";return;}
-  $("gMsg").textContent="Adding "+rows.length+"…";
-  api("import-guests",{edition:ed,rows:rows,replace:$("gReplace").checked}).then(function(d){
-    if(!d||!d.ok){$("gMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
-    $("gCount").textContent=d.total+" invited";show("gCount",true);showLinks(d.links);loadEditions();refreshStandings();
-    // adding a guest emails them their invite link (only those not yet invited)
-    $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · emailing invites…";
+  var rows=parseRows($("gPaste").value);if(!rows.length){$("gMsg").textContent="Type a name and email first.";return;}
+  $("importG").disabled=true;$("gMsg").textContent="Adding "+rows.length+"…";
+  api("import-guests",{edition:ed,rows:rows}).then(function(d){
+    if(!d||!d.ok){$("importG").disabled=false;$("gMsg").textContent="Error: "+((d&&d.error)||"failed");return;}
+    $("gPaste").value="";refreshStandings();loadEditions();
+    $("gMsg").textContent="Added "+d.added+(d.updated?", updated "+d.updated:"")+" · sending invites…";
     api("send-invites",{edition:ed,onlyNew:true}).then(function(s){
+      $("importG").disabled=false;refreshStandings();
       if(!s||!s.ok){$("gMsg").textContent="Added "+d.added+" · invite email error: "+((s&&s.error)||"failed");return;}
-      var f=(s.failed&&s.failed.length)?(" · "+s.failed.length+" failed ("+esc(String(s.failed[0].text||s.failed[0].status||""))+")"):"";
-      $("gMsg").textContent="Added "+d.added+", updated "+d.updated+" · invited "+s.sent+f+" ✓";
+      var f=(s.failed&&s.failed.length)?(" · "+s.failed.length+" failed"):"";
+      $("gMsg").textContent="Added "+d.added+(d.updated?", updated "+d.updated:"")+" · invited "+s.sent+f+" ✓";
     });
   });
 });
-$("sendInvites").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
-  if(!confirm("Email the invite link to everyone not yet invited for this edition?"))return;
-  $("gMsg").textContent="Sending invites…";
-  api("send-invites",{edition:ed,onlyNew:true}).then(function(s){
-    if(!s||!s.ok){$("gMsg").textContent="Error: "+((s&&s.error)||"failed");return;}
-    var f=(s.failed&&s.failed.length)?(" · "+s.failed.length+" failed ("+esc(String(s.failed[0].text||s.failed[0].status||""))+")"):"";
-    $("gMsg").textContent="Invited "+s.sent+" (skipped "+s.skipped+")"+f;
-  });});
-$("getLinks").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
-  api("guest-links",{edition:ed}).then(function(d){if(d&&d.ok)showLinks(d.links);});});
 $("clearG").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_SLUG)return;
-  if(!confirm("Remove ALL invited guests AND their responses for this edition? Use this to clear test data — it can't be undone."))return;
-  $("gMsg").textContent="Clearing…";
-  api("clear-guests",{edition:ed}).then(function(d){
-    if(!d||!d.ok){$("gMsg").textContent="Error.";return;}
-    $("gMsg").textContent="Cleared ✓ (removed "+d.removed+" responses)";
-    $("gCount").textContent="0 invited";show("gCount",false);
-    LINKS=[];$("linksBox").textContent="";show("linksBox",false);show("linkActions",false);
-    loadEditions();api("data",{edition:ed}).then(function(x){if(x&&x.ok)renderData(x);});
-  });});
-var LINKS=[];
-function showLinks(links){LINKS=links||[];show("linksBox",true);show("linkActions",true);
-  $("linksBox").textContent=LINKS.map(function(l){return l.name+(l.email?" <"+l.email+">":"")+"  "+l.link;}).join("\n");}
-$("copyLinks").addEventListener("click",function(){var t=LINKS.map(function(l){return l.name+"\t"+(l.email||"")+"\t"+l.link;}).join("\n");
-  try{navigator.clipboard.writeText(t);}catch(e){var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}$("gMsg").textContent="Copied ✓";});
-$("csvLinks").addEventListener("click",function(){downloadCSV("amabile-table-links.csv",[["Name","Email","Link"]].concat(LINKS.map(function(l){return [l.name,l.email||"",l.link];})));});
+  if(!confirm("Remove everyone on this list and all their replies? Their links stop working. This cannot be undone."))return;
+  $("stMsg").textContent="Removing…";
+  api("clear-guests",{edition:ed}).then(function(d){$("stMsg").textContent=d&&d.ok?"List cleared":"Error.";loadEditions();refreshStandings();});});
 
-/* ---- standings ---- */
+/* per-row actions */
+function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}}
+$("stRows").addEventListener("click",function(ev){
+  var b=ev.target.closest("button[data-act]");if(!b||!CUR)return;
+  var gid=b.getAttribute("data-gid"),g=(CUR.guests||[]).filter(function(x){return x.gid===gid;})[0];if(!g)return;
+  var act=b.getAttribute("data-act"),ed=curEditionSlug();
+  if(act==="copy"){copyText(g.link);b.textContent="Copied";setTimeout(function(){b.textContent="Copy link";},1500);}
+  if(act==="send"){if(!confirm((g.invitedAt?"Resend":"Send")+" the invite email to "+g.name+"?"))return;b.disabled=true;
+    api("send-invites",{edition:ed,gids:[gid]}).then(function(){refreshStandings();});}
+  if(act==="remove"){if(!confirm("Remove "+g.name+"? Their link stops working and any reply is deleted."))return;b.disabled=true;
+    api("remove-guest",{edition:ed,gid:gid}).then(function(){loadEditions();refreshStandings();});}
+});
+
+/* ---- the list ---- */
 var CUR=null;
 function refreshStandings(){if(!CUR_SLUG)return;api("data",{edition:curEditionSlug()}).then(function(d){if(d&&d.ok)renderData(d);});}
-$("loadData").addEventListener("click",function(){if(!CUR_SLUG){$("stMsg").textContent="Pick an edition.";return;}
-  $("stMsg").textContent="Loading…";refreshStandings();});
-/* auto-refresh: keeps "who's coming" live as RSVPs land, without clicking Refresh */
+/* auto-refresh keeps the list live as replies land */
 setInterval(function(){if(CUR_SLUG&&!document.hidden)refreshStandings();},15000);
 function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
   $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
-  var rows=[].concat(
-    d.seated.map(function(r){return tr("seated","Seated",r);}),
-    d.wait.map(function(r){return tr("wait","Wait #"+r.position,r);}),
-    d.declined.map(function(r){return tr("declined","Declined",r);}),
-    d.noReply.map(function(r){return '<tr class="declined"><td>No reply</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td></td><td></td><td></td><td></td><td class="muted">—</td></tr>';})
-  );
-  $("stRows").innerHTML=rows.join("")||'<tr><td colspan="7" class="muted">No replies yet</td></tr>';
+  $("gCount").textContent=s.invited;show("gCount",s.invited>0);
+  $("stRows").innerHTML=(d.guests||[]).map(tr).join("")||'<tr><td colspan="5" class="muted">Nobody invited yet. Add guests above.</td></tr>';
 }
 function kpi(v,l){return '<div class="kpi"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>';}
-function emailCell(r){var e=r.emailStatus;
-  if(!e)return '<span class="muted">—</span>';
-  if(e.attempted===false)return e.reason==="no_api_key"?'<span style="color:#c0392b;font-weight:700">No email key</span>':'<span class="muted">—</span>';
-  if(e.ok)return '<span style="color:#3B6D11;font-weight:700">Sent ✓</span>';
-  return '<span style="color:#c0392b;font-weight:700" title="'+esc((e.text||e.error||"").slice(0,140))+'">Failed '+esc(String(e.status||e.error||""))+'</span>';}
-function tr(cls,label,r){return '<tr class="'+cls+'"><td>'+esc(label)+'</td><td>'+esc(r.name)+'</td><td>'+esc(r.email)+'</td><td>'+esc(r.mobile||"")+'</td><td>'+esc(r.role||"")+'</td><td>'+esc(r.notes||"")+'</td><td>'+(r.optin?"◎":"")+'</td><td>'+emailCell(r)+'</td></tr>';}
+var LABEL={seated:"Seated",wait:"Waitlist",declined:"Declined","no-reply":"No reply"};
+function inviteCell(g){
+  if(!g.email)return '<span class="muted">No email. Copy the link and send it yourself.</span>';
+  var r=g.inviteResult;
+  if(g.invitedAt)return '<span style="color:#3B6D11;font-weight:700">Sent ✓</span> <span class="muted">'+esc(new Date(g.invitedAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}))+'</span>';
+  if(r&&!r.ok)return '<span style="color:#c0392b;font-weight:700" title="'+esc(r.text||"")+'">Failed '+esc(String(r.status||""))+'</span>';
+  return '<span class="muted">Not sent</span>';
+}
+function replyCell(g){
+  var t=LABEL[g.status]||g.status;if(g.status==="wait")t+=" #"+g.position;
+  var e=g.emailStatus,conf="";
+  if(g.status==="seated"&&e&&e.attempted!==false)conf=e.ok?'<div class="sub" style="color:#3B6D11">Confirmation sent</div>':'<div class="sub" style="color:#c0392b">Confirmation failed</div>';
+  return t+conf;
+}
+/* Extra detail (role, mobile, dietary) only shows when a guest gave it, as a small line under the name. Full detail is in the CSV. */
+function tr(g){var extra=[g.role,g.mobile,g.notes].filter(Boolean).map(esc).join(" · ");
+  var cls=g.status==="seated"?"seated":g.status==="wait"?"wait":"declined";
+  return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
+    '<td class="act"><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button></td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
-  var rows=[["Status","Position","Name","Email","Mobile","What they do","Dietary/notes","Wants next"]];
-  CUR.seated.forEach(function(r){rows.push(["Seated","",r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
-  CUR.wait.forEach(function(r){rows.push(["Waitlist",r.position,r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
-  CUR.declined.forEach(function(r){rows.push(["Declined","",r.name,r.email,r.mobile,r.role,r.notes,r.optin?"yes":""]);});
-  CUR.noReply.forEach(function(r){rows.push(["No reply","",r.name,r.email,"","","",""]);});
+  var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","What they do","Dietary/notes","Wants next"]];
+  (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.role,g.notes,g.optin?"yes":""]);});
   downloadCSV("amabile-table-"+(CUR.edition.edition||"edition")+".csv",rows);});
 
 function downloadCSV(fname,rows){var csv=rows.map(function(row){return row.map(function(c){c=String(c==null?"":c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",");}).join("\n");
