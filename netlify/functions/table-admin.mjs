@@ -197,16 +197,19 @@ export default async (req) => {
     const guests = await loadGuests(st, ed);
     const tok = Object.keys(guests).find((t) => guests[t].gid === gid);
     if (!tok) return json({ ok: false, error: "no_guest" }, 404);
+    // A guest who has replied is part of the record (and possibly the seating). Not removable.
+    const replied = await st.get(kRsvp(ed, gid), { type: "json" }).catch(() => null);
+    if (replied) return json({ ok: false, error: "responded" }, 409);
     delete guests[tok];
     await st.setJSON(kGuests(ed), guests);
-    await st.delete(kRsvp(ed, gid)).catch(() => {});
     return json({ ok: true, total: Object.keys(guests).length });
   }
 
-  // ---- clear the guest list + responses (test-data reset) ----------------------------
+  // ---- clear the guest list (test-data reset). Refused once anyone has replied. -------
   if (action === "clear-guests") {
     const ed = edId(d.edition || "");
     if (!ed) return json({ ok: false, error: "bad_edition" }, 400);
+    if ((await loadRsvps(st, ed)).length) return json({ ok: false, error: "responded" }, 409);
     await st.setJSON(kGuests(ed), {});
     let removed = 0;
     try {

@@ -247,7 +247,7 @@ $("stRows").addEventListener("click",function(ev){
   if(act==="send"){if(!confirm((g.invitedAt?"Resend":"Send")+" the invite email to "+g.name+"?"))return;b.disabled=true;
     api("send-invites",{edition:ed,gids:[gid]}).then(function(){refreshStandings();});}
   if(act==="remove"){if(!confirm("Remove "+g.name+"? Their link stops working and any reply is deleted."))return;b.disabled=true;
-    api("remove-guest",{edition:ed,gid:gid}).then(function(){loadEditions();refreshStandings();});}
+    api("remove-guest",{edition:ed,gid:gid}).then(function(r){if(r&&r.error==="responded")alert(g.name+" has already replied, so they stay on the list.");loadEditions();refreshStandings();});}
 });
 
 /* ---- the list ---- */
@@ -258,6 +258,7 @@ setInterval(function(){if(CUR_SLUG&&!document.hidden)refreshStandings();},15000)
 function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
   $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
   $("gCount").textContent=s.invited;show("gCount",s.invited>0);
+  show("clearG",s.invited>0&&s.noReply===s.invited); // only while nobody has replied
   $("stRows").innerHTML=(d.guests||[]).map(tr).join("")||'<tr><td colspan="5" class="muted">Nobody invited yet. Add guests above.</td></tr>';
 }
 function kpi(v,l){return '<div class="kpi"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>';}
@@ -279,7 +280,7 @@ function replyCell(g){
 function tr(g){var extra=[g.role,g.mobile,g.notes].filter(Boolean).map(esc).join(" · ");
   var cls=g.status==="seated"?"seated":g.status==="wait"?"wait":"declined";
   return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
-    '<td class="act"><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button></td></tr>';}
+    '<td class="act"><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","What they do","Dietary/notes","Wants next"]];
   (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.role,g.notes,g.optin?"yes":""]);});

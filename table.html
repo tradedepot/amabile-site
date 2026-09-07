@@ -135,7 +135,7 @@ var PLUS='<p class="note">This invitation is personal to you. Seating is planned
 function render(){
   var e=DATA.edition, y=DATA.your||{};
   if(e.closed){app.innerHTML=head()+'<h2>Replies are closed.</h2><p class="body" style="text-align:center">The list for this edition is now set. We will invite you to the next one.</p>';return;}
-  if((y.response==="yes"||y.response==="no")&&(!PRE||PRE===y.response))return renderStatus();
+  // Returning guests see the invitation with their answer selected and can change it.
   renderForm();
 }
 
@@ -153,9 +153,14 @@ function renderStatus(){
 function renderForm(){
   var y=DATA.your||{}, s=DATA.summary||{};
   var full=s.full && y.status!=="seated";
-  var bar=full?'<div class="status">The table is currently full. Saying yes adds you to the waitlist, and we will email you the moment a seat opens.</div>':
-          (y.status==="seated"?'<div class="status seated">Your seat is confirmed. You can update your reply below.</div>':
-          (y.status==="wait"?'<div class="status">You are on the waitlist, position '+esc(y.position)+'.</div>':""));
+  var replied=y.response==="yes"||y.response==="no";
+  var bar="";
+  if(replied){
+    if(y.response==="yes"&&y.status==="seated")bar='<div class="status seated">You replied yes, and your seat is confirmed. Change your reply below if plans change.</div>';
+    else if(y.response==="yes")bar='<div class="status">You replied yes and are on the waitlist, position '+esc(y.position)+'. Change your reply below if plans change.</div>';
+    else bar='<div class="status">You replied that you cannot make it. Change your reply below if plans change.</div>';
+  }
+  if(full)bar+='<div class="status">The table is currently full. Saying yes adds you to the waitlist, and we will email you the moment a seat opens.</div>';
   app.innerHTML=head()+bar+
     '<div class="yesno"><button class="pill yes" id="bYes">Yes, I will be there</button><button class="pill no" id="bNo">I cannot make it</button></div>'+
     '<div class="more" id="more">'+
@@ -175,7 +180,7 @@ function renderForm(){
   var yesFields=document.getElementById("yesFields"),go=document.getElementById("go");
   function choose(r){resp=r;bYes.classList.toggle("sel",r==="yes");bNo.classList.toggle("sel",r==="no");
     more.classList.add("open");yesFields.style.display=r==="yes"?"block":"none";
-    go.textContent=r==="yes"?(full?"Join the waitlist":"Confirm my seat"):"Send my reply";
+    go.textContent=replied?"Update my reply":(r==="yes"?(full?"Join the waitlist":"Confirm my seat"):"Send my reply");
     if(r==="yes")setTimeout(function(){document.getElementById("fEmail").focus();},80);}
   bYes.addEventListener("click",function(){choose("yes");});
   bNo.addEventListener("click",function(){choose("no");});
