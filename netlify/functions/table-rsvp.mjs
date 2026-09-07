@@ -41,14 +41,13 @@ export default async (req, context) => {
 
   const email = clean(d.email, 160);
   const mobile = clean(d.mobile, 40);
-  const role = clean(d.role, 120);      // "what you do" — feeds the seating plan
-  const notes = clean(d.notes, 400);    // dietary / access
-  const optin = !!d.optin;
+  const role = clean(d.role, 120);      // legacy field, no longer asked
+  const notes = clean(d.notes, 400);    // dietary
+  const optin = false;                  // no newsletter opt-in on the Table
 
   if (response === "yes") {
     if (!isEmail(email)) return json({ ok: false, error: "bad_email" }, 400);
     if (!mobile) return json({ ok: false, error: "no_mobile" }, 400);
-    if (!role) return json({ ok: false, error: "no_role" }, 400);
   }
 
   const cap = edition.cap || 0;
@@ -158,21 +157,6 @@ export default async (req, context) => {
         <p style="margin:8px 0 0">Now: ${after.seatedCount} of ${cap} seated, ${after.waitCount} waiting.</p>
       `);
       await sendEmail(apiKey, notifyTo, `Table RSVP: ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html, TABLE_FROM);
-    }
-
-    // Opt-in → newsletter contact (tagged for the Table, never the viral loop).
-    if (optin && isEmail(rec.email)) {
-      const lid = process.env.BREVO_LIST_ID;
-      const attrs = { FIRSTNAME: clean(guest.name, 80), SOURCE: "amabile-table", CAMPAIGN: clean(edition.title, 80) };
-      async function addContact(a) {
-        const b = { email: rec.email, attributes: a, updateEnabled: true };
-        if (lid) b.listIds = [Number(lid)];
-        const r = await fetch("https://api.brevo.com/v3/contacts", {
-          method: "POST", headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" }, body: JSON.stringify(b)
-        });
-        return { ok: r.ok || r.status === 204, text: r.ok ? "" : await r.text() };
-      }
-      try { const res = await addContact(attrs); if (!res.ok && /attribute/i.test(res.text)) await addContact({ FIRSTNAME: clean(guest.name, 80) }); } catch (_) {}
     }
   }
 

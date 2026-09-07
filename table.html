@@ -53,8 +53,6 @@ label span{text-transform:none;letter-spacing:0;color:var(--mute)}
 input[type=text],input[type=email],input[type=tel],textarea{width:100%;padding:12px 14px;border:1px solid var(--line);border-radius:6px;font-family:Georgia,"Times New Roman",serif;font-size:16px;background:#fff;color:var(--ink)}
 input:focus,textarea:focus{outline:none;border-color:var(--rule);box-shadow:0 0 0 3px rgba(201,161,90,.25)}
 textarea{min-height:76px;resize:vertical}
-.optin{display:flex;gap:10px;align-items:flex-start;margin-top:18px;font-family:Arial,Helvetica,sans-serif;font-size:13px;color:var(--body);line-height:1.4}
-.optin input{margin-top:2px;width:16px;height:16px;accent-color:var(--wine)}
 .send{margin-top:22px;text-align:center}
 .err{font-family:Arial,Helvetica,sans-serif;color:var(--wine);font-size:13px;margin-top:12px;text-align:center;min-height:16px}
 .status{font-family:Arial,Helvetica,sans-serif;font-size:13px;line-height:1.5;color:var(--body);background:#f7efdc;border:1px solid var(--line);border-radius:6px;padding:10px 14px;margin:0 0 22px;text-align:left}
@@ -167,10 +165,8 @@ function renderForm(){
       '<div id="yesFields">'+
         '<label for="fEmail">Email</label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">'+
         '<label for="fMobile">Mobile <span>(for day-of logistics)</span></label><input type="tel" id="fMobile" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
-        '<label for="fRole">What you do, in a few words</label><input type="text" id="fRole" value="'+esc(y.role||"")+'">'+
       '</div>'+
-      '<label for="fNotes">Anything we should know? <span>(dietary, access; optional)</span></label><textarea id="fNotes">'+esc(y.notes||"")+'</textarea>'+
-      '<label class="optin"><input type="checkbox" id="fOptin"'+(y.optin?" checked":"")+'><span>Keep me in mind for the next Amabile Table</span></label>'+
+      '<label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'">'+
       '<div class="send"><button class="pill" id="go">Send my reply</button></div>'+
       '<div class="err" id="ferr"></div>'+
     '</div>'+PLUS;
@@ -193,20 +189,17 @@ function renderForm(){
     if(resp==="yes"){
       var email=document.getElementById("fEmail").value.trim();
       var mobile=document.getElementById("fMobile").value.trim();
-      var role=document.getElementById("fRole").value.trim();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent="Add a valid email so we can confirm.";return;}
       if(!mobile){errEl.textContent="Add a mobile for day-of logistics.";return;}
-      if(!role){errEl.textContent="Tell us what you do. It helps us seat the table.";return;}
-      body.email=email;body.mobile=mobile;body.role=role;
+      body.email=email;body.mobile=mobile;
     }
     body.notes=document.getElementById("fNotes").value.trim();
-    body.optin=document.getElementById("fOptin").checked;
     go.disabled=true;go.textContent="Sending…";
     fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
       .then(function(r){return r.json().catch(function(){return{};});})
       .then(function(d){
         if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"Replies just closed for this edition.":"Something went wrong. Please try again.";return;}
-        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",mobile:body.mobile||"",role:body.role||"",notes:body.notes,optin:body.optin};
+        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",mobile:body.mobile||"",notes:body.notes};
         DATA.summary=d.summary||DATA.summary;
         renderStatus();window.scrollTo(0,0);
       })

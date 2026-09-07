@@ -282,8 +282,8 @@ function tr(g){var extra=[g.role,g.mobile,g.notes].filter(Boolean).map(esc).join
   return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
     '<td class="act"><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
-  var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","What they do","Dietary/notes","Wants next"]];
-  (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.role,g.notes,g.optin?"yes":""]);});
+  var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","Dietary"]];
+  (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.notes]);});
   downloadCSV("amabile-table-"+(CUR.edition.edition||"edition")+".csv",rows);});
 
 function downloadCSV(fname,rows){var csv=rows.map(function(row){return row.map(function(c){c=String(c==null?"":c);return /[",\n]/.test(c)?'"'+c.replace(/"/g,'""')+'"':c;}).join(",");}).join("\n");
