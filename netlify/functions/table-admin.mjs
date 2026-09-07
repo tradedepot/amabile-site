@@ -2,7 +2,7 @@
 // the POST body (never in the query string) and checked on every action. Handles editions
 // as DATA (create/update without a deploy) and bulk guest-list import from a spreadsheet
 // paste, minting a collision-checked per-guest token for each row.
-import { json, clean, INVITE_SITE } from "./_lib.mjs";
+import { json, clean, isEmail, INVITE_SITE, FROM } from "./_lib.mjs";
 import {
   tstore, edId, kEdition, kGuests, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix
@@ -24,6 +24,34 @@ export default async (req) => {
 
   // ---- auth check only (admin page login) --------------------------------------------
   if (action === "auth") return json({ ok: true });
+
+  // ---- diagnostics: send a real test email and return Brevo's actual response ---------
+  if (action === "test-email") {
+    const apiKey = process.env.BREVO_API_KEY;
+    const to = clean(d.to, 160);
+    const diag = {
+      hasKey: !!apiKey,
+      sender: FROM.email,
+      notifyEmailSet: !!process.env.TABLE_NOTIFY_EMAIL
+    };
+    if (!apiKey) return json({ ok: false, error: "no_brevo_key", ...diag });
+    if (!isEmail(to)) return json({ ok: false, error: "bad_to", ...diag });
+    try {
+      const r = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
+        body: JSON.stringify({
+          sender: FROM, to: [{ email: to }],
+          subject: "Amabile Table — test email",
+          htmlContent: "<p>This is a test from the Amabile Table admin. If you received it, transactional email is working.</p>"
+        })
+      });
+      const body = (await r.text().catch(() => "")).slice(0, 500);
+      return json({ ok: r.status >= 200 && r.status < 300, status: r.status, body, ...diag });
+    } catch (e) {
+      return json({ ok: false, error: "fetch_failed", detail: String(e).slice(0, 200), ...diag });
+    }
+  }
 
   // ---- list editions -----------------------------------------------------------------
   if (action === "editions") {

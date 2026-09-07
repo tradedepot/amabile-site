@@ -16,16 +16,28 @@ export function json(obj, status = 200) {
 export const isEmail = (e) => /^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(String(e || "").trim());
 export const clean = (s, n) => String(s == null ? "" : s).slice(0, n).trim();
 
-// Send a transactional email via Brevo. Sender must be a verified sender in Brevo.
+// Send a transactional email via Brevo. Sender (FROM) must be a verified sender in Brevo,
+// or every send is rejected. Returns a result and logs failures to the function log so a
+// silent non-delivery (bad key, unverified sender, 4xx) is actually visible in Netlify.
 export async function sendEmail(apiKey, to, subject, html) {
-  if (!apiKey || !isEmail(to)) return;
+  if (!apiKey) { console.warn("sendEmail: BREVO_API_KEY is not set"); return { ok: false, error: "no_key" }; }
+  if (!isEmail(to)) return { ok: false, error: "bad_to" };
   try {
-    await fetch("https://api.brevo.com/v3/smtp/email", {
+    const r = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
       body: JSON.stringify({ sender: FROM, to: [{ email: to }], subject, htmlContent: html })
     });
-  } catch (_) {}
+    if (r.status < 200 || r.status >= 300) {
+      const t = await r.text().catch(() => "");
+      console.warn("sendEmail failed", r.status, "sender=" + FROM.email, t.slice(0, 200));
+      return { ok: false, status: r.status, text: t.slice(0, 200) };
+    }
+    return { ok: true, status: r.status };
+  } catch (e) {
+    console.warn("sendEmail error", String(e));
+    return { ok: false, error: String(e) };
+  }
 }
 
 export function countRsvps(list) {

@@ -71,6 +71,12 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
         <button class="btn gd" id="newEd">+ New edition</button>
         <button class="btn ghost sm" id="refreshEds">Refresh</button>
       </div>
+      <div class="row" style="margin-top:14px;padding-top:12px;border-top:1px dashed rgba(42,18,7,.18)">
+        <span class="muted" style="font-weight:700">Email check:</span>
+        <input type="text" id="testTo" placeholder="you@email.com" style="max-width:240px">
+        <button class="btn ghost sm" id="testEmail">Send test</button>
+        <span class="muted" id="testMsg"></span>
+      </div>
     </div>
 
     <!-- Edition form (hidden until you pick/create one) -->
@@ -142,6 +148,17 @@ function loadEditions(){return api("editions").then(function(d){EDITIONS=(d&&d.e
   $("edSelect").innerHTML='<option value="">Choose an edition…</option>'+EDITIONS.map(function(e){return '<option value="'+esc(e.edition)+'">'+esc(e.title)+'  ('+e.invited+' invited · cap '+e.cap+')</option>';}).join("");
 });}
 $("refreshEds").addEventListener("click",loadEditions);
+
+/* email diagnostics — surfaces Brevo's real response so a silent non-delivery is explained */
+$("testEmail").addEventListener("click",function(){
+  var to=$("testTo").value.trim();if(!to){$("testMsg").textContent="Enter an email first.";return;}
+  $("testMsg").textContent="Sending…";
+  api("test-email",{to:to}).then(function(d){
+    if(!d.hasKey){$("testMsg").innerHTML='<b style="color:#c0392b">BREVO_API_KEY is not set on this deploy.</b>';return;}
+    if(d.ok){$("testMsg").innerHTML='<b style="color:#3B6D11">Sent ✓ (Brevo '+d.status+', from '+esc(d.sender)+'). Check inbox + spam.</b>';return;}
+    $("testMsg").innerHTML='<b style="color:#c0392b">Failed — Brevo '+esc(String(d.status||d.error||""))+'</b>: '+esc((d.body||d.detail||"").slice(0,200))+' <span class="muted">(sender '+esc(d.sender||"")+')</span>';
+  }).catch(function(){$("testMsg").textContent="Request failed.";});
+});
 
 function openEdition(slug){
   var e=EDITIONS.filter(function(x){return x.edition===slug;})[0];
