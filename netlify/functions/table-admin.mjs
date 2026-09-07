@@ -2,10 +2,10 @@
 // the POST body (never in the query string) and checked on every action. Handles editions
 // as DATA (create/update without a deploy) and bulk guest-list import from a spreadsheet
 // paste, minting a collision-checked per-guest token for each row.
-import { json, clean, isEmail, INVITE_SITE, FROM } from "./_lib.mjs";
+import { json, clean, isEmail, INVITE_SITE } from "./_lib.mjs";
 import {
   tstore, edId, kEdition, kGuests, loadEdition, loadGuests, loadRsvps,
-  standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix
+  standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM
 } from "./_table.mjs";
 
 function authed(d) {
@@ -31,7 +31,7 @@ export default async (req) => {
     const to = clean(d.to, 160);
     const diag = {
       hasKey: !!apiKey,
-      sender: FROM.email,
+      sender: TABLE_FROM.email,
       notifyEmailSet: !!process.env.TABLE_NOTIFY_EMAIL
     };
     if (!apiKey) return json({ ok: false, error: "no_brevo_key", ...diag });
@@ -41,7 +41,7 @@ export default async (req) => {
         method: "POST",
         headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
         body: JSON.stringify({
-          sender: FROM, to: [{ email: to }],
+          sender: TABLE_FROM, to: [{ email: to }],
           subject: "Amabile Table — test email",
           htmlContent: "<p>This is a test from the Amabile Table admin. If you received it, transactional email is working.</p>"
         })

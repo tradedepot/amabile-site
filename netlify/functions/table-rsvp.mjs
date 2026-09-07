@@ -8,7 +8,7 @@ import { bqInsert } from "./_bq.mjs";
 import {
   tstore, edId, tokenClean, clientIp, rateOk,
   kRsvp, loadEdition, loadGuests, guestByToken, loadRsvps, standings, statusOf,
-  fmtDate, deadlinePassed
+  fmtDate, deadlinePassed, TABLE_FROM
 } from "./_table.mjs";
 
 function seatedGids(stand) { return new Set(stand.seated.map((r) => r.gid)); }
@@ -80,8 +80,13 @@ export default async (req, context) => {
   };
   await st.setJSON(kRsvp(ed, guest.gid), rec);
 
-  // Recompute after the write.
-  const after = standings(await loadRsvps(st, ed), cap);
+  // Recompute after the write. Blobs list() is only eventually consistent, so the record we
+  // just wrote can be momentarily absent from the listing — which would make the guest come
+  // back as status "none" and SKIP their confirmation email. Fold our own record in explicitly
+  // so the recompute always reflects it.
+  let afterList = await loadRsvps(st, ed);
+  afterList = afterList.filter((r) => r.gid !== guest.gid).concat([rec]);
+  const after = standings(afterList, cap);
   const mine = statusOf(guest.gid, after);
   const afterSeated = seatedGids(after);
 
@@ -105,7 +110,7 @@ export default async (req, context) => {
           <p style="margin:0 0 16px;color:#6a4634">${whenBits}</p>
           <p style="margin:0">${button(guestLink, "Confirm you're still coming →")}</p>
         `);
-        await sendEmail(apiKey, r.email, `You're off the waitlist — ${clean(edition.title, 60)}`, html);
+        await sendEmail(apiKey, r.email, `You're off the waitlist — ${clean(edition.title, 60)}`, html, TABLE_FROM);
         try { await st.setJSON(kRsvp(ed, r.gid), { ...r, notifiedStatus: "seated" }); } catch (_) {}
       }
     }
@@ -122,7 +127,7 @@ export default async (req, context) => {
         <p style="margin:12px 0 16px;color:#6a4634">Plans change — you can update your answer any time here:</p>
         <p style="margin:0">${button(guestLink, "View or change your RSVP →")}</p>
       `);
-      await sendEmail(apiKey, rec.email, `You're in — ${clean(edition.title, 60)} 🍷`, html);
+      await sendEmail(apiKey, rec.email, `You're in — ${clean(edition.title, 60)} 🍷`, html, TABLE_FROM);
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "seated" }); } catch (_) {}
     } else if (response === "yes" && mine.status === "wait" && isEmail(rec.email)) {
       const html = shell(`
@@ -131,7 +136,7 @@ export default async (req, context) => {
         <p style="margin:0 0 16px;color:#6a4634">${clean(whenBits, 200)}</p>
         <p style="margin:0">${button(guestLink, "View your status →")}</p>
       `);
-      await sendEmail(apiKey, rec.email, `Waitlisted (no. ${mine.position}) — ${clean(edition.title, 60)}`, html);
+      await sendEmail(apiKey, rec.email, `Waitlisted (no. ${mine.position}) — ${clean(edition.title, 60)}`, html, TABLE_FROM);
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "wait" }); } catch (_) {}
     }
 
@@ -145,7 +150,7 @@ export default async (req, context) => {
         ${rec.notes ? `<p style="margin:0 0 4px;color:#6a4634">Notes: ${clean(rec.notes, 400)}</p>` : ""}
         <p style="margin:8px 0 0;color:#6a4634">Now: <b>${after.seatedCount}/${cap} seated</b> · ${after.waitCount} waiting</p>
       `);
-      await sendEmail(apiKey, notifyTo, `Table RSVP — ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html);
+      await sendEmail(apiKey, notifyTo, `Table RSVP — ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html, TABLE_FROM);
     }
 
     // Opt-in → newsletter contact (tagged for the Table, never the viral loop).

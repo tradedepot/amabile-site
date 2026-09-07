@@ -11,9 +11,18 @@
 // one guest's blob to "no"; the next person on the waitlist is now within the first <cap>,
 // i.e. promoted automatically, with no mutation of anyone else's record.
 import { getStore } from "@netlify/blobs";
-import { clean } from "./_lib.mjs";
+import { clean, FROM } from "./_lib.mjs";
 
 export const STORE_NAME = "amabile-invites";
+
+// Sender for Table emails specifically, so the Table can move to table@amabiledirosa.com
+// while the consumer invite loop stays on vibes@. Defaults to the shared sender until you
+// set TABLE_FROM_EMAIL — that address MUST be a verified sender (or authenticated domain)
+// in Brevo, or Brevo rejects the send.
+export const TABLE_FROM = {
+  email: process.env.TABLE_FROM_EMAIL || FROM.email,
+  name: process.env.TABLE_FROM_NAME || "The Amabile Table"
+};
 export function tstore() { return getStore(STORE_NAME); }
 
 export const kEdition = (ed) => "table:" + ed;

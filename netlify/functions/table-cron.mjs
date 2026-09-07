@@ -2,7 +2,7 @@
 // date is two days out and hasn't been reminded yet, emails the currently-seated guests and
 // marks the edition so it never double-sends. Best-effort — a failure never blocks anything.
 import { sendEmail, shell, button, isEmail, clean, INVITE_SITE } from "./_lib.mjs";
-import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate } from "./_table.mjs";
+import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, TABLE_FROM } from "./_table.mjs";
 
 export const config = { schedule: "0 9 * * *" }; // 09:00 UTC daily
 
@@ -43,7 +43,7 @@ export default async () => {
           <p style="margin:0 0 14px;color:#6a4634">Your seat is saved. If anything has changed and you can no longer make it, please let us know so we can offer the seat on — one tap:</p>
           <p style="margin:0">${button(link, "View or change your RSVP →")}</p>
         `);
-        await sendEmail(apiKey, r.email, `Two days to go — ${clean(ed.title, 60)}`, html);
+        await sendEmail(apiKey, r.email, `Two days to go — ${clean(ed.title, 60)}`, html, TABLE_FROM);
         sent++;
       }
       await st.setJSON(kEdition(ed.edition), { ...ed, remindedAt: Date.now() });

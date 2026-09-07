@@ -4,7 +4,13 @@
 // Public site (for store/find-a-bottle links). Invite/RSVP links use the short domain.
 export const SITE = "https://www.amabiledirosa.com";
 export const INVITE_SITE = "https://wya.to";
-export const FROM = { email: "vibes@amabiledirosa.com", name: "Amabile di Rosa" };
+// Sender for all transactional email. MUST be a verified sender in Brevo, or covered by an
+// authenticated domain (SPF/DKIM). Overridable via env so you can repoint it at a verified
+// mailbox without a code change (still needs a redeploy to take effect).
+export const FROM = {
+  email: process.env.MAIL_FROM_EMAIL || "vibes@amabiledirosa.com",
+  name: process.env.MAIL_FROM_NAME || "Amabile di Rosa"
+};
 
 export function json(obj, status = 200) {
   return new Response(JSON.stringify(obj), {
@@ -19,14 +25,15 @@ export const clean = (s, n) => String(s == null ? "" : s).slice(0, n).trim();
 // Send a transactional email via Brevo. Sender (FROM) must be a verified sender in Brevo,
 // or every send is rejected. Returns a result and logs failures to the function log so a
 // silent non-delivery (bad key, unverified sender, 4xx) is actually visible in Netlify.
-export async function sendEmail(apiKey, to, subject, html) {
+export async function sendEmail(apiKey, to, subject, html, from) {
   if (!apiKey) { console.warn("sendEmail: BREVO_API_KEY is not set"); return { ok: false, error: "no_key" }; }
   if (!isEmail(to)) return { ok: false, error: "bad_to" };
+  const sender = from || FROM;
   try {
     const r = await fetch("https://api.brevo.com/v3/smtp/email", {
       method: "POST",
       headers: { "api-key": apiKey, "content-type": "application/json", accept: "application/json" },
-      body: JSON.stringify({ sender: FROM, to: [{ email: to }], subject, htmlContent: html })
+      body: JSON.stringify({ sender, to: [{ email: to }], subject, htmlContent: html })
     });
     if (r.status < 200 || r.status >= 300) {
       const t = await r.text().catch(() => "");
