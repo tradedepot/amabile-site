@@ -43,7 +43,6 @@ table.det td.l{font-family:Arial,Helvetica,sans-serif;font-size:11px;letter-spac
 .pill{cursor:pointer;font-family:Arial,Helvetica,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:15px 34px;border-radius:999px;border:2px solid var(--wine);background:var(--wine);color:var(--paper);transition:opacity .12s,transform .12s}
 .pill.no{background:transparent;color:var(--wine)}
 .pill:hover{transform:translateY(-1px)}
-.pill.sel{box-shadow:0 0 0 3px var(--paper),0 0 0 5px var(--rule)}
 .pill:disabled{opacity:.55;cursor:default}
 .note{margin:26px 0 0;font-size:13px;color:var(--mute);font-family:Arial,Helvetica,sans-serif;text-align:left;line-height:1.5}
 .more{display:none;text-align:left;margin-top:26px;padding-top:22px;border-top:1px solid var(--cream)}
@@ -134,76 +133,67 @@ var PLUS='<p class="note">This invitation is personal to you. Seating is planned
 function render(){
   var e=DATA.edition, y=DATA.your||{};
   if(e.closed){app.innerHTML=head()+'<h2>Replies are closed.</h2><p class="body" style="text-align:center">The list for this edition is now set. We will invite you to the next one.</p>';return;}
-  // Returning guests see the invitation with their answer selected and can change it.
-  renderForm();
+  if((y.response==="yes"||y.response==="no")&&!PRE)return renderStatus();
+  renderInvite();
 }
 
+/* After replying (or on return): what they said, with the option to change it. Dietary
+   needs are an optional add once the seat is taken, never a step before it. */
 function renderStatus(){
   var y=DATA.your||{}, e=DATA.edition;
-  var h,b;
+  var h,b,diet="";
   if(y.response==="yes"&&y.status==="seated"){h="Your seat is confirmed.";b="We will see you at "+(e.title||"the Table")+".";}
   else if(y.response==="yes"&&y.status==="wait"){h="You are on the waitlist, position "+y.position+".";b="If a seat opens we will email you. There is nothing you need to do.";}
   else{h="Noted, thank you.";b="Sorry you cannot make this one. We will keep you in mind for the next edition.";}
-  app.innerHTML=head()+'<h2>'+esc(h)+'</h2><p class="body" style="text-align:center">'+esc(b)+'</p>'+
+  if(y.response==="yes")diet='<div class="more open" style="margin-top:20px;padding-top:18px"><label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'"><div class="send"><button class="pill no" id="saveNotes" style="padding:11px 24px;font-size:13px">Save</button></div><div class="err" id="ferr"></div></div>';
+  app.innerHTML=head()+'<h2>'+esc(h)+'</h2><p class="body" style="text-align:center">'+esc(b)+'</p>'+diet+
     '<button class="change" id="changeBtn">Change my reply</button>'+PLUS;
-  document.getElementById("changeBtn").addEventListener("click",renderForm);
+  document.getElementById("changeBtn").addEventListener("click",function(){renderInvite(true);});
+  if(y.response==="yes"){var sv=document.getElementById("saveNotes");sv.addEventListener("click",function(){
+    submit("yes",{notes:document.getElementById("fNotes").value.trim()},sv,"Saved");});}
 }
 
-function renderForm(){
+/* The invitation with the two buttons. Tapping one IS the reply. */
+function renderInvite(changing){
   var y=DATA.your||{}, s=DATA.summary||{};
   var full=s.full && y.status!=="seated";
-  var replied=y.response==="yes"||y.response==="no";
   var needEmail=!((DATA.guest||{}).hasEmail)&&!y.email; // only when the invitation carries no email
   var bar="";
-  if(replied){
-    if(y.response==="yes"&&y.status==="seated")bar='<div class="status seated">You replied yes, and your seat is confirmed. Change your reply below if plans change.</div>';
-    else if(y.response==="yes")bar='<div class="status">You replied yes and are on the waitlist, position '+esc(y.position)+'. Change your reply below if plans change.</div>';
-    else bar='<div class="status">You replied that you cannot make it. Change your reply below if plans change.</div>';
-  }
+  if(changing)bar='<div class="status">You currently have: '+(y.response==="yes"?"Yes, I will be there":"I cannot make it")+'. Tap the other to change it.</div>';
   if(full)bar+='<div class="status">The table is currently full. Saying yes adds you to the waitlist, and we will email you the moment a seat opens.</div>';
   app.innerHTML=head()+bar+
     '<div class="yesno"><button class="pill yes" id="bYes">Yes, I will be there</button><button class="pill no" id="bNo">I cannot make it</button></div>'+
-    '<div class="more" id="more">'+
-      '<div id="yesFields">'+
-        (needEmail?'<label for="fEmail">Email <span>(so we can confirm your seat)</span></label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">':'')+
-        '<label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'">'+
-      '</div>'+
-      '<div class="send"><button class="pill" id="go">Send my reply</button></div>'+
-      '<div class="err" id="ferr"></div>'+
-    '</div>'+PLUS;
-
-  var resp=PRE||y.response||"", more=document.getElementById("more");PRE="";
+    (needEmail?'<div class="more" id="emailBox"><label for="fEmail">Email <span>(so we can confirm your seat)</span></label><input type="email" id="fEmail" autocomplete="email"><div class="send"><button class="pill" id="goEmail">Confirm my seat</button></div></div>':'')+
+    '<div class="err" id="ferr"></div>'+PLUS;
   var bYes=document.getElementById("bYes"),bNo=document.getElementById("bNo");
-  var yesFields=document.getElementById("yesFields"),go=document.getElementById("go");
-  function choose(r){resp=r;bYes.classList.toggle("sel",r==="yes");bNo.classList.toggle("sel",r==="no");
-    more.classList.add("open");yesFields.style.display=r==="yes"?"block":"none";
-    go.textContent=replied?"Update my reply":(r==="yes"?(full?"Join the waitlist":"Confirm my seat"):"Send my reply");
-    if(r==="yes"&&needEmail)setTimeout(function(){document.getElementById("fEmail").focus();},80);}
-  bYes.addEventListener("click",function(){choose("yes");});
-  bNo.addEventListener("click",function(){choose("no");});
-  if(resp)choose(resp);
-
-  go.addEventListener("click",function(){
-    var errEl=document.getElementById("ferr");errEl.textContent="";
-    if(!resp){errEl.textContent="Choose yes or no first.";return;}
-    var body={edition:ED,token:TOKEN,response:resp,attr:ATTR};
-    if(resp==="yes"&&needEmail){
-      var email=document.getElementById("fEmail").value.trim();
-      if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent="Add a valid email so we can confirm.";return;}
-      body.email=email;
-    }
-    body.notes=resp==="yes"?document.getElementById("fNotes").value.trim():"";
-    go.disabled=true;go.textContent="Sending…";
-    fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
-      .then(function(r){return r.json().catch(function(){return{};});})
-      .then(function(d){
-        if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"Replies just closed for this edition.":"Something went wrong. Please try again.";return;}
-        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",notes:body.notes};
-        DATA.summary=d.summary||DATA.summary;
-        renderStatus();window.scrollTo(0,0);
-      })
-      .catch(function(){go.disabled=false;go.textContent="Send my reply";errEl.textContent="Network hiccup. Please try again.";});
+  bYes.addEventListener("click",function(){
+    if(needEmail){document.getElementById("emailBox").classList.add("open");document.getElementById("fEmail").focus();return;}
+    submit("yes",{},bYes);
   });
+  bNo.addEventListener("click",function(){submit("no",{},bNo);});
+  if(needEmail)document.getElementById("goEmail").addEventListener("click",function(){
+    var email=document.getElementById("fEmail").value.trim();
+    if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){document.getElementById("ferr").textContent="Add a valid email so we can confirm.";return;}
+    submit("yes",{email:email},document.getElementById("goEmail"));
+  });
+  if(PRE){var b=PRE==="yes"?bYes:bNo;PRE="";b.scrollIntoView({block:"center"});}
+}
+
+function submit(resp,extra,btn,doneLabel){
+  var y=DATA.your||{}, errEl=document.getElementById("ferr");if(errEl)errEl.textContent="";
+  var body={edition:ED,token:TOKEN,response:resp,attr:ATTR,notes:extra.notes!=null?extra.notes:(resp==="yes"?(y.notes||""):"")};
+  if(extra.email)body.email=extra.email;
+  var label=btn.textContent;btn.disabled=true;btn.textContent="One moment…";
+  fetch("/.netlify/functions/table-rsvp",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body)})
+    .then(function(r){return r.json().catch(function(){return{};});})
+    .then(function(d){
+      if(!d||!d.ok){btn.disabled=false;btn.textContent=label;if(errEl)errEl.textContent=d&&d.error==="closed"?"Replies just closed for this edition.":"Something went wrong. Please try again.";return;}
+      DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",notes:body.notes};
+      DATA.summary=d.summary||DATA.summary;
+      if(doneLabel){btn.disabled=false;btn.textContent=doneLabel;setTimeout(function(){btn.textContent=label;},1500);return;}
+      renderStatus();window.scrollTo(0,0);
+    })
+    .catch(function(){btn.disabled=false;btn.textContent=label;if(errEl)errEl.textContent="Network hiccup. Please try again.";});
 }
 </script>
 </body>
