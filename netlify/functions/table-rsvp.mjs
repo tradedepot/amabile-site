@@ -120,9 +120,17 @@ export default async (req, context) => {
 
   // Emails to the responding guest. emailResult is surfaced in the response + logged so a
   // non-delivery is diagnosable in one RSVP (e.g. an unverified sender returns a 400 here).
+  // What actually changed on this save. A repeat tap of the same answer, or a dietary note
+  // added after the fact, must not re-send the confirmation or re-notify the host.
+  const prevResponse = existing ? existing.response : null;
+  const prevNotified = (existing && existing.notifiedStatus) || null;
+  const responseChanged = prevResponse !== response;
+  const statusChanged = response === "yes" && prevNotified !== mine.status;
+  const notesChanged = (existing ? existing.notes || "" : "") !== (rec.notes || "");
   let emailResult = apiKey ? { attempted: false } : { attempted: false, reason: "no_api_key" };
+  if (apiKey && !statusChanged && !responseChanged) emailResult = { attempted: false, reason: "unchanged" };
   if (apiKey) {
-    if (response === "yes" && mine.status === "seated" && isEmail(rec.email)) {
+    if (response === "yes" && mine.status === "seated" && statusChanged && isEmail(rec.email)) {
       const html = tableShell(`
         <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">Your seat is confirmed.</h2>
         <p style="margin:0 0 6px">We will see you at ${esc(clean(edition.title, 80))}, hosted by ${esc(hostName)}.</p>
@@ -133,7 +141,7 @@ export default async (req, context) => {
       `);
       emailResult = { attempted: true, to: rec.email, sender: TABLE_FROM.email, ...(await sendEmail(apiKey, rec.email, `Your seat is confirmed, ${clean(edition.title, 60)}`, html, TABLE_FROM)) };
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "seated" }); } catch (_) {}
-    } else if (response === "yes" && mine.status === "wait" && isEmail(rec.email)) {
+    } else if (response === "yes" && mine.status === "wait" && statusChanged && isEmail(rec.email)) {
       const html = tableShell(`
         <h2 style="margin:0 0 10px;font-size:22px;font-weight:normal">You are on the waitlist, position ${mine.position}.</h2>
         <p style="margin:0 0 6px">${esc(clean(edition.title, 80))} is full for now, so we have saved you a place in line. If a seat opens we will email you. There is nothing you need to do.</p>
@@ -144,9 +152,11 @@ export default async (req, context) => {
       try { await st.setJSON(kRsvp(ed, guest.gid), { ...rec, notifiedStatus: "wait" }); } catch (_) {}
     }
 
-    // Internal notification on every response.
-    if (isEmail(notifyTo)) {
-      const verb = response === "yes" ? (mine.status === "seated" ? "is in, seated" : "is in, waitlist position " + mine.position) : "cannot make it";
+    // Internal notification: only when the answer or standing changed, or a note was added.
+    if (isEmail(notifyTo) && (responseChanged || statusChanged || notesChanged)) {
+      const verb = !responseChanged && !statusChanged
+        ? "updated their notes"
+        : response === "yes" ? (mine.status === "seated" ? "is in, seated" : "is in, waitlist position " + mine.position) : "cannot make it";
       const html = tableShell(`
         <h2 style="margin:0 0 8px;font-size:20px;font-weight:normal">${esc(clean(guest.name, 80))} ${verb}.</h2>
         <p style="margin:0 0 6px">${esc(clean(edition.title, 80))}</p>
@@ -154,7 +164,8 @@ export default async (req, context) => {
         ${rec.notes ? `<p style="margin:0 0 4px">Notes: ${esc(clean(rec.notes, 400))}</p>` : ""}
         <p style="margin:8px 0 0">Now: ${after.seatedCount} of ${cap} seated, ${after.waitCount} waiting.</p>
       `);
-      await sendEmail(apiKey, notifyTo, `Table RSVP: ${clean(guest.name, 60)} ${response === "yes" ? "in" : "out"}`, html, TABLE_FROM);
+      const subj = !responseChanged && !statusChanged ? "notes" : (response === "yes" ? "in" : "out");
+      await sendEmail(apiKey, notifyTo, `Table RSVP: ${clean(guest.name, 60)} ${subj}`, html, TABLE_FROM);
     }
   }
 
@@ -178,7 +189,7 @@ export default async (req, context) => {
   // language, whether each guest's confirmation actually sent — no devtools or logs needed.
   try {
     const cur = await st.get(kRsvp(ed, guest.gid), { type: "json" }).catch(() => null);
-    if (cur) await st.setJSON(kRsvp(ed, guest.gid), { ...cur, emailStatus: emailResult });
+    if (cur && emailResult.attempted) await st.setJSON(kRsvp(ed, guest.gid), { ...cur, emailStatus: emailResult });
   } catch (_) {}
 
   console.log("table-rsvp", JSON.stringify({ ed, gid: guest.gid, response, status: mine.status, to: rec.email, sender: TABLE_FROM.email, email: emailResult }));
