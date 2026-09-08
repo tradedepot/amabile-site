@@ -39,7 +39,7 @@ textarea{min-height:120px;resize:vertical;font-family:ui-monospace,Menlo,monospa
 table{width:100%;border-collapse:collapse;margin-top:10px;font-size:13.5px}
 th,td{text-align:left;padding:8px 9px;border-bottom:1px solid rgba(42,18,7,.12);vertical-align:top}
 th{background:var(--ink);color:var(--lime);font-size:11px;text-transform:uppercase;letter-spacing:.05em}
-td.st,td.nm{white-space:nowrap}td.nm{font-weight:700}td .sub{font-weight:500;font-size:12px;color:#9a8576;margin-top:2px;white-space:normal}
+td.st,td.nm{white-space:nowrap}td.nm{font-weight:700}td .sub{font-weight:500;font-size:12px;color:#9a8576;margin-top:2px;white-space:normal}td .sub.diet{color:#7d1d1d;font-weight:700}
 tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{color:#9a8576}
 .tablewrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
 td.act{white-space:nowrap;text-align:right}
@@ -243,6 +243,8 @@ $("stRows").addEventListener("click",function(ev){
   var b=ev.target.closest("button[data-act]");if(!b||!CUR)return;
   var gid=b.getAttribute("data-gid"),g=(CUR.guests||[]).filter(function(x){return x.gid===gid;})[0];if(!g)return;
   var act=b.getAttribute("data-act"),ed=curEditionSlug();
+  if(act==="rename"){var nn=prompt("Name for this guest (nothing else changes, nobody is emailed):",g.name);if(nn==null)return;nn=nn.trim();if(!nn||nn===g.name)return;b.disabled=true;
+    api("rename-guest",{edition:ed,gid:gid,name:nn}).then(function(r){if(!r||!r.ok)alert("Could not rename.");refreshStandings();});}
   if(act==="copy"){copyText(g.link);b.textContent="Copied";setTimeout(function(){b.textContent="Copy link";},1500);}
   if(act==="send"){if(!confirm((g.invitedAt?"Resend":"Send")+" the invite email to "+g.name+"?"))return;b.disabled=true;
     api("send-invites",{edition:ed,gids:[gid]}).then(function(){refreshStandings();});}
@@ -273,14 +275,14 @@ function inviteCell(g){
 function replyCell(g){
   var t=LABEL[g.status]||g.status;if(g.status==="wait")t+=" #"+g.position;
   var e=g.emailStatus,conf="";
-  if(g.status==="seated"&&e&&e.attempted!==false)conf=e.ok?'<div class="sub" style="color:#3B6D11">Confirmation sent</div>':'<div class="sub" style="color:#c0392b">Confirmation failed</div>';
+  if(g.status==="seated"&&e&&e.attempted&&!e.ok)conf='<div class="sub" style="color:#c0392b">Confirmation email failed</div>';
   return t+conf;
 }
 /* Extra detail (role, mobile, dietary) only shows when a guest gave it, as a small line under the name. Full detail is in the CSV. */
-function tr(g){var extra=[g.role,g.mobile,g.notes].filter(Boolean).map(esc).join(" · ");
+function tr(g){var extra=[g.role,g.mobile].filter(Boolean).map(esc).join(" · ");
   var cls=g.status==="seated"?"seated":g.status==="wait"?"wait":"declined";
-  return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
-    '<td class="act"><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
+  return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(g.notes?'<div class="sub diet">Dietary: '+esc(g.notes)+'</div>':'')+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
+    '<td class="act"><button class="lnk" data-act="rename" data-gid="'+esc(g.gid)+'">Edit name</button><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","Dietary"]];
   (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.notes]);});

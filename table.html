@@ -150,7 +150,9 @@ function renderStatus(){
     '<button class="change" id="changeBtn">Change my reply</button>'+PLUS;
   document.getElementById("changeBtn").addEventListener("click",function(){renderInvite(true);});
   if(y.response==="yes"){var sv=document.getElementById("saveNotes");sv.addEventListener("click",function(){
-    submit("yes",{notes:document.getElementById("fNotes").value.trim()},sv,"Saved");});}
+    var n=document.getElementById("fNotes").value.trim();
+    if(n===(y.notes||"")){sv.textContent="Saved";setTimeout(function(){sv.textContent="Save";},1200);return;} // nothing changed, no request
+    submit("yes",{notes:n},sv,"Saved");});}
 }
 
 /* The invitation with the two buttons. Tapping one IS the reply. */

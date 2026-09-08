@@ -47,7 +47,9 @@ export function tableRow(label, val) {
 export function tableBtn(href, label) {
   return `<a href="${href}" style="display:inline-block;background:#7d1d1d;color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:14px 38px;border-radius:999px">${label}</a>`;
 }
-export function tstore() { return getStore(STORE_NAME); }
+// Strong consistency: a save must see the save just before it. The default (eventual) let a
+// second request seconds later read a guest's record as empty and re-send their emails.
+export function tstore() { return getStore({ name: STORE_NAME, consistency: "strong" }); }
 
 export const kEdition = (ed) => "table:" + ed;
 export const kGuests = (ed) => "table:" + ed + ":guests";

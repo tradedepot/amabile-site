@@ -188,6 +188,23 @@ export default async (req) => {
     return json({ ok: true, sent, skipped, failed });
   }
 
+  // ---- rename one guest. Touches the name only: same link, same reply, same standing, no
+  // emails to anyone. The reply record carries a copy of the name, so it is updated too.
+  if (action === "rename-guest") {
+    const ed = edId(d.edition || "");
+    const gid = clean(d.gid, 40);
+    const name = clean(d.name, 80);
+    if (!ed || !gid || !name) return json({ ok: false, error: "bad_request" }, 400);
+    const guests = await loadGuests(st, ed);
+    const tok = Object.keys(guests).find((t) => guests[t].gid === gid);
+    if (!tok) return json({ ok: false, error: "no_guest" }, 404);
+    guests[tok].name = name;
+    await st.setJSON(kGuests(ed), guests);
+    const rec = await st.get(kRsvp(ed, gid), { type: "json" }).catch(() => null);
+    if (rec) await st.setJSON(kRsvp(ed, gid), { ...rec, name });
+    return json({ ok: true, name });
+  }
+
   // ---- remove one guest (and their response, if any) ---------------------------------
   if (action === "remove-guest") {
     const ed = edId(d.edition || "");
