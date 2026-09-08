@@ -153,6 +153,7 @@ function renderForm(){
   var y=DATA.your||{}, s=DATA.summary||{};
   var full=s.full && y.status!=="seated";
   var replied=y.response==="yes"||y.response==="no";
+  var needEmail=!((DATA.guest||{}).hasEmail)&&!y.email; // only when the invitation carries no email
   var bar="";
   if(replied){
     if(y.response==="yes"&&y.status==="seated")bar='<div class="status seated">You replied yes, and your seat is confirmed. Change your reply below if plans change.</div>';
@@ -164,8 +165,7 @@ function renderForm(){
     '<div class="yesno"><button class="pill yes" id="bYes">Yes, I will be there</button><button class="pill no" id="bNo">I cannot make it</button></div>'+
     '<div class="more" id="more">'+
       '<div id="yesFields">'+
-        '<label for="fEmail">Email</label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">'+
-        '<label for="fMobile">Mobile <span>(for day-of logistics)</span></label><input type="tel" id="fMobile" autocomplete="tel" value="'+esc(y.mobile||"")+'">'+
+        (needEmail?'<label for="fEmail">Email <span>(so we can confirm your seat)</span></label><input type="email" id="fEmail" autocomplete="email" value="'+esc(y.email||"")+'">':'')+
         '<label for="fNotes">Dietary needs <span>(optional)</span></label><input type="text" id="fNotes" value="'+esc(y.notes||"")+'">'+
       '</div>'+
       '<div class="send"><button class="pill" id="go">Send my reply</button></div>'+
@@ -178,7 +178,7 @@ function renderForm(){
   function choose(r){resp=r;bYes.classList.toggle("sel",r==="yes");bNo.classList.toggle("sel",r==="no");
     more.classList.add("open");yesFields.style.display=r==="yes"?"block":"none";
     go.textContent=replied?"Update my reply":(r==="yes"?(full?"Join the waitlist":"Confirm my seat"):"Send my reply");
-    if(r==="yes")setTimeout(function(){document.getElementById("fEmail").focus();},80);}
+    if(r==="yes"&&needEmail)setTimeout(function(){document.getElementById("fEmail").focus();},80);}
   bYes.addEventListener("click",function(){choose("yes");});
   bNo.addEventListener("click",function(){choose("no");});
   if(resp)choose(resp);
@@ -187,12 +187,10 @@ function renderForm(){
     var errEl=document.getElementById("ferr");errEl.textContent="";
     if(!resp){errEl.textContent="Choose yes or no first.";return;}
     var body={edition:ED,token:TOKEN,response:resp,attr:ATTR};
-    if(resp==="yes"){
+    if(resp==="yes"&&needEmail){
       var email=document.getElementById("fEmail").value.trim();
-      var mobile=document.getElementById("fMobile").value.trim();
       if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){errEl.textContent="Add a valid email so we can confirm.";return;}
-      if(!mobile){errEl.textContent="Add a mobile for day-of logistics.";return;}
-      body.email=email;body.mobile=mobile;
+      body.email=email;
     }
     body.notes=resp==="yes"?document.getElementById("fNotes").value.trim():"";
     go.disabled=true;go.textContent="Sending…";
@@ -200,7 +198,7 @@ function renderForm(){
       .then(function(r){return r.json().catch(function(){return{};});})
       .then(function(d){
         if(!d||!d.ok){go.disabled=false;go.textContent="Send my reply";errEl.textContent=d&&d.error==="closed"?"Replies just closed for this edition.":"Something went wrong. Please try again.";return;}
-        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",mobile:body.mobile||"",notes:body.notes};
+        DATA.your={response:resp,status:d.status,position:d.position,email:body.email||y.email||"",notes:body.notes};
         DATA.summary=d.summary||DATA.summary;
         renderStatus();window.scrollTo(0,0);
       })

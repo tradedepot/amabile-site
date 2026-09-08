@@ -45,10 +45,10 @@ export default async (req, context) => {
   const notes = clean(d.notes, 400);    // dietary
   const optin = false;                  // no newsletter opt-in on the Table
 
-  if (response === "yes") {
-    if (!isEmail(email)) return json({ ok: false, error: "bad_email" }, 400);
-    if (!mobile) return json({ ok: false, error: "no_mobile" }, 400);
-  }
+  // The email we confirm to: the one on the invitation, unless the guest supplies one (only
+  // asked when the invite has none, i.e. a link handed over by hand).
+  const confirmEmail = email || guest.email || "";
+  if (response === "yes" && !isEmail(confirmEmail)) return json({ ok: false, error: "bad_email" }, 400);
 
   const cap = edition.cap || 0;
   const before = standings(await loadRsvps(st, ed), cap);
@@ -66,7 +66,7 @@ export default async (req, context) => {
     gid: guest.gid,
     name: guest.name,
     response,
-    email: email || (existing && existing.email) || guest.email || "",
+    email: confirmEmail || (existing && existing.email) || "",
     mobile: mobile || (existing && existing.mobile) || "",
     role: role || (existing && existing.role) || "",
     notes,
