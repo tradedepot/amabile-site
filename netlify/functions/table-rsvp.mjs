@@ -169,8 +169,9 @@ export default async (req, context) => {
     }
   }
 
-  // BigQuery mirror (best-effort).
-  await bqInsert("table_rsvps", {
+  // BigQuery mirror (best-effort). One row per real change; a repeat of the same answer or an
+  // unchanged note is not logged, so the table reads as a clean history per guest.
+  if (responseChanged || statusChanged || notesChanged) await bqInsert("table_rsvps", {
     edition: ed,
     gid: guest.gid,
     name: guest.name || null,

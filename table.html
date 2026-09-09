@@ -168,11 +168,13 @@ function renderInvite(changing){
     (needEmail?'<div class="more" id="emailBox"><label for="fEmail">Email <span>(so we can confirm your seat)</span></label><input type="email" id="fEmail" autocomplete="email"><div class="send"><button class="pill" id="goEmail">Confirm my seat</button></div></div>':'')+
     '<div class="err" id="ferr"></div>'+PLUS;
   var bYes=document.getElementById("bYes"),bNo=document.getElementById("bNo");
+  // Tapping the answer they already have is not a change: just show their status again.
   bYes.addEventListener("click",function(){
+    if(y.response==="yes"){renderStatus();window.scrollTo(0,0);return;}
     if(needEmail){document.getElementById("emailBox").classList.add("open");document.getElementById("fEmail").focus();return;}
     submit("yes",{},bYes);
   });
-  bNo.addEventListener("click",function(){submit("no",{},bNo);});
+  bNo.addEventListener("click",function(){if(y.response==="no"){renderStatus();window.scrollTo(0,0);return;}submit("no",{},bNo);});
   if(needEmail)document.getElementById("goEmail").addEventListener("click",function(){
     var email=document.getElementById("fEmail").value.trim();
     if(!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)){document.getElementById("ferr").textContent="Add a valid email so we can confirm.";return;}

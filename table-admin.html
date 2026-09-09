@@ -245,6 +245,10 @@ $("stRows").addEventListener("click",function(ev){
   var act=b.getAttribute("data-act"),ed=curEditionSlug();
   if(act==="rename"){var nn=prompt("Name for this guest (nothing else changes, nobody is emailed):",g.name);if(nn==null)return;nn=nn.trim();if(!nn||nn===g.name)return;b.disabled=true;
     api("rename-guest",{edition:ed,gid:gid,name:nn}).then(function(r){if(!r||!r.ok)alert("Could not rename.");refreshStandings();});}
+  /* TEMPORARY: edit email (remove with the set-email action in table-admin.mjs) */
+  if(act==="email"){var ne=prompt("Correct email for "+g.name+" (same link, nothing else changes). Then click Send on the row.",g.email||"");if(ne==null)return;ne=ne.trim().toLowerCase();if(!ne||ne===(g.email||"").toLowerCase())return;b.disabled=true;
+    api("set-email",{edition:ed,gid:gid,email:ne}).then(function(r){if(!r||!r.ok)alert("Could not update.");refreshStandings();});}
+  /* END TEMPORARY */
   if(act==="copy"){copyText(g.link);b.textContent="Copied";setTimeout(function(){b.textContent="Copy link";},1500);}
   if(act==="send"){if(!confirm((g.invitedAt?"Resend":"Send")+" the invite email to "+g.name+"?"))return;b.disabled=true;
     api("send-invites",{edition:ed,gids:[gid]}).then(function(){refreshStandings();});}
@@ -282,7 +286,7 @@ function replyCell(g){
 function tr(g){var extra=[g.role,g.mobile].filter(Boolean).map(esc).join(" · ");
   var cls=g.status==="seated"?"seated":g.status==="wait"?"wait":"declined";
   return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(g.notes?'<div class="sub diet">Dietary: '+esc(g.notes)+'</div>':'')+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
-    '<td class="act"><button class="lnk" data-act="rename" data-gid="'+esc(g.gid)+'">Edit name</button><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
+    '<td class="act"><button class="lnk" data-act="rename" data-gid="'+esc(g.gid)+'">Edit name</button><button class="lnk" data-act="email" data-gid="'+esc(g.gid)+'">Edit email</button><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","Dietary"]];
   (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.notes]);});
