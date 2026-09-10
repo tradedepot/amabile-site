@@ -205,26 +205,6 @@ export default async (req) => {
     return json({ ok: true, name });
   }
 
-  // ---- TEMPORARY: correct one guest's email (remove after the No 1 list is fixed) --------
-  // Same link, same reply, same standing; nothing emailed. Marks them not-yet-invited so
-  // Send in the admin re-invites at the corrected address.
-  if (action === "set-email") {
-    const ed = edId(d.edition || "");
-    const gid = clean(d.gid, 40);
-    const to = clean(d.email, 160).toLowerCase();
-    if (!ed || !gid || !isEmail(to)) return json({ ok: false, error: "bad_request" }, 400);
-    const guests = await loadGuests(st, ed);
-    const tok = Object.keys(guests).find((t) => guests[t].gid === gid);
-    if (!tok) return json({ ok: false, error: "no_guest" }, 404);
-    guests[tok].email = to;
-    delete guests[tok].invitedAt; delete guests[tok].inviteResult;
-    await st.setJSON(kGuests(ed), guests);
-    const rec = await st.get(kRsvp(ed, gid), { type: "json" }).catch(() => null);
-    if (rec) await st.setJSON(kRsvp(ed, gid), { ...rec, email: to });
-    return json({ ok: true, email: to });
-  }
-  // ---- END TEMPORARY ----------------------------------------------------------------------
-
   // ---- remove one guest (and their response, if any) ---------------------------------
   if (action === "remove-guest") {
     const ed = edId(d.edition || "");
