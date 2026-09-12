@@ -26,6 +26,8 @@ h1 em{font-style:italic;color:var(--gold)}
 .count{font-family:Fraunces,Georgia,serif;font-size:28px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--linen)}
 .count b{font-weight:600;color:var(--rosa)}
 .count span{font-family:"Instrument Sans",sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-left:6px}
+.sync{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:2px;text-align:right}
+.sync.on{color:#8FC7B8}
 .row2{display:flex;gap:8px;margin-top:8px}
 .search{flex:1;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:999px;padding:0 14px;height:40px}
 .search svg{flex:none;opacity:.7;color:var(--gold)}
@@ -117,7 +119,7 @@ ul.know li::marker{color:var(--gold)}
   <header class="top">
     <div class="row1">
       <h1>The <em>Room</em></h1>
-      <div class="count"><b id="cin">0</b>/<span id="ctot" style="margin:0;font-family:Fraunces,Georgia,serif;font-size:28px;letter-spacing:0;text-transform:none;color:var(--linen)">0</span><span>in</span></div>
+      <div><div class="count"><b id="cin">0</b>/<span id="ctot" style="margin:0;font-family:Fraunces,Georgia,serif;font-size:28px;letter-spacing:0;text-transform:none;color:var(--linen)">0</span><span>in</span></div><div class="sync" id="sync">this phone only</div></div>
     </div>
     <div class="row2">
       <label class="search">
@@ -131,7 +133,7 @@ ul.know li::marker{color:var(--gold)}
 
   <div class="stage" id="stage"><svg class="table" id="svg"></svg></div>
 
-  <div class="foot"><span>Tap a face, or a thread. The door is at the top. Ticks live on this phone; copy the list into the group.</span><button type="button" id="reset">Reset ticks</button></div>
+  <div class="foot"><span>Tap a face, or a thread. The door is at the top. On the website the ticks sync between phones every few seconds. Anywhere else they stay on this phone.</span><button type="button" id="reset">Reset ticks</button></div>
 </div>
 
 <div class="sheet" id="sheet"><div class="inner" id="sheetIn"></div></div>
@@ -144,6 +146,10 @@ const EDGES = [["Tega", "Bukky Taylor", "Mo'Hits", "Tega worked the Mo'Hits stre
 const KNOW = {"Chibuzo Aghaji": ["Moët Hennessy honoured vendor, 2024.", "Blue Nun 24K launch at the Civic Centre, 2019, with Ice Box."], "Roy": ["Bar manager at Nómaada, Backyard Hospitality Group. Octo, the speakeasy that opened at the same address in April, is almost certainly his programme."], "Emmanuel Labrande": ["Ran Alliance Française Accra before Lagos, opened Kumasi in 2021. Sorbonne."], "Chef Eros": ["Wolverhampton, started behind a bar.", "First West African chef at Coachella's Outstanding in the Field. First African (RED) chef. ILÉ Bistro, Culver City."], "Madame Otufale": ["Published as Abiola Williams-Otufale. Spoke for AF Lagos at Francophonie Day in March.", "Her career outside the Alliance is not on the record. Let her tell it."], "Dolapo Morgan": ["UCL first class. Accenture and Bain across six countries. Termii board.", "Creative director of Refine, a jewellery brand. That is her fashion side."], "Elizabeth Elohor": ["Opened Beth London on Baker Street on 1 June. Ask about that first.", "Held the Elite Paris franchise for thirteen years.", "Maison Privé on Maritime Lane is probably hers. Confirm before saying so."], "Peace": ["Nothing public beyond the bank."], "Nneka Agbata": ["The Clean Lab, 2023, private-label home and personal care. Registry name Christianna Agbata.", "A third arm called WIMDA that nobody has written about. Ask."], "Kachi Itim": ["Born 1994. Nigerian-Kittitian, holds a St Kitts passport.", "Fed a film crew on set in 2015 as a wardrobe stylist; that became the business.", "Runs The Alpha Mom Foundation."], "Jerry Olah": ["No public footprint at all. Bola follows him."], "Tanya Rupani": ["Grew up in Lagos, Indian family, Newcastle 2018.", "In April she did what this lunch is: five courses from a fragrance, at ONA with Chef Obehi."], "Bola Lawal": ["Houston: University of Houston, ConocoPhillips, Shell, Accenture. Then ScholarX and Premia.", "Premia began as Sallah barbecues. 900 members, 26 countries."], "Yobe Helen": ["BellaNaija Style's 20 creators list. Café Lancôme, March 2025.", "Vlogs hosting friends at home. She will notice how this room is run."], "Tega": ["Don Jazzy's cousin. UniPort computer science. Road manager to D'Prince in 2012.", "Led the Kupanda and Universal deals. Billboard Global Power Player 2026."], "Moses": ["The City People opened here on 5 September with Absa and SANAVA, runs to the 26th.", "Also a songwriter and vocalist."], "Bukky Taylor": ["Left for the US at 15. UMass, a DC law firm, Winnipeg, where she founded the agency at 25.", "Clients: Moët Hennessy, Pernod Ricard, Estée Lauder, MAC. Luxury Network Nigeria partnerships."], "Ayomide Olabimtan": ["Ìlé Ayọ̀ and Fabric Fairies. Aylor follows her."], "Vivian Osuji": ["Waitress, bar back, head bartender at The Grill by Delis, Freepour's 15 movers list in 2022.", "Irish Mixers Club champion, March 2025, judged by the Bartenders Guild president."], "Ladunni Lambo": ["A designer first: Nottingham Trent, Lagos Fashion Week 2013, Frankie & Co, her own label, GTBank Fashion Weekend 2017, Emerge ALARA top six. Chimamanda has worn her.", "Co-curated \"With Love, From Home\" in this gallery in July."], "Lase Oyedeji": ["Oniyo: brands, PR, production, talent. Spoke at Africa Creative Market in September 2025. OAU, most likely."], "Charbel": ["Z Kitchen: Spirited Awards 2025 top ten for the region, FT's \"Power dining in Lagos\". It has a wine room.", "Owned by Ziad and Zeina Beydoun."], "Mayowa Lawal": ["Born 2002, self-taught, Ijebu-Ode. Copenhagen solo 2023, Art Basel Miami 2022, billboards in Tokyo and Seoul. Moscow in October.", "Shot the Adidas Lagos flagship launch. Featured by Apple."], "Chisom Njoku": ["Vogue Italia and The Guardian before Huemaine.", "Porsche's first African art film; face of Porsche x BOSS. Forbes Africa's West African rep. Heads by BNXN."], "Kachi": [], "Aylor": [], "IG": [], "Anita": []};
 const KEY='room-in-t1';let IN={};try{IN=JSON.parse(localStorage.getItem(KEY)||'{}')||{}}catch(e){IN={}}
 function save(){try{localStorage.setItem(KEY,JSON.stringify(IN))}catch(e){}}
+const SYNC_URL='/table/1/room/state';let remote=false;
+function paintAll(){GUESTS.forEach(g=>{const el=faceEl[g.n];if(el)el.classList.toggle('isin',!!IN[g.id])});updateCount();const ib=sheetIn.querySelector('[data-in]');if(ib){const on=!!IN[ib.dataset.in];ib.classList.toggle('on',on);ib.setAttribute('aria-pressed',String(on))}}
+async function pull(){try{const r=await fetch(SYNC_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();IN=j.in||{};save();remote=true;document.getElementById('sync').textContent='synced';document.getElementById('sync').classList.add('on');paintAll()}catch(e){}}
+async function push(id,on){if(!remote)return;try{await fetch(SYNC_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id,on,at:IN[id]||0})})}catch(e){}}
 const byName={};GUESTS.forEach(g=>byName[g.n]=g);
 const guests=GUESTS.filter(g=>!g.us);
 const TH={};THREADS.forEach(t=>TH[t[0]]=t);
@@ -218,13 +224,14 @@ sheetIn.addEventListener('click',e=>{
   if(e.target.closest('[data-close]')){closeAll();return}
   const tb=e.target.closest('.tchip');if(tb){showThread(tb.dataset.t);return}
   const pb=e.target.closest('[data-p]');if(pb){showPerson(pb.dataset.p);return}
-  const ib=e.target.closest('[data-in]');if(ib){const id=ib.dataset.in;if(IN[id])delete IN[id];else IN[id]=Date.now();save();ib.classList.toggle('on',!!IN[id]);ib.setAttribute('aria-pressed',String(!!IN[id]));const g=GUESTS.find(x=>x.id===id);faceEl[g.n].classList.toggle('isin',!!IN[id]);updateCount();return}
+  const ib=e.target.closest('[data-in]');if(ib){const id=ib.dataset.in;const on=!IN[id];if(on)IN[id]=Date.now();else delete IN[id];save();push(id,on);ib.classList.toggle('on',!!IN[id]);ib.setAttribute('aria-pressed',String(!!IN[id]));const g=GUESTS.find(x=>x.id===id);faceEl[g.n].classList.toggle('isin',!!IN[id]);updateCount();return}
   const pr=e.target.closest('.prow');if(pr){const on=pr.classList.contains('on');sheetIn.querySelectorAll('.prow').forEach(x=>x.classList.remove('on'));if(!on)pr.classList.add('on');return}
 });
-document.getElementById('reset').addEventListener('click',()=>{IN={};save();Object.values(faceEl).forEach(el=>el.classList.remove('isin'));updateCount();if(sel)showPerson(sel)});
+document.getElementById('reset').addEventListener('click',()=>{const ids=Object.keys(IN);IN={};save();ids.forEach(id=>push(id,false));Object.values(faceEl).forEach(el=>el.classList.remove('isin'));updateCount();if(sel)showPerson(sel)});
 document.getElementById('copy').addEventListener('click',async()=>{const inn=guests.filter(g=>IN[g.id]).sort((a,b)=>IN[a.id]-IN[b.id]).map(g=>g.n);const out=guests.filter(g=>!IN[g.id]).map(g=>g.n);const txt=`In the room ${inn.length}/${guests.length}: ${inn.join(', ')||'nobody yet'}.\nStill to come: ${out.join(', ')||'nobody'}.`;const b=document.getElementById('copy');try{await navigator.clipboard.writeText(txt);b.textContent='Copied';b.classList.add('done')}catch(e){window.prompt('Copy this',txt)}setTimeout(()=>{b.textContent="Copy who's in";b.classList.remove('done')},1600)});
 function updateCount(){document.getElementById('cin').textContent=guests.filter(g=>IN[g.id]).length;document.getElementById('ctot').textContent=guests.length}
 updateCount();
+pull();setInterval(()=>{if(document.visibilityState==='visible')pull()},8000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
 </script>
 </body>
 </html>
