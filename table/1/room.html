@@ -26,8 +26,6 @@ h1 em{font-style:italic;color:var(--gold)}
 .count{font-family:Fraunces,Georgia,serif;font-size:28px;font-variant-numeric:tabular-nums;white-space:nowrap;color:var(--linen)}
 .count b{font-weight:600;color:var(--rosa)}
 .count span{font-family:"Instrument Sans",sans-serif;font-size:12px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-left:6px}
-.sync{font-size:11px;letter-spacing:.08em;text-transform:uppercase;color:var(--dim);margin-top:2px;text-align:right}
-.sync.on{color:#8FC7B8}
 .row2{display:flex;gap:8px;margin-top:8px}
 .search{flex:1;display:flex;align-items:center;gap:8px;background:rgba(0,0,0,.25);border:1px solid var(--line);border-radius:999px;padding:0 14px;height:40px}
 .search svg{flex:none;opacity:.7;color:var(--gold)}
@@ -119,7 +117,7 @@ ul.know li::marker{color:var(--gold)}
   <header class="top">
     <div class="row1">
       <h1>The <em>Room</em></h1>
-      <div><div class="count"><b id="cin">0</b>/<span id="ctot" style="margin:0;font-family:Fraunces,Georgia,serif;font-size:28px;letter-spacing:0;text-transform:none;color:var(--linen)">0</span><span>in</span></div><div class="sync" id="sync">this phone only</div></div>
+      <div class="count"><b id="cin">0</b>/<span id="ctot" style="margin:0;font-family:Fraunces,Georgia,serif;font-size:28px;letter-spacing:0;text-transform:none;color:var(--linen)">0</span><span>in</span></div>
     </div>
     <div class="row2">
       <label class="search">
@@ -133,7 +131,7 @@ ul.know li::marker{color:var(--gold)}
 
   <div class="stage" id="stage"><svg class="table" id="svg"></svg></div>
 
-  <div class="foot"><span>Tap a face, or a thread. The door is at the top. On the website the ticks sync between phones every few seconds. Anywhere else they stay on this phone.</span><button type="button" id="reset">Reset ticks</button></div>
+  <div class="foot"><span id="foot">Tap a face, or a thread. The door is at the top. Ticks stay on this phone unless you open the page on the website.</span><button type="button" id="reset">Reset ticks</button></div>
 </div>
 
 <div class="sheet" id="sheet"><div class="inner" id="sheetIn"></div></div>
@@ -148,7 +146,7 @@ const KEY='room-in-t1';let IN={};try{IN=JSON.parse(localStorage.getItem(KEY)||'{
 function save(){try{localStorage.setItem(KEY,JSON.stringify(IN))}catch(e){}}
 const SYNC_URL='/table/1/room/state';let remote=false;
 function paintAll(){GUESTS.forEach(g=>{const el=faceEl[g.n];if(el)el.classList.toggle('isin',!!IN[g.id])});updateCount();const ib=sheetIn.querySelector('[data-in]');if(ib){const on=!!IN[ib.dataset.in];ib.classList.toggle('on',on);ib.setAttribute('aria-pressed',String(on))}}
-async function pull(){try{const r=await fetch(SYNC_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();IN=j.in||{};save();remote=true;document.getElementById('sync').textContent='synced';document.getElementById('sync').classList.add('on');paintAll()}catch(e){}}
+async function pull(){try{const r=await fetch(SYNC_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();IN=j.in||{};save();remote=true;document.getElementById('foot').textContent='Tap a face, or a thread. The door is at the top. Ticks are shared across the team\'s phones.';paintAll()}catch(e){}}
 async function push(id,on){if(!remote)return;try{await fetch(SYNC_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id,on,at:IN[id]||0})})}catch(e){}}
 const byName={};GUESTS.forEach(g=>byName[g.n]=g);
 const guests=GUESTS.filter(g=>!g.us);
