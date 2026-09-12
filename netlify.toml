@@ -95,3 +95,10 @@
 # Clean shortcuts /new, /pullup, /host are owned by the generator-ssr function
 # (config.path), which serves the homepage with a behaviour-led link preview
 # ("Round up your crew") and auto-opens the generator on those paths.
+
+# The Room: the team's door page for Table No 1 (faces, seats, who is in). Private by
+# obscurity, noindex, never linked. Static file, outside the table-ssr paths and the age gate.
+[[redirects]]
+  from = "/table/1/room"
+  to = "/table/1/room.html"
+  status = 200
