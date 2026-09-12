@@ -106,8 +106,8 @@ ul.know li::marker{color:var(--gold)}
 .members .pf{width:52px;height:52px;border:2.5px solid var(--c)}
 .members span{font-size:11px;color:var(--linen);text-align:center;line-height:1.1}
 .close{position:absolute;left:14px;top:10px;width:32px;height:32px;border-radius:50%;background:rgba(255,255,255,.08);display:grid;place-items:center;color:var(--muted);font-size:18px}
-.foot{margin-top:16px;font-size:12px;color:var(--dim);line-height:1.5;display:flex;justify-content:space-between;gap:12px}
-.foot button{text-decoration:underline;text-underline-offset:3px;color:var(--dim)}
+.foot{margin-top:18px;font-size:12px;color:var(--dim);display:flex;justify-content:center}
+.foot button{color:var(--dim);white-space:nowrap;padding:8px 14px;border:1px solid rgba(255,255,255,.08);border-radius:999px}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -131,7 +131,7 @@ ul.know li::marker{color:var(--gold)}
 
   <div class="stage" id="stage"><svg class="table" id="svg"></svg></div>
 
-  <div class="foot"><span id="foot">Tap a face, or a thread. The door is at the top. Ticks stay on this phone unless you open the page on the website.</span><button type="button" id="reset">Reset ticks</button></div>
+  <div class="foot"><button type="button" id="reset">Reset ticks</button></div>
 </div>
 
 <div class="sheet" id="sheet"><div class="inner" id="sheetIn"></div></div>
@@ -146,7 +146,7 @@ const KEY='room-in-t1';let IN={};try{IN=JSON.parse(localStorage.getItem(KEY)||'{
 function save(){try{localStorage.setItem(KEY,JSON.stringify(IN))}catch(e){}}
 const SYNC_URL='/table/1/room/state';let remote=false;
 function paintAll(){GUESTS.forEach(g=>{const el=faceEl[g.n];if(el)el.classList.toggle('isin',!!IN[g.id])});updateCount();const ib=sheetIn.querySelector('[data-in]');if(ib){const on=!!IN[ib.dataset.in];ib.classList.toggle('on',on);ib.setAttribute('aria-pressed',String(on))}}
-async function pull(){try{const r=await fetch(SYNC_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();IN=j.in||{};save();remote=true;document.getElementById('foot').textContent='Tap a face, or a thread. The door is at the top. Ticks are shared across the team\'s phones.';paintAll()}catch(e){}}
+async function pull(){try{const r=await fetch(SYNC_URL,{cache:'no-store'});if(!r.ok)throw 0;const j=await r.json();IN=j.in||{};save();remote=true;paintAll()}catch(e){}}
 async function push(id,on){if(!remote)return;try{await fetch(SYNC_URL,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({id,on,at:IN[id]||0})})}catch(e){}}
 const byName={};GUESTS.forEach(g=>byName[g.n]=g);
 const guests=GUESTS.filter(g=>!g.us);
