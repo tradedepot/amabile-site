@@ -42,8 +42,8 @@ h1 em{font-style:italic;color:var(--gold)}
 .stage{position:relative;margin-top:6px}
 svg.table{width:100%;height:auto;display:block;overflow:visible}
 .ends{font-family:"Instrument Sans",sans-serif;font-size:9px;letter-spacing:.22em;fill:var(--gold);font-weight:600}
-.seatcode{font-family:Fraunces,Georgia,serif;font-size:9.5px;fill:var(--gold);font-weight:600;letter-spacing:.04em}
-.nm{font-family:"Instrument Sans",sans-serif;font-size:10.5px;fill:var(--linen);font-weight:500;text-anchor:middle}
+.seatcode{font-family:Fraunces,Georgia,serif;font-size:10px;fill:var(--gold);font-weight:600;letter-spacing:.04em}
+.nm{font-family:"Instrument Sans",sans-serif;font-size:11.5px;fill:var(--linen);font-weight:500;text-anchor:middle}
 .nm.us{fill:var(--rosa)}
 .initial{font-family:Fraunces,Georgia,serif;font-size:20px;fill:var(--gold);text-anchor:middle;font-weight:600}
 g.face{cursor:pointer;transition:opacity .25s}
@@ -62,7 +62,7 @@ g.lbl{pointer-events:none}
 g.lbl rect{fill:#141210;stroke:var(--hl,var(--gold));stroke-width:1;rx:9}
 g.lbl text{font-family:"Instrument Sans",sans-serif;font-size:10px;font-weight:600;fill:var(--linen);text-anchor:middle;dominant-baseline:middle}
 rect.linen{fill:var(--linen);stroke:var(--gold);stroke-width:1.5}
-text.tname{font-family:Fraunces,Georgia,serif;font-size:11px;letter-spacing:.32em;fill:var(--gold2);text-anchor:middle;writing-mode:vertical-rl}
+text.tname{font-family:Fraunces,Georgia,serif;font-size:10px;letter-spacing:.3em;fill:var(--gold2);text-anchor:middle;writing-mode:vertical-rl}
 .stage.dimmed g.face.off{opacity:.15}
 .sheet{position:fixed;left:0;right:0;bottom:0;z-index:8;background:var(--sheet);color:var(--ink);border-radius:22px 22px 0 0;box-shadow:0 -12px 40px rgba(0,0,0,.5);max-height:52vh;overflow-y:auto;transform:translateY(105%);transition:transform .28s cubic-bezier(.2,.8,.2,1);border-top:1px solid var(--line)}
 .sheet.open{transform:translateY(0)}
@@ -155,23 +155,23 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function initials(n){return n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
 function pf(g){return `<div class="pf${g.logo?' logo':''}">${g.img?`<img src="${g.img}" alt="">`:esc(initials(g.n))}</div>`}
 
-const W=400,R=26,ROW=74,TOP=44,XA=70,XB=330,N=14;
+const W=400,R=36,ROW=92,TOP=44,XA=96,XB=304,N=14;
 const H=TOP+N*ROW+30;
 const pos={};GUESTS.forEach(g=>{if(g.seat){pos[g.n]={x:g.side==='A'?XA:XB,y:TOP+(g.seat-1)*ROW+ROW/2}}});
-function edgePath(a,b){const p=pos[a],q=pos[b];if(!p||!q)return null;if(p.x!==q.x)return `M${p.x} ${p.y}L${q.x} ${q.y}`;const d=Math.abs(p.y-q.y)/ROW;const bulge=(p.x===XA?-1:1)*(34+d*9);const cx=p.x+bulge,cy=(p.y+q.y)/2;return `M${p.x} ${p.y}Q${cx} ${cy} ${q.x} ${q.y}`}
-function edgeMid(a,b){const p=pos[a],q=pos[b];if(p.x!==q.x)return {x:(p.x+q.x)/2,y:(p.y+q.y)/2};const d=Math.abs(p.y-q.y)/ROW;const bulge=(p.x===XA?-1:1)*(34+d*9);return {x:p.x+bulge/2,y:(p.y+q.y)/2}}
+function edgePath(a,b){const p=pos[a],q=pos[b];if(!p||!q)return null;if(p.x!==q.x)return `M${p.x} ${p.y}L${q.x} ${q.y}`;const d=Math.abs(p.y-q.y)/ROW;const bulge=(p.x===XA?-1:1)*(48+d*10);const cx=p.x+bulge,cy=(p.y+q.y)/2;return `M${p.x} ${p.y}Q${cx} ${cy} ${q.x} ${q.y}`}
+function edgeMid(a,b){const p=pos[a],q=pos[b];if(p.x!==q.x)return {x:(p.x+q.x)/2,y:(p.y+q.y)/2};const d=Math.abs(p.y-q.y)/ROW;const bulge=(p.x===XA?-1:1)*(48+d*10);return {x:p.x+bulge*0.72,y:(p.y+q.y)/2}}
 
 const svg=document.getElementById('svg');
 svg.setAttribute('viewBox',`0 0 ${W} ${H}`);
 let s='<defs>'+GUESTS.map((g,i)=>`<clipPath id="c${i}"><circle cx="0" cy="0" r="${R}"/></clipPath>`).join('')+'</defs>';
-s+=`<rect class="linen" x="128" y="${TOP-10}" width="144" height="${N*ROW+20}" rx="10"/>`;
+s+=`<rect class="linen" x="166" y="${TOP-10}" width="68" height="${N*ROW+20}" rx="8"/>`;
 s+=`<text class="tname" x="200" y="${TOP+N*ROW/2}">TABLE No 1</text>`;
-s+=`<text class="ends" x="200" y="${TOP-20}" text-anchor="middle">DOOR &amp; SERVICE END</text>`;
+s+=`<text class="ends" x="200" y="${TOP-22}" text-anchor="middle">DOOR</text>`;
 s+=`<text class="ends" x="200" y="${TOP+N*ROW+24}" text-anchor="middle">FAR END</text>`;
 s+='<g id="edges">'+EDGES.map((e,i)=>{const d=edgePath(e[0],e[1]);return d?`<path class="edge" data-i="${i}" d="${d}"/>`:''}).join('')+'</g>';
-s+='<g id="faces">'+GUESTS.map((g,i)=>{const p=pos[g.n];if(!p)return '';const codeX=g.side==='A'?-(R+6):(R+6);const anchor=g.side==='A'?'end':'start';
+s+='<g id="faces">'+GUESTS.map((g,i)=>{const p=pos[g.n];if(!p)return '';const codeX=g.side==='A'?-(R+5):(R+5);const anchor=g.side==='A'?'end':'start';
   const img=g.img?`<image href="${g.img}" x="${-R}" y="${-R}" width="${2*R}" height="${2*R}" clip-path="url(#c${i})" preserveAspectRatio="xMidYMid ${g.logo?'meet':'slice'}"/>`:`<circle r="${R}" fill="#2E2721"/><text class="initial" y="7">${esc(initials(g.n))}</text>`;
-  return `<g class="face${g.us?' us':''}${IN[g.id]?' isin':''}" data-n="${esc(g.n)}" transform="translate(${p.x} ${p.y})">${g.logo?`<circle r="${R}" fill="#fff"/>`:''}${img}<circle class="ring" r="${R+1.5}"/><circle class="in" cx="${R-6}" cy="${-R+6}" r="5"/><text class="seatcode" x="${codeX}" y="4" text-anchor="${anchor}">${g.side}${g.seat}</text><text class="nm${g.us?' us':''}" y="${R+13}">${esc(SHORT[g.n]||g.n)}</text><circle class="hit" r="${R+10}"/></g>`}).join('')+'</g>';
+  return `<g class="face${g.us?' us':''}${IN[g.id]?' isin':''}" data-n="${esc(g.n)}" transform="translate(${p.x} ${p.y})">${g.logo?`<circle r="${R}" fill="#fff"/>`:''}${img}<circle class="ring" r="${R+1.5}"/><circle class="in" cx="${R-8}" cy="${-R+8}" r="6"/><text class="seatcode" x="${codeX}" y="4" text-anchor="${anchor}">${g.side}${g.seat}</text><text class="nm${g.us?' us':''}" y="${R+13}">${esc(SHORT[g.n]||g.n)}</text><circle class="hit" r="${R+10}"/></g>`}).join('')+'</g>';
 s+='<g id="labels"></g>';
 svg.innerHTML=s;
 
