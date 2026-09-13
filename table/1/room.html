@@ -140,6 +140,8 @@ ul.know li::marker{color:var(--gold)}
 .trow{display:flex;gap:16px;align-items:flex-start}
 .trow .tline{flex:1;min-width:0}
 .mini{flex:none;margin-top:10px}
+.toast{white-space:nowrap;position:fixed;left:50%;bottom:28px;transform:translate(-50%,12px);z-index:9;background:var(--gold);color:#141210;font-size:13px;font-weight:600;padding:9px 16px;border-radius:999px;opacity:0;transition:all .3s;pointer-events:none;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.toast.on{opacity:1;transform:translate(-50%,0)}
 @media (prefers-reduced-motion: reduce){*{transition:none!important}}
 </style>
 </head>
@@ -210,7 +212,7 @@ const tstrip=document.getElementById('threads');
 tstrip.innerHTML=THREADS.map(t=>`<button class="tchip" type="button" data-t="${t[0]}" aria-pressed="false" style="--c:${t[2]}"><i></i>${esc(t[1])}</button>`).join('');
 
 const stage=document.getElementById('stage');
-let sel=null, selT=null, q='';
+let sel=null, selT=null, peek=null, q='';
 const faceEl={};[...svg.querySelectorAll('g.face')].forEach(el=>faceEl[el.dataset.n]=el);
 const edgeEl=[...svg.querySelectorAll('path.edge')];
 function clearLit(){Object.values(faceEl).forEach(el=>{el.classList.remove('sel','lit');el.style.removeProperty('--hl')});edgeEl.forEach(el=>{el.classList.remove('lit');el.style.removeProperty('--hl')});document.getElementById('labels').innerHTML='';stage.classList.remove('focus')}
@@ -234,8 +236,9 @@ function miniMap(members,c){const rw=11,h=N*rw+16;let s=`<svg class="mini" viewB
   GUESTS.forEach(g=>{if(!g.seat)return;const x=g.side==='A'?17:53,y=11+(g.seat-1)*rw+rw/2;const on=members.includes(g.n);s+=on?`<circle cx="${x}" cy="${y}" r="4.4" fill="${c}" style="filter:drop-shadow(0 0 3px ${c})"/>`:`<circle cx="${x}" cy="${y}" r="2.6" fill="rgba(255,255,255,.16)"/>`});return s+'</svg>'}
 const sheet=document.getElementById('sheet'),sheetIn=document.getElementById('sheetIn');
 function openSheet(html,focusName){sheetIn.innerHTML=html;sheet.classList.add('open');sheet.scrollTop=0;if(focusName&&faceEl[focusName]){const r=faceEl[focusName].getBoundingClientRect();const target=window.innerHeight*0.18;window.scrollBy({top:r.top-target,behavior:'smooth'})}}
-function closeAll(){sel=null;selT=null;sheet.classList.remove('open');clearLit();tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed','false'))}
-function showPerson(n){const g=byName[n];sel=n;selT=null;tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed','false'));lightPerson(n);
+function closeSheet(){sel=null;selT=null;sheet.classList.remove('open');tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed','false'))}
+function closeAll(){peek=null;closeSheet();clearLit();tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed','false'))}
+function showPerson(n){const g=byName[n];sel=n;selT=null;peek=n;tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed','false'));lightPerson(n);
   const isIn=!!IN[g.id];const es=edgesOf(n);const threads=THREADS.filter(t=>t[3].includes(n));
   const bringName=g.bringTo?byName[g.bringTo]:null;const bfirst=g.bring?g.bring.split('.')[0]:'';const brest=g.bring?g.bring.split('.').slice(1).join('.').trim():'';
   const html=`<button class="close" type="button" data-close aria-label="Close">×</button><div class="grab"></div>
@@ -247,7 +250,7 @@ function showPerson(n){const g=byName[n];sel=n;selT=null;tstrip.querySelectorAll
   ${threads.length?`<div class="k">Threads</div><div class="tchips">${threads.map(t=>`<button class="tchip" type="button" data-t="${t[0]}" aria-pressed="false" style="--c:${t[2]}"><i></i>${esc(t[1])}</button>`).join('')}</div>`:''}
   ${(KNOW[n]||[]).length?`<div class="k">Worth knowing</div><ul class="know">${KNOW[n].map(l=>`<li>${esc(l)}</li>`).join('')}</ul>`:''}`;
   openSheet(html,n)}
-function showThread(id){const t=TH[id];selT=id;sel=null;tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===id)));lightThread(id);
+function showThread(id){const t=TH[id];selT=id;sel=null;peek=null;tstrip.querySelectorAll('.tchip').forEach(b=>b.setAttribute('aria-pressed',String(b.dataset.t===id)));lightThread(id);
   const html=`<button class="close" type="button" data-close aria-label="Close">×</button><div class="grab"></div>
   <div class="sh" style="padding-left:44px"><div style="width:14px;height:14px;border-radius:50%;background:${t[2]};box-shadow:0 0 12px ${t[2]};flex:none"></div><h2>${esc(t[1])}</h2></div>
   <div class="trow"><div class="tline">${esc(t[4])}</div>${miniMap(t[3],t[2])}</div>
@@ -255,9 +258,9 @@ function showThread(id){const t=TH[id];selT=id;sel=null;tstrip.querySelectorAll(
   openSheet(html)}
 
 function applySearch(){if(!q){stage.classList.remove('dimmed');Object.values(faceEl).forEach(el=>el.classList.remove('off'));return}stage.classList.add('dimmed');GUESTS.forEach(g=>{const el=faceEl[g.n];if(!el)return;const t=(g.n+' '+(g.sub||'')+' '+g.who+' '+g.side+g.seat).toLowerCase();el.classList.toggle('off',!t.includes(q))})}
-document.getElementById('q').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();if(sel||selT)closeAll();applySearch()});
+document.getElementById('q').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();if(sel||selT||peek)closeAll();applySearch()});
 
-svg.addEventListener('click',e=>{const f=e.target.closest('g.face');if(!f){if(sel||selT)closeAll();return}const n=f.dataset.n;if(sel===n){closeAll();return}showPerson(n)});
+svg.addEventListener('click',e=>{const f=e.target.closest('g.face');if(!f){if(sel||selT||peek)closeAll();return}const n=f.dataset.n;if(sel===n){closeSheet();peek=n;return}if(peek===n){showPerson(n);return}closeSheet();peek=n;lightPerson(n);const r=f.getBoundingClientRect();const target=window.innerHeight*0.42;if(Math.abs(r.top-target)>window.innerHeight*0.25)window.scrollBy({top:r.top-target,behavior:'smooth'});hint()});
 tstrip.addEventListener('click',e=>{const b=e.target.closest('.tchip');if(!b)return;if(selT===b.dataset.t){closeAll();return}showThread(b.dataset.t)});
 sheetIn.addEventListener('click',e=>{
   if(e.target.closest('[data-close]')){closeAll();return}
@@ -269,6 +272,8 @@ sheetIn.addEventListener('click',e=>{
 });
 document.getElementById('reset').addEventListener('click',()=>{const ids=Object.keys(IN);IN={};save();ids.forEach(id=>push(id,false));Object.values(faceEl).forEach(el=>el.classList.remove('isin'));updateCount();if(sel)showPerson(sel)});
 document.getElementById('copy').addEventListener('click',async()=>{const inn=guests.filter(g=>IN[g.id]).sort((a,b)=>IN[a.id]-IN[b.id]).map(g=>g.n);const out=guests.filter(g=>!IN[g.id]).map(g=>g.n);const txt=`In the room ${inn.length}/${guests.length}: ${inn.join(', ')||'nobody yet'}.\nStill to come: ${out.join(', ')||'nobody'}.`;const b=document.getElementById('copy');try{await navigator.clipboard.writeText(txt);b.textContent='Copied';b.classList.add('done')}catch(e){window.prompt('Copy this',txt)}setTimeout(()=>{b.textContent="Copy who's in";b.classList.remove('done')},1600)});
+let hinted=false;try{hinted=!!localStorage.getItem('room-hint')}catch(e){}
+function hint(){if(hinted)return;hinted=true;try{localStorage.setItem('room-hint','1')}catch(e){}const t=document.createElement('div');t.className='toast';t.textContent='Tap again for the card';document.body.appendChild(t);requestAnimationFrame(()=>t.classList.add('on'));setTimeout(()=>{t.classList.remove('on');setTimeout(()=>t.remove(),400)},2600)}
 function updateCount(){document.getElementById('cin').textContent=guests.filter(g=>IN[g.id]).length;document.getElementById('ctot').textContent=guests.length}
 updateCount();
 pull();setInterval(()=>{if(document.visibilityState==='visible')pull()},8000);document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='visible')pull()});
