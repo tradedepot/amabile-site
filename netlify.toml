@@ -102,3 +102,9 @@
   from = "/table/1/room"
   to = "/table/1/room.html"
   status = 200
+
+# Host's flash cards. Same rules as the room: obscurity, noindex, never linked.
+[[redirects]]
+  from = "/table/1/h"
+  to = "/table/1/h.html"
+  status = 200
