@@ -58,7 +58,8 @@ g.face.lit .ring{stroke:var(--hl,var(--gold));stroke-width:3;opacity:1;filter:dr
 path.edge{fill:none;stroke:var(--gold);stroke-width:1;opacity:.11;transition:opacity .25s,stroke-width .25s}
 .stage.focus path.edge{opacity:.04}
 .stage.focus path.edge.lit{opacity:.95;stroke-width:2.2;stroke:var(--hl,var(--gold));filter:drop-shadow(0 0 4px var(--hl,var(--gold)))}
-g.lbl{pointer-events:none}
+g.lbl{cursor:pointer}
+g.lbl rect.hit{fill:transparent;stroke:none}
 g.lbl rect{fill:#141210;stroke:var(--hl,var(--gold));stroke-width:1;rx:9}
 g.lbl text{font-family:"Instrument Sans",sans-serif;font-size:10px;font-weight:600;fill:var(--linen);text-anchor:middle;dominant-baseline:middle}
 rect.linen{fill:var(--linen);stroke:var(--gold);stroke-width:1.5}
@@ -166,6 +167,7 @@ function esc(s){return String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','
 function initials(n){return n.split(/\s+/).map(w=>w[0]).slice(0,2).join('').toUpperCase()}
 function pf(g,big){const src=big?(g.imgL||g.img):g.img;return `<div class="pf${g.logo?' logo':''}">${src?`<img src="${src}" alt="">`:esc(initials(g.n))}</div>`}
 
+const TABLE_NAME={'Chibuzo Aghaji':'Aplus'};
 const W=400,R=36,ROW=92,TOP=44,XA=96,XB=304,N=14;
 const H=TOP+N*ROW+30;
 const pos={};GUESTS.forEach(g=>{if(g.seat){pos[g.n]={x:g.side==='A'?XA:XB,y:TOP+(g.seat-1)*ROW+ROW/2}}});
@@ -182,7 +184,7 @@ s+=`<text class="ends" x="200" y="${TOP+N*ROW+24}" text-anchor="middle">FAR END<
 s+='<g id="edges">'+EDGES.map((e,i)=>{const d=edgePath(e[0],e[1]);return d?`<path class="edge" data-i="${i}" d="${d}"/>`:''}).join('')+'</g>';
 s+='<g id="faces">'+GUESTS.map((g,i)=>{const p=pos[g.n];if(!p)return '';const codeX=g.side==='A'?-(R+5):(R+5);const anchor=g.side==='A'?'end':'start';
   const img=g.img?`<image href="${g.img}" x="${-R}" y="${-R}" width="${2*R}" height="${2*R}" clip-path="url(#c${i})" preserveAspectRatio="xMidYMid ${g.logo?'meet':'slice'}"/>`:`<circle r="${R}" fill="#2E2721"/><text class="initial" y="7">${esc(initials(g.n))}</text>`;
-  return `<g class="face${g.us?' us':''}${IN[g.id]?' isin':''}" data-n="${esc(g.n)}" transform="translate(${p.x} ${p.y})">${g.logo?`<circle r="${R}" fill="#fff"/>`:''}${img}<circle class="ring" r="${R+1.5}"/><circle class="in" cx="${R-8}" cy="${-R+8}" r="6"/><text class="seatcode" x="${codeX}" y="4" text-anchor="${anchor}">${g.side}${g.seat}</text><text class="nm${g.us?' us':''}" y="${R+13}">${esc(SHORT[g.n]||g.n)}</text><circle class="hit" r="${R+10}"/></g>`}).join('')+'</g>';
+  return `<g class="face${g.us?' us':''}${IN[g.id]?' isin':''}" data-n="${esc(g.n)}" transform="translate(${p.x} ${p.y})">${g.logo?`<circle r="${R}" fill="#fff"/>`:''}${img}<circle class="ring" r="${R+1.5}"/><circle class="in" cx="${R-8}" cy="${-R+8}" r="6"/><text class="seatcode" x="${codeX}" y="4" text-anchor="${anchor}">${g.side}${g.seat}</text><text class="nm${g.us?' us':''}" y="${R+13}">${esc(TABLE_NAME[g.n]||SHORT[g.n]||g.n)}</text><circle class="hit" r="${R+10}"/></g>`}).join('')+'</g>';
 s+='<g id="labels"></g>';
 svg.innerHTML=s;
 
@@ -197,8 +199,8 @@ function clearLit(){Object.values(faceEl).forEach(el=>{el.classList.remove('sel'
 function edgesOf(n){return EDGES.map((e,i)=>({e,i})).filter(x=>x.e[0]===n||x.e[1]===n)}
 function colorOf(e){return e[4]?TH[e[4]][2]:'#E8C37A'}
 function lightPerson(n){clearLit();stage.classList.add('focus');faceEl[n]&&faceEl[n].classList.add('sel');const es=edgesOf(n);const lb=[];
-  es.forEach(({e,i})=>{const other=e[0]===n?e[1]:e[0];const c=colorOf(e);const f=faceEl[other];if(f){f.classList.add('lit');f.style.setProperty('--hl',c)}const p=edgeEl.find(x=>+x.dataset.i===i);if(p){p.classList.add('lit');p.style.setProperty('--hl',c)}if(pos[other]&&pos[n]&&es.length<=9){const m=edgeMid(n,other);lb.push({m,t:e[2],c})}});
-  document.getElementById('labels').innerHTML=lb.map(({m,t,c})=>{const w=t.length*6.2+16;return `<g class="lbl" style="--hl:${c}" transform="translate(${m.x} ${m.y})"><rect x="${-w/2}" y="-9" width="${w}" height="18"/><text>${esc(t)}</text></g>`}).join('')}
+  es.forEach(({e,i})=>{const other=e[0]===n?e[1]:e[0];const c=colorOf(e);const f=faceEl[other];if(f){f.classList.add('lit');f.style.setProperty('--hl',c)}const p=edgeEl.find(x=>+x.dataset.i===i);if(p){p.classList.add('lit');p.style.setProperty('--hl',c)}if(pos[other]&&pos[n]&&es.length<=9){const m=edgeMid(n,other);lb.push({m,t:e[2],c,i})}});
+  document.getElementById('labels').innerHTML=lb.map(({m,t,c,i})=>{const w=t.length*6.2+16;return `<g class="lbl" style="--hl:${c}" data-i="${i}" transform="translate(${m.x} ${m.y})"><rect class="hit" x="${-w/2-10}" y="-17" width="${w+20}" height="34"/><rect x="${-w/2}" y="-9" width="${w}" height="18"/><text>${esc(t)}</text></g>`}).join('')}
 function lightThread(id){clearLit();stage.classList.add('focus');const t=TH[id];t[3].forEach(n=>{const f=faceEl[n];if(f){f.classList.add('lit');f.style.setProperty('--hl',t[2])}});
   EDGES.forEach((e,i)=>{if(e[4]===id||(!e[4]&&t[3].includes(e[0])&&t[3].includes(e[1]))){const p=edgeEl.find(x=>+x.dataset.i===i);if(p){p.classList.add('lit');p.style.setProperty('--hl',t[2])}}})}
 
@@ -229,7 +231,7 @@ function showThread(id){const t=TH[id];selT=id;sel=null;peek=null;tstrip.querySe
 function applySearch(){if(!q){stage.classList.remove('dimmed');Object.values(faceEl).forEach(el=>el.classList.remove('off'));return}stage.classList.add('dimmed');GUESTS.forEach(g=>{const el=faceEl[g.n];if(!el)return;const t=(g.n+' '+(g.sub||'')+' '+g.who+' '+g.side+g.seat).toLowerCase();el.classList.toggle('off',!t.includes(q))})}
 document.getElementById('q').addEventListener('input',e=>{q=e.target.value.trim().toLowerCase();if(sel||selT||peek)closeAll();applySearch()});
 
-svg.addEventListener('click',e=>{const f=e.target.closest('g.face');if(!f){if(sel||selT||peek)closeAll();return}const n=f.dataset.n;if(sel===n){closeSheet();peek=n;return}if(peek===n){showPerson(n);return}closeSheet();peek=n;lightPerson(n);const r=f.getBoundingClientRect();const target=window.innerHeight*0.42;if(Math.abs(r.top-target)>window.innerHeight*0.25)window.scrollBy({top:r.top-target,behavior:'smooth'});hint()});
+svg.addEventListener('click',e=>{const l=e.target.closest('g.lbl');if(l){const ed=EDGES[+l.dataset.i];if(ed[4]){showThread(ed[4])}else{const who=peek||sel||ed[0];showPerson(who);const row=sheetIn.querySelector(`.prow[data-e="${l.dataset.i}"]`);if(row){row.classList.add('on');setTimeout(()=>row.scrollIntoView({block:'center',behavior:'smooth'}),350)}}return}const f=e.target.closest('g.face');if(!f){if(sel||selT||peek)closeAll();return}const n=f.dataset.n;if(sel===n){closeSheet();peek=n;return}if(peek===n){showPerson(n);return}closeSheet();peek=n;lightPerson(n);const r=f.getBoundingClientRect();const target=window.innerHeight*0.42;if(Math.abs(r.top-target)>window.innerHeight*0.25)window.scrollBy({top:r.top-target,behavior:'smooth'});hint()});
 tstrip.addEventListener('click',e=>{const b=e.target.closest('.tchip');if(!b)return;if(selT===b.dataset.t){closeAll();return}showThread(b.dataset.t)});
 sheetIn.addEventListener('click',e=>{
   if(e.target.closest('[data-close]')){closeCard();return}
