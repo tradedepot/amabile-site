@@ -54,12 +54,12 @@ footer .c{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-
     <h1>Table No 1</h1>
     <div class="sub">Sunday 13 September, Alliance Française de Lagos</div>
     <div class="rule"></div>
-    <p class="lead">Twenty-eight of us, one long table, an afternoon. Tap any picture to see it properly and save it.</p>
+    <p class="lead">One long table, a Sunday afternoon. Tap any picture to see it properly and save it.</p>
   </header>
   <div class="grid" id="grid">
 <figure class="t" data-n="SP2R1413" style="--r:900/720"><img src="p/SP2R1413-s.jpg" width="900" height="720" alt="" loading="eager" decoding="async"><figcaption>Before anyone sat</figcaption></figure>
 <figure class="t" data-n="SP2R1385" style="--r:900/720"><img src="p/SP2R1385-s.jpg" width="900" height="720" alt="" loading="eager" decoding="async"></figure>
-<figure class="t" data-n="SP2R1784" style="--r:900/720"><img src="p/SP2R1784-s.jpg" width="900" height="720" alt="" loading="eager" decoding="async"></figure>
+<figure class="t" data-n="SHEY0687" style="--r:900/720"><img src="p/SHEY0687-s.jpg" width="900" height="720" alt="" loading="eager" decoding="async"></figure>
 <figure class="t" data-n="SP2R1463" style="--r:900/720"><img src="p/SP2R1463-s.jpg" width="900" height="720" alt="" loading="eager" decoding="async"><figcaption>Doors</figcaption></figure>
 <figure class="t" data-n="SP2R1467" style="--r:900/720"><img src="p/SP2R1467-s.jpg" width="900" height="720" alt="" loading="lazy" decoding="async"></figure>
 <figure class="t" data-n="SHEY1034" style="--r:900/720"><img src="p/SHEY1034-s.jpg" width="900" height="720" alt="" loading="lazy" decoding="async"></figure>
@@ -97,7 +97,7 @@ footer .c{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-
   <div class="bar"><span id="cnt"></span><a class="save" id="save" href="#" download>Save</a></div>
 </div>
 <script>
-const N=["SP2R1413", "SP2R1385", "SP2R1784", "SP2R1463", "SP2R1467", "SHEY1034", "SHEY1039", "SP2R1477", "SHEY0942", "SHEY0923", "SHEY0934", "SP2R1474", "SHEY0626", "SP2R1682", "SHEY0675", "SP2R1534", "SHEY0794", "SP2R1511", "SHEY0955", "SP2R1822", "SHEY0952", "SHEY0983", "SHEY1001", "SHEY0971"];let i=0;
+const N=["SP2R1413", "SP2R1385", "SHEY0687", "SP2R1463", "SP2R1467", "SHEY1034", "SHEY1039", "SP2R1477", "SHEY0942", "SHEY0923", "SHEY0934", "SP2R1474", "SHEY0626", "SP2R1682", "SHEY0675", "SP2R1534", "SHEY0794", "SP2R1511", "SHEY0955", "SP2R1822", "SHEY0952", "SHEY0983", "SHEY1001", "SHEY0971"];let i=0;
 const lb=document.getElementById('lb'),big=document.getElementById('big'),save=document.getElementById('save'),cnt=document.getElementById('cnt');
 function open(k){i=k;big.src='p/'+N[i]+'.jpg';save.href='p/'+N[i]+'.jpg';save.download='Amabile-Table-No1-'+String(i+1).padStart(2,'0')+'.jpg';cnt.textContent=(i+1)+' / '+N.length;lb.classList.add('on');document.body.style.overflow='hidden'}
 function close(){lb.classList.remove('on');document.body.style.overflow=''}

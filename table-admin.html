@@ -45,6 +45,10 @@ tr.seated td{background:#f3ffe3}tr.wait td{background:#FFF6E4}tr.declined td{col
 td.act{white-space:nowrap;text-align:right}
 .lnk{cursor:pointer;background:none;border:0;font-family:inherit;font-size:12.5px;font-weight:700;color:#6a4634;text-decoration:underline;padding:2px 0;margin-left:12px}
 .lnk.rm{color:#c0392b}.lnk:disabled{opacity:.5}
+.lnk.gold{color:#7d1d1d}
+td.ck{text-align:center}td.ck input{width:18px;height:18px;accent-color:#7d1d1d;cursor:pointer}
+tr.came td.nm::after{content:" ·";color:#3B6D11}
+.thanked{color:#3B6D11;font-weight:700;font-size:12.5px}
 .kpis{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
 .kpi{background:#FBFAEB;border-radius:12px;padding:10px 14px;min-width:88px}
 .kpi b{display:block;font-family:"Bagel Fat One",cursive;font-size:22px}
@@ -92,6 +96,10 @@ td.act{white-space:nowrap;text-align:right}
         <div style="grid-column:1/-1"><label>Where is it?</label><input type="text" id="fVenue" placeholder="e.g. Bottega Ristorante, Victoria Island"><div class="linkhint">Shown on the invite and the confirmation. A recognisable name is enough — add a floor or suite if it helps guests find you.</div></div>
         <div><label>How many seats?</label><input type="number" id="fCap" min="1" value="26"></div>
         <div><label>RSVPs close <span style="text-transform:none;font-weight:500;color:#9a8576">(optional)</span></label><input type="date" id="fDeadline"><div class="linkhint">Leave blank to keep replies open until the lunch date.</div></div>
+        <div style="grid-column:1/-1;margin-top:6px"><div class="eyebrow">After the day</div></div>
+        <div style="grid-column:1/-1"><label>Thank-you message</label><textarea id="fThanks" style="font-family:inherit;font-size:14.5px;min-height:90px" placeholder="Thank you for Sunday. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below."></textarea><div class="linkhint">Goes out as a card, in the host's voice, to guests you tick as having come. Signed with the host's first name.</div></div>
+        <div><label>Playlist link <span style="text-transform:none;font-weight:500;color:#9a8576">(optional)</span></label><input type="text" id="fPlaylist" placeholder="https://open.spotify.com/playlist/…"></div>
+        <div><label>Three pictures on the card</label><input type="text" id="fThanksPhotos" placeholder="SP2R1413-s, SHEY0687-s, SP2R1822-s"><div class="linkhint">File names under <code>/table/&lt;edition&gt;/p/</code>, comma separated. The page itself is at <code>/table/&lt;edition&gt;/photos</code>.</div></div>
       </div>
       <div class="row"><button class="btn" id="saveEd">Save</button><span class="muted" id="edMsg"></span></div>
     </div>
@@ -110,7 +118,7 @@ td.act{white-space:nowrap;text-align:right}
         <div class="row" style="margin-top:10px"><button class="btn" id="importG">Add and send invites</button><span class="muted" id="gMsg"></span></div>
 
         <h2 style="margin-top:26px">Everyone invited <span class="chip hide" id="gCount"></span></h2>
-        <div class="tablewrap"><table id="stTable"><thead><tr><th>Reply</th><th>Name</th><th>Email</th><th>Invite</th><th></th></tr></thead><tbody id="stRows"></tbody></table></div>
+        <div class="tablewrap"><table id="stTable"><thead><tr><th>Reply</th><th>Name</th><th>Email</th><th>Invite</th><th>Came</th><th></th></tr></thead><tbody id="stRows"></tbody></table></div>
         <div class="row" style="margin-top:14px;justify-content:space-between">
           <div class="row" style="margin:0"><button class="btn alt sm" id="csvData">Download CSV</button><span class="muted" id="stMsg"></span></div>
           <button class="btn ghost sm" id="clearG" style="color:#c0392b;border-color:transparent;background:transparent">Remove everyone</button>
@@ -158,6 +166,7 @@ function openEdition(slug){
     $("fTitle").value=m.title||"";$("fHost").value=m.hostName||m.host||"";$("fInvite").value=m.cardParagraph||m.invite||"";$("fDate").value=m.dateISO||"";$("fTime").value=m.timeLabel||"";$("fSeatedBy").value=m.seatedByLabel||"";
     $("fVenue").value=m.venue||"";$("fCap").value=m.cap||26;
     $("fDeadline").value=(m.deadlineISO||"").slice(0,10);
+    $("fThanks").value=m.thanksParagraph||"";$("fPlaylist").value=m.playlistUrl||"";$("fThanksPhotos").value=m.thanksPhotos||"";
     updateSlugHint();renderData(d);
   });
 }
@@ -166,7 +175,7 @@ function newEdition(){
   $("edHead").textContent="New edition";$("edLink").innerHTML="";
   var n=(EDITIONS.length||0)+1;
   $("fTitle").value="The Amabile Table — No. "+n;
-  ["fHost","fInvite","fDate","fTime","fSeatedBy","fVenue","fDeadline"].forEach(function(id){$(id).value="";});
+  ["fHost","fInvite","fDate","fTime","fSeatedBy","fVenue","fDeadline","fThanks","fPlaylist","fThanksPhotos"].forEach(function(id){$(id).value="";});
   $("fCap").value=26;$("edMsg").textContent="";$("gPaste").value="";
   updateSlugHint();$("fTitle").focus();
 }
@@ -187,7 +196,8 @@ $("saveEd").addEventListener("click",function(){
   }
   var dateISO=$("fDate").value;
   var body={edition:slug,title:title,hostName:hostVal,cardParagraph:inviteVal,dateISO:dateISO,timeLabel:$("fTime").value.trim(),
-    seatedByLabel:$("fSeatedBy").value.trim(),venue:$("fVenue").value.trim(),cap:parseInt($("fCap").value,10)||0};
+    seatedByLabel:$("fSeatedBy").value.trim(),venue:$("fVenue").value.trim(),cap:parseInt($("fCap").value,10)||0,
+    thanksParagraph:$("fThanks").value.trim(),playlistUrl:$("fPlaylist").value.trim(),thanksPhotos:$("fThanksPhotos").value.trim()};
   var dl=$("fDeadline").value; // date only
   if(dl)body.deadlineISO=dl+"T09:00:00"; else if(dateISO)body.deadlineISO=dateISO+"T09:00:00";
   $("edMsg").textContent="Saving…";
@@ -239,6 +249,11 @@ $("clearG").addEventListener("click",function(){var ed=curEditionSlug();if(!CUR_
 
 /* per-row actions */
 function copyText(t){try{navigator.clipboard.writeText(t);}catch(e){var i=document.createElement("textarea");i.value=t;document.body.appendChild(i);i.select();document.execCommand("copy");i.remove();}}
+$("stRows").addEventListener("change",function(ev){
+  var c=ev.target;if(!c||c.getAttribute("data-act")!=="came"||!CUR)return;
+  var gid=c.getAttribute("data-gid");c.disabled=true;
+  api("mark-attended",{edition:curEditionSlug(),gid:gid,attended:c.checked}).then(function(){refreshStandings();});
+});
 $("stRows").addEventListener("click",function(ev){
   var b=ev.target.closest("button[data-act]");if(!b||!CUR)return;
   var gid=b.getAttribute("data-gid"),g=(CUR.guests||[]).filter(function(x){return x.gid===gid;})[0];if(!g)return;
@@ -248,6 +263,8 @@ $("stRows").addEventListener("click",function(ev){
   if(act==="copy"){copyText(g.link);b.textContent="Copied";setTimeout(function(){b.textContent="Copy link";},1500);}
   if(act==="send"){if(!confirm((g.invitedAt?"Resend":"Send")+" the invite email to "+g.name+"?"))return;b.disabled=true;
     api("send-invites",{edition:ed,gids:[gid]}).then(function(){refreshStandings();});}
+  if(act==="thanks"){if(!confirm((g.thanksAt?"Resend":"Send")+" the thank-you card to "+g.name+"?"))return;b.disabled=true;
+    api("send-thanks",{edition:ed,gids:[gid]}).then(function(r){if(r&&r.ok&&r.sent===0)alert("Nothing sent. Check the guest is ticked as having come and has an email.");refreshStandings();});}
   if(act==="remove"){if(!confirm("Remove "+g.name+"? Their link stops working and any reply is deleted."))return;b.disabled=true;
     api("remove-guest",{edition:ed,gid:gid}).then(function(r){if(r&&r.error==="responded")alert(g.name+" has already replied, so they stay on the list.");loadEditions();refreshStandings();});}
 });
@@ -258,10 +275,10 @@ function refreshStandings(){if(!CUR_SLUG)return;api("data",{edition:curEditionSl
 /* auto-refresh keeps the list live as replies land */
 setInterval(function(){if(CUR_SLUG&&!document.hidden)refreshStandings();},15000);
 function renderData(d){CUR=d;var s=d.summary;$("stMsg").textContent="Updated "+new Date().toLocaleTimeString();
-  $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited");
+  $("kpis").innerHTML=kpi(s.seated+"/"+s.cap,"Seated")+kpi(s.waitlist,"Waitlist")+kpi(s.declined,"Declined")+kpi(s.noReply,"No reply")+kpi(s.invited,"Invited")+(s.came?kpi(s.came+(s.thanked?" · "+s.thanked+" thanked":""),"Came"):"");
   $("gCount").textContent=s.invited;show("gCount",s.invited>0);
   show("clearG",s.invited>0&&s.noReply===s.invited); // only while nobody has replied
-  $("stRows").innerHTML=(d.guests||[]).map(tr).join("")||'<tr><td colspan="5" class="muted">Nobody invited yet. Add guests above.</td></tr>';
+  $("stRows").innerHTML=(d.guests||[]).map(tr).join("")||'<tr><td colspan="6" class="muted">Nobody invited yet. Add guests above.</td></tr>';
 }
 function kpi(v,l){return '<div class="kpi"><b>'+esc(v)+'</b><span>'+esc(l)+'</span></div>';}
 var LABEL={seated:"Seated",wait:"Waitlist",declined:"Declined","no-reply":"No reply"};
@@ -281,8 +298,14 @@ function replyCell(g){
 /* Extra detail (role, mobile, dietary) only shows when a guest gave it, as a small line under the name. Full detail is in the CSV. */
 function tr(g){var extra=[g.role,g.mobile].filter(Boolean).map(esc).join(" · ");
   var cls=g.status==="seated"?"seated":g.status==="wait"?"wait":"declined";
-  return '<tr class="'+cls+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(g.notes?'<div class="sub diet">Dietary: '+esc(g.notes)+'</div>':'')+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td>'+
-    '<td class="act"><button class="lnk" data-act="rename" data-gid="'+esc(g.gid)+'">Edit name</button><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
+  var came='<label class="came"><input type="checkbox" data-act="came" data-gid="'+esc(g.gid)+'"'+(g.attendedAt?' checked':'')+'></label>';
+  var thanks='';
+  if(g.attendedAt&&g.email){
+    if(g.thanksAt)thanks='<span class="thanked">Thanked ✓ '+esc(new Date(g.thanksAt).toLocaleDateString("en-GB",{day:"numeric",month:"short"}))+'</span><button class="lnk" data-act="thanks" data-gid="'+esc(g.gid)+'">Resend</button>';
+    else thanks='<button class="lnk gold" data-act="thanks" data-gid="'+esc(g.gid)+'">Send thanks</button>';
+  }
+  return '<tr class="'+cls+(g.attendedAt?' came':'')+'"><td class="st">'+replyCell(g)+'</td><td class="nm">'+esc(g.name)+(g.notes?'<div class="sub diet">Dietary: '+esc(g.notes)+'</div>':'')+(extra?'<div class="sub">'+extra+'</div>':'')+'</td><td>'+esc(g.email)+'</td><td>'+inviteCell(g)+'</td><td class="ck">'+came+'</td>'+
+    '<td class="act">'+thanks+'<button class="lnk" data-act="rename" data-gid="'+esc(g.gid)+'">Edit name</button><button class="lnk" data-act="copy" data-gid="'+esc(g.gid)+'">Copy link</button>'+(g.email?'<button class="lnk" data-act="send" data-gid="'+esc(g.gid)+'">'+(g.invitedAt?"Resend":"Send")+'</button>':'')+(g.status==="no-reply"?'<button class="lnk rm" data-act="remove" data-gid="'+esc(g.gid)+'">Remove</button>':'')+'</td></tr>';}
 $("csvData").addEventListener("click",function(){if(!CUR)return;
   var rows=[["Reply","Position","Name","Email","Invite sent","Link","Mobile","Dietary"]];
   (CUR.guests||[]).forEach(function(g){rows.push([LABEL[g.status]||g.status,g.position||"",g.name,g.email,g.invitedAt?new Date(g.invitedAt).toISOString().slice(0,10):"",g.link,g.mobile,g.notes]);});

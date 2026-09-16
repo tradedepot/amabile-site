@@ -59,6 +59,43 @@ function inviteEmailHtml({ name, hostName, title, whenCell, venue, cardParagraph
   </table></body></html>`;
 }
 
+// The thank-you card, sent the week after to guests who came. Same shell as the invitation;
+// a strip of three pictures from the day, one button to the photo page, one to the playlist.
+// Photos live at /table/<edition>/p/<name>.jpg on the site; the edition stores which three.
+function thanksEmailHtml({ name, title, dateLabel, venue, paragraph, photos, photosUrl, playlistUrl, signoff }) {
+  const strip = photos.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px"><tr>${
+    photos.map((src, i) => `<td style="padding:0 ${i === 1 && photos.length === 3 ? "4px" : "0"};width:${Math.floor(100 / photos.length)}%"><a href="${photosUrl}" style="display:block"><img src="${src}" width="152" alt="" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:6px;border:1px solid #e6d3a8"></a></td>`).join("")
+  }</tr></table>` : "";
+  const paras = String(paragraph || "").split(/\n{2,}|\n/).filter(Boolean)
+    .map((p) => `<p style="margin:0 0 22px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">${esc(p)}</p>`).join("");
+  const btn = (href, label, ghost) => `<td style="padding:0 6px"><a href="${href}" style="display:inline-block;background:${ghost ? "transparent" : "#7d1d1d"};border:2px solid #7d1d1d;color:${ghost ? "#7d1d1d" : "#fffdf7"};text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:15px;letter-spacing:.03em;padding:13px 30px;border-radius:999px">${label}</a></td>`;
+  return `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Type" content="text/html; charset=utf-8"></head><body style="margin:0;background:#efe4cf;font-family:Georgia,'Times New Roman',serif;color:#2a1207">
+  <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:#efe4cf;padding:34px 14px">
+    <tr><td align="center">
+      <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:560px;background:#fffdf7;border:1px solid #e6d3a8;border-radius:10px;overflow:hidden">
+        <tr><td style="height:6px;background:#7d1d1d"></td></tr>
+        <tr><td style="padding:40px 46px 34px;text-align:center">
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:#b08d57;margin-bottom:16px">THE AMABILE TABLE</div>
+          <h1 style="margin:0 0 6px;font-size:30px;line-height:1.15;color:#2a1207;font-weight:normal">${esc(title)}</h1>
+          <div style="font-size:15px;font-style:italic;color:#b08d57">${esc([dateLabel, venue].filter(Boolean).join(", "))}</div>
+          <div style="width:46px;height:2px;background:#c9a15a;margin:22px auto 24px"></div>
+          <p style="margin:0 0 16px;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">Ciao ${esc(name) || "there"},</p>
+          ${paras}
+          ${strip}
+          <table role="presentation" cellpadding="0" cellspacing="0" align="center" style="margin:0 auto"><tr>
+            ${btn(photosUrl, "See the pictures", false)}${playlistUrl ? btn(playlistUrl, "The playlist", true) : ""}
+          </tr></table>
+          <p style="margin:28px 0 0;font-size:16px;line-height:1.7;color:#4a3a2c;text-align:left">${esc(signoff)}</p>
+        </td></tr>
+        <tr><td style="padding:20px 46px 26px;border-top:1px solid #efe4cf;text-align:center">
+          <div style="font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:15px;color:#8a6d4a">Amabile di Rosa</div>
+          <div style="font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8c;margin-top:6px">Lagos, Nigeria</div>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table></body></html>`;
+}
+
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
   let d;
@@ -112,6 +149,9 @@ export default async (req) => {
       cap: Math.max(1, parseInt(d.cap, 10) || 0),
       deadlineISO: clean(d.deadlineISO, 30),   // ISO datetime; RSVPs close at/after this
       deadlineLabel: clean(d.deadlineLabel, 80),
+      playlistUrl: clean(d.playlistUrl, 200),          // Spotify link, on the thank-you card
+      thanksParagraph: clean(d.thanksParagraph, 1600), // the host's thank-you, their voice
+      thanksPhotos: clean(d.thanksPhotos, 300),        // up to three file names under /table/<ed>/p/, comma separated
       createdAt: (prior && prior.createdAt) || Date.now(),
       updatedAt: Date.now()
     };
@@ -188,6 +228,55 @@ export default async (req) => {
     return json({ ok: true, sent, skipped, failed });
   }
 
+  // ---- came / did not come. A tick on the guest record; nothing is emailed. ------------
+  if (action === "mark-attended") {
+    const ed = edId(d.edition || "");
+    const gid = clean(d.gid, 40);
+    if (!ed || !gid) return json({ ok: false, error: "bad_request" }, 400);
+    const guests = await loadGuests(st, ed);
+    const tok = Object.keys(guests).find((t) => guests[t].gid === gid);
+    if (!tok) return json({ ok: false, error: "no_guest" }, 404);
+    if (d.attended) guests[tok].attendedAt = guests[tok].attendedAt || Date.now();
+    else delete guests[tok].attendedAt;
+    await st.setJSON(kGuests(ed), guests);
+    return json({ ok: true, attendedAt: guests[tok].attendedAt || null });
+  }
+
+  // ---- the thank-you card, only to guests marked as having come -------------------------
+  if (action === "send-thanks") {
+    const ed = edId(d.edition || "");
+    const edition = await loadEdition(st, ed);
+    if (!edition) return json({ ok: false, error: "no_edition" }, 404);
+    const apiKey = process.env.BREVO_API_KEY;
+    if (!apiKey) return json({ ok: false, error: "no_brevo_key" }, 500);
+    const guests = await loadGuests(st, ed);
+    const only = Array.isArray(d.gids) && d.gids.length ? new Set(d.gids.map((g) => clean(g, 40))) : null;
+    const site = INVITE_SITE || "https://wya.to";
+    const hostName = clean(edition.hostName || edition.host, 80);
+    const signoff = hostName.split(" ")[0] || "Amabile di Rosa";
+    const title = clean(edition.title, 80) || ed;
+    const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
+    const paragraph = clean(edition.thanksParagraph, 1600) || "Thank you for coming. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below.";
+    const photos = clean(edition.thanksPhotos, 300).split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3)
+      .map((n) => `${site}/table/${ed}/p/${n.replace(/\.jpe?g$/i, "")}.jpg`);
+    const photosUrl = `${site}/table/${ed}/photos`;
+    const playlistUrl = clean(edition.playlistUrl, 200);
+    let sent = 0, skipped = 0; const failed = [];
+    for (const [, g] of Object.entries(guests)) {
+      if (only && !only.has(g.gid)) continue;
+      if (!g.attendedAt) { skipped++; continue; }
+      if (!isEmail(g.email)) { skipped++; continue; }
+      if (!only && g.thanksAt) { skipped++; continue; }
+      const html = thanksEmailHtml({ name: clean(g.name, 80).split(" ")[0], title, dateLabel, venue: clean(edition.venue, 120), paragraph, photos, photosUrl, playlistUrl, signoff });
+      const res = await sendEmail(apiKey, g.email, `Thank you for ${dateLabel ? dateLabel.split(" ")[0] : "coming"}`, html, TABLE_FROM);
+      g.thanksResult = { ok: !!(res && res.ok), status: (res && res.status) || null, text: (res && (res.text || res.error) || "").slice(0, 140), at: Date.now() };
+      if (res && res.ok) { sent++; g.thanksAt = Date.now(); }
+      else failed.push({ email: g.email, status: g.thanksResult.status, text: g.thanksResult.text });
+    }
+    await st.setJSON(kGuests(ed), guests);
+    return json({ ok: true, sent, skipped, failed });
+  }
+
   // ---- rename one guest. Touches the name only: same link, same reply, same standing, no
   // emails to anyone. The reply record carries a copy of the name, so it is updated too.
   if (action === "rename-guest") {
@@ -257,6 +346,7 @@ export default async (req) => {
       return {
         gid: g.gid, name: g.name, email: g.email || "", link: `${site}/table/${ed}?g=${tok}`,
         invitedAt: g.invitedAt || null, inviteResult: g.inviteResult || null,
+        attendedAt: g.attendedAt || null, thanksAt: g.thanksAt || null, thanksResult: g.thanksResult || null,
         status: r ? r.status : "no-reply", position: r ? r.position : null,
         mobile: r ? r.mobile || "" : "", role: r ? r.role || "" : "", notes: r ? r.notes || "" : "",
         optin: r ? !!r.optin : false, emailStatus: r ? r.emailStatus || null : null,
@@ -271,12 +361,14 @@ export default async (req) => {
         dateLabel: edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || ""),
         timeLabel: edition.timeLabel || "", seatedByLabel: edition.seatedByLabel || "",
         venue: edition.venue || "", address: edition.address || "",
-        cap, deadlineISO: edition.deadlineISO || "", closed: deadlinePassed(edition)
+        cap, deadlineISO: edition.deadlineISO || "", closed: deadlinePassed(edition),
+        playlistUrl: edition.playlistUrl || "", thanksParagraph: edition.thanksParagraph || "", thanksPhotos: edition.thanksPhotos || ""
       },
       summary: {
         invited: list.length,
         seated: stand.seatedCount, cap, waitlist: stand.waitCount,
-        declined: stand.declined.length, noReply: list.filter((g) => g.status === "no-reply").length, full: stand.full
+        declined: stand.declined.length, noReply: list.filter((g) => g.status === "no-reply").length, full: stand.full,
+        came: list.filter((g) => g.attendedAt).length, thanked: list.filter((g) => g.thanksAt).length
       },
       guests: list
     });
