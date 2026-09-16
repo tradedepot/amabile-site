@@ -62,6 +62,11 @@ function inviteEmailHtml({ name, hostName, title, whenCell, venue, cardParagraph
 // The thank-you card, sent the week after to guests who came. Same shell as the invitation;
 // a strip of three pictures from the day, one button to the photo page, one to the playlist.
 // Photos live at /table/<edition>/p/<name>.jpg on the site; the edition stores which three.
+// Per-edition fallbacks for the thank-you card, used only when the edition fields are blank.
+const THANKS_DEFAULTS = {
+  "1": { photos: "SP2R1413-s,AT02-s,SP2R1822-s", playlist: "https://open.spotify.com/playlist/1zziPNUCwGtezVH72qZntB" },
+};
+
 function thanksEmailHtml({ name, title, dateLabel, venue, paragraph, photos, photosUrl, playlistUrl, signoff }) {
   const strip = photos.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px"><tr>${
     photos.map((src, i) => `<td style="padding:0 ${i === 1 && photos.length === 3 ? "4px" : "0"};width:${Math.floor(100 / photos.length)}%"><a href="${photosUrl}" style="display:block"><img src="${src}" width="152" alt="" style="display:block;width:100%;height:150px;object-fit:cover;border-radius:6px;border:1px solid #e6d3a8"></a></td>`).join("")
@@ -256,11 +261,14 @@ export default async (req) => {
     const signoff = hostName.split(" ")[0] || "Amabile di Rosa";
     const title = clean(edition.title, 80) || ed;
     const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
-    const paragraph = clean(edition.thanksParagraph, 1600) || "Thank you for coming. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below.";
-    const photos = clean(edition.thanksPhotos, 300).split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3)
+    // Edition fields win; when they are blank, fall back to what was agreed for that edition.
+    const dflt = THANKS_DEFAULTS[ed] || {};
+    const weekday = dateLabel ? dateLabel.split(" ")[0] : "";
+    const paragraph = clean(edition.thanksParagraph, 1600) || `Thank you for ${weekday || "coming"}. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below.`;
+    const photos = (clean(edition.thanksPhotos, 300) || dflt.photos || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3)
       .map((n) => `${site}/table/${ed}/p/${n.replace(/\.jpe?g$/i, "")}.jpg`);
     const photosUrl = `${site}/table/${ed}/photos`;
-    const playlistUrl = clean(edition.playlistUrl, 200);
+    const playlistUrl = clean(edition.playlistUrl, 200) || dflt.playlist || "";
     let sent = 0, skipped = 0; const failed = [];
     for (const [, g] of Object.entries(guests)) {
       if (only && !only.has(g.gid)) continue;
