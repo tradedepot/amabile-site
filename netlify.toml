@@ -108,3 +108,9 @@
   from = "/table/1/h"
   to = "/table/1/h.html"
   status = 200
+
+# Guests' photo page for Table No 1, sent after the day. Images live in /table/1/p/.
+[[redirects]]
+  from = "/table/1/photos"
+  to = "/table/1/photos.html"
+  status = 200
