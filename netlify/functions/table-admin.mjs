@@ -262,12 +262,14 @@ export default async (req) => {
     const title = clean(edition.title, 80) || ed;
     const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
     // Edition fields win; when they are blank, fall back to what was agreed for that edition.
-    const dflt = THANKS_DEFAULTS[ed] || {};
+    // The site folder is /table/<number>/ while the edition id is e.g. "no-1".
+    const pathId = clean(edition.pathId, 20) || ((String(ed).match(/\d+/) || [ed])[0]);
+    const dflt = THANKS_DEFAULTS[pathId] || THANKS_DEFAULTS[ed] || {};
     const weekday = dateLabel ? dateLabel.split(" ")[0] : "";
     const paragraph = clean(edition.thanksParagraph, 1600) || `Thank you for ${weekday || "coming"}. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below.`;
     const photos = (clean(edition.thanksPhotos, 300) || dflt.photos || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3)
-      .map((n) => `${site}/table/${ed}/p/${n.replace(/\.jpe?g$/i, "")}.jpg`);
-    const photosUrl = `${site}/table/${ed}/photos`;
+      .map((n) => `${site}/table/${pathId}/p/${n.replace(/\.jpe?g$/i, "")}.jpg`);
+    const photosUrl = `${site}/table/${pathId}/photos`;
     const playlistUrl = clean(edition.playlistUrl, 200) || dflt.playlist || "";
     let sent = 0, skipped = 0; const failed = [];
     for (const [, g] of Object.entries(guests)) {
