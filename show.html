@@ -125,7 +125,6 @@ input:focus,textarea:focus{border-color:var(--ink)}
         <div class="label" id="whereFixedLabel">We'll bring it to</div>
         <div class="where-big disp" id="whereLabel"></div>
         <button class="linkbtn" id="whereChange" type="button">Not your table? Change it</button>
-        <div class="wherenote hidden" id="whereNote">Orders already placed keep their table.</div>
       </div>
       <div id="wherePick">
         <div class="label" id="wherePickLabel">Your table number</div>
@@ -213,10 +212,9 @@ input:focus,textarea:focus{border-color:var(--ink)}
   function addMine(id, ref){ var l = mineList().filter(function(x){ return x.id !== id; }); l.push({ id: id, ref: ref, at: Date.now() }); store(MINE, l.slice(-12)); }
   // With earlier orders showing above, make it clear the table here is for the new order only.
   function setWhereLabels(hasOrders){
-    $("whereFixedLabel").textContent = hasOrders ? "Your new order goes to" : "We'll bring it to";
-    $("whereChange").textContent = hasOrders ? "Different table? Change it for this order" : "Not your table? Change it";
-    $("wherePickLabel").textContent = hasOrders ? "Table number for your new order" : "Your table number";
-    $("whereNote").classList.toggle("hidden", !hasOrders);
+    $("whereFixedLabel").textContent = hasOrders ? "New order to" : "We'll bring it to";
+    $("whereChange").textContent = hasOrders ? "Change table" : "Not your table? Change it";
+    $("wherePickLabel").textContent = hasOrders ? "New order to table" : "Your table number";
   }
   function refreshMine(){
     clearTimeout(mineT);
