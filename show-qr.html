@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Seat ordering QR cards | Amabile di Rosa</title>
+<title>Table tents | Amabile di Rosa</title>
 <meta name="robots" content="noindex, nofollow">
 <link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -11,103 +11,155 @@
 <link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <style>
-:root{--red:#E74529;--cream:#FFF3E0;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A}
+:root{--red:#E74529;--cream:#FFF3E0;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A;--muted:#8a7464}
 *{box-sizing:border-box;margin:0;padding:0}
 body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:var(--ink)}
 .disp{font-family:"Bagel Fat One",cursive;font-weight:400;line-height:.95}
-.panel{max-width:820px;margin:20px auto;background:#fff;border-radius:16px;padding:18px}
+.panel{max-width:860px;margin:20px auto;background:#fff;border-radius:16px;padding:18px}
 .panel h1{font-size:26px;color:var(--red);margin-bottom:6px}
 .panel p{font-size:14px;color:#6b5646;margin-bottom:12px;line-height:1.45}
 .f{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
 .f label{font-size:12px;font-weight:700;display:block;margin-bottom:4px}
 .f input{width:100%;padding:10px;border:2px solid #ddd;border-radius:10px;font:500 15px "Space Grotesk",sans-serif}
 .btn{border:0;cursor:pointer;background:var(--red);color:var(--cream);font:400 16px "Bagel Fat One",cursive;padding:11px 20px;border-radius:999px;margin-right:8px}
+.btn.sm{font:700 13px "Space Grotesk",sans-serif;padding:8px 14px;background:var(--ink)}
 .hidden{display:none!important}
-.sheet{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:12px}
-/* A6 card: 105 x 148 mm, four per A4 */
-.qc{width:105mm;height:148mm;background:var(--cream);border-radius:6mm;padding:8mm 8mm 7mm;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;overflow:hidden;break-inside:avoid}
-.qc::before{content:"";position:absolute;left:0;right:0;top:0;height:3mm;background:var(--red)}
-.qc .logo{height:11mm;margin-top:1mm}
-.qc .eb{font-size:7.5pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a7a3a;margin-top:3.5mm}
-.qc h2{font-size:21pt;color:var(--red);margin-top:2.5mm}
-.qc .qr{margin-top:4mm;background:#fff;padding:2.5mm;border-radius:3mm;position:relative}
-.qc .qr img,.qc .qr canvas{display:block;width:46mm!important;height:46mm!important}
-.qc .tbl{font-size:19pt;margin-top:4mm;color:var(--ink)}
-.qc .how{font-size:9.5pt;font-weight:700;margin-top:2mm}
-.qc .price{font-size:9pt;margin-top:1.5mm;color:#5a4636}
-.qc .offer{margin-top:3mm;background:var(--red);color:var(--cream);border-radius:3mm;padding:2.2mm 5mm;line-height:1.1}
-.qc .offer b{display:block;font-family:"Bagel Fat One",cursive;font-weight:400;font-size:17pt}
-.qc .offer span{display:block;font-size:9pt;font-weight:700;margin-top:.6mm}
-.qc .foot{margin-top:auto;font-size:7pt;color:#8a7464;letter-spacing:.04em}
-.qc .url{font-size:8pt;font-weight:700;margin-top:1.5mm;color:#8a7464}
+
+/* Preview list: one row per tent */
+.list{max-width:860px;margin:0 auto 40px;display:flex;flex-direction:column;gap:22px;padding:0 12px}
+.item{background:#fff;border-radius:16px;padding:14px;display:flex;flex-direction:column;gap:10px;align-items:flex-start}
+.item .meta{display:flex;align-items:center;justify-content:space-between;width:100%;gap:10px}
+.item .meta b{font-size:15px}
+.item .meta span{font-size:13px;color:var(--muted)}
+.prev{width:100%;overflow:hidden}
+.prev .sheet{zoom:.62}
+
+/* One A4 sheet = one tent. Portrait A4 (210 x 297 mm), folded across the middle.
+   Bottom half faces the front; top half is upside down so it reads upright on the back. */
+.sheet{width:210mm;height:297mm;background:#fff;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.12)}
+.half{position:absolute;left:0;width:210mm;height:148.5mm;padding:9mm}
+.half.top{top:0;transform:rotate(180deg)}
+.half.bot{top:148.5mm}
+.fold{position:absolute;left:0;right:0;top:148.5mm;border-top:.25mm dashed #d9cbb5}
+.fold::after{content:"Fold";position:absolute;right:4mm;top:-4.2mm;font-size:6.5pt;color:#c2b39c;letter-spacing:.1em;text-transform:uppercase}
+
+/* Face: landscape panel, QR left, words right */
+.face{width:100%;height:100%;background:var(--cream);border-radius:6mm;overflow:hidden;position:relative;display:flex;align-items:center;gap:8mm;padding:9mm 9mm 8mm 9mm}
+.face::before{content:"";position:absolute;left:0;right:0;top:0;height:2.5mm;background:var(--red)}
+.face .l{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.face .qr{background:#fff;padding:3mm;border-radius:3mm}
+.face .qr img,.face .qr canvas{display:block;width:80mm!important;height:80mm!important}
+.face .scan{font-size:11pt;font-weight:700;margin-top:2.5mm;letter-spacing:.02em}
+.face .r{flex:1;min-width:0;display:flex;flex-direction:column;justify-content:center}
+.face .logo{height:12mm;align-self:flex-start}
+.face .eb{font-size:8pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a7a3a;margin-top:3mm}
+.face .tbl{font-size:50pt;color:var(--ink);margin-top:2mm;white-space:nowrap}
+.face .tbl.gen{font-size:28pt;line-height:1.02;white-space:normal}
+.face .hint{font-size:10pt;font-weight:700;color:var(--muted);margin-top:1.5mm}
+.face .h{font-size:18pt;color:var(--red);margin-top:3mm}
+.face .price{font-size:10.5pt;line-height:1.35;margin-top:1.2mm;color:#5a4636}
+.face .offer{margin-top:3.5mm;background:var(--red);color:var(--cream);border-radius:3mm;padding:2.4mm 4mm;line-height:1.1;align-self:flex-start}
+.face .offer b{display:block;font-family:"Bagel Fat One",cursive;font-weight:400;font-size:21pt}
+.face .offer span{display:block;font-size:10.5pt;font-weight:700;margin-top:.6mm}
+.face .foot{font-size:7.5pt;color:var(--muted);margin-top:3mm;letter-spacing:.03em}
+
 @media print{
-  @page{size:A4;margin:0}
+  @page{size:A4 portrait;margin:0}
   body{background:#fff}
-  .panel{display:none}
-  .sheet{display:grid;grid-template-columns:105mm 105mm;grid-auto-rows:148.5mm;gap:0;padding:0;justify-content:start}
-  .qc{border-radius:0;outline:.2mm dashed #ccc}
+  .panel,.item .meta{display:none!important}
+  .list{display:block;padding:0;margin:0;max-width:none}
+  .item{display:block;padding:0;border-radius:0;background:none}
+  .prev{overflow:visible}
+  .prev .sheet{zoom:1;box-shadow:none;break-after:page;page-break-after:always}
+  body.one .item:not(.pick){display:none!important}
 }
 </style>
 </head>
 <body>
 <div class="panel" id="gate">
-  <h1 class="disp">Seat ordering QR cards</h1>
+  <h1 class="disp">Table tents</h1>
   <p>Admin only.</p>
   <div class="f" style="max-width:420px;grid-template-columns:1fr auto"><input id="pw" type="password" placeholder="Admin password" autocomplete="off"><button class="btn" id="enter" style="margin:0">Enter</button></div>
   <p id="gateErr" style="color:var(--red);font-weight:700;min-height:18px"></p>
 </div>
+
 <div class="panel hidden" id="tools">
-  <h1 class="disp">Seat ordering QR cards</h1>
-  <p>Table cards carry the table number, so guests never type where they are. General cards (bar, entrance) ask guests to type their table number. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
+  <h1 class="disp">Table tents</h1>
+  <p>One A4 sheet per tent. Print on A4 card at 100% scale (no "fit to page"), fold along the dashed line and stand it on the table. Both sides show the same face. The last tent is the general one for the bar or entrance; guests type their table number after scanning. Scan a printed tent before printing the lot.</p>
   <div class="f">
+    <div><label>Number of tables</label><input id="tables" type="number" min="0" max="300" value="20"></div>
     <div><label>Link base</label><input id="base" value="https://www.amabiledirosa.com/bachelor"></div>
-    <div><label>Number of tables</label><input id="tables" type="number" min="0" value="20"></div>
-    <div><label>General cards</label><input id="gen" type="number" min="0" value="8"></div>
   </div>
-  <button class="btn" id="make">Build cards</button><button class="btn" onclick="print()">Print</button>
+  <button class="btn" id="make">Update</button><button class="btn" id="printAll">Print all</button>
 </div>
-<div class="sheet" id="sheet"></div>
+
+<div class="list hidden" id="list"></div>
+
 <script>
 (function(){
-  function card(sheet, label, url, display){
-    var c = document.createElement("div"); c.className = "qc";
-    c.innerHTML = '<img class="logo" src="/assets/images/logo/logo_wine.png" alt="Amabile di Rosa">' +
-      '<div class="eb">The Last Bachelor</div>' +
-      '<h2 class="disp">Wine to your table.</h2>' +
-      '<div class="qr"></div>' +
-      '<div class="tbl disp">' + label + '</div>' +
-      '<div class="how">Scan, pick, pay. We bring it over.</div>' +
-      '<div class="price">₦20,000 a bottle</div>' +
-      '<div class="offer"><b>Free suya</b><span>when you order 2 or more bottles</span></div>' +
-      '<div class="foot">Please drink responsibly.</div>' +
-      '<div class="url">' + display + '</div>';
-    sheet.appendChild(c);
-    new QRCode(c.querySelector(".qr"), { text: url, width: 400, height: 400, colorDark: "#2a1207", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  var $ = function(id){ return document.getElementById(id); };
+
+  function face(label, url, display, general){
+    var d = document.createElement("div"); d.className = "face";
+    d.innerHTML =
+      '<div class="l"><div class="qr"></div><div class="scan">Scan to order</div></div>' +
+      '<div class="r">' +
+        '<img class="logo" src="/assets/images/logo/logo_wine.png" alt="Amabile di Rosa">' +
+        '<div class="eb">The Last Bachelor</div>' +
+        '<div class="tbl disp' + (general ? ' gen' : '') + '">' + label + '</div>' +
+        (general ? '<div class="hint">Add your table number after you scan</div>' : '') +
+        '<div class="h disp">Wine to your table.</div>' +
+        '<div class="price">₦20,000 a bottle.<br>Scan, pick, pay. We bring it over.</div>' +
+        '<div class="offer"><b>Free suya</b><span>when you order 2 or more bottles</span></div>' +
+        '<div class="foot">18+ only · Please drink responsibly · ' + display + '</div>' +
+      '</div>';
+    new QRCode(d.querySelector(".qr"), { text: url, width: 480, height: 480, colorDark: "#2a1207", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+    return d;
   }
+
+  function tent(label, url, display, general){
+    var item = document.createElement("div"); item.className = "item";
+    item.innerHTML = '<div class="meta"><div><b>' + label + '</b> <span>' + display + '</span></div><button class="btn sm" type="button">Print this one</button></div><div class="prev"><div class="sheet"><div class="half top"></div><div class="fold"></div><div class="half bot"></div></div></div>';
+    item.querySelector(".top").appendChild(face(label, url, display, general));
+    item.querySelector(".bot").appendChild(face(label, url, display, general));
+    item.querySelector(".meta .btn").onclick = function(){
+      document.body.classList.add("one"); item.classList.add("pick");
+      window.print();
+    };
+    return item;
+  }
+
+  window.addEventListener("afterprint", function(){
+    document.body.classList.remove("one");
+    Array.prototype.forEach.call(document.querySelectorAll(".item.pick"), function(x){ x.classList.remove("pick"); });
+  });
+
   function build(){
-    var base = document.getElementById("base").value.replace(/\/+$/, "");
+    var base = $("base").value.trim().replace(/\/+$/, "");
     var short = base.replace(/^https?:\/\/(www\.)?/, "");
-    var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
-    var t = +document.getElementById("tables").value || 0, n = +document.getElementById("gen").value || 0;
-    for (var i = 1; i <= t; i++) card(sheet, "Table " + i, base + "/" + i, short + "/" + i);
-    for (var k = 0; k < n; k++) card(sheet, "Order to your table", base, short);
+    var n = Math.max(0, Math.min(300, parseInt($("tables").value, 10) || 0));
+    var list = $("list"); list.innerHTML = "";
+    for (var i = 1; i <= n; i++) list.appendChild(tent("Table " + i, base + "/" + i, short + "/" + i, false));
+    list.appendChild(tent("Order from any table", base, short, true));
+    list.classList.remove("hidden");
   }
-  document.getElementById("make").onclick = build;
+  $("make").onclick = build;
+  $("printAll").onclick = function(){ document.body.classList.remove("one"); window.print(); };
+
   // Admin password (same as the Amabile Table admin), checked server-side.
   function enter(){
-    var k = document.getElementById("pw").value.trim();
+    var k = $("pw").value.trim();
     fetch("/.netlify/functions/show-board", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "admin-check", ak: k }) })
       .then(function(r){ return r.json(); })
       .then(function(d){
-        if (!d.ok) { document.getElementById("gateErr").textContent = "Wrong password."; return; }
-        document.getElementById("gate").classList.add("hidden");
-        document.getElementById("tools").classList.remove("hidden");
+        if (!d.ok) { $("gateErr").textContent = "Wrong password."; return; }
+        $("gate").classList.add("hidden"); $("tools").classList.remove("hidden");
         build();
       })
-      .catch(function(){ document.getElementById("gateErr").textContent = "No connection."; });
+      .catch(function(){ $("gateErr").textContent = "No connection."; });
   }
-  document.getElementById("enter").onclick = enter;
-  document.getElementById("pw").onkeydown = function(e){ if (e.key === "Enter") enter(); };
+  $("enter").onclick = enter;
+  $("pw").onkeydown = function(e){ if (e.key === "Enter") enter(); };
 })();
 </script>
 </body>
