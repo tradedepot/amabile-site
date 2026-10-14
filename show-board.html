@@ -268,7 +268,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
         '<div class="top"><span class="code disp">' + esc(o.id) + '</span><span class="age' + (mins > 10 && o.status !== "delivered" ? " late" : "") + '">' + ago(since) + '</span></div>' +
         '<div class="where disp">' + esc(o.where) + '</div>' +
         '<div class="items">' + esc(items(o)) + '</div>' +
-        '<div class="extra">' + (o.suya ? '<span class="suya">+ Free suya</span> ' : "") + (o.glasses ? o.glasses + " glasses" : "No glasses") + '</div>' +
+        '<div class="extra">' + (o.suya ? '<span class="suya">+ Free suya</span> ' : "") + "" + '</div>' +
         (o.note ? '<div class="note">' + esc(o.note) + '</div>' : "") +
         '<div class="who">' + esc(o.name) + ' · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a> · ' + naira(o.total) + '</div>' +
         (o.status === "review" ? '<div class="runner">Paystack amount did not match. Check before delivering.</div>' : "") +
@@ -287,10 +287,10 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
 
   // ---- CSV ----
   $("csv").onclick = function(){
-    var rows = [["order","status","where","bianco","rosato","rosso","bottles","suya","glasses","total_ngn","name","phone","email","note","runner","created","paid","delivered","channel","source"]];
+    var rows = [["order","status","where","bianco","rosato","rosso","bottles","suya","total_ngn","name","phone","email","note","runner","created","paid","delivered","channel","source"]];
     Object.keys(orders).map(function(k){ return orders[k]; }).sort(function(a, b){ return a.createdAt - b.createdAt; }).forEach(function(o){
       var it = o.items || {}, d = function(t){ return t ? new Date(t).toISOString() : ""; };
-      rows.push([o.id, o.status, o.where, it.bianco || 0, it.rosato || 0, it.rosso || 0, o.bottles, o.suya || 0, o.glasses || 0, o.total, o.name, o.phone, o.email, o.note || "", o.runner || "", d(o.createdAt), d(o.paidAt), d(o.deliveredAt), o.channel || "", (o.utm && o.utm.src) || ""]);
+      rows.push([o.id, o.status, o.where, it.bianco || 0, it.rosato || 0, it.rosso || 0, o.bottles, o.suya || 0, o.total, o.name, o.phone, o.email, o.note || "", o.runner || "", d(o.createdAt), d(o.paidAt), d(o.deliveredAt), o.channel || "", (o.utm && o.utm.src) || ""]);
     });
     var csv = rows.map(function(r){ return r.map(function(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(","); }).join("\n");
     var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "amabile-seat-orders.csv"; a.click();

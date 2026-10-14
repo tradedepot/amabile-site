@@ -30,7 +30,7 @@ export default async (req) => {
     return json({
       ok: true,
       open: isOpen(settings),
-      event: { name: EVENT.name, short: EVENT.short, venue: EVENT.venue, maxBottles: EVENT.maxBottles, maxGlasses: EVENT.maxGlasses, suyaMin: EVENT.suyaMin },
+      event: { name: EVENT.name, short: EVENT.short, venue: EVENT.venue, maxBottles: EVENT.maxBottles, suyaMin: EVENT.suyaMin },
       suya: settings.suya,
       wines: WINES.map((w) => ({ ...w, soldOut: !!settings.soldOut[w.id] })),
       sections: SECTIONS,
@@ -80,7 +80,6 @@ export default async (req) => {
     status: "pending",
     createdAt: Date.now(),
     items: p.items, bottles: p.bottles, total: p.total, suya: p.suya,
-    glasses: Math.max(0, Math.min(EVENT.maxGlasses, parseInt(d.glasses, 10) || 0)),
     table, where, name, phone, email,
     note: clean(d.note, 140),
     utm: Object.fromEntries(Object.entries(d.utm || {}).slice(0, 8).map(([k, v]) => [clean(k, 30), clean(v, 100)]))

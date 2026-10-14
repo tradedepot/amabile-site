@@ -100,7 +100,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   <section id="orderView">
     <span class="eyebrow">Amabile at The Last Bachelor</span>
     <h1 class="disp">Wine to your seat.</h1>
-    <p class="lede">Pick your bottles, pay here, and we bring them over. Chilled, with glasses.</p>
+    <p class="lede">Pick your bottles, pay here, and we bring them over. Chilled.</p>
 
     <div class="card" id="whereCard">
       <div id="whereFixed" class="hidden">
@@ -126,20 +126,11 @@ input:focus,textarea:focus{border-color:var(--ink)}
     </div>
 
     <div class="card">
-      <div class="row">
-        <div><div class="t">Glasses</div><div class="s">How many should we bring?</div></div>
-        <div class="step" data-glasses>
-          <button type="button" data-d="-1" aria-label="Fewer glasses">−</button><output id="glasses">0</output><button type="button" data-d="1" aria-label="More glasses">+</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="card">
       <div class="label">Your details</div>
       <div class="field"><label for="name">Name</label><input id="name" autocomplete="given-name" maxlength="60" placeholder="So the runner can find you"></div>
       <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0803 000 0000"></div>
       <div class="field"><label for="email">Email</label><input id="email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="For your receipt"></div>
-      <div class="field" style="margin-bottom:0"><label for="note">Anything else? <span style="font-weight:500;color:var(--muted)">(optional)</span></label><input id="note" maxlength="140" placeholder="e.g. Ice bucket please"></div>
+      <div class="field" style="margin-bottom:0"><label for="note">Anything else? <span style="font-weight:500;color:var(--muted)">(optional)</span></label><input id="note" maxlength="140" placeholder="e.g. I'm in the red jacket"></div>
       <div class="err" id="err"></div>
     </div>
 
@@ -191,7 +182,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   var API = "/.netlify/functions/show-order";
   var LS = "amb_show_order";
   var $ = function(id){ return document.getElementById(id); };
-  var cfg = null, qty = {}, glasses = 0, glassesTouched = false, section = "", table = "", pollT = null;
+  var cfg = null, qty = {}, section = "", table = "", pollT = null;
 
   function store(k, v){ try{ if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
   function naira(n){ return "₦" + Number(n || 0).toLocaleString("en-NG"); }
@@ -249,22 +240,16 @@ input:focus,textarea:focus{border-color:var(--ink)}
       el.querySelector(".step").onclick = function(e){
         var d = Number(e.target.getAttribute("data-d")); if (!d || e.target.disabled) return;
         qty[w.id] = Math.max(0, (qty[w.id] || 0) + d);
-        if (!glassesTouched) glasses = Math.min(cfg.event.maxGlasses, bottles() * 2);
         update();
       };
       box.appendChild(el);
     });
   }
-  document.querySelector("[data-glasses]").onclick = function(e){
-    var d = Number(e.target.getAttribute("data-d")); if (!d) return;
-    glassesTouched = true; glasses = Math.max(0, Math.min(cfg.event.maxGlasses, glasses + d)); update();
-  };
 
   function suyaFor(n){ return cfg.suya && n >= cfg.event.suyaMin ? 1 : 0; }
   function total(){ var t = 0; cfg.wines.forEach(function(w){ t += (qty[w.id] || 0) * w.price; }); return t; }
   function update(){
     renderWines();
-    $("glasses").textContent = glasses;
     var n = bottles(), s = suyaFor(n);
     $("sumTotal").textContent = naira(total());
     $("sumLine").textContent = !n ? "Pick a bottle" :
@@ -302,7 +287,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     store("amb_show_me", { name: name, phone: phone, email: email });
     $("pay").disabled = true; $("pay").textContent = "One sec…";
     fetch(API, { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ items: qty, glasses: glasses, table: table, section: section, spot: spot, name: name, phone: phone, email: email, note: $("note").value.trim(), utm: utm }) })
+      body: JSON.stringify({ items: qty, table: table, section: section, spot: spot, name: name, phone: phone, email: email, note: $("note").value.trim(), utm: utm }) })
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (!d.ok) return fail(d.error);
@@ -365,7 +350,6 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var lines = [];
     (cfg ? cfg.wines : []).forEach(function(w){ if (o.items && o.items[w.id]) lines.push(o.items[w.id] + " × " + w.name); });
     if (o.suya) lines.push("Suya, on us");
-    if (o.glasses) lines.push(o.glasses + " glasses");
     $("stLines").innerHTML = lines.map(esc).join("<br>") + "<br><b>" + naira(o.total) + "</b>";
     $("stHelp").textContent = done ? "Want another round? Tap below." : "Show this code to your runner.";
     if (paid && st !== "review" && !store("amb_show_tracked_" + o.id)) {
@@ -376,7 +360,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   }
 
   $("again").onclick = function(){
-    stopPoll(); store(LS, null); qty = {}; glasses = 0; glassesTouched = false;
+    stopPoll(); store(LS, null); qty = {};
     if (history.replaceState) history.replaceState(null, "", location.pathname);
     if (cfg && cfg.open) { show("orderView"); update(); } else show("closedView");
   };

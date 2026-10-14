@@ -19,7 +19,6 @@ export const EVENT = {
   closesAt: Date.parse("2026-10-19T02:00:00Z"),
   currency: "NGN",
   maxBottles: 6,       // per order
-  maxGlasses: 12,
   suyaMin: 2           // orders of this many bottles or more get one complimentary suya
 };
 
@@ -106,7 +105,7 @@ export function itemsText(o) {
 export function publicView(o) {
   return {
     id: o.id, status: o.status, items: o.items, bottles: o.bottles, total: o.total,
-    suya: o.suya, glasses: o.glasses, where: o.where, name: o.name,
+    suya: o.suya, where: o.where, name: o.name,
     paidAt: o.paidAt || null, claimedAt: o.claimedAt || null, deliveredAt: o.deliveredAt || null
   };
 }
@@ -200,7 +199,7 @@ async function notifyOnce(s, o) {
 export function alertText(o) {
   const lines = [
     "New order " + o.id + " · " + o.where,
-    itemsText(o) + (o.suya ? " · + free suya" : "") + (o.glasses ? " · " + o.glasses + " glasses" : ""),
+    itemsText(o) + (o.suya ? " · + free suya" : ""),
     o.name + " · " + o.phone
   ];
   if (o.note) lines.push("Note: " + o.note);
