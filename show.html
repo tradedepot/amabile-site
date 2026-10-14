@@ -133,7 +133,6 @@ input:focus,textarea:focus{border-color:var(--ink)}
       <div class="err" id="err"></div>
     </div>
 
-    <p class="fine">Please drink responsibly.</p>
   </section>
 
   <!-- STATUS -->
@@ -163,7 +162,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     <p class="lede">Find an Amabile team member and they'll sort you out.</p>
   </section>
 
-  <p class="fine" style="margin-top:28px">Amabile di Rosa / Lagos, Nigeria<br><a href="/responsible-drinking.html">Drink responsibly</a></p>
+  <p class="fine" style="margin-top:28px">Amabile di Rosa / Lagos, Nigeria<br>18+ only · <a href="/responsible-drinking.html">Drink responsibly</a></p>
 </main>
 
 <div class="bar hidden" id="bar">
@@ -189,10 +188,10 @@ input:focus,textarea:focus{border-color:var(--ink)}
   function show(v){ ["orderView","statusView","closedView"].forEach(function(x){ $(x).classList.toggle("hidden", x !== v); }); $("bar").classList.toggle("hidden", v !== "orderView"); window.scrollTo(0,0); }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
-  // ---- table code: /show/G12 or ?t=G12 ----
+  // ---- table code: /bachelor/12 or ?t=12 ----
   var params = new URLSearchParams(location.search);
   (function(){
-    var m = location.pathname.match(/^\/show\/([A-Za-z0-9]{1,6})\/?$/);
+    var m = location.pathname.match(/^\/bachelor\/([A-Za-z0-9]{1,6})\/?$/);
     table = ((m && m[1]) || params.get("t") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   })();
   function tableLabel(c){ return "Table " + (/^\d+$/.test(c) ? String(Number(c)) : c); }

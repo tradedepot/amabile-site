@@ -78,7 +78,7 @@ export default async (req) => {
   };
 
   if (!process.env.PAYSTACK_SECRET_KEY) return json({ ok: false, error: "payments_not_configured" }, 503);
-  const init = await paystackInit(o, url.origin + "/show?order=" + id + "&ref=" + encodeURIComponent(o.ref));
+  const init = await paystackInit(o, url.origin + "/bachelor?order=" + id + "&ref=" + encodeURIComponent(o.ref));
   if (!init) return json({ ok: false, error: "payment_init" }, 502);
 
   o.accessCode = init.access_code;

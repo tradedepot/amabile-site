@@ -63,7 +63,7 @@ export async function getSettings(s) {
 
 export const isOpen = (settings) => settings.open && Date.now() < EVENT.closesAt;
 
-// Table QRs carry the table number: /show/12 = Table 12.
+// Table QRs carry the table number: /bachelor/12 = Table 12.
 export function tableLabel(code) {
   const c = String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   if (!c) return "";
@@ -203,7 +203,7 @@ export function alertText(o) {
     o.name + " · " + o.phone
   ];
   if (o.note) lines.push("Note: " + o.note);
-  lines.push("Board: https://www.amabiledirosa.com/show/board");
+  lines.push("Board: https://www.amabiledirosa.com/bachelor/board");
   return lines.join("\n");
 }
 
