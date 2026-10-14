@@ -25,6 +25,7 @@ export default async (req) => {
 
   if (req.method === "GET") {
     if (!boardAuthorised(url.searchParams.get("k") || "")) return json({ ok: false, error: "unauthorized" }, 401);
+    if (url.searchParams.get("ping")) return json({ ok: true });
     const after = url.searchParams.get("after") || "";
     const evKeys = await listKeys(s, K.evPrefix);
     const cursor = evKeys.length ? evKeys[evKeys.length - 1] : "";
