@@ -26,7 +26,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--cream);min-hei
 .wrap{max-width:520px;margin:0 auto;padding:22px 16px 140px}
 .logo{display:block;width:132px;margin:4px auto 18px}
 .eyebrow{display:block;text-align:center;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
-h1{font-size:clamp(38px,11vw,52px);text-align:center;margin:10px 0 10px;color:var(--cream)}
+h1{font-size:clamp(32px,9.4vw,52px);text-align:center;margin:10px 0 10px;color:var(--cream)}
 .lede{text-align:center;color:rgba(255,243,224,.82);font-size:15.5px;line-height:1.45;max-width:340px;margin:0 auto 22px}
 .card{background:var(--cream);color:var(--ink);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
@@ -87,6 +87,18 @@ input:focus,textarea:focus{border-color:var(--ink)}
 @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(231,69,41,.18)}}
 .lines{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:15px;line-height:1.7}
 .hidden{display:none!important}
+/* your orders */
+.mine{padding:14px 16px}
+.mine .label{margin-bottom:6px}
+.mo{display:flex;align-items:center;gap:12px;width:100%;background:none;border:0;border-top:1px solid var(--line);padding:11px 0;cursor:pointer;text-align:left;font:inherit;color:var(--ink)}
+.mo:first-of-type{border-top:0}
+.mo .c{font-family:"Bagel Fat One",cursive;font-size:24px;min-width:58px}
+.mo .w{flex:1;font-size:13.5px;color:var(--muted)}
+.mo .st{font-size:12.5px;font-weight:700;border-radius:999px;padding:4px 10px;white-space:nowrap;background:#f1e4cf}
+.mo .st.paid{background:#FDEBE4;color:#9a3d1e}
+.mo .st.claimed{background:#F6E7C4;color:#7a5a12}
+.mo .st.delivered{background:#e3efe5;color:#2f5b37}
+.mo .ar{color:var(--muted);font-weight:700}
 @media (min-width:600px){.wrap{padding-top:36px}}
 </style>
 </head>
@@ -101,6 +113,11 @@ input:focus,textarea:focus{border-color:var(--ink)}
     <span class="eyebrow">Amabile at The Last Bachelor</span>
     <h1 class="disp">Wine to your table.</h1>
     <p class="lede">Pick your bottles, pay here, and we bring them over. Chilled.</p>
+
+    <div class="card mine hidden" id="mine">
+      <div class="label">Your orders</div>
+      <div id="mineList"></div>
+    </div>
 
     <div class="card" id="whereCard">
       <div id="whereFixed" class="hidden">
@@ -185,7 +202,41 @@ input:focus,textarea:focus{border-color:var(--ink)}
   function store(k, v){ try{ if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
   function naira(n){ return "₦" + Number(n || 0).toLocaleString("en-NG"); }
   function toast(t){ var el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(function(){ el.style.display = "none"; }, 3200); }
-  function show(v){ ["orderView","statusView","closedView"].forEach(function(x){ $(x).classList.toggle("hidden", x !== v); }); $("bar").classList.toggle("hidden", v !== "orderView"); window.scrollTo(0,0); }
+  function show(v){ ["orderView","statusView","closedView"].forEach(function(x){ $(x).classList.toggle("hidden", x !== v); }); $("bar").classList.toggle("hidden", v !== "orderView"); window.scrollTo(0,0); if (v === "orderView") refreshMine(); else clearTimeout(mineT); }
+
+  // ---- your orders (every order placed on this phone tonight) ----
+  var MINE = "amb_show_orders", mineT = null, mineState = {};
+  var ST = { paid: "Paid", claimed: "On its way", delivered: "Delivered", review: "Being checked" };
+  function mineList(){ var l = store(MINE) || []; var cut = Date.now() - 12 * 3600e3; return l.filter(function(x){ return x && x.id && x.ref && (x.at || 0) > cut; }); }
+  function addMine(id, ref){ var l = mineList().filter(function(x){ return x.id !== id; }); l.push({ id: id, ref: ref, at: Date.now() }); store(MINE, l.slice(-12)); }
+  function refreshMine(){
+    clearTimeout(mineT);
+    var l = mineList();
+    if (!l.length) { $("mine").classList.add("hidden"); return; }
+    Promise.all(l.map(function(x){
+      if (mineState[x.id] && mineState[x.id].status === "delivered") return Promise.resolve({ ok: true, order: mineState[x.id] });
+      return fetch(API + "?id=" + encodeURIComponent(x.id) + "&ref=" + encodeURIComponent(x.ref), { cache: "no-store" })
+        .then(function(r){ return r.json(); }).catch(function(){ return { ok: false }; });
+    })).then(function(res){
+      var rows = [], live = false;
+      res.forEach(function(d, i){
+        if (!d.ok) return;
+        var o = d.order; mineState[o.id] = o;
+        if (o.status === "pending") return; // unpaid or abandoned checkout
+        if (o.status !== "delivered") live = true;
+        rows.push('<button type="button" class="mo" data-i="' + i + '"><span class="c">' + esc(o.id) + '</span><span class="w">' + esc(o.where) + '</span><span class="st ' + esc(o.status) + '">' + esc(ST[o.status] || o.status) + '</span><span class="ar">›</span></button>');
+      });
+      $("mineList").innerHTML = rows.reverse().join("");
+      $("mine").classList.toggle("hidden", !rows.length);
+      $("mineList").onclick = function(e){
+        var b = e.target.closest(".mo"); if (!b) return;
+        var x = l[Number(b.getAttribute("data-i"))];
+        store(LS, { id: x.id, ref: x.ref, at: x.at });
+        goStatus(x.id, x.ref);
+      };
+      if (live && !$("orderView").classList.contains("hidden")) mineT = setTimeout(refreshMine, 10000);
+    });
+  }
   function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
 
   // ---- table code: /bachelor/12 or ?t=12 ----
@@ -283,6 +334,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
       .then(function(d){
         if (!d.ok) return fail(d.error);
         store(LS, { id: d.order.id, ref: d.ref, at: Date.now() });
+        addMine(d.order.id, d.ref);
         openPaystack(d);
       })
       .catch(function(){ fail("busy"); });
@@ -351,7 +403,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   }
 
   $("again").onclick = function(){
-    stopPoll(); store(LS, null); qty = {};
+    stopPoll(); store(LS, null); qty = {}; $("note").value = ""; $("pay").textContent = "Pay";
     if (history.replaceState) history.replaceState(null, "", location.pathname);
     if (cfg && cfg.open) { show("orderView"); update(); } else show("closedView");
   };
@@ -374,7 +426,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
       // Back from Paystack redirect, or a live order on this phone
       var rid = params.get("order"), rref = params.get("ref") || params.get("reference");
       var saved = store(LS);
-      if (rid && rref) return goStatus(rid.toUpperCase(), rref);
+      if (rid && rref) { addMine(rid.toUpperCase(), rref); return goStatus(rid.toUpperCase(), rref); }
       if (saved && saved.id && Date.now() - (saved.at || 0) < 6 * 3600e3) {
         return fetch(API + "?id=" + saved.id + "&ref=" + encodeURIComponent(saved.ref), { cache: "no-store" })
           .then(function(r){ return r.json(); })
