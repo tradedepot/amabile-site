@@ -86,9 +86,8 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 <div class="panel hidden" id="tools">
   <h1 class="disp">Table tents</h1>
   <p>One A4 sheet per tent. Print on A4 card at 100% scale (no "fit to page"), fold along the dashed line and stand it on the table. Both sides show the same face. The last tent is the general one for the bar or entrance; guests type their table number after scanning. Scan a printed tent before printing the lot.</p>
-  <div class="f">
-    <div><label>Number of tables</label><input id="tables" type="number" min="0" max="300" value="20"></div>
-    <div><label>Link base</label><input id="base" value="https://www.amabiledirosa.com/bachelor"></div>
+  <div class="f" style="max-width:260px">
+    <div><label>Number of tables</label><input id="tables" type="number" min="0" max="300" value="55"></div>
   </div>
   <button class="btn" id="make">Update</button><button class="btn" id="printAll">Print all</button>
 </div>
@@ -98,6 +97,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 <script>
 (function(){
   var $ = function(id){ return document.getElementById(id); };
+  var BASE = "https://www.amabiledirosa.com/bachelor"; // fixed: every printed QR points here
 
   function face(label, url, display, general){
     var d = document.createElement("div"); d.className = "face";
@@ -135,7 +135,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
   });
 
   function build(){
-    var base = $("base").value.trim().replace(/\/+$/, "");
+    var base = BASE;
     var short = base.replace(/^https?:\/\/(www\.)?/, "");
     var n = Math.max(0, Math.min(300, parseInt($("tables").value, 10) || 0));
     var list = $("list"); list.innerHTML = "";
