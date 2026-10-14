@@ -31,6 +31,7 @@ h1{font-size:clamp(32px,9.4vw,52px);text-align:center;margin:10px 0 10px;color:v
 .card{background:var(--cream);color:var(--ink);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
 .label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
 .where-big{font-size:28px;color:var(--ink)}
+.wherenote{font-size:12.5px;color:var(--muted);margin-top:6px}
 .linkbtn{background:none;border:0;color:var(--red);font:700 13.5px "Space Grotesk",sans-serif;text-decoration:underline;cursor:pointer;padding:0;margin-top:6px}
 .chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
 .chip{border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:999px;padding:9px 14px;font:700 14px "Space Grotesk",sans-serif;cursor:pointer}
@@ -121,12 +122,13 @@ input:focus,textarea:focus{border-color:var(--ink)}
 
     <div class="card" id="whereCard">
       <div id="whereFixed" class="hidden">
-        <div class="label">We'll bring it to</div>
+        <div class="label" id="whereFixedLabel">We'll bring it to</div>
         <div class="where-big disp" id="whereLabel"></div>
         <button class="linkbtn" id="whereChange" type="button">Not your table? Change it</button>
+        <div class="wherenote hidden" id="whereNote">Orders already placed keep their table.</div>
       </div>
       <div id="wherePick">
-        <div class="label">Your table number</div>
+        <div class="label" id="wherePickLabel">Your table number</div>
         <input id="spot" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="It's on the card on your table" autocomplete="off" maxlength="4">
       </div>
     </div>
@@ -209,10 +211,17 @@ input:focus,textarea:focus{border-color:var(--ink)}
   var ST = { paid: "Paid", claimed: "On its way", delivered: "Delivered", review: "Being checked" };
   function mineList(){ var l = store(MINE) || []; var cut = Date.now() - 12 * 3600e3; return l.filter(function(x){ return x && x.id && x.ref && (x.at || 0) > cut; }); }
   function addMine(id, ref){ var l = mineList().filter(function(x){ return x.id !== id; }); l.push({ id: id, ref: ref, at: Date.now() }); store(MINE, l.slice(-12)); }
+  // With earlier orders showing above, make it clear the table here is for the new order only.
+  function setWhereLabels(hasOrders){
+    $("whereFixedLabel").textContent = hasOrders ? "Your new order goes to" : "We'll bring it to";
+    $("whereChange").textContent = hasOrders ? "Different table? Change it for this order" : "Not your table? Change it";
+    $("wherePickLabel").textContent = hasOrders ? "Table number for your new order" : "Your table number";
+    $("whereNote").classList.toggle("hidden", !hasOrders);
+  }
   function refreshMine(){
     clearTimeout(mineT);
     var l = mineList();
-    if (!l.length) { $("mine").classList.add("hidden"); return; }
+    if (!l.length) { $("mine").classList.add("hidden"); setWhereLabels(false); return; }
     Promise.all(l.map(function(x){
       if (mineState[x.id] && mineState[x.id].status === "delivered") return Promise.resolve({ ok: true, order: mineState[x.id] });
       return fetch(API + "?id=" + encodeURIComponent(x.id) + "&ref=" + encodeURIComponent(x.ref), { cache: "no-store" })
@@ -228,6 +237,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
       });
       $("mineList").innerHTML = rows.reverse().join("");
       $("mine").classList.toggle("hidden", !rows.length);
+      setWhereLabels(rows.length > 0);
       $("mineList").onclick = function(e){
         var b = e.target.closest(".mo"); if (!b) return;
         var x = l[Number(b.getAttribute("data-i"))];
