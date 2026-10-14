@@ -3,7 +3,7 @@
 //   GET  ?k=…&after=…    → only orders changed since cursor (cheap to poll every few seconds)
 //   POST {k, action, id?, runner?, settings?}
 //        action: claim | deliver | undo | approve | settings
-import { K, store, json, clean, getSettings, saveOrder, boardAuthorised, DEFAULT_SETTINGS, WINES } from "./_show.mjs";
+import { K, store, json, clean, getSettings, saveOrder, boardAuthorised, adminAuthorised, DEFAULT_SETTINGS, WINES } from "./_show.mjs";
 
 async function fetchAll(s, keys) {
   const out = [];
@@ -25,7 +25,6 @@ export default async (req) => {
 
   if (req.method === "GET") {
     if (!boardAuthorised(url.searchParams.get("k") || "")) return json({ ok: false, error: "unauthorized" }, 401);
-    if (url.searchParams.get("ping")) return json({ ok: true });
     const after = url.searchParams.get("after") || "";
     const evKeys = await listKeys(s, K.evPrefix);
     const cursor = evKeys.length ? evKeys[evKeys.length - 1] : "";
@@ -53,7 +52,11 @@ export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
   let d;
   try { d = await req.json(); } catch { return json({ ok: false, error: "bad_json" }, 400); }
-  if (!boardAuthorised(d.k || "")) return json({ ok: false, error: "unauthorized" }, 401);
+  const isAdmin = adminAuthorised(d.ak);
+  // Admin key check for the QR printer and the board's Unlock controls.
+  if (d.action === "admin-check") return isAdmin ? json({ ok: true }) : json({ ok: false, error: "unauthorized" }, 401);
+  if (!boardAuthorised(d.k || "") && !isAdmin) return json({ ok: false, error: "unauthorized" }, 401);
+  if ((d.action === "settings" || d.action === "approve") && !isAdmin) return json({ ok: false, error: "admin_only" }, 403);
 
   if (d.action === "settings") {
     const cur = await getSettings(s);

@@ -39,6 +39,9 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
 .ctl{background:rgba(255,243,224,.05);border-radius:14px;padding:10px 12px;margin-bottom:12px}
 .ctl summary{cursor:pointer;font-weight:700;font-size:14px;color:rgba(255,243,224,.8)}
 .ctl.warn summary{color:var(--red)}
+.unlock{display:flex;gap:8px;margin-top:10px;max-width:420px}
+.unlock input{margin:0;padding:10px 12px;font-size:15px}
+.unlock .btn{flex:none}
 .tog{border:2px solid rgba(255,243,224,.25);background:transparent;color:var(--cream);border-radius:999px;padding:8px 13px;font:700 13px "Space Grotesk",sans-serif;cursor:pointer}
 .tog.on{background:var(--sage);border-color:var(--sage);color:#0f2414}
 .tog.bad{background:var(--red);border-color:var(--red)}
@@ -100,7 +103,10 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
       <div class="stat"><b id="stRev">₦0</b><span>Paid</span></div>
     </div>
 
-    <details class="ctl"><summary>Controls: orders, suya, stock</summary><div class="controls" id="controls"></div></details>
+    <details class="ctl"><summary>Controls: orders, suya, stock</summary>
+      <div class="unlock" id="unlock"><input id="ak" type="password" placeholder="Admin password" autocomplete="off"><button class="btn ghost" id="akGo">Unlock</button></div>
+      <div class="controls" id="controls"></div>
+    </details>
 
     <div class="tabs" id="tabs"></div>
     <div class="grid" id="grid"></div>
@@ -112,7 +118,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
 (function(){
   var API = "/.netlify/functions/show-board";
   var $ = function(id){ return document.getElementById(id); };
-  var K = "", me = "", cursor = "", orders = {}, settings = null, tab = "todo", soundOn = true, first = true, pollT = null, fails = 0;
+  var K = "", AK = "", me = "", cursor = "", orders = {}, settings = null, tab = "todo", soundOn = true, first = true, pollT = null, fails = 0;
   var WINES = [{id:"bianco",name:"Bianco"},{id:"rosato",name:"Rosato"},{id:"rosso",name:"Rosso"}];
 
   function ls(k, v){ try{ if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
@@ -189,7 +195,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
 
   function act(id, action, force){
     var o = orders[id];
-    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, action: action, id: id, runner: me, force: !!force }) })
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, ak: AK, action: action, id: id, runner: me, force: !!force }) })
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (d.order) { d.order.updatedAt = Date.now(); orders[id] = d.order; }
@@ -200,8 +206,18 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
       }).catch(function(){ toast("No connection. Try again."); });
   }
 
+  function unlock(){
+    var k = $("ak").value.trim();
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "admin-check", ak: k }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (!d.ok) { toast("Wrong admin password"); return; } AK = k; render(); })
+      .catch(function(){ toast("No connection. Try again."); });
+  }
+  $("akGo").onclick = unlock;
+  $("ak").onkeydown = function(e){ if (e.key === "Enter") unlock(); };
+
   function setSetting(patch){
-    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, action: "settings", settings: patch }) })
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, ak: AK, action: "settings", settings: patch }) })
       .then(function(r){ return r.json(); }).then(function(d){ if (d.ok) { settings = d.settings; render(); } else toast("Couldn't save"); });
   }
 
@@ -224,6 +240,8 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
 
     // controls
     var c = $("controls"); c.innerHTML = "";
+    $("unlock").classList.toggle("hidden", !!AK);
+    c.classList.toggle("hidden", !AK);
     var anyOff = !settings.open || !settings.suya || WINES.some(function(w){ return settings.soldOut[w.id]; });
     document.querySelector(".ctl").classList.toggle("warn", anyOff);
     document.querySelector(".ctl summary").textContent = anyOff ? "Controls: " + [!settings.open && "orders paused", !settings.suya && "suya off"].concat(WINES.filter(function(w){ return settings.soldOut[w.id]; }).map(function(w){ return w.name + " sold out"; })).filter(Boolean).join(", ") : "Controls: orders, suya, stock";
@@ -263,7 +281,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
       if (o.status === "paid") acts = '<button class="btn alt" data-a="claim" data-id="' + o.id + '">I\'ve got it</button><button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button>';
       else if (o.status === "claimed") acts = '<button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button><button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
       else if (o.status === "delivered") acts = '<button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
-      else if (o.status === "review") acts = '<button class="btn alt" data-a="approve" data-id="' + o.id + '">Checked on Paystack, approve</button>';
+      else if (o.status === "review") acts = AK ? '<button class="btn alt" data-a="approve" data-id="' + o.id + '">Checked on Paystack, approve</button>' : "";
       return '<div class="o ' + o.status + (o._fresh && Date.now() - o._fresh < 4000 ? " fresh" : "") + '">' +
         '<div class="top"><span class="code disp">' + esc(o.id) + '</span><span class="age' + (mins > 10 && o.status !== "delivered" ? " late" : "") + '">' + ago(since) + '</span></div>' +
         '<div class="where disp">' + esc(o.where) + '</div>' +
@@ -271,7 +289,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
         '<div class="extra">' + (o.suya ? '<span class="suya">+ Free suya</span> ' : "") + "" + '</div>' +
         (o.note ? '<div class="note">' + esc(o.note) + '</div>' : "") +
         '<div class="who">' + esc(o.name) + ' · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a> · ' + naira(o.total) + '</div>' +
-        (o.status === "review" ? '<div class="runner">Paystack amount did not match. Check before delivering.</div>' : "") +
+        (o.status === "review" ? '<div class="runner">Paystack amount did not match. Don\'t deliver yet. An admin checks and approves it.</div>' : "") +
         (o.runner ? '<div class="runner">' + (o.status === "delivered" ? "Delivered by " : "With ") + esc(o.runner) + '</div>' : "") +
         (acts ? '<div class="acts">' + acts + '</div>' : "") +
       '</div>';

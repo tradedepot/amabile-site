@@ -255,6 +255,13 @@ async function addContact(o) {
   if (!r.ok) { const t = await r.text().catch(() => ""); if (/attribute/i.test(t)) await send({ FIRSTNAME: first }); }
 }
 
+// Controls (pause, suya, stock), approvals and the QR printer use the same admin password
+// as the Amabile Table admin (TABLE_ADMIN_KEY). Runners only have SHOW_KEY.
+export function adminAuthorised(k) {
+  const key = process.env.TABLE_ADMIN_KEY || "";
+  return !!key && typeof k === "string" && k === key;
+}
+
 export function boardAuthorised(k) {
   const key = process.env.SHOW_KEY || process.env.SAMPLING_KEY || "";
   return !!key && k === key;

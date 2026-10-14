@@ -52,8 +52,8 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 <body>
 <div class="panel" id="gate">
   <h1 class="disp">Seat ordering QR cards</h1>
-  <p>Team only.</p>
-  <div class="f" style="max-width:420px;grid-template-columns:1fr auto"><input id="pw" type="password" placeholder="Team password" autocomplete="off"><button class="btn" id="enter" style="margin:0">Enter</button></div>
+  <p>Admin only.</p>
+  <div class="f" style="max-width:420px;grid-template-columns:1fr auto"><input id="pw" type="password" placeholder="Admin password" autocomplete="off"><button class="btn" id="enter" style="margin:0">Enter</button></div>
   <p id="gateErr" style="color:var(--red);font-weight:700;min-height:18px"></p>
 </div>
 <div class="panel hidden" id="tools">
@@ -93,10 +93,10 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
     for (var k = 0; k < n; k++) card(sheet, "Order to your table", base, short);
   }
   document.getElementById("make").onclick = build;
-  // Same password as the runner board (SHOW_KEY), checked server-side.
+  // Admin password (same as the Amabile Table admin), checked server-side.
   function enter(){
     var k = document.getElementById("pw").value.trim();
-    fetch("/.netlify/functions/show-board?k=" + encodeURIComponent(k) + "&ping=1", { cache: "no-store" })
+    fetch("/.netlify/functions/show-board", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ action: "admin-check", ak: k }) })
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (!d.ok) { document.getElementById("gateErr").textContent = "Wrong password."; return; }
