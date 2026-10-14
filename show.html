@@ -1,0 +1,447 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
+<title>Wine to your seat | Amabile di Rosa</title>
+<meta name="description" content="Order Amabile di Rosa to your seat at The Last Bachelor. Pick, pay, and we bring it over.">
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#1A1030">
+<meta property="og:title" content="Wine to your seat | Amabile di Rosa">
+<meta property="og:description" content="Pick your bottles, pay here, and we bring them to your table.">
+<meta property="og:image" content="https://www.amabiledirosa.com/og-image.jpg">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A;--muted:#8a7464;--line:rgba(42,18,7,.12)}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html{background:var(--night)}
+body{font-family:"Space Grotesk",system-ui,sans-serif;color:var(--cream);min-height:100vh;
+  background:radial-gradient(120% 60% at 50% -10%,#9c2444 0%,#4a1636 38%,var(--night) 75%) no-repeat,var(--night)}
+.disp{font-family:"Bagel Fat One",system-ui,cursive;font-weight:400;line-height:.95}
+.wrap{max-width:520px;margin:0 auto;padding:22px 16px 140px}
+.logo{display:block;width:132px;margin:4px auto 18px}
+.eyebrow{display:block;text-align:center;font-size:11px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:var(--gold)}
+h1{font-size:clamp(38px,11vw,52px);text-align:center;margin:10px 0 10px;color:var(--cream)}
+.lede{text-align:center;color:rgba(255,243,224,.82);font-size:15.5px;line-height:1.45;max-width:340px;margin:0 auto 22px}
+.card{background:var(--cream);color:var(--ink);border-radius:22px;padding:18px;margin-bottom:14px;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.label{font-size:11px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.where-big{font-size:28px;color:var(--ink)}
+.linkbtn{background:none;border:0;color:var(--red);font:700 13.5px "Space Grotesk",sans-serif;text-decoration:underline;cursor:pointer;padding:0;margin-top:6px}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.chip{border:2px solid var(--ink);background:#fff;color:var(--ink);border-radius:999px;padding:9px 14px;font:700 14px "Space Grotesk",sans-serif;cursor:pointer}
+.chip.on{background:var(--ink);color:var(--cream)}
+input,textarea{width:100%;border:2px solid var(--line);background:#fff;border-radius:14px;padding:13px 14px;font:500 16px "Space Grotesk",sans-serif;color:var(--ink);outline:none}
+input:focus,textarea:focus{border-color:var(--ink)}
+.field{margin-bottom:10px}
+.field label{display:block;font-size:13px;font-weight:700;margin:0 0 6px 2px}
+.offer{display:flex;align-items:center;gap:12px;border:2px dashed var(--gold);border-radius:18px;padding:13px 15px;margin:0 0 14px;color:var(--cream)}
+.offer b{font-family:"Bagel Fat One",cursive;font-weight:400;font-size:19px;color:var(--gold);display:block;line-height:1.05}
+.offer span{font-size:13.5px;color:rgba(255,243,224,.8)}
+.offer .tag{flex:none;width:46px;height:46px;border-radius:50%;background:var(--gold);color:var(--night);display:grid;place-items:center;font:700 11px "Space Grotesk",sans-serif;text-transform:uppercase;letter-spacing:.06em;text-align:center;line-height:1.05}
+.wine{display:flex;gap:14px;align-items:flex-start;padding:12px 0;border-top:1px solid var(--line)}
+.wine:first-of-type{border-top:0;padding-top:2px}
+.wine img{flex:none;width:80px;height:118px;object-fit:cover;object-position:center 58%;border-radius:14px;background:#f1f1f3}
+.wine .info{flex:1;min-width:0}
+.wine .nm{font-size:23px;color:var(--ink)}
+.wine .kind{display:inline-block;white-space:nowrap;font-size:10.5px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff;border-radius:999px;padding:3px 9px;margin:5px 0 6px}
+.wine .notes{font-size:13px;color:var(--muted);line-height:1.35}
+.wine .pr{font-weight:700;font-size:15px}
+.wine .buy{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:8px}
+.wine.out{opacity:.45}
+.wine.out .pr::after{content:" · Sold out";color:var(--red)}
+.step{display:flex;align-items:center;gap:2px;background:#fff;border:2px solid var(--ink);border-radius:999px;flex:none}
+.step button{width:38px;height:38px;border:0;background:none;font:700 22px "Space Grotesk",sans-serif;color:var(--ink);cursor:pointer;border-radius:50%}
+.step button:disabled{opacity:.25}
+.step output{min-width:20px;text-align:center;font-weight:700;font-size:17px}
+.row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.row .t{font-weight:700}
+.row .s{font-size:13px;color:var(--muted)}
+.fine{text-align:center;font-size:12.5px;color:rgba(255,243,224,.6);line-height:1.5;margin-top:18px}
+.fine a{color:rgba(255,243,224,.8)}
+.bar{position:fixed;left:0;right:0;bottom:0;padding:12px 16px calc(12px + env(safe-area-inset-bottom));background:rgba(26,16,48,.94);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border-top:1px solid rgba(255,243,224,.12);z-index:5}
+.bar .in{max-width:520px;margin:0 auto;display:flex;align-items:center;gap:12px}
+.bar .sum{flex:1;min-width:0}
+.bar .sum b{display:block;font-size:20px}
+.bar .sum span{font-size:12.5px;color:rgba(255,243,224,.72)}
+.btn{border:0;cursor:pointer;background:var(--red);color:var(--cream);font:400 19px "Bagel Fat One",cursive;padding:15px 26px;border-radius:999px;box-shadow:0 6px 0 #9c2a17}
+.btn:active{transform:translateY(2px);box-shadow:0 4px 0 #9c2a17}
+.btn:disabled{opacity:.45;cursor:default}
+.btn.ghost{background:transparent;border:2px solid rgba(255,243,224,.4);box-shadow:none;font-size:16px;padding:12px 22px}
+.err{color:var(--red);font-weight:700;font-size:14px;margin-top:8px;min-height:0}
+.toast{position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:var(--cream);color:var(--ink);font-weight:700;padding:12px 18px;border-radius:14px;box-shadow:0 8px 24px rgba(0,0,0,.35);z-index:9;max-width:90vw;text-align:center;display:none}
+/* status */
+.code{font-size:72px;letter-spacing:.04em;color:var(--ink);text-align:center;margin:4px 0 2px}
+.center{text-align:center}
+.steps{display:flex;justify-content:space-between;margin:20px 4px 6px;position:relative}
+.steps::before{content:"";position:absolute;left:12%;right:12%;top:15px;height:3px;background:var(--line)}
+.stp{position:relative;flex:1;text-align:center;font-size:12.5px;font-weight:700;color:var(--muted)}
+.stp i{display:grid;place-items:center;width:32px;height:32px;margin:0 auto 6px;border-radius:50%;background:#fff;border:3px solid var(--line);font-style:normal;font-size:14px}
+.stp.done{color:var(--ink)}
+.stp.done i{background:var(--ink);border-color:var(--ink);color:var(--cream)}
+.stp.now i{border-color:var(--red);animation:pulse 1.4s infinite}
+@keyframes pulse{50%{box-shadow:0 0 0 7px rgba(231,69,41,.18)}}
+.lines{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:15px;line-height:1.7}
+.hidden{display:none!important}
+/* age gate */
+.gate{position:fixed;inset:0;z-index:20;background:var(--night);display:grid;place-items:center;padding:24px}
+.gate .box{max-width:360px;text-align:center}
+.gate h2{font-size:34px;margin:16px 0 10px}
+.gate p{color:rgba(255,243,224,.78);line-height:1.5;margin-bottom:22px}
+.gate .opts{display:flex;gap:10px;justify-content:center}
+@media (min-width:600px){.wrap{padding-top:36px}}
+</style>
+</head>
+<body>
+
+<div class="gate hidden" id="gate">
+  <div class="box">
+    <img class="logo" src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa">
+    <h2 class="disp">Are you 18 or over?</h2>
+    <p>You need to be of legal drinking age to order.</p>
+    <div class="opts">
+      <button class="btn" id="gateYes">Yes, I am</button>
+      <button class="btn ghost" id="gateNo">No</button>
+    </div>
+    <p class="err hidden" id="gateMsg" style="margin-top:16px;color:var(--cream)">Come back when you are. Enjoy the show.</p>
+  </div>
+</div>
+
+<main class="wrap">
+  <img class="logo" src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa">
+
+  <!-- ORDER -->
+  <section id="orderView">
+    <span class="eyebrow">Amabile at The Last Bachelor</span>
+    <h1 class="disp">Wine to your seat.</h1>
+    <p class="lede">Pick your bottles, pay here, and we bring them over. Chilled, with glasses.</p>
+
+    <div class="card" id="whereCard">
+      <div id="whereFixed" class="hidden">
+        <div class="label">We'll bring it to</div>
+        <div class="where-big disp" id="whereLabel"></div>
+        <button class="linkbtn" id="whereChange" type="button">Not your table? Change it</button>
+      </div>
+      <div id="wherePick">
+        <div class="label">Where are you sitting?</div>
+        <div class="chips" id="sections"></div>
+        <input id="spot" placeholder="Row and seat, or table number" autocomplete="off" maxlength="60">
+      </div>
+    </div>
+
+    <div class="offer hidden" id="offer">
+      <div class="tag">Suya</div>
+      <div><b>Two bottles for the table? The suya is on us.</b><span>One portion with every two bottles.</span></div>
+    </div>
+
+    <div class="card">
+      <div class="label">The wines</div>
+      <div id="wines"></div>
+    </div>
+
+    <div class="card">
+      <div class="row">
+        <div><div class="t">Glasses</div><div class="s">How many should we bring?</div></div>
+        <div class="step" data-glasses>
+          <button type="button" data-d="-1" aria-label="Fewer glasses">−</button><output id="glasses">0</output><button type="button" data-d="1" aria-label="More glasses">+</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="label">Your details</div>
+      <div class="field"><label for="name">Name</label><input id="name" autocomplete="given-name" maxlength="60" placeholder="So the runner can find you"></div>
+      <div class="field"><label for="phone">Phone</label><input id="phone" type="tel" inputmode="tel" autocomplete="tel" maxlength="20" placeholder="0803 000 0000"></div>
+      <div class="field"><label for="email">Email</label><input id="email" type="email" inputmode="email" autocomplete="email" maxlength="120" placeholder="For your receipt"></div>
+      <div class="field" style="margin-bottom:0"><label for="note">Anything else? <span style="font-weight:500;color:var(--muted)">(optional)</span></label><input id="note" maxlength="140" placeholder="e.g. Ice bucket please"></div>
+      <div class="err" id="err"></div>
+    </div>
+
+    <p class="fine">18+ only. Please drink responsibly.<br>Payments by Paystack. Card, transfer or USSD.</p>
+  </section>
+
+  <!-- STATUS -->
+  <section id="statusView" class="hidden">
+    <span class="eyebrow">Amabile at The Last Bachelor</span>
+    <h1 class="disp" id="stTitle">Order in.</h1>
+    <p class="lede" id="stLede">Your runner is on the way. Keep this page open.</p>
+    <div class="card">
+      <div class="label center">Your order</div>
+      <div class="code disp" id="stCode">···</div>
+      <div class="center" style="font-weight:700" id="stWhere"></div>
+      <div class="steps">
+        <div class="stp" id="s1"><i>1</i>Paid</div>
+        <div class="stp" id="s2"><i>2</i>On its way</div>
+        <div class="stp" id="s3"><i>3</i>Delivered</div>
+      </div>
+      <div class="lines" id="stLines"></div>
+    </div>
+    <p class="fine" id="stHelp">Show this code to your runner.</p>
+    <div class="center" style="margin-top:18px"><button class="btn ghost" id="again">Order more</button></div>
+  </section>
+
+  <!-- CLOSED -->
+  <section id="closedView" class="hidden">
+    <span class="eyebrow">Amabile at The Last Bachelor</span>
+    <h1 class="disp">Orders are paused.</h1>
+    <p class="lede">Find an Amabile team member and they'll sort you out.</p>
+  </section>
+
+  <p class="fine" style="margin-top:28px">Amabile di Rosa / Lagos, Nigeria<br><a href="/responsible-drinking.html">Drink responsibly</a></p>
+</main>
+
+<div class="bar hidden" id="bar">
+  <div class="in">
+    <div class="sum"><b id="sumTotal">₦0</b><span id="sumLine">Pick a bottle</span></div>
+    <button class="btn" id="pay" disabled>Pay</button>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script src="/assets/js/analytics.js" defer></script>
+<script src="https://js.paystack.co/v2/inline.js" async></script>
+<script>
+(function(){
+  var API = "/.netlify/functions/show-order";
+  var LS = "amb_show_order";
+  var $ = function(id){ return document.getElementById(id); };
+  var cfg = null, qty = {}, glasses = 0, glassesTouched = false, section = "", table = "", pollT = null;
+
+  function store(k, v){ try{ if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
+  function naira(n){ return "₦" + Number(n || 0).toLocaleString("en-NG"); }
+  function toast(t){ var el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(function(){ el.style.display = "none"; }, 3200); }
+  function show(v){ ["orderView","statusView","closedView"].forEach(function(x){ $(x).classList.toggle("hidden", x !== v); }); $("bar").classList.toggle("hidden", v !== "orderView"); window.scrollTo(0,0); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+
+  // ---- table code: /show/G12 or ?t=G12 ----
+  var params = new URLSearchParams(location.search);
+  (function(){
+    var m = location.pathname.match(/^\/show\/([A-Za-z0-9]{1,6})\/?$/);
+    table = ((m && m[1]) || params.get("t") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
+  })();
+  function tableLabel(c){ var m = c.match(/^([GP])(\d{1,3})$/); if (m) return (m[1] === "G" ? "Gold table " : "Premium table ") + Number(m[2]); return "Table " + c; }
+
+  var utm = {};
+  params.forEach(function(v, k){ if (/^utm_/.test(k)) utm[k] = v; });
+  utm.src = table ? "table_qr" : "general_qr";
+
+  // ---- age gate ----
+  function gate(done){
+    if (store("amb_age_ok")) return done();
+    $("gate").classList.remove("hidden");
+    $("gateYes").onclick = function(){ store("amb_age_ok", true); $("gate").classList.add("hidden"); done(); };
+    $("gateNo").onclick = function(){ $("gateMsg").classList.remove("hidden"); };
+  }
+
+  // ---- where ----
+  function renderWhere(){
+    if (table){
+      $("whereFixed").classList.remove("hidden"); $("wherePick").classList.add("hidden");
+      $("whereLabel").textContent = tableLabel(table);
+    } else {
+      $("whereFixed").classList.add("hidden"); $("wherePick").classList.remove("hidden");
+    }
+  }
+  $("whereChange").onclick = function(){ table = ""; renderWhere(); $("spot").focus(); };
+
+  function renderSections(){
+    var box = $("sections"); box.innerHTML = "";
+    cfg.sections.forEach(function(sct){
+      var b = document.createElement("button"); b.type = "button"; b.className = "chip" + (section === sct ? " on" : ""); b.textContent = sct;
+      b.onclick = function(){ section = sct; renderSections(); $("spot").placeholder = /table/i.test(sct) ? "Table number" : "Row and seat, e.g. Row D, seat 14"; };
+      box.appendChild(b);
+    });
+  }
+
+  // ---- menu ----
+  function bottles(){ var n = 0; for (var k in qty) n += qty[k]; return n; }
+  function renderWines(){
+    var box = $("wines"); box.innerHTML = "";
+    cfg.wines.forEach(function(w){
+      var q = qty[w.id] || 0;
+      var el = document.createElement("div"); el.className = "wine" + (w.soldOut ? " out" : "");
+      el.innerHTML = '<img src="' + esc(w.img) + '" alt="Amabile di Rosa ' + esc(w.name) + '" loading="lazy">' +
+        '<div class="info"><div class="nm disp">' + esc(w.name) + '</div>' +
+        '<span class="kind" style="background:' + esc(w.accent) + '">' + esc(w.kind) + ' · ' + esc(w.abv) + '</span>' +
+        '<div class="notes">' + esc(w.notes) + '</div><div class="buy"><div class="pr">' + naira(w.price) + '</div>' +
+        '<div class="step"><button type="button" data-d="-1" aria-label="One less ' + esc(w.name) + '">−</button><output>' + q + '</output><button type="button" data-d="1" aria-label="One more ' + esc(w.name) + '">+</button></div></div></div>';
+      var btns = el.querySelectorAll("button");
+      btns[0].disabled = !q;
+      btns[1].disabled = w.soldOut || bottles() >= cfg.event.maxBottles;
+      el.querySelector(".step").onclick = function(e){
+        var d = Number(e.target.getAttribute("data-d")); if (!d || e.target.disabled) return;
+        qty[w.id] = Math.max(0, (qty[w.id] || 0) + d);
+        if (!glassesTouched) glasses = Math.min(cfg.event.maxGlasses, bottles() * 2);
+        update();
+      };
+      box.appendChild(el);
+    });
+  }
+  document.querySelector("[data-glasses]").onclick = function(e){
+    var d = Number(e.target.getAttribute("data-d")); if (!d) return;
+    glassesTouched = true; glasses = Math.max(0, Math.min(cfg.event.maxGlasses, glasses + d)); update();
+  };
+
+  function suyaFor(n){ return cfg.suya ? Math.floor(n / cfg.event.suyaEvery) : 0; }
+  function total(){ var t = 0; cfg.wines.forEach(function(w){ t += (qty[w.id] || 0) * w.price; }); return t; }
+  function update(){
+    renderWines();
+    $("glasses").textContent = glasses;
+    var n = bottles(), s = suyaFor(n);
+    $("sumTotal").textContent = naira(total());
+    $("sumLine").textContent = !n ? "Pick a bottle" :
+      n + (n === 1 ? " bottle" : " bottles") + (s ? " · " + s + " suya on us" : (cfg.suya && n === 1 ? " · add one for free suya" : ""));
+    $("pay").disabled = !n;
+    $("err").textContent = "";
+  }
+
+  // ---- pay ----
+  var ERR = {
+    name: "Add your name so the runner can find you.",
+    phone: "Add a phone number we can reach you on.",
+    email: "Add an email for your receipt.",
+    where: "Tell us where you're sitting.",
+    sold_out: "Sorry, one of those just sold out.",
+    closed: "Orders are paused right now.",
+    too_many: "That's a lot of wine. Six bottles max per order.",
+    payments_not_configured: "Payments aren't switched on yet. Find an Amabile team member.",
+    payment_init: "Couldn't start the payment. Try again in a moment.",
+    busy: "Busy right now. Try again in a moment."
+  };
+  function fail(code){
+    var m = ERR[code] || "Something went wrong. Try again.";
+    $("err").textContent = m; toast(m);
+    if (code === "sold_out" || code === "closed") loadConfig();
+    $("pay").disabled = false; $("pay").textContent = "Pay";
+  }
+
+  $("pay").onclick = function(){
+    var name = $("name").value.trim(), phone = $("phone").value.trim(), email = $("email").value.trim(), spot = $("spot").value.trim();
+    if (!table && (!section || !spot)) { fail("where"); $("whereCard").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+    if (!name) { fail("name"); $("name").focus(); return; }
+    if (phone.replace(/\D/g, "").length < 10) { fail("phone"); $("phone").focus(); return; }
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fail("email"); $("email").focus(); return; }
+    store("amb_show_me", { name: name, phone: phone, email: email });
+    $("pay").disabled = true; $("pay").textContent = "One sec…";
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" },
+      body: JSON.stringify({ items: qty, glasses: glasses, table: table, section: section, spot: spot, name: name, phone: phone, email: email, note: $("note").value.trim(), utm: utm }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (!d.ok) return fail(d.error);
+        store(LS, { id: d.order.id, ref: d.ref, at: Date.now() });
+        openPaystack(d);
+      })
+      .catch(function(){ fail("busy"); });
+  };
+
+  function openPaystack(d){
+    var reset = function(){ $("pay").disabled = false; $("pay").textContent = "Pay"; };
+    if (!window.PaystackPop) { location.href = d.authorizationUrl; return; }
+    try {
+      var pop = new PaystackPop();
+      pop.resumeTransaction(d.accessCode, {
+        onSuccess: function(){ goStatus(d.order.id, d.ref); },
+        onCancel: function(){ stopPoll(); reset(); toast("Payment cancelled. Your wine is still in the basket."); },
+        onError: function(){ stopPoll(); location.href = d.authorizationUrl; }
+      });
+      // Belt and braces: if the popup's callback never fires, the poll still spots the payment.
+      startPoll(d.order.id, d.ref, true);
+    } catch (e) { location.href = d.authorizationUrl; }
+  }
+
+  // ---- status ----
+  function stopPoll(){ clearTimeout(pollT); pollT = null; }
+  function startPoll(id, ref, quietUntilPaid){
+    stopPoll();
+    var tick = function(){
+      fetch(API + "?id=" + encodeURIComponent(id) + "&ref=" + encodeURIComponent(ref), { cache: "no-store" })
+        .then(function(r){ return r.json(); })
+        .then(function(d){
+          if (!d.ok) { if (!quietUntilPaid) store(LS, null); return; }
+          var o = d.order;
+          if (quietUntilPaid && o.status === "pending") { pollT = setTimeout(tick, 5000); return; }
+          quietUntilPaid = false;
+          renderStatus(o);
+          if (o.status !== "delivered") pollT = setTimeout(tick, o.status === "pending" ? 3000 : 6000);
+        })
+        .catch(function(){ pollT = setTimeout(tick, 6000); });
+    };
+    tick();
+  }
+  function goStatus(id, ref){ show("statusView"); $("stCode").textContent = id; startPoll(id, ref, false); }
+
+  function renderStatus(o){
+    if ($("statusView").classList.contains("hidden")) show("statusView");
+    $("stCode").textContent = o.id;
+    $("stWhere").textContent = o.where;
+    var st = o.status;
+    var paid = st !== "pending", moving = st === "claimed" || st === "delivered", done = st === "delivered";
+    $("s1").className = "stp " + (paid ? "done" : "now");
+    $("s2").className = "stp " + (moving ? "done" : paid ? "now" : "");
+    $("s3").className = "stp " + (done ? "done" : moving ? "now" : "");
+    $("stTitle").textContent = done ? "Enjoy." : st === "pending" ? "Confirming payment." : st === "review" ? "Almost there." : "Order in.";
+    $("stLede").textContent = done ? "Cheers from all of us at Amabile." :
+      st === "pending" ? "This takes a few seconds. Keep this page open." :
+      st === "review" ? "We're checking your payment. A team member will be with you shortly." :
+      moving ? "Your runner has it and is heading over." : "Paid. A runner is picking it up now.";
+    var lines = [];
+    (cfg ? cfg.wines : []).forEach(function(w){ if (o.items && o.items[w.id]) lines.push(o.items[w.id] + " × " + w.name); });
+    if (o.suya) lines.push(o.suya + " × Suya, on us");
+    if (o.glasses) lines.push(o.glasses + " glasses");
+    $("stLines").innerHTML = lines.map(esc).join("<br>") + "<br><b>" + naira(o.total) + "</b>";
+    $("stHelp").textContent = done ? "Want another round? Tap below." : "Show this code to your runner.";
+    if (paid && st !== "review" && !store("amb_show_tracked_" + o.id)) {
+      store("amb_show_tracked_" + o.id, true);
+      try { if (window.gtag) gtag("event", "purchase", { transaction_id: o.id, value: o.total, currency: "NGN" }); } catch (e) {}
+      try { if (window.fbq) fbq("track", "Purchase", { value: o.total, currency: "NGN" }); } catch (e) {}
+    }
+  }
+
+  $("again").onclick = function(){
+    stopPoll(); store(LS, null); qty = {}; glasses = 0; glassesTouched = false;
+    if (history.replaceState) history.replaceState(null, "", location.pathname);
+    if (cfg && cfg.open) { show("orderView"); update(); } else show("closedView");
+  };
+
+  // ---- boot ----
+  function loadConfig(){
+    return fetch(API, { cache: "no-store" }).then(function(r){ return r.json(); }).then(function(d){
+      cfg = d;
+      $("offer").classList.toggle("hidden", !cfg.suya);
+      cfg.wines.forEach(function(w){ if (w.soldOut) qty[w.id] = 0; });
+      return d;
+    });
+  }
+
+  function boot(){
+    renderWhere();
+    var me = store("amb_show_me");
+    if (me) { $("name").value = me.name || ""; $("phone").value = me.phone || ""; $("email").value = me.email || ""; }
+    loadConfig().then(function(){
+      renderSections();
+      // Back from Paystack redirect, or a live order on this phone
+      var rid = params.get("order"), rref = params.get("ref") || params.get("reference");
+      var saved = store(LS);
+      if (rid && rref) return goStatus(rid.toUpperCase(), rref);
+      if (saved && saved.id && Date.now() - (saved.at || 0) < 6 * 3600e3) {
+        return fetch(API + "?id=" + saved.id + "&ref=" + encodeURIComponent(saved.ref), { cache: "no-store" })
+          .then(function(r){ return r.json(); })
+          .then(function(d){
+            if (d.ok && d.order.status !== "pending" && d.order.status !== "delivered") goStatus(saved.id, saved.ref);
+            else start();
+          }).catch(start);
+      }
+      start();
+    }).catch(function(){ toast("Can't reach us. Check your signal and refresh."); });
+  }
+  function start(){ if (!cfg.open) return show("closedView"); show("orderView"); update(); }
+
+  gate(boot);
+})();
+</script>
+</body>
+</html>

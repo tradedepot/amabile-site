@@ -1,0 +1,301 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Runner board | Amabile di Rosa</title>
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#1A1030">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{--red:#E74529;--sage:#82B28C;--blue:#4D7396;--cream:#FFF3E0;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A;--lime:#C6FF4D;--muted:#8a7464}
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{font-family:"Space Grotesk",system-ui,sans-serif;background:var(--night);color:var(--cream);min-height:100vh}
+.disp{font-family:"Bagel Fat One",cursive;font-weight:400;line-height:.95}
+.wrap{max-width:1100px;margin:0 auto;padding:16px 14px 80px}
+.gate{max-width:380px;margin:12vh auto 0;text-align:center}
+.gate h1{font-size:34px;margin-bottom:6px}
+.gate p{color:rgba(255,243,224,.7);margin-bottom:18px}
+input{width:100%;padding:14px;border-radius:14px;border:2px solid rgba(255,243,224,.25);background:rgba(255,255,255,.06);color:var(--cream);font:500 16px "Space Grotesk",sans-serif;margin-bottom:10px;outline:none}
+input:focus{border-color:var(--gold)}
+.btn{border:0;cursor:pointer;background:var(--red);color:var(--cream);font:400 17px "Bagel Fat One",cursive;padding:13px 22px;border-radius:999px}
+.btn.alt{background:var(--lime);color:#1a2e00}
+.btn.ghost{background:transparent;border:2px solid rgba(255,243,224,.3);font:700 13px "Space Grotesk",sans-serif;padding:8px 14px}
+.btn:disabled{opacity:.4}
+.err{color:var(--red);font-weight:700;margin-top:8px;min-height:18px}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+header h1{font-size:26px}
+header .me{font-size:13px;color:rgba(255,243,224,.7)}
+.live{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--lime);margin-right:6px;vertical-align:middle}
+.live.off{background:var(--red)}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:12px}
+.stat{background:rgba(255,243,224,.07);border-radius:14px;padding:10px 12px}
+.stat b{display:block;font-size:22px}
+.stat span{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,243,224,.6)}
+.controls{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0 4px;align-items:center}
+.ctl{background:rgba(255,243,224,.05);border-radius:14px;padding:10px 12px;margin-bottom:12px}
+.ctl summary{cursor:pointer;font-weight:700;font-size:14px;color:rgba(255,243,224,.8)}
+.ctl.warn summary{color:var(--red)}
+.tog{border:2px solid rgba(255,243,224,.25);background:transparent;color:var(--cream);border-radius:999px;padding:8px 13px;font:700 13px "Space Grotesk",sans-serif;cursor:pointer}
+.tog.on{background:var(--sage);border-color:var(--sage);color:#0f2414}
+.tog.bad{background:var(--red);border-color:var(--red)}
+.tabs{display:flex;gap:6px;margin-bottom:12px;overflow-x:auto}
+.tab{flex:none;border:0;background:rgba(255,243,224,.08);color:var(--cream);border-radius:999px;padding:10px 15px;font:700 14px "Space Grotesk",sans-serif;cursor:pointer}
+.tab.on{background:var(--cream);color:var(--ink)}
+.tab i{font-style:normal;opacity:.6;margin-left:4px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.o{background:var(--cream);color:var(--ink);border-radius:20px;padding:14px 16px;position:relative;border-left:10px solid var(--red)}
+.o.claimed{border-left-color:var(--gold)}
+.o.delivered{border-left-color:var(--sage);opacity:.75}
+.o.review{border-left-color:#ff4d8d}
+.o.pending{border-left-color:#bbb;opacity:.6}
+.o.fresh{animation:flash 1s ease 3}
+@keyframes flash{50%{box-shadow:0 0 0 6px var(--lime)}}
+.o .top{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.o .code{font-size:32px}
+.o .age{font-size:13px;font-weight:700;color:var(--muted)}
+.o .age.late{color:var(--red)}
+.o .where{font-size:22px;margin:6px 0 8px;color:var(--red)}
+.o .items{font-size:16px;font-weight:700;line-height:1.45}
+.o .extra{font-size:14px;margin-top:4px}
+.o .suya{display:inline-block;background:var(--gold);color:var(--ink);border-radius:999px;padding:2px 10px;font-weight:700;font-size:13px}
+.o .who{margin-top:8px;font-size:14px;color:#5a4636}
+.o .who a{color:var(--ink);font-weight:700}
+.o .note{margin-top:6px;font-size:14px;background:#fff;border-radius:10px;padding:6px 9px}
+.o .runner{margin-top:6px;font-size:13px;font-weight:700;color:#8a6a1f}
+.o .acts{display:flex;gap:8px;margin-top:12px}
+.o .acts .btn{flex:1;font-size:16px;padding:12px}
+.o .acts .undo{flex:none;background:transparent;color:var(--muted);border:2px solid #d9c9b5;font:700 13px "Space Grotesk",sans-serif}
+.empty{text-align:center;color:rgba(255,243,224,.5);padding:50px 0}
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--lime);color:#1a2e00;font-weight:700;padding:12px 18px;border-radius:14px;display:none;z-index:9}
+.hidden{display:none!important}
+@media (max-width:600px){.stats{grid-template-columns:repeat(2,1fr)}.grid{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div id="gate" class="gate">
+    <img src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa" style="width:130px;margin-bottom:20px">
+    <h1 class="disp">Runner board</h1>
+    <p>The Last Bachelor · Balmoral</p>
+    <input id="pw" type="password" placeholder="Team password" autocomplete="off">
+    <input id="runner" placeholder="Your name" maxlength="30" autocomplete="off">
+    <button class="btn" id="enter">Start</button>
+    <div class="err" id="gateErr"></div>
+  </div>
+
+  <div id="app" class="hidden">
+    <header>
+      <div><h1 class="disp">Runner board</h1><div class="me"><span class="live" id="live"></span><span id="liveTxt">Live</span> · <span id="meName"></span></div></div>
+      <div style="display:flex;gap:8px"><button class="btn ghost" id="sound">Sound on</button><button class="btn ghost" id="csv">CSV</button></div>
+    </header>
+
+    <div class="stats">
+      <div class="stat"><b id="stTodo">0</b><span>To deliver</span></div>
+      <div class="stat"><b id="stBottles">0</b><span>Bottles sold</span></div>
+      <div class="stat"><b id="stSuya">0</b><span>Suya given</span></div>
+      <div class="stat"><b id="stRev">₦0</b><span>Paid</span></div>
+    </div>
+
+    <details class="ctl"><summary>Controls: orders, suya, stock</summary><div class="controls" id="controls"></div></details>
+
+    <div class="tabs" id="tabs"></div>
+    <div class="grid" id="grid"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+(function(){
+  var API = "/.netlify/functions/show-board";
+  var $ = function(id){ return document.getElementById(id); };
+  var K = "", me = "", cursor = "", orders = {}, settings = null, tab = "todo", soundOn = true, first = true, pollT = null, fails = 0;
+  var WINES = [{id:"bianco",name:"Bianco"},{id:"rosato",name:"Rosato"},{id:"rosso",name:"Rosso"}];
+
+  function ls(k, v){ try{ if (v === undefined) return localStorage.getItem(k); localStorage.setItem(k, v); }catch(e){ return null; } }
+  function naira(n){ return "₦" + Number(n || 0).toLocaleString("en-NG"); }
+  function esc(s){ return String(s == null ? "" : s).replace(/[&<>"]/g, function(c){ return {"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]; }); }
+  function toast(t){ var el = $("toast"); el.textContent = t; el.style.display = "block"; clearTimeout(toast._t); toast._t = setTimeout(function(){ el.style.display = "none"; }, 2500); }
+  function items(o){ return WINES.filter(function(w){ return o.items && o.items[w.id]; }).map(function(w){ return o.items[w.id] + " × " + w.name; }).join(" · "); }
+  function ago(t){ var m = Math.floor((Date.now() - t) / 60000); return m < 1 ? "just now" : m + " min"; }
+
+  // ---- sound ----
+  var ctx = null;
+  function beep(){
+    if (!soundOn) return;
+    try {
+      ctx = ctx || new (window.AudioContext || window.webkitAudioContext)();
+      [0, .18].forEach(function(dt){
+        var o = ctx.createOscillator(), g = ctx.createGain();
+        o.frequency.value = 880; o.connect(g); g.connect(ctx.destination);
+        g.gain.setValueAtTime(.0001, ctx.currentTime + dt);
+        g.gain.exponentialRampToValueAtTime(.4, ctx.currentTime + dt + .02);
+        g.gain.exponentialRampToValueAtTime(.0001, ctx.currentTime + dt + .15);
+        o.start(ctx.currentTime + dt); o.stop(ctx.currentTime + dt + .16);
+      });
+    } catch (e) {}
+    try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch (e) {}
+  }
+  $("sound").onclick = function(){ soundOn = !soundOn; this.textContent = soundOn ? "Sound on" : "Sound off"; if (soundOn) beep(); };
+
+  // ---- keep screen awake ----
+  var lock = null;
+  function wake(){ try { if (navigator.wakeLock) navigator.wakeLock.request("screen").then(function(l){ lock = l; }).catch(function(){}); } catch (e) {} }
+  document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "visible") { wake(); poll(true); } });
+
+  // ---- gate ----
+  $("pw").value = ls("amb_board_k") || "";
+  $("runner").value = ls("amb_board_me") || "";
+  $("enter").onclick = function(){
+    K = $("pw").value.trim(); me = $("runner").value.trim();
+    if (!me) { $("gateErr").textContent = "Add your name."; return; }
+    fetch(API + "?k=" + encodeURIComponent(K), { cache: "no-store" }).then(function(r){ return r.json(); }).then(function(d){
+      if (!d.ok) { $("gateErr").textContent = "Wrong password."; return; }
+      ls("amb_board_k", K); ls("amb_board_me", me);
+      $("gate").classList.add("hidden"); $("app").classList.remove("hidden");
+      $("meName").textContent = me;
+      beep(); wake();
+      ingest(d); first = false; render();
+      pollT = setTimeout(poll, 4000);
+    }).catch(function(){ $("gateErr").textContent = "No connection."; });
+  };
+
+  // ---- data ----
+  function ingest(d){
+    settings = d.settings; cursor = d.cursor || cursor;
+    var fresh = 0;
+    (d.orders || []).forEach(function(o){
+      var prev = orders[o.id];
+      if (prev && (prev.updatedAt || 0) > (o.updatedAt || 0)) return;
+      if (!first && o.status === "paid" && (!prev || prev.status === "pending")) { o._fresh = Date.now(); fresh++; }
+      else if (prev && prev._fresh) o._fresh = prev._fresh;
+      orders[o.id] = o;
+    });
+    if (fresh) { beep(); toast(fresh === 1 ? "New order" : fresh + " new orders"); }
+  }
+  function poll(now){
+    clearTimeout(pollT);
+    if (!K) return;
+    fetch(API + "?k=" + encodeURIComponent(K) + "&after=" + encodeURIComponent(cursor), { cache: "no-store" })
+      .then(function(r){ return r.json(); })
+      .then(function(d){ if (!d.ok) throw 0; fails = 0; setLive(true); ingest(d); render(); })
+      .catch(function(){ fails++; if (fails > 1) setLive(false); })
+      .then(function(){ pollT = setTimeout(poll, 4000); });
+  }
+  function setLive(ok){ $("live").className = "live" + (ok ? "" : " off"); $("liveTxt").textContent = ok ? "Live" : "Reconnecting…"; }
+
+  function act(id, action, force){
+    var o = orders[id];
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, action: action, id: id, runner: me, force: !!force }) })
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d.order) { d.order.updatedAt = Date.now(); orders[id] = d.order; }
+        if (!d.ok && d.error === "taken") {
+          if (confirm(d.order.runner + " already has " + id + ". Take it over?")) return act(id, action, true);
+        } else if (!d.ok) toast("Couldn't update " + id);
+        render();
+      }).catch(function(){ toast("No connection. Try again."); });
+  }
+
+  function setSetting(patch){
+    fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ k: K, action: "settings", settings: patch }) })
+      .then(function(r){ return r.json(); }).then(function(d){ if (d.ok) { settings = d.settings; render(); } else toast("Couldn't save"); });
+  }
+
+  // ---- render ----
+  var TABS = [
+    { id: "todo", label: "To deliver", f: function(o){ return o.status === "paid" || o.status === "claimed"; } },
+    { id: "mine", label: "Mine", f: function(o){ return o.status === "claimed" && o.runner === me; } },
+    { id: "done", label: "Delivered", f: function(o){ return o.status === "delivered"; } },
+    { id: "issues", label: "Check", f: function(o){ return o.status === "review"; } },
+    { id: "unpaid", label: "Unpaid", f: function(o){ return o.status === "pending"; } }
+  ];
+
+  function render(){
+    var all = Object.keys(orders).map(function(k){ return orders[k]; });
+    var paid = all.filter(function(o){ return ["paid","claimed","delivered"].indexOf(o.status) >= 0; });
+    $("stTodo").textContent = all.filter(TABS[0].f).length;
+    $("stBottles").textContent = paid.reduce(function(a, o){ return a + o.bottles; }, 0);
+    $("stSuya").textContent = paid.reduce(function(a, o){ return a + (o.suya || 0); }, 0);
+    $("stRev").textContent = naira(paid.reduce(function(a, o){ return a + o.total; }, 0));
+
+    // controls
+    var c = $("controls"); c.innerHTML = "";
+    var anyOff = !settings.open || !settings.suya || WINES.some(function(w){ return settings.soldOut[w.id]; });
+    document.querySelector(".ctl").classList.toggle("warn", anyOff);
+    document.querySelector(".ctl summary").textContent = anyOff ? "Controls: " + [!settings.open && "orders paused", !settings.suya && "suya off"].concat(WINES.filter(function(w){ return settings.soldOut[w.id]; }).map(function(w){ return w.name + " sold out"; })).filter(Boolean).join(", ") : "Controls: orders, suya, stock";
+    function tog(label, on, bad, fn){ var b = document.createElement("button"); b.className = "tog " + (on ? (bad ? "bad" : "on") : ""); b.textContent = label; b.onclick = fn; c.appendChild(b); }
+    tog(settings.open ? "Orders open" : "Orders paused", true, !settings.open, function(){
+      if (confirm(settings.open ? "Pause all new orders?" : "Reopen orders?")) setSetting({ open: !settings.open });
+    });
+    tog(settings.suya ? "Suya offer on" : "Suya offer off", true, !settings.suya, function(){
+      if (confirm(settings.suya ? "Stop the free suya offer (out of suya)?" : "Turn the suya offer back on?")) setSetting({ suya: !settings.suya });
+    });
+    WINES.forEach(function(w){
+      var out = !!settings.soldOut[w.id];
+      tog(w.name + (out ? " sold out" : " in stock"), true, out, function(){
+        if (confirm(out ? "Mark " + w.name + " back in stock?" : "Mark " + w.name + " sold out?")) { var p = { soldOut: {} }; p.soldOut[w.id] = !out; setSetting(p); }
+      });
+    });
+
+    // tabs
+    var t = $("tabs"); t.innerHTML = "";
+    TABS.forEach(function(x){
+      var n = all.filter(x.f).length;
+      if ((x.id === "issues" || x.id === "unpaid") && !n && tab !== x.id) return;
+      var b = document.createElement("button"); b.className = "tab" + (tab === x.id ? " on" : "");
+      b.innerHTML = esc(x.label) + "<i>" + n + "</i>"; b.onclick = function(){ tab = x.id; render(); }; t.appendChild(b);
+    });
+
+    var cur = TABS.filter(function(x){ return x.id === tab; })[0];
+    var list = all.filter(cur.f);
+    if (tab === "done") list.sort(function(a, b){ return (b.deliveredAt || 0) - (a.deliveredAt || 0); });
+    else list.sort(function(a, b){ return (a.paidAt || a.createdAt) - (b.paidAt || b.createdAt); });
+
+    var g = $("grid");
+    if (!list.length) { g.innerHTML = '<div class="empty">' + (tab === "todo" ? "All clear. New orders ping here." : "Nothing here.") + "</div>"; return; }
+    g.innerHTML = list.map(function(o){
+      var since = o.paidAt || o.createdAt, mins = (Date.now() - since) / 60000;
+      var acts = "";
+      if (o.status === "paid") acts = '<button class="btn alt" data-a="claim" data-id="' + o.id + '">I\'ve got it</button><button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button>';
+      else if (o.status === "claimed") acts = '<button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button><button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
+      else if (o.status === "delivered") acts = '<button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
+      else if (o.status === "review") acts = '<button class="btn alt" data-a="approve" data-id="' + o.id + '">Checked on Paystack, approve</button>';
+      return '<div class="o ' + o.status + (o._fresh && Date.now() - o._fresh < 4000 ? " fresh" : "") + '">' +
+        '<div class="top"><span class="code disp">' + esc(o.id) + '</span><span class="age' + (mins > 10 && o.status !== "delivered" ? " late" : "") + '">' + ago(since) + '</span></div>' +
+        '<div class="where disp">' + esc(o.where) + '</div>' +
+        '<div class="items">' + esc(items(o)) + '</div>' +
+        '<div class="extra">' + (o.suya ? '<span class="suya">Suya × ' + o.suya + '</span> ' : "") + (o.glasses ? o.glasses + " glasses" : "No glasses") + '</div>' +
+        (o.note ? '<div class="note">' + esc(o.note) + '</div>' : "") +
+        '<div class="who">' + esc(o.name) + ' · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a> · ' + naira(o.total) + '</div>' +
+        (o.status === "review" ? '<div class="runner">Paystack amount did not match. Check before delivering.</div>' : "") +
+        (o.runner ? '<div class="runner">' + (o.status === "delivered" ? "Delivered by " : "With ") + esc(o.runner) + '</div>' : "") +
+        (acts ? '<div class="acts">' + acts + '</div>' : "") +
+      '</div>';
+    }).join("");
+  }
+  $("grid").onclick = function(e){
+    var b = e.target.closest("[data-a]"); if (!b) return;
+    var a = b.getAttribute("data-a"), id = b.getAttribute("data-id");
+    if (a === "undo" && !confirm("Undo the last step on " + id + "?")) return;
+    b.disabled = true; act(id, a);
+  };
+  setInterval(function(){ if (K) render(); }, 30000);
+
+  // ---- CSV ----
+  $("csv").onclick = function(){
+    var rows = [["order","status","where","bianco","rosato","rosso","bottles","suya","glasses","total_ngn","name","phone","email","note","runner","created","paid","delivered","channel","source"]];
+    Object.keys(orders).map(function(k){ return orders[k]; }).sort(function(a, b){ return a.createdAt - b.createdAt; }).forEach(function(o){
+      var it = o.items || {}, d = function(t){ return t ? new Date(t).toISOString() : ""; };
+      rows.push([o.id, o.status, o.where, it.bianco || 0, it.rosato || 0, it.rosso || 0, o.bottles, o.suya || 0, o.glasses || 0, o.total, o.name, o.phone, o.email, o.note || "", o.runner || "", d(o.createdAt), d(o.paidAt), d(o.deliveredAt), o.channel || "", (o.utm && o.utm.src) || ""]);
+    });
+    var csv = rows.map(function(r){ return r.map(function(v){ v = String(v == null ? "" : v); return /[",\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v; }).join(","); }).join("\n");
+    var a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv" })); a.download = "amabile-seat-orders.csv"; a.click();
+  };
+})();
+</script>
+</body>
+</html>

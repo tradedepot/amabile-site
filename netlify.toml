@@ -114,3 +114,22 @@
   from = "/table/1/photos"
   to = "/table/1/photos.html"
   status = 200
+
+# Seat ordering at The Last Bachelor (18 Oct 2026). QR per table: /show/G12, /show/P4; general QR: /show.
+# Board and QR printer are private (noindex, board is password-gated). Specific rules first.
+[[redirects]]
+  from = "/show/board"
+  to = "/show-board.html"
+  status = 200
+[[redirects]]
+  from = "/show/qr"
+  to = "/show-qr.html"
+  status = 200
+[[redirects]]
+  from = "/show"
+  to = "/show.html"
+  status = 200
+[[redirects]]
+  from = "/show/*"
+  to = "/show.html"
+  status = 200

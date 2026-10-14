@@ -1,0 +1,91 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Seat ordering QR cards | Amabile di Rosa</title>
+<meta name="robots" content="noindex, nofollow">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bagel+Fat+One&family=Space+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<style>
+:root{--red:#E74529;--cream:#FFF3E0;--night:#1A1030;--ink:#2a1207;--gold:#C9A15A}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:var(--ink)}
+.disp{font-family:"Bagel Fat One",cursive;font-weight:400;line-height:.95}
+.panel{max-width:820px;margin:20px auto;background:#fff;border-radius:16px;padding:18px}
+.panel h1{font-size:26px;color:var(--red);margin-bottom:6px}
+.panel p{font-size:14px;color:#6b5646;margin-bottom:12px;line-height:1.45}
+.f{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px;margin-bottom:12px}
+.f label{font-size:12px;font-weight:700;display:block;margin-bottom:4px}
+.f input{width:100%;padding:10px;border:2px solid #ddd;border-radius:10px;font:500 15px "Space Grotesk",sans-serif}
+.btn{border:0;cursor:pointer;background:var(--red);color:var(--cream);font:400 16px "Bagel Fat One",cursive;padding:11px 20px;border-radius:999px;margin-right:8px}
+.sheet{display:flex;flex-wrap:wrap;justify-content:center;gap:12px;padding:12px}
+/* A6 card: 105 x 148 mm, four per A4 */
+.qc{width:105mm;height:148mm;background:var(--cream);border-radius:6mm;padding:8mm 8mm 7mm;display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;overflow:hidden;break-inside:avoid}
+.qc::before{content:"";position:absolute;left:0;right:0;top:0;height:3mm;background:var(--red)}
+.qc .logo{height:11mm;margin-top:1mm}
+.qc .eb{font-size:7.5pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a7a3a;margin-top:3.5mm}
+.qc h2{font-size:21pt;color:var(--red);margin-top:2.5mm}
+.qc .qr{margin-top:4mm;background:#fff;padding:2.5mm;border-radius:3mm;position:relative}
+.qc .qr img,.qc .qr canvas{display:block;width:52mm!important;height:52mm!important}
+.qc .tbl{font-size:19pt;margin-top:4mm;color:var(--ink)}
+.qc .how{font-size:9.5pt;font-weight:700;margin-top:2mm}
+.qc .offer{font-size:8.5pt;margin-top:2mm;color:#5a4636}
+.qc .foot{margin-top:auto;font-size:7pt;color:#8a7464;letter-spacing:.04em}
+.qc .url{font-size:8pt;font-weight:700;margin-top:1.5mm;color:#8a7464}
+@media print{
+  @page{size:A4;margin:0}
+  body{background:#fff}
+  .panel{display:none}
+  .sheet{display:grid;grid-template-columns:105mm 105mm;grid-auto-rows:148.5mm;gap:0;padding:0;justify-content:start}
+  .qc{border-radius:0;outline:.2mm dashed #ccc}
+}
+</style>
+</head>
+<body>
+<div class="panel">
+  <h1 class="disp">Seat ordering QR cards</h1>
+  <p>Table cards carry the table number, so guests never type where they are. General cards are for Regular and VIP seating; guests type their row and seat. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
+  <div class="f">
+    <div><label>Link base</label><input id="base" value="https://www.amabiledirosa.com/show"></div>
+    <div><label>Gold tables (G1 to Gn)</label><input id="gold" type="number" min="0" value="10"></div>
+    <div><label>Premium tables (P1 to Pn)</label><input id="prem" type="number" min="0" value="10"></div>
+    <div><label>General cards</label><input id="gen" type="number" min="0" value="8"></div>
+  </div>
+  <button class="btn" id="make">Build cards</button><button class="btn" onclick="print()">Print</button>
+</div>
+<div class="sheet" id="sheet"></div>
+<script>
+(function(){
+  function card(sheet, label, url, display){
+    var c = document.createElement("div"); c.className = "qc";
+    c.innerHTML = '<img class="logo" src="/assets/images/logo/logo_wine.png" alt="Amabile di Rosa">' +
+      '<div class="eb">The Last Bachelor</div>' +
+      '<h2 class="disp">Wine to your seat.</h2>' +
+      '<div class="qr"></div>' +
+      '<div class="tbl disp">' + label + '</div>' +
+      '<div class="how">Scan, pick, pay. We bring it over.</div>' +
+      '<div class="offer">₦20,000 a bottle. Two bottles for the table? The suya is on us.</div>' +
+      '<div class="foot">18+ only. Please drink responsibly.</div>' +
+      '<div class="url">' + display + '</div>';
+    sheet.appendChild(c);
+    new QRCode(c.querySelector(".qr"), { text: url, width: 400, height: 400, colorDark: "#2a1207", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
+  }
+  function build(){
+    var base = document.getElementById("base").value.replace(/\/+$/, "");
+    var short = base.replace(/^https?:\/\/(www\.)?/, "");
+    var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
+    var g = +document.getElementById("gold").value || 0, p = +document.getElementById("prem").value || 0, n = +document.getElementById("gen").value || 0;
+    for (var i = 1; i <= g; i++) card(sheet, "Gold table " + i, base + "/G" + i, short + "/G" + i);
+    for (var j = 1; j <= p; j++) card(sheet, "Premium table " + j, base + "/P" + j, short + "/P" + j);
+    for (var k = 0; k < n; k++) card(sheet, "Order from your seat", base + "?utm_source=event&utm_medium=qr&utm_campaign=whalemouth-2026", short);
+  }
+  document.getElementById("make").onclick = build;
+  build();
+})();
+</script>
+</body>
+</html>
