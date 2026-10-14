@@ -87,29 +87,11 @@ input:focus,textarea:focus{border-color:var(--ink)}
 @keyframes pulse{50%{box-shadow:0 0 0 7px rgba(231,69,41,.18)}}
 .lines{margin-top:14px;border-top:1px solid var(--line);padding-top:12px;font-size:15px;line-height:1.7}
 .hidden{display:none!important}
-/* age gate */
-.gate{position:fixed;inset:0;z-index:20;background:var(--night);display:grid;place-items:center;padding:24px}
-.gate .box{max-width:360px;text-align:center}
-.gate h2{font-size:34px;margin:16px 0 10px}
-.gate p{color:rgba(255,243,224,.78);line-height:1.5;margin-bottom:22px}
-.gate .opts{display:flex;gap:10px;justify-content:center}
 @media (min-width:600px){.wrap{padding-top:36px}}
 </style>
 </head>
 <body>
 
-<div class="gate hidden" id="gate">
-  <div class="box">
-    <img class="logo" src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa">
-    <h2 class="disp">Are you 18 or over?</h2>
-    <p>You need to be of legal drinking age to order.</p>
-    <div class="opts">
-      <button class="btn" id="gateYes">Yes, I am</button>
-      <button class="btn ghost" id="gateNo">No</button>
-    </div>
-    <p class="err hidden" id="gateMsg" style="margin-top:16px;color:var(--cream)">Come back when you are. Enjoy the show.</p>
-  </div>
-</div>
 
 <main class="wrap">
   <img class="logo" src="/assets/images/logo/logo_white.png" alt="Amabile di Rosa">
@@ -134,8 +116,8 @@ input:focus,textarea:focus{border-color:var(--ink)}
     </div>
 
     <div class="offer hidden" id="offer">
-      <div class="tag">Suya</div>
-      <div><b>Two bottles for the table? The suya is on us.</b><span>One portion with every two bottles.</span></div>
+      <div class="tag">Free<br>suya</div>
+      <div><b>Order 2 or more bottles, get free suya.</b><span>One portion per order, on us.</span></div>
     </div>
 
     <div class="card">
@@ -161,7 +143,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
       <div class="err" id="err"></div>
     </div>
 
-    <p class="fine">18+ only. Please drink responsibly.<br>Payments by Paystack. Card, transfer or USSD.</p>
+    <p class="fine">Please drink responsibly.<br>Payments by Paystack. Card, transfer or USSD.</p>
   </section>
 
   <!-- STATUS -->
@@ -223,19 +205,11 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var m = location.pathname.match(/^\/show\/([A-Za-z0-9]{1,6})\/?$/);
     table = ((m && m[1]) || params.get("t") || "").toUpperCase().replace(/[^A-Z0-9]/g, "");
   })();
-  function tableLabel(c){ var m = c.match(/^([GP])(\d{1,3})$/); if (m) return (m[1] === "G" ? "Gold table " : "Premium table ") + Number(m[2]); return "Table " + c; }
+  function tableLabel(c){ return "Table " + (/^\d+$/.test(c) ? String(Number(c)) : c); }
 
   var utm = {};
   params.forEach(function(v, k){ if (/^utm_/.test(k)) utm[k] = v; });
   utm.src = table ? "table_qr" : "general_qr";
-
-  // ---- age gate ----
-  function gate(done){
-    if (store("amb_age_ok")) return done();
-    $("gate").classList.remove("hidden");
-    $("gateYes").onclick = function(){ store("amb_age_ok", true); $("gate").classList.add("hidden"); done(); };
-    $("gateNo").onclick = function(){ $("gateMsg").classList.remove("hidden"); };
-  }
 
   // ---- where ----
   function renderWhere(){
@@ -252,7 +226,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var box = $("sections"); box.innerHTML = "";
     cfg.sections.forEach(function(sct){
       var b = document.createElement("button"); b.type = "button"; b.className = "chip" + (section === sct ? " on" : ""); b.textContent = sct;
-      b.onclick = function(){ section = sct; renderSections(); $("spot").placeholder = /table/i.test(sct) ? "Table number" : "Row and seat, e.g. Row D, seat 14"; };
+      b.onclick = function(){ section = sct; renderSections(); $("spot").placeholder = sct === "Table" ? "Table number" : "Row and seat, e.g. Row D, seat 14"; };
       box.appendChild(b);
     });
   }
@@ -286,7 +260,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     glassesTouched = true; glasses = Math.max(0, Math.min(cfg.event.maxGlasses, glasses + d)); update();
   };
 
-  function suyaFor(n){ return cfg.suya ? Math.floor(n / cfg.event.suyaEvery) : 0; }
+  function suyaFor(n){ return cfg.suya && n >= cfg.event.suyaMin ? 1 : 0; }
   function total(){ var t = 0; cfg.wines.forEach(function(w){ t += (qty[w.id] || 0) * w.price; }); return t; }
   function update(){
     renderWines();
@@ -294,7 +268,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var n = bottles(), s = suyaFor(n);
     $("sumTotal").textContent = naira(total());
     $("sumLine").textContent = !n ? "Pick a bottle" :
-      n + (n === 1 ? " bottle" : " bottles") + (s ? " · " + s + " suya on us" : (cfg.suya && n === 1 ? " · add one for free suya" : ""));
+      n + (n === 1 ? " bottle" : " bottles") + (s ? " · free suya included" : (cfg.suya && n === 1 ? " · add 1 more for free suya" : ""));
     $("pay").disabled = !n;
     $("err").textContent = "";
   }
@@ -390,7 +364,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
       moving ? "Your runner has it and is heading over." : "Paid. A runner is picking it up now.";
     var lines = [];
     (cfg ? cfg.wines : []).forEach(function(w){ if (o.items && o.items[w.id]) lines.push(o.items[w.id] + " × " + w.name); });
-    if (o.suya) lines.push(o.suya + " × Suya, on us");
+    if (o.suya) lines.push("Suya, on us");
     if (o.glasses) lines.push(o.glasses + " glasses");
     $("stLines").innerHTML = lines.map(esc).join("<br>") + "<br><b>" + naira(o.total) + "</b>";
     $("stHelp").textContent = done ? "Want another round? Tap below." : "Show this code to your runner.";
@@ -440,7 +414,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   }
   function start(){ if (!cfg.open) return show("closedView"); show("orderView"); update(); }
 
-  gate(boot);
+  boot();
 })();
 </script>
 </body>

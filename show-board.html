@@ -268,7 +268,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
         '<div class="top"><span class="code disp">' + esc(o.id) + '</span><span class="age' + (mins > 10 && o.status !== "delivered" ? " late" : "") + '">' + ago(since) + '</span></div>' +
         '<div class="where disp">' + esc(o.where) + '</div>' +
         '<div class="items">' + esc(items(o)) + '</div>' +
-        '<div class="extra">' + (o.suya ? '<span class="suya">Suya × ' + o.suya + '</span> ' : "") + (o.glasses ? o.glasses + " glasses" : "No glasses") + '</div>' +
+        '<div class="extra">' + (o.suya ? '<span class="suya">+ Free suya</span> ' : "") + (o.glasses ? o.glasses + " glasses" : "No glasses") + '</div>' +
         (o.note ? '<div class="note">' + esc(o.note) + '</div>' : "") +
         '<div class="who">' + esc(o.name) + ' · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a> · ' + naira(o.total) + '</div>' +
         (o.status === "review" ? '<div class="runner">Paystack amount did not match. Check before delivering.</div>' : "") +

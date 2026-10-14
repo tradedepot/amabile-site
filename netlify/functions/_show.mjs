@@ -20,7 +20,7 @@ export const EVENT = {
   currency: "NGN",
   maxBottles: 6,       // per order
   maxGlasses: 12,
-  suyaEvery: 2         // one complimentary suya for every N bottles in a single order
+  suyaMin: 2           // orders of this many bottles or more get one complimentary suya
 };
 
 // Frizzante portfolio. Facts from 02_brand_context/product_data.md. Accents per brand colours.
@@ -64,13 +64,11 @@ export async function getSettings(s) {
 
 export const isOpen = (settings) => settings.open && Date.now() < EVENT.closesAt;
 
-// Table codes printed on the QRs: G12 = Gold table 12, P4 = Premium table 4.
+// Table QRs carry the table number: /show/12 = Table 12.
 export function tableLabel(code) {
   const c = String(code || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
   if (!c) return "";
-  const m = c.match(/^([GP])(\d{1,3})$/);
-  if (m) return (m[1] === "G" ? "Gold table " : "Premium table ") + Number(m[2]);
-  return "Table " + c;
+  return "Table " + (/^\d+$/.test(c) ? String(Number(c)) : c);
 }
 
 // Short order codes runners can shout across a room. No 0/O, 1/I/L, 5/S, 2/Z, 8/B.
@@ -95,7 +93,7 @@ export function price(items, settings) {
   }
   if (!bottles) return { error: "empty" };
   if (bottles > EVENT.maxBottles) return { error: "too_many" };
-  const suya = settings.suya ? Math.floor(bottles / EVENT.suyaEvery) : 0;
+  const suya = settings.suya && bottles >= EVENT.suyaMin ? 1 : 0;
   return { items: out, bottles, total, suya };
 }
 
@@ -202,7 +200,7 @@ async function notifyOnce(s, o) {
 export function alertText(o) {
   const lines = [
     "New order " + o.id + " · " + o.where,
-    itemsText(o) + (o.suya ? " · Suya x" + o.suya : "") + (o.glasses ? " · " + o.glasses + " glasses" : ""),
+    itemsText(o) + (o.suya ? " · + free suya" : "") + (o.glasses ? " · " + o.glasses + " glasses" : ""),
     o.name + " · " + o.phone
   ];
   if (o.note) lines.push("Note: " + o.note);

@@ -30,10 +30,13 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 .qc .eb{font-size:7.5pt;font-weight:700;letter-spacing:.2em;text-transform:uppercase;color:#9a7a3a;margin-top:3.5mm}
 .qc h2{font-size:21pt;color:var(--red);margin-top:2.5mm}
 .qc .qr{margin-top:4mm;background:#fff;padding:2.5mm;border-radius:3mm;position:relative}
-.qc .qr img,.qc .qr canvas{display:block;width:52mm!important;height:52mm!important}
+.qc .qr img,.qc .qr canvas{display:block;width:46mm!important;height:46mm!important}
 .qc .tbl{font-size:19pt;margin-top:4mm;color:var(--ink)}
 .qc .how{font-size:9.5pt;font-weight:700;margin-top:2mm}
-.qc .offer{font-size:8.5pt;margin-top:2mm;color:#5a4636}
+.qc .price{font-size:9pt;margin-top:1.5mm;color:#5a4636}
+.qc .offer{margin-top:3mm;background:var(--red);color:var(--cream);border-radius:3mm;padding:2.2mm 5mm;line-height:1.1}
+.qc .offer b{display:block;font-family:"Bagel Fat One",cursive;font-weight:400;font-size:17pt}
+.qc .offer span{display:block;font-size:9pt;font-weight:700;margin-top:.6mm}
 .qc .foot{margin-top:auto;font-size:7pt;color:#8a7464;letter-spacing:.04em}
 .qc .url{font-size:8pt;font-weight:700;margin-top:1.5mm;color:#8a7464}
 @media print{
@@ -48,11 +51,10 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 <body>
 <div class="panel">
   <h1 class="disp">Seat ordering QR cards</h1>
-  <p>Table cards carry the table number, so guests never type where they are. General cards are for Regular and VIP seating; guests type their row and seat. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
+  <p>Table cards carry the table number, so guests never type where they are. General cards are for everyone else; guests type their row and seat. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
   <div class="f">
     <div><label>Link base</label><input id="base" value="https://www.amabiledirosa.com/show"></div>
-    <div><label>Gold tables (G1 to Gn)</label><input id="gold" type="number" min="0" value="10"></div>
-    <div><label>Premium tables (P1 to Pn)</label><input id="prem" type="number" min="0" value="10"></div>
+    <div><label>Number of tables</label><input id="tables" type="number" min="0" value="20"></div>
     <div><label>General cards</label><input id="gen" type="number" min="0" value="8"></div>
   </div>
   <button class="btn" id="make">Build cards</button><button class="btn" onclick="print()">Print</button>
@@ -68,8 +70,9 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
       '<div class="qr"></div>' +
       '<div class="tbl disp">' + label + '</div>' +
       '<div class="how">Scan, pick, pay. We bring it over.</div>' +
-      '<div class="offer">₦20,000 a bottle. Two bottles for the table? The suya is on us.</div>' +
-      '<div class="foot">18+ only. Please drink responsibly.</div>' +
+      '<div class="price">₦20,000 a bottle</div>' +
+      '<div class="offer"><b>Free suya</b><span>when you order 2 or more bottles</span></div>' +
+      '<div class="foot">Please drink responsibly.</div>' +
       '<div class="url">' + display + '</div>';
     sheet.appendChild(c);
     new QRCode(c.querySelector(".qr"), { text: url, width: 400, height: 400, colorDark: "#2a1207", colorLight: "#ffffff", correctLevel: QRCode.CorrectLevel.M });
@@ -78,9 +81,8 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
     var base = document.getElementById("base").value.replace(/\/+$/, "");
     var short = base.replace(/^https?:\/\/(www\.)?/, "");
     var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
-    var g = +document.getElementById("gold").value || 0, p = +document.getElementById("prem").value || 0, n = +document.getElementById("gen").value || 0;
-    for (var i = 1; i <= g; i++) card(sheet, "Gold table " + i, base + "/G" + i, short + "/G" + i);
-    for (var j = 1; j <= p; j++) card(sheet, "Premium table " + j, base + "/P" + j, short + "/P" + j);
+    var t = +document.getElementById("tables").value || 0, n = +document.getElementById("gen").value || 0;
+    for (var i = 1; i <= t; i++) card(sheet, "Table " + i, base + "/" + i, short + "/" + i);
     for (var k = 0; k < n; k++) card(sheet, "Order from your seat", base + "?utm_source=event&utm_medium=qr&utm_campaign=whalemouth-2026", short);
   }
   document.getElementById("make").onclick = build;

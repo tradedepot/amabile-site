@@ -8,7 +8,7 @@ import {
   price, publicView, saveOrder, paystackInit, paystackVerify, markPaid
 } from "./_show.mjs";
 
-const SECTIONS = ["Regular", "VIP", "Gold table", "Premium table"];
+const SECTIONS = ["Regular", "VIP", "Table"];
 
 export default async (req) => {
   const s = store();
@@ -30,7 +30,7 @@ export default async (req) => {
     return json({
       ok: true,
       open: isOpen(settings),
-      event: { name: EVENT.name, short: EVENT.short, venue: EVENT.venue, maxBottles: EVENT.maxBottles, maxGlasses: EVENT.maxGlasses, suyaEvery: EVENT.suyaEvery },
+      event: { name: EVENT.name, short: EVENT.short, venue: EVENT.venue, maxBottles: EVENT.maxBottles, maxGlasses: EVENT.maxGlasses, suyaMin: EVENT.suyaMin },
       suya: settings.suya,
       wines: WINES.map((w) => ({ ...w, soldOut: !!settings.soldOut[w.id] })),
       sections: SECTIONS,
