@@ -83,7 +83,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
     var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
     var t = +document.getElementById("tables").value || 0, n = +document.getElementById("gen").value || 0;
     for (var i = 1; i <= t; i++) card(sheet, "Table " + i, base + "/" + i, short + "/" + i);
-    for (var k = 0; k < n; k++) card(sheet, "Order to your table", base + "?utm_source=event&utm_medium=qr&utm_campaign=whalemouth-2026", short);
+    for (var k = 0; k < n; k++) card(sheet, "Order to your table", base, short);
   }
   document.getElementById("make").onclick = build;
   build();
