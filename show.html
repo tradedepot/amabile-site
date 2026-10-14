@@ -3,11 +3,11 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cut">
-<title>Wine to your seat | Amabile di Rosa</title>
-<meta name="description" content="Order Amabile di Rosa to your seat at The Last Bachelor. Pick, pay, and we bring it over.">
+<title>Wine to your table | Amabile di Rosa</title>
+<meta name="description" content="Order Amabile di Rosa to your table at The Last Bachelor. Pick, pay, and we bring it over.">
 <meta name="robots" content="noindex">
 <meta name="theme-color" content="#1A1030">
-<meta property="og:title" content="Wine to your seat | Amabile di Rosa">
+<meta property="og:title" content="Wine to your table | Amabile di Rosa">
 <meta property="og:description" content="Pick your bottles, pay here, and we bring them to your table.">
 <meta property="og:image" content="https://www.amabiledirosa.com/og-image.jpg">
 <link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
@@ -99,7 +99,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   <!-- ORDER -->
   <section id="orderView">
     <span class="eyebrow">Amabile at The Last Bachelor</span>
-    <h1 class="disp">Wine to your seat.</h1>
+    <h1 class="disp">Wine to your table.</h1>
     <p class="lede">Pick your bottles, pay here, and we bring them over. Chilled.</p>
 
     <div class="card" id="whereCard">
@@ -109,9 +109,8 @@ input:focus,textarea:focus{border-color:var(--ink)}
         <button class="linkbtn" id="whereChange" type="button">Not your table? Change it</button>
       </div>
       <div id="wherePick">
-        <div class="label">Where are you sitting?</div>
-        <div class="chips" id="sections"></div>
-        <input id="spot" placeholder="Row and seat, or table number" autocomplete="off" maxlength="60">
+        <div class="label">Your table number</div>
+        <input id="spot" type="text" inputmode="numeric" pattern="[0-9]*" placeholder="It's on the card on your table" autocomplete="off" maxlength="4">
       </div>
     </div>
 
@@ -182,7 +181,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
   var API = "/.netlify/functions/show-order";
   var LS = "amb_show_order";
   var $ = function(id){ return document.getElementById(id); };
-  var cfg = null, qty = {}, section = "", table = "", pollT = null;
+  var cfg = null, qty = {}, table = "", pollT = null;
 
   function store(k, v){ try{ if (v === undefined) return JSON.parse(localStorage.getItem(k) || "null"); if (v === null) localStorage.removeItem(k); else localStorage.setItem(k, JSON.stringify(v)); }catch(e){ return null; } }
   function naira(n){ return "₦" + Number(n || 0).toLocaleString("en-NG"); }
@@ -213,14 +212,6 @@ input:focus,textarea:focus{border-color:var(--ink)}
   }
   $("whereChange").onclick = function(){ table = ""; renderWhere(); $("spot").focus(); };
 
-  function renderSections(){
-    var box = $("sections"); box.innerHTML = "";
-    cfg.sections.forEach(function(sct){
-      var b = document.createElement("button"); b.type = "button"; b.className = "chip" + (section === sct ? " on" : ""); b.textContent = sct;
-      b.onclick = function(){ section = sct; renderSections(); $("spot").placeholder = sct === "Table" ? "Table number" : "Row and seat, e.g. Row D, seat 14"; };
-      box.appendChild(b);
-    });
-  }
 
   // ---- menu ----
   function bottles(){ var n = 0; for (var k in qty) n += qty[k]; return n; }
@@ -263,7 +254,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     name: "Add your name so the runner can find you.",
     phone: "Add a phone number we can reach you on.",
     email: "Add an email for your receipt.",
-    where: "Tell us where you're sitting.",
+    where: "Add your table number.",
     sold_out: "Sorry, one of those just sold out.",
     closed: "Orders are paused right now.",
     too_many: "That's a lot of wine. Six bottles max per order.",
@@ -280,14 +271,15 @@ input:focus,textarea:focus{border-color:var(--ink)}
 
   $("pay").onclick = function(){
     var name = $("name").value.trim(), phone = $("phone").value.trim(), email = $("email").value.trim(), spot = $("spot").value.trim();
-    if (!table && (!section || !spot)) { fail("where"); $("whereCard").scrollIntoView({behavior:"smooth", block:"center"}); return; }
+    spot = spot.replace(/\D/g, "");
+    if (!table && !spot) { fail("where"); $("whereCard").scrollIntoView({behavior:"smooth", block:"center"}); return; }
     if (!name) { fail("name"); $("name").focus(); return; }
     if (phone.replace(/\D/g, "").length < 10) { fail("phone"); $("phone").focus(); return; }
     if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { fail("email"); $("email").focus(); return; }
     store("amb_show_me", { name: name, phone: phone, email: email });
     $("pay").disabled = true; $("pay").textContent = "One sec…";
     fetch(API, { method: "POST", headers: { "content-type": "application/json" },
-      body: JSON.stringify({ items: qty, table: table, section: section, spot: spot, name: name, phone: phone, email: email, note: $("note").value.trim(), utm: utm }) })
+      body: JSON.stringify({ items: qty, table: table || spot, name: name, phone: phone, email: email, note: $("note").value.trim(), utm: utm }) })
       .then(function(r){ return r.json(); })
       .then(function(d){
         if (!d.ok) return fail(d.error);
@@ -380,7 +372,6 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var me = store("amb_show_me");
     if (me) { $("name").value = me.name || ""; $("phone").value = me.phone || ""; $("email").value = me.email || ""; }
     loadConfig().then(function(){
-      renderSections();
       // Back from Paystack redirect, or a live order on this phone
       var rid = params.get("order"), rref = params.get("ref") || params.get("reference");
       var saved = store(LS);

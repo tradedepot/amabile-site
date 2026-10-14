@@ -51,7 +51,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
 <body>
 <div class="panel">
   <h1 class="disp">Seat ordering QR cards</h1>
-  <p>Table cards carry the table number, so guests never type where they are. General cards are for everyone else; guests type their row and seat. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
+  <p>Table cards carry the table number, so guests never type where they are. General cards (bar, entrance) ask guests to type their table number. Print on A4 card, four per sheet, cut along the dashed lines. Scan one of each before printing the lot.</p>
   <div class="f">
     <div><label>Link base</label><input id="base" value="https://www.amabiledirosa.com/show"></div>
     <div><label>Number of tables</label><input id="tables" type="number" min="0" value="20"></div>
@@ -66,7 +66,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
     var c = document.createElement("div"); c.className = "qc";
     c.innerHTML = '<img class="logo" src="/assets/images/logo/logo_wine.png" alt="Amabile di Rosa">' +
       '<div class="eb">The Last Bachelor</div>' +
-      '<h2 class="disp">Wine to your seat.</h2>' +
+      '<h2 class="disp">Wine to your table.</h2>' +
       '<div class="qr"></div>' +
       '<div class="tbl disp">' + label + '</div>' +
       '<div class="how">Scan, pick, pay. We bring it over.</div>' +
@@ -83,7 +83,7 @@ body{font-family:"Space Grotesk",system-ui,sans-serif;background:#eee6da;color:v
     var sheet = document.getElementById("sheet"); sheet.innerHTML = "";
     var t = +document.getElementById("tables").value || 0, n = +document.getElementById("gen").value || 0;
     for (var i = 1; i <= t; i++) card(sheet, "Table " + i, base + "/" + i, short + "/" + i);
-    for (var k = 0; k < n; k++) card(sheet, "Order from your seat", base + "?utm_source=event&utm_medium=qr&utm_campaign=whalemouth-2026", short);
+    for (var k = 0; k < n; k++) card(sheet, "Order to your table", base + "?utm_source=event&utm_medium=qr&utm_campaign=whalemouth-2026", short);
   }
   document.getElementById("make").onclick = build;
   build();

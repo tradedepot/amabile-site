@@ -8,7 +8,6 @@ import {
   price, publicView, saveOrder, paystackInit, paystackVerify, markPaid
 } from "./_show.mjs";
 
-const SECTIONS = ["Regular", "VIP", "Table"];
 
 export default async (req) => {
   const s = store();
@@ -33,7 +32,6 @@ export default async (req) => {
       event: { name: EVENT.name, short: EVENT.short, venue: EVENT.venue, maxBottles: EVENT.maxBottles, suyaMin: EVENT.suyaMin },
       suya: settings.suya,
       wines: WINES.map((w) => ({ ...w, soldOut: !!settings.soldOut[w.id] })),
-      sections: SECTIONS,
       paystackKey: process.env.PAYSTACK_PUBLIC_KEY || ""
     });
   }
@@ -55,16 +53,10 @@ export default async (req) => {
   if (phone.replace(/\D/g, "").length < 10) return json({ ok: false, error: "phone" }, 400);
   if (!isEmail(email)) return json({ ok: false, error: "email" }, 400);
 
-  // Where to bring it: a table QR carries the code; everyone else picks a section and seat.
+  // Tables only: the table QR carries the number, the general QR asks for it.
   const table = clean(d.table, 6).toUpperCase().replace(/[^A-Z0-9]/g, "");
-  let where = "";
-  if (table) where = tableLabel(table);
-  else {
-    const section = SECTIONS.includes(d.section) ? d.section : "";
-    const spot = clean(d.spot, 60);
-    if (!section || !spot) return json({ ok: false, error: "where" }, 400);
-    where = section + " · " + spot;
-  }
+  if (!table) return json({ ok: false, error: "where" }, 400);
+  const where = tableLabel(table);
 
   let id = "";
   for (let i = 0; i < 6 && !id; i++) {
