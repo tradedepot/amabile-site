@@ -130,7 +130,7 @@
             <span class="pay-txt"><span class="t">Pay on delivery</span><span class="s">Cash or transfer when it arrives</span></span>
             <span class="amt" id="amtPOD">₦425,000</span></label>
           <label class="pay" id="payTRbox" style="display:none"><input type="radio" name="pay" value="TRANSFER">
-            <span class="pay-txt"><span class="t">Prepay by transfer<span class="save-badge" id="prepaySaveBadge" style="display:none">SAVE</span></span><span class="s">Pay before delivery — we send your account details</span></span>
+            <span class="pay-txt"><span class="t">Pay now — card or transfer<span class="save-badge" id="prepaySaveBadge" style="display:none">SAVE</span></span><span class="s">Secure checkout via Paystack · instant confirmation</span></span>
             <span class="amt" id="amtTR">₦416,500</span></label>
         </div>
         <div class="note" id="podNote" style="display:none"></div>
@@ -160,7 +160,7 @@
     <div class="msg" id="linkMsg"></div><div class="altlink"><a id="linkResend">Resend link</a></div></div></div>
 
   <!-- COMPLETING -->
-  <div id="completingView" style="display:none"><div class="card center-card"><div class="ico">⏳</div><h2 style="text-align:center">Confirming…</h2><p class="cap" style="text-align:center">Signing you in and placing your order.</p></div></div>
+  <div id="completingView" style="display:none"><div class="card center-card"><div class="ico">⏳</div><h2 id="completingTitle" style="text-align:center">Confirming…</h2><p class="cap" id="completingSub" style="text-align:center">Signing you in and placing your order.</p></div></div>
 
   <!-- CONFIRMATION -->
   <div id="confirmView" style="display:none"><div style="text-align:center;padding:14px 0">
@@ -170,6 +170,7 @@
     <div class="oref" id="orefOut">ADR-LAG-0000</div>
     <div class="osum" id="osumOut"></div>
     <div id="walletBox" style="display:none"><p class="cap" style="font-size:15px">Transfer <b id="payAmt"></b> to your Amabile account before delivery:</p><div class="wallet" id="walletInner"></div></div>
+    <a class="place" id="payRetry" href="#" style="display:none;max-width:340px;margin:10px auto 0">Try payment again →</a>
     <a class="wa-btn" id="waConfirm" href="#" style="max-width:340px;margin:10px auto 0">💬 Message us on WhatsApp</a>
     <p class="fineprint" id="confirmFine" style="max-width:430px;margin:14px auto 0">Keep your reference. Pay on delivery — cash or transfer to the driver.</p>
   </div></div>
@@ -200,9 +201,10 @@ var CONFIG={
   eligibilityEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/podEligibility', // podEligibility Cloud Function (us-east1)
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
   signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
+  initPaymentEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/initPayment', // Paystack prepay: server-side transaction init → authorization_url
   sheetEndpoint:'',
   pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:10, minCases:1,
-  prepayEnabled:false,      // POD-only until TD confirms: wallet generation in prod, a cheaper prepayPriceListByState, and the payment-confirmed webhook. Flip true to enable pay-by-transfer.
+  prepayEnabled:true,       // prepay via Paystack (card/transfer). Set false to force POD-only.
   cities:[
     {name:'Lagos',state:'Lagos',sw:[6.35,3.05],ne:[6.75,3.75]},
     {name:'Enugu',state:'Enugu',sw:[6.35,7.42],ne:[6.56,7.60]},
@@ -285,6 +287,16 @@ function sendLink(email){
 (function boot(){
   track('view_trade_order',{funnel_step:2},{standard:'ViewContent',params:{content_name:'Trade Order'}});
   if(!firebaseReady){ if(account.email)enterOrder(); else show('loginView'); return; }
+  /* Returning from Paystack checkout: don't trust the redirect — wait for the backend notification. */
+  if(new URLSearchParams(location.search).get('pay')==='return'){
+    show('completingView'); setCompleting('Confirming your payment…','This can take a few seconds.');
+    var _pi={}; try{_pi=JSON.parse(LS.getItem('adr_pay')||'{}');}catch(e){}
+    auth.onAuthStateChanged(function(user){
+      if(user&&_pi.orderId){ account.email=user.email; watchPayment(_pi.orderId); }
+      else if(!user){ setCompleting('Confirming your payment…','We\'ll email you once it clears — you can safely close this page.'); }
+    });
+    return;
+  }
   if(auth.isSignInWithEmailLink(window.location.href)){
     show('completingView');
     var email=LS.getItem('adr_email'); if(!email)email=window.prompt('Confirm your email to finish placing your order:')||'';
@@ -404,6 +416,7 @@ $('orderForm').addEventListener('submit',function(e){e.preventDefault();
     address:addr.value.trim(),address_place_id:addressMeta?addressMeta.place_id:'',lat:addressMeta?addressMeta.lat:null,lng:addressMeta?addressMeta.lng:null,
     area_auto:addressMeta?addressMeta.area_auto:'',note:$('f-note').value.trim(),status:'New'};
   Object.assign(pendingOrder,utms());
+  if(pendingOrder.payment_method==='TRANSFER'){ pendingOrder.paymentReference='PAY-'+new Date().toISOString().slice(0,10).replace(/-/g,'')+'-'+Math.floor(100000+Math.random()*900000); pendingOrder.payment_status='pending'; }
   track('begin_checkout',{funnel_step:7,currency:'NGN',value:m.grand,items:ga4Items(),payment_method:pendingOrder.payment_method,cases:m.t},{standard:'InitiateCheckout',params:{value:m.grand,currency:'NGN',num_items:m.t},ttq:'InitiateCheckout'});
   if(signedIn){bookOrder();return;}
   LS.setItem('adr_email',account.email); LS.setItem('adr_pending',JSON.stringify({account:account,order:pendingOrder}));
@@ -423,13 +436,14 @@ function bookOrder(){
   postSheet(Object.assign({record:'account'},account,{verified:true,ts:new Date().toISOString()}));
   postSheet(Object.assign({record:'order'},pendingOrder,{userEmail:account.email,business:account.business,type:account.type,name:account.name,phone:account.phone,area:account.area,ts:new Date().toISOString()}));
   show('completingView');   // "placing your order…" until the backend result comes back
-  db.collection('orders').add(o).then(function(ref){ watchOrder(ref); }).catch(function(){ finishOrder(false,null); });
+  db.collection('orders').add(o).then(function(ref){ watchOrder(ref); }).catch(function(){ renderConfirm('pending',pendingOrder); });
 }
-/* Wait for pushOrderToTradeDepot to report the real result before confirming to the buyer. */
+/* Wait for pushOrderToTradeDepot's real result, then confirm (POD) or hand off to Paystack (prepay). */
 var orderWatchUnsub=null;
+function setCompleting(t,s){var a=$('completingTitle'),b=$('completingSub');if(a)a.textContent=t;if(b)b.textContent=s;}
 function watchOrder(ref){
   var done=false;
-  function settle(ok){ if(done)return; done=true; if(orderWatchUnsub){try{orderWatchUnsub();}catch(e){}orderWatchUnsub=null;} finishOrder(ok,ref); }
+  function settle(ok){ if(done)return; done=true; if(orderWatchUnsub){try{orderWatchUnsub();}catch(e){}orderWatchUnsub=null;} finishFlow(ok,ref); }
   orderWatchUnsub=ref.onSnapshot(function(doc){
     var d=doc.data()||{};
     if(d.integration_status==='ok'||d.oms_order_id) settle(true);
@@ -437,43 +451,58 @@ function watchOrder(ref){
   },function(){ settle(false); });
   setTimeout(function(){ settle(false); },25000); // backend slow/unreachable → honest fallback
 }
-function finishOrder(ok,ref){
-  var o2=pendingOrder,isTransfer=o2.payment_method==='TRANSFER';
-  if(ok){
-    track('purchase',{funnel_step:10,transaction_id:o2.ref,currency:'NGN',value:o2.total,shipping:o2.delivery_fee,payment_method:o2.payment_method,price_source:o2.price_source,cases:o2.cases,items:ga4Items()},
-      {standard:'Purchase',params:{value:o2.total,currency:'NGN',content_name:'Amabile Starter Order',num_items:o2.cases},ttq:'CompletePayment'});
-    $('confirmIco').textContent='✓'; $('confirmTitle').textContent='Order confirmed!';
-    $('confirmSub').textContent=isTransfer?'Transfer the amount below and we\'ll dispatch as soon as it lands.':'We\'ll call you shortly to arrange delivery — have payment ready for when it arrives.';
-    $('confirmFine').textContent=isTransfer?'Keep your reference and use it in your transfer narration. Delivery is booked once payment is confirmed.':'Keep your reference. Pay on delivery — cash or bank transfer to the driver.';
-  } else {
-    track('order_backend_pending',{transaction_id:o2.ref,value:o2.total,cases:o2.cases}); // ops signal — order captured, TD push not yet confirmed
-    $('confirmIco').textContent='📞'; $('confirmTitle').textContent='Order received';
-    $('confirmSub').textContent='We\'ve got your order — our team will confirm it by phone shortly.';
-    $('confirmFine').textContent='Keep your reference and quote it when we call. No payment needed until delivery.';
-  }
-  $('orefOut').textContent=o2.ref;
-  var rows='<div class="r"><span>Order</span><b>'+o2.mix+' ('+o2.cases+' case'+(o2.cases>1?'s':'')+')</b></div>'+
-    '<div class="r"><span>Business</span><b>'+(account.business||'—')+'</b></div>'+
-    '<div class="r"><span>Subtotal'+(isTransfer?' (prepay price)':'')+'</span><b>'+fmt(o2.subtotal)+'</b></div>'+
-    '<div class="r"><span>Delivery</span><b>'+(o2.delivery_fee===0?'Free':fmt(o2.delivery_fee))+'</b></div>'+
-    '<div class="r"><span>'+(isTransfer?'Total to transfer':'Pay on delivery')+'</span><b style="color:var(--red)">'+fmt(o2.total)+'</b></div>'+
-    '<div class="r"><span>Deliver to</span><b>'+account.name+' · '+account.phone+'</b></div>';
+function finishFlow(ok,ref){
+  if(!ok){ renderConfirm('pending',pendingOrder); return; }              // TD push failed → honest fallback (no payment taken)
+  if(pendingOrder && pendingOrder.payment_method==='TRANSFER'){ beginPaystack(ref.id); } // prepay → Paystack
+  else { renderConfirm('pod',pendingOrder); }                            // POD → confirmed
+}
+/* Prepay: server initializes the Paystack transaction and returns the checkout URL. */
+function beginPaystack(orderId){
+  try{LS.setItem('adr_pay',JSON.stringify({orderId:orderId}));}catch(e){}
+  setCompleting('Opening secure checkout…','Setting up your payment with Paystack.'); show('completingView');
+  if(!CONFIG.initPaymentEndpoint){ renderConfirm('pending',pendingOrder); return; }
+  fetch(CONFIG.initPaymentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:orderId})})
+    .then(function(r){return r.json().catch(function(){return {};});})
+    .then(function(j){
+      if(j&&j.ok&&j.authorization_url){ track('payment_started',{funnel_step:9,value:pendingOrder?pendingOrder.total:null,currency:'NGN'}); window.location.href=j.authorization_url; }
+      else if(j&&j.alreadyPaid){ watchPayment(orderId); }
+      else throw new Error((j&&j.error)||'init failed');
+    }).catch(function(){ renderConfirm('pending',pendingOrder); });
+}
+/* Back from Paystack: wait for the backend notification (payment_status) — never trust the redirect itself. */
+function watchPayment(orderId){
+  var done=false, ref=db.collection('orders').doc(orderId);
+  var unsub=ref.onSnapshot(function(doc){ var d=doc.data()||{}; d.__id=orderId;
+    if(d.payment_status==='paid'){ done=true; if(unsub)unsub(); try{LS.removeItem('adr_pay');}catch(e){} history.replaceState({},document.title,location.origin+location.pathname); renderConfirm('paid',d); }
+    else if(d.payment_status==='failed'||d.payment_status==='abandoned'){ done=true; if(unsub)unsub(); renderConfirm('payfail',d); }
+  },function(){});
+  setTimeout(function(){ if(!done){ if(unsub)unsub(); setCompleting('Still confirming your payment…','This is taking longer than usual — we\'ll email you once it clears. You can safely close this page.'); } },90000);
+}
+/* Unified confirmation. kind: pod | paid | pending | payfail. o2 = pendingOrder (same session) or the order doc (after redirect). */
+function renderConfirm(kind,o2){
+  o2=o2||{}; var isTransfer=o2.payment_method==='TRANSFER';
+  var biz=o2.business||account.business||'—', nm=o2.name||account.name||'', ph=o2.phone||account.phone||'';
+  var ico='✓',title='Order confirmed!',sub='',fine='';
+  if(kind==='paid'){ title='Payment received!'; sub='Your order is confirmed and paid. We\'ll be in touch to arrange delivery.'; fine='Keep your reference for any follow-up.'; }
+  else if(kind==='pod'){ sub='We\'ll call you shortly to arrange delivery — have payment ready for when it arrives.'; fine='Keep your reference. Pay on delivery — cash or transfer to the driver.'; }
+  else if(kind==='pending'){ ico='📞'; title='Order received'; sub='We\'ve got your order — our team will confirm it by phone shortly.'; fine='Keep your reference and quote it when we call.'; }
+  else if(kind==='payfail'){ ico='⚠️'; title='Payment not completed'; sub='Your order is saved but the payment didn\'t go through. You can try again.'; fine='Having trouble? Contact our trade desk and quote your reference.'; }
+  if(kind==='pod'||kind==='paid'){ track('purchase',{funnel_step:10,transaction_id:o2.ref,currency:'NGN',value:o2.total,shipping:o2.delivery_fee,payment_method:o2.payment_method,cases:o2.cases},{standard:'Purchase',params:{value:o2.total,currency:'NGN',content_name:'Amabile Trade Order',num_items:o2.cases},ttq:'CompletePayment'}); }
+  $('confirmIco').textContent=ico; $('confirmTitle').textContent=title; $('confirmSub').textContent=sub; $('confirmFine').textContent=fine;
+  $('orefOut').textContent=o2.ref||'';
+  var rows='<div class="r"><span>Order</span><b>'+(o2.mix||'')+' ('+(o2.cases||0)+' case'+((o2.cases||0)>1?'s':'')+')</b></div>'+
+    '<div class="r"><span>Business</span><b>'+biz+'</b></div>'+
+    '<div class="r"><span>Subtotal'+(isTransfer?' (prepay price)':'')+'</span><b>'+fmt(o2.subtotal||0)+'</b></div>'+
+    '<div class="r"><span>Delivery</span><b>'+((o2.delivery_fee||0)===0?'Free':fmt(o2.delivery_fee))+'</b></div>'+
+    '<div class="r"><span>'+(kind==='paid'?'Paid':(isTransfer?'To pay':'Pay on delivery'))+'</span><b style="color:var(--red)">'+fmt(o2.total||0)+'</b></div>'+
+    '<div class="r"><span>Deliver to</span><b>'+nm+' · '+ph+'</b></div>';
   $('osumOut').innerHTML=rows;
-  if(ok&&isTransfer){ $('payAmt').textContent=fmt(o2.total); $('walletBox').style.display='block';
-    $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">⏳ Generating your payment account…</div>';
-    if(ref)watchWallet(ref);
-    setTimeout(function(){ if($('walletInner').textContent.indexOf('Generating')>-1){ $('walletInner').innerHTML='<div class="v" style="color:#6a5343;margin:0">'+(CONFIG.waEnabled?'We\'ll WhatsApp your account details shortly.':'We\'ll call you with your account details shortly.')+'</div>'; } },30000);
-  } else { $('walletBox').style.display='none'; }
-  if(CONFIG.waEnabled&&ok){ var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+account.business+' ('+account.type+')\n'+o2.mix+' — '+o2.cases+' case(s)\n'+(isTransfer?'Prepay by transfer':'Pay on delivery')+': '+fmt(o2.total)+'\n'+account.name+' · '+account.phone+'\n'+o2.address); $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
+  var wb=$('walletBox'); if(wb)wb.style.display='none';
+  var retry=$('payRetry'); if(retry){ if(kind==='payfail'){ retry.style.display='inline-block'; retry.onclick=function(e){e.preventDefault(); var pid=(o2&&o2.__id)||(JSON.parse(LS.getItem('adr_pay')||'{}').orderId||''); if(pid)beginPaystack(pid); }; } else retry.style.display='none'; }
+  if(CONFIG.waEnabled&&(kind==='pod'||kind==='paid')){ var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+biz+'\n'+(o2.mix||'')+' — '+(o2.cases||0)+' case(s)\n'+fmt(o2.total||0)+'\n'+nm+' · '+ph); $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
   else { $('waConfirm').style.display='none'; }
   show('confirmView');
 }
-function watchWallet(ref){ if(!ref)return; if(walletUnsub)walletUnsub();
-  walletUnsub=ref.onSnapshot(function(doc){ var d=doc.data(); if(!d||!d.wallet||!d.wallet.account_number)return; var w=d.wallet;
-    $('walletInner').innerHTML='<div class="k">Bank</div><div class="v">'+(w.bank_name||'')+'</div><div class="k">Account number</div><div class="v acct" id="acctNo">'+w.account_number+'</div><div class="k">Account name</div><div class="v">'+(w.account_name||'')+'</div><button class="copy" id="copyAcct" type="button">Copy account number</button>';
-    var btn=$('copyAcct'); if(btn)btn.onclick=function(){track('copy_account_number',{});navigator.clipboard.writeText(w.account_number).then(function(){btn.textContent='Copied ✓';setTimeout(function(){btn.textContent='Copy account number';},1800);});};
-    if(walletUnsub)walletUnsub();
-  }); }
 
 (function(){ var big=$('bigWa'); if(!big)return;
   if(CONFIG.waEnabled){
