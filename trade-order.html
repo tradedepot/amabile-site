@@ -202,10 +202,10 @@ var CONFIG={
   eligibilityEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/podEligibility', // podEligibility Cloud Function (us-east1)
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
   signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
-  initPaymentEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/initPayment', // Paystack prepay: server-side transaction init → authorization_url
+  initPaymentEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/initPayment', // payment gateway prepay: server-side transaction init → authorization_url
   sheetEndpoint:'',
   pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:10, minCases:1,
-  prepayEnabled:true,       // prepay via Paystack (card/transfer). Set false to force POD-only.
+  prepayEnabled:true,       // prepay via payment gateway (card/transfer). Set false to force POD-only.
   cities:[
     {name:'Lagos',state:'Lagos',sw:[6.35,3.05],ne:[6.75,3.75]},
     {name:'Enugu',state:'Enugu',sw:[6.35,7.42],ne:[6.56,7.60]},
@@ -288,7 +288,7 @@ function sendLink(email){
 (function boot(){
   track('view_trade_order',{funnel_step:2},{standard:'ViewContent',params:{content_name:'Trade Order'}});
   if(!firebaseReady){ if(account.email)enterOrder(); else show('loginView'); return; }
-  /* Returning from Paystack checkout: don't trust the redirect — wait for the backend notification. */
+  /* Returning from payment gateway checkout: don't trust the redirect — wait for the backend notification. */
   if(new URLSearchParams(location.search).get('pay')==='return'){
     show('completingView'); setCompleting('Confirming your payment…','This can take a few seconds.');
     var _pi={}; try{_pi=JSON.parse(LS.getItem('adr_pay')||'{}');}catch(e){}
@@ -439,7 +439,7 @@ function bookOrder(){
   show('completingView');   // "placing your order…" until the backend result comes back
   db.collection('orders').add(o).then(function(ref){ watchOrder(ref); }).catch(function(){ renderConfirm('pending',pendingOrder); });
 }
-/* Wait for pushOrderToTradeDepot's real result, then confirm (POD) or hand off to Paystack (prepay). */
+/* Wait for pushOrderToTradeDepot's real result, then confirm (POD) or hand off to payment gateway (prepay). */
 var orderWatchUnsub=null;
 function setCompleting(t,s){var a=$('completingTitle'),b=$('completingSub');if(a)a.textContent=t;if(b)b.textContent=s;}
 function watchOrder(ref){
@@ -454,11 +454,11 @@ function watchOrder(ref){
 }
 function finishFlow(ok,ref){
   if(!ok){ renderConfirm('pending',pendingOrder); return; }              // TD push failed → honest fallback (no payment taken)
-  if(pendingOrder && pendingOrder.payment_method==='TRANSFER'){ beginPaystack(ref.id); } // prepay → Paystack
+  if(pendingOrder && pendingOrder.payment_method==='TRANSFER'){ beginCheckout(ref.id); } // prepay → payment gateway
   else { renderConfirm('pod',pendingOrder); }                            // POD → confirmed
 }
-/* Prepay: server initializes the Paystack transaction and returns the checkout URL. */
-function beginPaystack(orderId){
+/* Prepay: server initializes the payment gateway transaction and returns the checkout URL. */
+function beginCheckout(orderId){
   try{LS.setItem('adr_pay',JSON.stringify({orderId:orderId}));}catch(e){}
   setCompleting('Opening secure checkout…','Setting up your secure payment.'); show('completingView');
   if(!CONFIG.initPaymentEndpoint){ renderConfirm('pending',pendingOrder); return; }
@@ -470,7 +470,7 @@ function beginPaystack(orderId){
       else throw new Error((j&&j.error)||'init failed');
     }).catch(function(){ renderConfirm('pending',pendingOrder); });
 }
-/* Back from Paystack: wait for the backend notification (payment_status) — never trust the redirect itself. */
+/* Back from payment gateway: wait for the backend notification (payment_status) — never trust the redirect itself. */
 function watchPayment(orderId){
   var done=false, ref=db.collection('orders').doc(orderId);
   var unsub=ref.onSnapshot(function(doc){ var d=doc.data()||{}; d.__id=orderId;
@@ -499,7 +499,7 @@ function renderConfirm(kind,o2){
     '<div class="r"><span>Deliver to</span><b>'+nm+' · '+ph+'</b></div>';
   $('osumOut').innerHTML=rows;
   var wb=$('walletBox'); if(wb)wb.style.display='none';
-  var retry=$('payRetry'); if(retry){ if(kind==='payfail'){ retry.style.display='inline-block'; retry.onclick=function(e){e.preventDefault(); var pid=(o2&&o2.__id)||(JSON.parse(LS.getItem('adr_pay')||'{}').orderId||''); if(pid)beginPaystack(pid); }; } else retry.style.display='none'; }
+  var retry=$('payRetry'); if(retry){ if(kind==='payfail'){ retry.style.display='inline-block'; retry.onclick=function(e){e.preventDefault(); var pid=(o2&&o2.__id)||(JSON.parse(LS.getItem('adr_pay')||'{}').orderId||''); if(pid)beginCheckout(pid); }; } else retry.style.display='none'; }
   if(CONFIG.waEnabled&&(kind==='pod'||kind==='paid')){ var waMsg=encodeURIComponent('Hi Amabile 👋 Trade order '+o2.ref+'\n'+biz+'\n'+(o2.mix||'')+' — '+(o2.cases||0)+' case(s)\n'+fmt(o2.total||0)+'\n'+nm+' · '+ph); $('waConfirm').href='https://wa.me/'+CONFIG.waPhone+'?text='+waMsg; $('waConfirm').style.display=''; }
   else { $('waConfirm').style.display='none'; }
   show('confirmView');

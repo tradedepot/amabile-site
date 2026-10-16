@@ -281,7 +281,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
       if (o.status === "paid") acts = '<button class="btn alt" data-a="claim" data-id="' + o.id + '">I\'ve got it</button><button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button>';
       else if (o.status === "claimed") acts = '<button class="btn" data-a="deliver" data-id="' + o.id + '">Delivered</button><button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
       else if (o.status === "delivered") acts = '<button class="btn undo" data-a="undo" data-id="' + o.id + '">Undo</button>';
-      else if (o.status === "review") acts = AK ? '<button class="btn alt" data-a="approve" data-id="' + o.id + '">Checked on Paystack, approve</button>' : "";
+      else if (o.status === "review") acts = AK ? '<button class="btn alt" data-a="approve" data-id="' + o.id + '">Payment checked, approve</button>' : "";
       return '<div class="o ' + o.status + (o._fresh && Date.now() - o._fresh < 4000 ? " fresh" : "") + '">' +
         '<div class="top"><span class="code disp">' + esc(o.id) + '</span><span class="age' + (mins > 10 && o.status !== "delivered" ? " late" : "") + '">' + ago(since) + '</span></div>' +
         '<div class="where disp">' + esc(o.where) + '</div>' +
@@ -289,7 +289,7 @@ header .me{font-size:13px;color:rgba(255,243,224,.7)}
         '<div class="extra">' + (o.suya ? '<span class="suya">+ Free suya</span> ' : "") + "" + '</div>' +
         (o.note ? '<div class="note">' + esc(o.note) + '</div>' : "") +
         '<div class="who">' + esc(o.name) + ' · <a href="tel:' + esc(o.phone) + '">' + esc(o.phone) + '</a> · ' + naira(o.total) + '</div>' +
-        (o.status === "review" ? '<div class="runner">Paystack amount did not match. Don\'t deliver yet. An admin checks and approves it.</div>' : "") +
+        (o.status === "review" ? '<div class="runner">Payment amount did not match. Don\'t deliver yet. An admin checks and approves it.</div>' : "") +
         (o.runner ? '<div class="runner">' + (o.status === "delivered" ? "Delivered by " : "With ") + esc(o.runner) + '</div>' : "") +
         (acts ? '<div class="acts">' + acts + '</div>' : "") +
       '</div>';

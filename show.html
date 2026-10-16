@@ -343,12 +343,12 @@ input:focus,textarea:focus{border-color:var(--ink)}
         if (!d.ok) return fail(d.error);
         store(LS, { id: d.order.id, ref: d.ref, at: Date.now() });
         addMine(d.order.id, d.ref);
-        openPaystack(d);
+        openCheckout(d);
       })
       .catch(function(){ fail("busy"); });
   };
 
-  function openPaystack(d){
+  function openCheckout(d){
     var reset = function(){ $("pay").disabled = false; $("pay").textContent = "Pay"; };
     if (!window.PaystackPop) { location.href = d.authorizationUrl; return; }
     try {
@@ -431,7 +431,7 @@ input:focus,textarea:focus{border-color:var(--ink)}
     var me = store("amb_show_me");
     if (me) { $("name").value = me.name || ""; $("phone").value = me.phone || ""; $("email").value = me.email || ""; }
     loadConfig().then(function(){
-      // Back from Paystack redirect, or a live order on this phone
+      // Back from checkout redirect, or a live order on this phone
       var rid = params.get("order"), rref = params.get("ref") || params.get("reference");
       var saved = store(LS);
       if (rid && rref) { addMine(rid.toUpperCase(), rref); return goStatus(rid.toUpperCase(), rref); }
