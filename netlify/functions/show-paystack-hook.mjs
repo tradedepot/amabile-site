@@ -20,6 +20,27 @@ export default async (req) => {
   if (evt.event !== "charge.success") return json({ ok: true });
 
   const tx = evt.data || {};
+  const md = tx.metadata || {};
+  // Trade self-serve orders (from initPayment) carry paymentReference + orderId → route to the trade backend.
+  // Same Amabile Paystack business, one webhook; we branch on metadata and hand trade events to paymentNotification.
+  if (md.paymentReference || md.orderId) {
+    const v = (await paystackVerify(tx.reference).catch(() => null)) || tx;
+    if ((v.status || tx.status) === "success") {
+      try {
+        await fetch("https://us-east1-amabile-trade.cloudfunctions.net/paymentNotification", {
+          method: "POST",
+          headers: { "content-type": "application/json", "x-payment-secret": process.env.TRADE_PAYMENT_NOTIFY_SECRET || "" },
+          body: JSON.stringify({
+            orderId: md.orderId || null, adrRef: md.adrRef || null,
+            paymentReference: md.paymentReference || null, reference: tx.reference, retailOutletId: md.retailOutletId || null,
+            email: (tx.customer && tx.customer.email) || "", amount: (v.amount != null ? v.amount : tx.amount),
+            currency: tx.currency || "NGN", status: "success", paidAt: v.paid_at || tx.paid_at || new Date().toISOString()
+          })
+        });
+      } catch (e) { /* paymentNotification is idempotent; Paystack retries the webhook on non-200/failure */ }
+    }
+    return json({ ok: true });
+  }
   const id = idFromRef(tx.reference);
   // Same Paystack account may serve other things: ignore anything that is not ours.
   if (!id || (tx.metadata && tx.metadata.event && tx.metadata.event !== EVENT.slug)) return json({ ok: true });
