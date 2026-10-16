@@ -130,7 +130,7 @@
             <span class="pay-txt"><span class="t">Pay on delivery</span><span class="s">Cash or transfer when it arrives</span></span>
             <span class="amt" id="amtPOD">₦425,000</span></label>
           <label class="pay" id="payTRbox" style="display:none"><input type="radio" name="pay" value="TRANSFER">
-            <span class="pay-txt"><span class="t">Pay now — card or transfer<span class="save-badge" id="prepaySaveBadge" style="display:none">SAVE</span></span><span class="s">Secure checkout via Paystack · instant confirmation</span></span>
+            <span class="pay-txt"><span class="t">Pay now — card or transfer<span class="save-badge" id="prepaySaveBadge" style="display:none">SAVE</span></span><span class="s">Secure checkout · instant confirmation</span></span>
             <span class="amt" id="amtTR">₦416,500</span></label>
         </div>
         <div class="note" id="podNote" style="display:none"></div>
@@ -460,7 +460,7 @@ function finishFlow(ok,ref){
 /* Prepay: server initializes the Paystack transaction and returns the checkout URL. */
 function beginPaystack(orderId){
   try{LS.setItem('adr_pay',JSON.stringify({orderId:orderId}));}catch(e){}
-  setCompleting('Opening secure checkout…','Setting up your payment with Paystack.'); show('completingView');
+  setCompleting('Opening secure checkout…','Setting up your secure payment.'); show('completingView');
   if(!CONFIG.initPaymentEndpoint){ renderConfirm('pending',pendingOrder); return; }
   fetch(CONFIG.initPaymentEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({orderId:orderId})})
     .then(function(r){return r.json().catch(function(){return {};});})
