@@ -1,14 +1,17 @@
-// The Room: shared "who is in the room" ticks for Table No 1, so every phone on the team
-// sees the same state. One blob per guest (t1:in:<gid>), same no-shared-counter pattern
-// as the RSVP tool, so two phones ticking at once cannot clobber each other.
+// The Room: shared "who is in the room" ticks per Table edition, so every phone on the team
+// sees the same state. One blob per guest (t<edition>:in:<gid>), same no-shared-counter
+// pattern as the RSVP tool, so two phones ticking at once cannot clobber each other.
+// /table/1/room/state keeps the t1: prefix it always had; /table/2/room/state is t2:, and so on.
 import { getStore } from "@netlify/blobs";
 
-export const config = { path: "/table/1/room/state" };
+export const config = { path: "/table/:ed/room/state" };
 
-const PREFIX = "t1:in:";
 const store = () => getStore({ name: "amabile-room", consistency: "strong" });
 
-export default async (req) => {
+export default async (req, context) => {
+  const ed = String((context && context.params && context.params.ed) || "").replace(/\D/g, "").slice(0, 3);
+  if (!ed) return json({ error: "edition" }, 404);
+  const PREFIX = `t${ed}:in:`;
   const s = store();
   if (req.method === "GET") {
     const { blobs } = await s.list({ prefix: PREFIX });
