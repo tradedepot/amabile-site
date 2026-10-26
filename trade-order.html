@@ -295,7 +295,9 @@ function sendLink(email){
     var _pi={}; try{_pi=JSON.parse(LS.getItem('adr_pay')||'{}');}catch(e){}
     auth.onAuthStateChanged(function(user){
       if(user&&_pi.orderId){ account.email=user.email; watchPayment(_pi.orderId); }
-      else if(!user){ setCompleting('Confirming your payment…','We\'ll email you once it clears — you can safely close this page.'); }
+      else if(!user){ setCompleting('Confirming your payment…', new URLSearchParams(location.search).get('src')==='chat'
+        ? 'Thank you. We\'ll confirm your payment in the chat in a moment. You can close this page.'
+        : 'We\'ll email you once it clears. You can safely close this page.'); }
     });
     return;
   }

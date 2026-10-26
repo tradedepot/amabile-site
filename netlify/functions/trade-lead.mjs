@@ -91,12 +91,12 @@ export default async (req) => {
         firstName: String(d.name || "").trim().split(/\s+/)[0] || undefined, phone: e164,
         email: d.email || undefined,
         custom_fields: [
-          { name: "outlet_name", value: d.business || "" }, { name: "outlet_type", value: d.buyer_type || "" },
-          { name: "declared_volume", value: d.cases || "" }, { name: "segment", value: "prospect_new" },
-          { name: "lead_date", value: new Date().toISOString().slice(0, 10) }
+          { name: "amb_outlet_name", value: d.business || "" }, { name: "amb_outlet_type", value: d.buyer_type || "" },
+          { name: "amb_declared_volume", value: d.cases || "" }, { name: "amb_segment", value: "prospect_new" },
+          { name: "amb_lead_date", value: new Date().toISOString().slice(0, 10) }
         ].filter((f) => f.value) }) });
       await fetch("https://api.respond.io/v2/contact/" + id + "/tag", { method: "POST", headers: hdr,
-        body: JSON.stringify(["src_web_form", "seg_prospect_new", hot ? "heat_hot" : "heat_cold", "broadcast_ok", "new_web_lead"]) });
+        body: JSON.stringify(["amb_src_web_form", "amb_seg_prospect_new", hot ? "amb_heat_hot" : "amb_heat_cold", "amb_broadcast_ok", "amb_new_web_lead"]) });
       out.respondio = "ok";
     } catch (e) { out.respondio = "fail"; }
   } else { out.respondio = RIO ? "skip:no-phone" : "skip:no-key"; }
