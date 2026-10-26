@@ -9,6 +9,13 @@
 # /venue is owned by the venue-ssr function (config.path "/venue"), which injects a
 # venue-coded title ("Guest list — <venue>") then serves the static venue.html body.
 
+# WhatsApp sign-in links from respond.io: /o/<signed token> → trade order page, signed in (see waLogin in the platform functions).
+[[redirects]]
+  from = "/o/:token"
+  to = "/trade-order.html?wa=:token&utm_source=whatsapp&utm_medium=respondio"
+  status = 302
+  force = true
+
 # Short "join the community" bio links (adr.wine/ig, /fb, /tt) → the site's join section,
 # skipping the age splash, each carrying its platform's UTM for attribution.
 [[redirects]]

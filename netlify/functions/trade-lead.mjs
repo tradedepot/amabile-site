@@ -75,5 +75,31 @@ export default async (req) => {
     } catch (e) { out.ga4 = "fail"; }
   } else { out.ga4 = "skip:no-secret"; }
 
+  // 4) respond.io — every web lead becomes a WhatsApp contact the engine can work (env RESPONDIO_API_KEY).
+  const RIO = process.env.RESPONDIO_API_KEY;
+  const digits = String(d.phone || "").replace(/\D/g, "");
+  const e164 = digits.length === 11 && digits.startsWith("0") ? "+234" + digits.slice(1)
+    : digits.length === 13 && digits.startsWith("234") ? "+" + digits
+    : digits.length === 10 && /^[789]/.test(digits) ? "+234" + digits : null;
+  if (RIO && e164) {
+    const bt = String(d.buyer_type || "").toLowerCase(), cs = String(d.cases || "");
+    const hot = /distributor|wholesal|liquor|wine shop/.test(bt) || /5|20|50|100/.test(cs);
+    const hdr = { Authorization: "Bearer " + RIO, "Content-Type": "application/json" };
+    const id = "phone:" + e164;
+    try {
+      await fetch("https://api.respond.io/v2/contact/create_or_update/" + id, { method: "POST", headers: hdr, body: JSON.stringify({
+        firstName: String(d.name || "").trim().split(/\s+/)[0] || undefined, phone: e164,
+        email: d.email || undefined,
+        custom_fields: [
+          { name: "outlet_name", value: d.business || "" }, { name: "outlet_type", value: d.buyer_type || "" },
+          { name: "declared_volume", value: d.cases || "" }, { name: "segment", value: "prospect_new" },
+          { name: "lead_date", value: new Date().toISOString().slice(0, 10) }
+        ].filter((f) => f.value) }) });
+      await fetch("https://api.respond.io/v2/contact/" + id + "/tag", { method: "POST", headers: hdr,
+        body: JSON.stringify(["src_web_form", "seg_prospect_new", hot ? "heat_hot" : "heat_cold", "broadcast_ok", "new_web_lead"]) });
+      out.respondio = "ok";
+    } catch (e) { out.respondio = "fail"; }
+  } else { out.respondio = RIO ? "skip:no-phone" : "skip:no-key"; }
+
   return new Response(JSON.stringify({ ok: true, out }), { headers: { "content-type": "application/json" } });
 };

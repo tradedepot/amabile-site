@@ -203,6 +203,7 @@ var CONFIG={
   pricingEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/getPricing', // getPricing Cloud Function (us-east1)
   signinEmailEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/sendSignInEmail', // branded sign-in email via Resend (blank → Firebase default mailer)
   initPaymentEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/initPayment', // payment gateway prepay: server-side transaction init → authorization_url
+  waLoginEndpoint:'https://us-east1-amabile-trade.cloudfunctions.net/waLogin', // WhatsApp sign-in: /o/<token> links from respond.io log the buyer straight in
   sheetEndpoint:'',
   pricePerCase:85000, deliveryFee:4000, freeDeliveryFrom:3, maxCases:10, minCases:1,
   prepayEnabled:true,       // prepay via payment gateway (card/transfer). Set false to force POD-only.
@@ -296,6 +297,26 @@ function sendLink(email){
       if(user&&_pi.orderId){ account.email=user.email; watchPayment(_pi.orderId); }
       else if(!user){ setCompleting('Confirming your payment…','We\'ll email you once it clears — you can safely close this page.'); }
     });
+    return;
+  }
+  /* WhatsApp sign-in: respond.io sends /o/<token>, Netlify redirects here with ?wa=<token>. The token is signed
+     server-side and only reaches the buyer on their own WhatsApp, so it verifies the number. */
+  var waTok=new URLSearchParams(location.search).get('wa');
+  if(waTok&&CONFIG.waLoginEndpoint){
+    show('completingView'); setCompleting('Signing you in…','One moment.');
+    fetch(CONFIG.waLoginEndpoint,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({t:waTok})})
+      .then(function(r){return r.json().then(function(j){ if(!r.ok||!j.ok) throw new Error(j.error||'Link expired'); return j; });})
+      .then(function(j){ return auth.signInWithCustomToken(j.customToken).then(function(){ return j.profile||{}; }); })
+      .then(function(p){
+        var q=new URLSearchParams(location.search); q.delete('wa');
+        history.replaceState({},document.title,location.origin+location.pathname+(q.toString()?'?'+q.toString():''));
+        signedIn=true;
+        var pc=(p.city||'').toLowerCase(), city=detectCity(pc)||(/capital|fct/.test(pc)?'Abuja':/rivers/.test(pc)?'Port Harcourt':'');
+        account={email:p.email||'',name:p.name||'',business:p.business||'',type:p.type||'',phone:p.phone||'',area:p.city||'',city:city};
+        track('wa_link_signin',{funnel_step:3,method:'whatsapp_link'});
+        enterOrder();
+      })
+      .catch(function(e){ show('loginView'); var m=$('loginMsg'); if(m){m.className='msg e';m.textContent=(e&&e.message)||'That link has expired. Reply on WhatsApp for a fresh one.';} });
     return;
   }
   if(auth.isSignInWithEmailLink(window.location.href)){
