@@ -75,7 +75,7 @@ export default async (req) => {
     } catch (e) { out.ga4 = "fail"; }
   } else { out.ga4 = "skip:no-secret"; }
 
-  // 4) respond.io — every web lead becomes a WhatsApp contact the engine can work (env RESPONDIO_API_KEY).
+  // 4) respond.io: every web lead becomes a WhatsApp contact the engine can work (env RESPONDIO_API_KEY).
   const RIO = process.env.RESPONDIO_API_KEY;
   const digits = String(d.phone || "").replace(/\D/g, "");
   const e164 = digits.length === 11 && digits.startsWith("0") ? "+234" + digits.slice(1)
