@@ -221,13 +221,17 @@
     const me = S.me;
     $("#meBtn").innerHTML = me ? A.avatar(me.player.avatar, 52) : A.avatar({ skin: "s3", hair: "low", face: "smile", outfit: "ankara" }, 52);
     const lb = $("#lightBar");
-    if (!S.token || !me) lb.innerHTML = `<button class="pill" id="signInPill">Sign in to send and claim</button>`;
-    else if (me.light) {
-      const v = venueOf(me.light.venueId);
-      lb.innerHTML = `<div class="pill on"><span class="dot"></span>You're outside${v ? " · " + esc(spotName(v.band)) : ""} · till ${timeShort(me.light.until)}<button id="lightOff">Off</button></div>`;
-    } else lb.innerHTML = `<button class="pill" id="lightOn">Open to bottles</button>`;
+    if (!S.token || !me) lb.innerHTML = `<button class="pill" id="signInPill">Sign in</button>`;
+    else if (me.light) lb.innerHTML = `<button class="pill on" id="lightMenu"><span class="dot"></span>Outside<span class="till">till ${timeShort(me.light.until)}</span></button>`;
+    else lb.innerHTML = `<button class="pill" id="lightOn"><span class="ring"></span>Open to bottles</button>`;
     const on = $("#lightOn"); if (on) on.onclick = () => startLight();
-    const off = $("#lightOff"); if (off) off.onclick = async () => { await api("light", { on: false }); await loadMe(); toast("Light off."); };
+    const lm = $("#lightMenu"); if (lm) lm.onclick = () => {
+      const v = venueOf(me.light.venueId);
+      modal(`<h2>You're outside</h2><p>${v ? "At " + esc(spotName(v.band)) + ", until " : "Until "}${timeShort(me.light.until)}. Your people can see you're out, never where, and can send a bottle to your table.</p>
+        <button class="btn block ghost" id="lightOff">Turn my light off</button>`, (c) => {
+        c.querySelector("#lightOff").onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Light off."); };
+      });
+    };
     const si = $("#signInPill"); if (si) si.onclick = () => signIn();
 
     const out = me ? me.circle.filter((c) => c.out) : [];
@@ -365,13 +369,17 @@
   }
   function bottlesTab() {
     const me = S.me; const bag = me.bag, sent = me.sent || [];
-    const items = bag.map((b) => `<div class="item bag"><div class="bt ph">${photo(b.wine, 110)}</div><div class="grow"><h4>From ${esc(b.from)}</h4>
-      <div class="sub">${esc(wineOf(b.wine).label)} · ${b.kind === "gift" ? esc(bandName(b.band)) + " and below" : "on its way"}</div>${b.note ? `<div class="note">"${esc(b.note)}"</div>` : ""}
-      <div class="row" style="margin-top:8px;flex-wrap:wrap">${b.status === "waiting"
-        ? `<button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button><button class="btn small ghost" data-spots="${b.id}">Where?</button><button class="link" data-more="${b.id}">More</button>`
-        : `<span class="tag gold">On its way</span><button class="link" data-cancel="${b.id}">Not here any more</button>`}</div></div></div>`).join("");
+    const items = bag.map((b) => `<div class="bagcard"><div class="pic">${photo(b.wine, 132)}</div><div class="info">
+      <div class="from">From <b>${esc(b.from)}</b></div><div class="wname">${esc(wineOf(b.wine).label)}</div>
+      <div class="meta">${esc(wineOf(b.wine).kind || "")}${b.kind === "gift" ? " · " + esc(bandName(b.band)) + " spots and below" : ""}</div>
+      ${b.note ? `<div class="q">"${esc(b.note)}"</div>` : ""}
+      ${b.status === "waiting"
+        ? `<div class="acts"><button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button></div>
+           <div class="links"><button class="link" data-spots="${b.id}">Where to claim</button><span>·</span><button class="link" data-more="${b.id}">More</button></div>`
+        : `<div class="acts one"><span class="tag gold">On its way</span></div><div class="links"><button class="link" data-cancel="${b.id}">Not here any more</button></div>`}
+      </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>To ${esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div><span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span></div>`).join("");
-    return `<h2>Your bottles</h2>${items || `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
+    return `<h2>Your bottles</h2>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
   function bindSheet(tab) {
@@ -522,17 +530,21 @@
       const wines = st.mode === "light" ? S.cfg.wines.filter((w) => (st.friend.wines || []).includes(w.id)) : S.cfg.wines.filter((w) => anyBand(w.id));
       if (!st.wine || !wines.some((w) => w.id === st.wine)) st.wine = wines[0] && wines[0].id;
       const price = priceFor(st);
+      const who = st.mode === "light"
+        ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
+        : st.mode === "table" ? `<div class="to-card"><div class="grow"><b>Table ${esc(st.table)}</b><small>In this room, from you.</small></div></div>`
+        : `<div class="tofield"><input id="to" type="tel" inputmode="tel" placeholder="Their number, 0803 000 0000" value="${esc(st.to)}">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
+           ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`;
+      const bands = st.mode === "number" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
       return `<h2>Send an Amabile</h2>
-        ${st.mode === "light" ? `<div class="item"><div class="bt">${A.avatar(st.friend.avatar, 44)}</div><div class="grow"><h4>${esc(st.friend.name)}</h4><div class="sub">Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</div></div></div>`
-          : st.mode === "table" ? `<div class="item"><div class="grow"><h4>Table ${esc(st.table)}</h4><div class="sub">In this room, from you.</div></div></div>`
-          : `<label class="field"><span>Their number</span><div class="row"><input id="to" type="tel" placeholder="0803 000 0000" value="${esc(st.to)}" class="grow">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div></label>
-             ${out.length ? `<p class="muted">Or someone outside now:</p><div class="chips">${out.map((c) => `<button class="chip" data-f="${c.key}">${esc(c.name)}</button>`).join("")}</div>` : ""}`}
-        <h3>Wine</h3><div class="wines">${wines.map((w) => `<button class="wine${st.wine === w.id ? " on" : ""}" data-w="${w.id}">${photo(w.id, 96)}<br>${esc(w.name)}<small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div>
-        ${st.mode === "number" ? `<h3>Where it can be claimed</h3><div class="chips">${S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)).map((b) => `<button class="chip${st.band === b ? " on" : ""}" data-b="${b}">${esc(bandName(b))} spots<small>${naira(bandPrice(b, st.wine))} · ${spotsFor(b, st.wine)} spot${spotsFor(b, st.wine) === 1 ? "" : "s"}</small></button>`).join("")}</div>` : ""}
-        <label class="field"><span>A note (optional)</span><textarea id="note" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea></label>
-        <label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>
-        <button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="muted" style="font-size:12px">They get it at a partner venue when they're outside. You'll see Waiting, then Delivered. Never where.</p>`;
+        <div class="sec"><div class="lab">To</div>${who}</div>
+        <div class="sec"><div class="lab">Wine</div><div class="wpick">${wines.map((w) => `<button class="wcard${st.wine === w.id ? " on" : ""}" data-w="${w.id}"><span class="pic">${photo(w.id, 118)}</span><b>${esc(w.name)}</b><small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div></div>
+        ${bands.length ? `<div class="sec"><div class="lab">Where they can claim it</div><div class="bandlist">${bands.map((b) => { const n = spotsFor(b, st.wine);
+          return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))} spots</b><small>${n} spot${n === 1 ? "" : "s"}${b !== bands[0] ? " and anywhere cheaper" : ""}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
+        <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
+          <label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label></div>
+        <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
+        <p class="fine">They claim it at a partner venue next time they're outside. You'll see Waiting, then Delivered. Never where.</p></div>`;
     };
     const mount = (c) => {
       const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
@@ -540,6 +552,7 @@
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { st.wine = b.dataset.w; redraw(); }));
       c.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { st.band = b.dataset.b; redraw(); }));
       c.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { st.mode = "light"; st.friend = out.find((x) => x.key === b.dataset.f); redraw(); }));
+      const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
       const pick = c.querySelector("#pick");
       if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { st.to = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
