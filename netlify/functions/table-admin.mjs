@@ -65,6 +65,7 @@ function inviteEmailHtml({ name, hostName, title, whenCell, venue, cardParagraph
 // Per-edition fallbacks for the thank-you card, used only when the edition fields are blank.
 const THANKS_DEFAULTS = {
   "1": { photos: "SP2R1413-s,AT02-s,SP2R1822-s", playlist: "https://open.spotify.com/playlist/1zziPNUCwGtezVH72qZntB" },
+  "2": { photos: "3O0A8082-s,SHEY0152-s,SHEY0820-s", playlist: "" },
 };
 
 function thanksEmailHtml({ name, title, dateLabel, venue, paragraph, photos, photosUrl, playlistUrl, signoff }) {

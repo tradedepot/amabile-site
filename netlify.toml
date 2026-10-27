@@ -114,6 +114,12 @@
   to = "/table/2/room.html"
   status = 200
 
+# Guests' photo page for Table No 2. Images live in /table/2/p/.
+[[redirects]]
+  from = "/table/2/photos"
+  to = "/table/2/photos.html"
+  status = 200
+
 # Host's flash cards. Same rules as the room: obscurity, noindex, never linked.
 [[redirects]]
   from = "/table/1/h"
