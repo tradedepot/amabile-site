@@ -580,7 +580,7 @@
     const people = c.filter((x) => x.mutual || x.out).sort((a, b) => rank(a) - rank(b) || String(a.name).localeCompare(String(b.name)));
     const pending = c.filter((x) => !x.mutual && !x.out);
     const row = (x) => `<div class="item${x.out ? " lit" : ""}"><div class="bt av">${A.avatar(x.avatar || {}, 44)}${x.out ? "<i></i>" : ""}</div>
-      <div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">${x.out ? "Outside now, at " + esc(spotName(x.band)) : x.level === "hidden" ? "Hidden from your light" : "Sees your light"}</div></div>
+      <div class="grow"><h4>${esc(x.name || x.phone)}${x.status ? ` <span class="lvl sm">${esc(x.status)}</span>` : ""}</h4><div class="sub">${x.out ? "Outside now, at " + esc(spotName(x.band)) : x.level === "hidden" ? "Hidden from your light" : "Sees your light"}</div></div>
       ${x.out ? `<button class="btn small" data-sendto="${x.key}">Send</button>` : ""}
       ${x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : ""}</div>`;
     const nOut = people.filter((x) => x.out).length;
@@ -692,8 +692,12 @@
   async function meCard() {
     const p = S.me.player;
     // Kept bare on purpose: nothing here suggests anyone can see where you are.
-    modal(`<div class="row"><div>${A.avatar(p.avatar, 96)}</div><div class="grow"><h2 style="margin:0">${esc(p.name)}</h2>
-      <div class="muted" style="margin-top:6px">${p.sentCount || 0} bottles sent</div></div></div>
+    const lv = S.cfg.levels || [];
+    const cur = lv.filter((x) => (p.received || 0) >= x.at).pop() || { at: 0 }, nx = lv.find((x) => x.at > (p.received || 0));
+    const pct = nx ? Math.round((((p.received || 0) - cur.at) / (nx.at - cur.at)) * 100) : 100;
+    modal(`<div class="row"><div class="meav${S.me.light ? " outside" : ""}">${A.avatar(p.avatar, 96)}</div><div class="grow"><h2 style="margin:0">${esc(p.name)}</h2><span class="lvl">${esc(p.level || "JJC")}</span></div></div>
+      <div class="status"><div class="n">${p.received || 0}</div><div class="grow"><b>bottle${p.received === 1 ? "" : "s"} sent to your table</b>
+        <div class="bar"><i style="width:${pct}%"></i></div><small>${p.next ? `${p.toNext} more to <b>${esc(p.next)}</b>` : "As high as it goes."}</small></div></div>
       ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
       <p></p><button class="btn block ghost" id="look">Change my avatar</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);

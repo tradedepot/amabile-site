@@ -121,6 +121,7 @@ export async function ticketServed(s, t, by) {
     const p = await getJSON(s, K.player(t.playerPhone));
     if (p) {
       addNight(p); addStamp(p, t.venueId); addBadge(p, "first-light");
+      if (t.kind !== "drop" && t.bottleId) p.received = (p.received || 0) + 1;
       if (t.kind === "drop" && t.createdAt - (t.dropStart || 0) < 10 * 60 * 1000) addBadge(p, "early");
       p.rank = rankFor(p);
       await s.setJSON(K.player(t.playerPhone), p);

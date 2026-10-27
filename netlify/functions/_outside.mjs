@@ -315,7 +315,8 @@ export function boardView(t) {
 // ---------- players ----------
 export function publicPlayer(p) {
   if (!p) return null;
-  return { name: p.name || "", avatar: p.avatar || null, rank: p.rank || "JJC", badges: p.badges || [], stamps: p.stamps || [], sentCount: p.sentCount || 0 };
+  const lv = levelFor(p.received);
+  return { name: p.name || "", avatar: p.avatar || null, received: p.received || 0, level: lv.name, next: lv.next, toNext: lv.toNext, sentCount: p.sentCount || 0 };
 }
 export function isAdult(dob) {
   const m = String(dob || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -328,15 +329,19 @@ export function isAdult(dob) {
 }
 
 // Ranks count nights, never bottles, and only two nights a week.
-export function rankFor(p) {
-  const nights = (p.nights || []).length, venues = new Set(p.stamps || []).size, sent = p.sentCount || 0;
-  const people = new Set(p.sentTo || []).size;
-  if (p.landmark) return "Landmark";
-  if (sent >= 20 && people >= 10) return "Chairman";
-  if (nights >= 15 && sent >= 5 && venues >= 8) return "Face";
-  if (nights >= 6 && venues >= 3) return "Regular";
-  return "JJC";
+// Status is the bottles people have sent to your table: worn the way money was in Lagos Life.
+// Counts gifts that reached you (drops from Amabile don't count). You can't send to yourself.
+export const LEVELS = [
+  { at: 0, name: "JJC" }, { at: 1, name: "Known Face" }, { at: 3, name: "Correct Person" }, { at: 7, name: "Big Deal" },
+  { at: 15, name: "Celeb" }, { at: 30, name: "Agba" }, { at: 60, name: "Lagos Royalty" }
+];
+export function levelFor(received) {
+  const n = Number(received) || 0;
+  let i = 0; while (i + 1 < LEVELS.length && n >= LEVELS[i + 1].at) i++;
+  const nx = LEVELS[i + 1];
+  return { name: LEVELS[i].name, next: nx ? nx.name : null, toNext: nx ? nx.at - n : 0 };
 }
+export function rankFor(p) { return levelFor(p.received).name; }
 export function addNight(p, t = Date.now()) {
   const night = nightKey(t);
   p.nights = p.nights || [];

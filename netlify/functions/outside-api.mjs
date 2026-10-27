@@ -19,7 +19,7 @@ import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
   publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
-  payEmail, sendCode, publicPlayer, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
+  payEmail, sendCode, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "./_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "./_outside_flow.mjs";
 
@@ -101,7 +101,7 @@ export default async (req) => {
       const [bands, venues, glow] = await Promise.all([getBands(s), allVenues(s), computeGlow(s)]);
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
         venues: venues.filter((v) => v.active).map(publicVenue), glow: glow.glow, drops: await liveDrops(s),
-        beacons: BEACONS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", rules: { lightHours: RULES.lightHours } });
+        beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", rules: { lightHours: RULES.lightHours } });
     }
 
     if (route === "auth/start") {
@@ -198,7 +198,7 @@ export default async (req) => {
           out = lightIsOn(l);
           if (out) { const v = await getJSON(s, K.venue(l.venueId)); band = v ? v.band : null; wines = v ? publicVenue(v).wines.filter((w) => !(v.outOf || {})[w]) : []; }
         }
-        circle.push({ key: phoneKey(e.other), name: them.name, avatar: them.avatar || null, level: e.level, mutual, out, band, wines, pending: !theirs });
+        circle.push({ key: phoneKey(e.other), name: them.name, avatar: them.avatar || null, status: mutual ? levelFor(them.received).name : "", level: e.level, mutual, out, band, wines, pending: !theirs });
       }
       return json({ ok: true, player: { ...publicPlayer(player), phone: maskPhone(me), invite: player.hash || numberHash(me), nights: (player.nights || []).length },
         bag: bag.map(bagView), sent, light: lightIsOn(light) ? { venueId: light.venueId, table: light.table, until: light.until, visible: !!light.visible, manual: !!light.manual } : null,
