@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outside admin</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --wine:#7d1d1d; --gold:#f2c66b; --ink:#3a2a20; --card:#fffdf7; --cream:#efe4cf; --rule:#e6d6b8; }
+  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: var(--cream); color: var(--ink); }
+  header { background: var(--wine); color: #fff; padding: 14px 18px; display: flex; gap: 16px; align-items: center; flex-wrap: wrap; }
+  header h1 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; margin: 0; font-size: 26px; }
+  nav button { background: transparent; color: #fff; border: 2px solid rgba(255,255,255,.4); border-radius: 999px; padding: 6px 12px; font: inherit; font-weight: 800; cursor: pointer; }
+  nav button.on { background: var(--gold); color: var(--ink); border-color: var(--gold); }
+  main { max-width: 1100px; margin: 0 auto; padding: 18px; }
+  .card { background: var(--card); border: 2px solid var(--ink); border-radius: 16px; padding: 16px; margin-bottom: 14px; }
+  h2 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; color: var(--wine); margin: 0 0 10px; }
+  table { width: 100%; border-collapse: collapse; font-size: 14px; } th, td { text-align: left; padding: 7px 6px; border-bottom: 1px solid var(--rule); vertical-align: top; }
+  th { font-size: 12px; text-transform: uppercase; letter-spacing: .5px; color: #6b5646; }
+  label { display: block; font-weight: 800; font-size: 13px; margin: 8px 0 4px; }
+  input, select, textarea { width: 100%; font: inherit; padding: 9px 10px; border: 2px solid var(--ink); border-radius: 10px; background: #fff; }
+  input[type=checkbox] { width: auto; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
+  button.b { font: inherit; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 9px 14px; background: var(--wine); color: #fff; cursor: pointer; }
+  button.b.ghost { background: #fff; color: var(--ink); } button.b.small { padding: 5px 10px; font-size: 13px; }
+  .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+  .note { background: #fff7df; border: 2px dashed var(--wine); border-radius: 12px; padding: 12px; margin: 10px 0; }
+  .muted { color: #6b5646; font-size: 13px; } .tag { display: inline-block; padding: 1px 8px; border-radius: 999px; border: 1.5px solid var(--ink); font-size: 12px; font-weight: 800; background: var(--cream); }
+  .tag.on { background: #c9f0d6; } .tag.off { background: #f3d2d2; }
+  .login { max-width: 380px; margin: 80px auto; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script>
+(() => {
+  const API = "/api/outside-admin";
+  const LS = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch {} } };
+  let ak = LS.get("outside.ak") || "", tab = "venues", data = {};
+  const BAND_NAMES = { everyday: "Chill", lounge: "Enjoyment", premium: "Soft Life", top: "Odogwu" };
+  const ARTS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const naira = (n) => (n ? "₦" + Number(n).toLocaleString("en-NG") : "");
+  const lagos = (t) => new Date(t).toLocaleString("en-GB", { timeZone: "Africa/Lagos", weekday: "short", day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" });
+  const root = document.getElementById("root");
+  async function call(body) {
+    const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ak, ...body }) });
+    const d = await r.json().catch(() => ({ ok: false, error: "server" }));
+    if (r.status === 401) { ak = ""; login("Wrong password."); }
+    return d;
+  }
+  function login(msg) {
+    root.innerHTML = `<div class="card login"><h2>Outside admin</h2><label>Admin password</label><input id="k" type="password"><p><button class="b" id="go">Sign in</button></p><p class="muted">${esc(msg || "")}</p></div>`;
+    document.getElementById("go").onclick = async () => { ak = document.getElementById("k").value; const r = await call({ action: "venues" }); if (r.ok) { LS.set("outside.ak", ak); data.venues = r; show("venues"); } };
+  }
+  function shell(inner) {
+    root.innerHTML = `<header><h1>Outside admin</h1><nav class="row">${["venues", "bands", "drops", "payouts", "bottles", "unmet"].map((t) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</nav></header><main>${inner}</main>`;
+    root.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => show(b.dataset.t)));
+  }
+  async function show(t) {
+    tab = t;
+    if (t === "venues") { const r = await call({ action: "venues" }); data.venues = r; return venues(); }
+    if (t === "bands") { const r = await call({ action: "venues" }); data.venues = r; return bands(); }
+    if (t === "drops") { const [v, d] = await Promise.all([call({ action: "venues" }), call({ action: "drops" })]); data.venues = v; data.drops = d.drops || []; return drops(); }
+    if (t === "payouts") { const r = await call({ action: "ledger" }); return payouts(r.ledger || []); }
+    if (t === "bottles") { const r = await call({ action: "bottles" }); return bottles(r.bottles || []); }
+    if (t === "unmet") { const r = await call({ action: "unmet" }); return unmet(r.unmet || []); }
+  }
+
+  // ---------- venues ----------
+  function venues(flash) {
+    const vs = (data.venues.venues || []).sort((a, b) => a.name.localeCompare(b.name));
+    shell(`${flash || ""}<div class="card"><div class="row" style="justify-content:space-between"><h2>Venues (${vs.length})</h2><button class="b" id="new">Add a venue</button></div>
+      <table><tr><th>Venue</th><th>Area</th><th>Level</th><th>Prices</th><th>Status</th><th></th></tr>
+      ${vs.map((v) => `<tr><td><b>${esc(v.name)}</b><div class="muted">${esc(v.art)} · ${v.tables || ""} tables</div></td><td>${esc(v.area)}</td><td>${BAND_NAMES[v.band] || v.band}</td>
+        <td class="muted">${Object.entries(v.prices || {}).map(([w, p]) => esc(w) + " " + naira(p)).join("<br>")}${v.taxIncluded ? "" : "<br>(before tax)"}</td>
+        <td><span class="tag ${v.active ? "on" : "off"}">${v.active ? "Live" : "Off"}</span>${v.paused ? ' <span class="tag off">Paused</span>' : ""}</td>
+        <td><button class="b small ghost" data-e="${v.id}">Edit</button> <button class="b small ghost" data-k="${v.id}">New board codes</button></td></tr>`).join("")}</table></div>`);
+    document.getElementById("new").onclick = () => venueForm({});
+    root.querySelectorAll("[data-e]").forEach((b) => (b.onclick = () => venueForm(vs.find((v) => v.id === b.dataset.e))));
+    root.querySelectorAll("[data-k]").forEach((b) => (b.onclick = async () => {
+      if (!confirm("Issue new codes? The old ones stop working.")) return;
+      const r = await call({ action: "venue-keys", id: b.dataset.k }); if (r.ok) venues(keysNote(r, vs.find((v) => v.id === b.dataset.k).name));
+    }));
+  }
+  const keysNote = (r, name) => `<div class="note"><b>Board codes for ${esc(name)}</b>. Shown once, save them now.<br>Board link: <a href="${esc(r.board)}" target="_blank">${esc(r.board)}</a><br>Runner code: <b style="font-size:20px">${esc(r.keys.runner)}</b> · Manager code: <b style="font-size:20px">${esc(r.keys.manager)}</b></div>`;
+  function venueForm(v) {
+    const W = data.venues.wines || [];
+    shell(`<div class="card"><h2>${v.id ? "Edit " + esc(v.name) : "Add a venue"}</h2>
+      <div class="grid"><div><label>Name</label><input id="name" value="${esc(v.name || "")}"></div><div><label>Area</label><input id="area" value="${esc(v.area || "")}" placeholder="Victoria Island"></div>
+      <div><label>Price level</label><select id="band">${Object.entries(BAND_NAMES).map(([k, n]) => `<option value="${k}"${v.band === k ? " selected" : ""}>${n}</option>`).join("")}</select></div>
+      <div><label>Building on the map</label><select id="art">${ARTS.map((a) => `<option${v.art === a ? " selected" : ""}>${a}</option>`).join("")}</select></div></div>
+      <label>Menu price per bottle, ₦ (leave blank if not stocked)</label><div class="grid">${W.map((w) => `<div><label class="muted">${esc(w.label)}</label><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div>`).join("")}</div>
+      <label><input type="checkbox" id="tax"${v.taxIncluded ? " checked" : ""}> Menu prices include VAT, consumption tax and service</label>
+      <h2 style="margin-top:16px">Location</h2><p class="muted">Stand inside the venue and tap Use my location, or paste a Google Maps link.</p>
+      <div class="row"><button class="b ghost" id="here">Use my location</button><input id="gm" placeholder="Paste a Google Maps link" style="flex:1;min-width:220px"></div>
+      <div class="grid"><div><label>Latitude</label><input id="lat" value="${v.lat ?? ""}"></div><div><label>Longitude</label><input id="lng" value="${v.lng ?? ""}"></div>
+      <div><label>Radius, metres</label><input id="radius" value="${v.radius || 60}"></div><div><label>Tables</label><input id="tables" value="${v.tables || 20}"></div></div>
+      <div class="grid"><div><label>Runner fee for drop bottles, ₦</label><input id="fee" value="${v.runnerFee || 2000}"></div><div><label>Tonight (shown to players)</label><input id="tonight" value="${esc(v.tonight || "")}" placeholder="DJ from 9pm"></div></div>
+      <h2 style="margin-top:16px">Contact and payouts</h2><div class="grid"><div><label>Manager name</label><input id="cn" value="${esc((v.contact || {}).name || "")}"></div><div><label>Manager phone</label><input id="cp" value="${esc((v.contact || {}).phone || "")}"></div>
+      <div><label>Bank</label><input id="bk" value="${esc((v.payout || {}).bank || "")}"></div><div><label>Account number</label><input id="ac" value="${esc((v.payout || {}).account || "")}"></div><div><label>Account name</label><input id="an" value="${esc((v.payout || {}).name || "")}"></div></div>
+      <label style="margin-top:14px"><input type="checkbox" id="active"${v.active || !v.id ? " checked" : ""}> Live in the game</label>
+      <p class="row"><button class="b" id="save">Save</button><button class="b ghost" id="back">Back</button></p><p id="msg" class="muted"></p></div>`);
+    const $ = (id) => document.getElementById(id);
+    $("back").onclick = () => venues();
+    $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); $("msg").textContent = "Location set, accuracy about " + Math.round(p.coords.accuracy) + "m."; }, () => ($("msg").textContent = "Location not available."), { enableHighAccuracy: true, timeout: 15000 });
+    $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; $("msg").textContent = "Location read from the link."; } };
+    $("save").onclick = async () => {
+      const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
+      const venue = { id: v.id, name: $("name").value, area: $("area").value, band: $("band").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
+        lat: Number($("lat").value), lng: Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
+        contact: { name: $("cn").value, phone: $("cp").value }, payout: { bank: $("bk").value, account: $("ac").value, name: $("an").value }, active: $("active").checked };
+      const r = await call({ action: "venue-save", venue });
+      if (!r.ok) return ($("msg").textContent = r.error === "location" ? "Set the location first." : "Couldn't save: " + r.error);
+      data.venues = await call({ action: "venues" });
+      venues(r.keys ? keysNote(r, r.venue.name) : `<div class="note">Saved ${esc(r.venue.name)}.</div>`);
+    };
+  }
+
+  // ---------- bands ----------
+  function bands() {
+    const b = data.venues.bands, order = data.venues.bandOrder;
+    shell(`<div class="card"><h2>Gift prices by level</h2><p class="muted">What a sender pays for a waiting bottle. A bottle can be claimed at any venue at its level or below. Leave Odogwu blank: sends there are priced at the venue.</p>
+      ${Object.keys(b).map((fam) => `<h2 style="font-size:20px;margin-top:14px">${fam[0].toUpperCase() + fam.slice(1)}</h2><div class="grid">${order.map((k) => `<div><label>${BAND_NAMES[k]}</label><input data-f="${fam}" data-b="${k}" inputmode="numeric" value="${b[fam][k] || ""}"></div>`).join("")}</div>`).join("")}
+      <p><button class="b" id="save">Save prices</button></p><p id="msg" class="muted"></p></div>`);
+    document.getElementById("save").onclick = async () => {
+      const out = {}; document.querySelectorAll("[data-f]").forEach((i) => { out[i.dataset.f] = out[i.dataset.f] || {}; out[i.dataset.f][i.dataset.b] = i.value; });
+      const r = await call({ action: "bands-save", bands: out }); document.getElementById("msg").textContent = r.ok ? "Saved." : "Couldn't save.";
+    };
+  }
+
+  // ---------- drops ----------
+  function drops() {
+    const vs = data.venues.venues || [], W = data.venues.wines || [];
+    const vn = (id) => (vs.find((v) => v.id === id) || {}).name || id;
+    shell(`<div class="card"><h2>New drop</h2><div class="grid">
+      <div><label>Venue</label><select id="venue">${vs.filter((v) => v.active).map((v) => `<option value="${v.id}">${esc(v.name)}</option>`).join("")}</select></div>
+      <div><label>Type</label><select id="kind"><option value="open">Open: first tables</option><option value="gathering">Gathering: opens when the room fills</option><option value="hidden">Hidden: clue only</option><option value="passiton">Pass it on</option></select></div>
+      <div><label>Starts (Lagos time)</label><input id="start" type="datetime-local"></div><div><label>Ends (Lagos time, 2am latest)</label><input id="end" type="datetime-local"></div>
+      <div><label>Bottles</label><input id="bottles" value="20"></div><div><label>Lights needed (gathering)</label><input id="gl" value="15"></div></div>
+      <label>Wines</label><div class="row">${W.map((w) => `<label style="font-weight:700"><input type="checkbox" data-w="${w.id}"${w.family === "frizzante" && w.id !== "rosato" ? " checked" : ""}> ${esc(w.label)}</label>`).join("")}</div>
+      <div class="grid"><div><label>Clue (hidden drops)</label><input id="clue"></div><div><label>Reward for the last table</label><input id="reward" placeholder="Suya platter for the last table"></div></div>
+      <p><button class="b" id="save">Schedule drop</button></p><p id="msg" class="muted"></p></div>
+      <div class="card"><h2>Drops</h2><table><tr><th>When</th><th>Venue</th><th>Type</th><th>Taken</th><th>Status</th><th></th></tr>
+      ${(data.drops || []).map((d) => `<tr><td>${lagos(d.start)}<div class="muted">to ${lagos(d.end)}</div></td><td>${esc(vn(d.venueId))}</td><td>${esc(d.kind)}</td><td>${d.taken} of ${d.bottles}</td>
+        <td>${d.status === "cancelled" ? '<span class="tag off">Cancelled</span>' : Date.now() > d.end ? '<span class="tag">Ended</span>' : Date.now() >= d.start ? '<span class="tag on">Live</span>' : '<span class="tag">Scheduled</span>'}</td>
+        <td>${d.status !== "cancelled" && Date.now() < d.end ? `<button class="b small ghost" data-c="${d.id}">Cancel</button>` : ""}</td></tr>`).join("")}</table></div>`);
+    const $ = (id) => document.getElementById(id);
+    $("save").onclick = async () => {
+      const wines = [...document.querySelectorAll("[data-w]")].filter((i) => i.checked).map((i) => i.dataset.w);
+      const toIso = (v) => (v ? new Date(Date.parse(v + ":00+01:00")).toISOString() : "");
+      const r = await call({ action: "drop-save", drop: { venueId: $("venue").value, kind: $("kind").value, start: toIso($("start").value), end: toIso($("end").value), bottles: $("bottles").value, gatheringLights: $("gl").value, wines, clue: $("clue").value, reward: $("reward").value } });
+      if (!r.ok) return ($("msg").textContent = r.error === "after_2am" ? "Drops must end by 2am." : r.error === "times" ? "Check the start and end times." : "Couldn't save: " + r.error);
+      show("drops");
+    };
+    root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = async () => { if (confirm("Cancel this drop?")) { await call({ action: "drop-cancel", id: b.dataset.c }); show("drops"); } }));
+  }
+
+  // ---------- payouts ----------
+  function payouts(rows) {
+    const total = rows.reduce((n, r) => n + r.owed, 0);
+    shell(`<div class="card"><h2>Owed to venues: ${naira(total) || "₦0"}</h2><p class="muted">Menu-price bottles are owed at the venue's own price. Drop bottles are owed the runner fee only.</p>
+      <table><tr><th>Venue</th><th>Owed</th><th>Bottles</th><th>Pay to</th><th></th></tr>
+      ${rows.filter((r) => r.lines).map((r) => `<tr><td><b>${esc(r.name)}</b></td><td><b>${naira(r.owed)}</b></td><td>${r.menu} gifts · ${r.drops} drop</td>
+        <td class="muted">${esc(r.payout.name || "")}<br>${esc(r.payout.bank || "")} ${esc(r.payout.account || "")}</td>
+        <td><button class="b small" data-p="${r.venueId}">Mark paid</button></td></tr>`).join("") || `<tr><td colspan="5" class="muted">Nothing owed.</td></tr>`}</table></div>`);
+    root.querySelectorAll("[data-p]").forEach((b) => (b.onclick = async () => {
+      const r = rows.find((x) => x.venueId === b.dataset.p); const ref = prompt("Transfer reference for " + r.name + " (" + naira(r.owed) + ")"); if (ref === null) return;
+      await call({ action: "ledger-paid", keys: r.keys, ref }); show("payouts");
+    }));
+  }
+
+  // ---------- bottles and unmet ----------
+  function bottles(bs) {
+    shell(`<div class="card"><h2>Recent bottles</h2><table><tr><th>When</th><th>From</th><th>To</th><th>Wine</th><th>Level</th><th>Paid</th><th>Status</th><th>Notice</th></tr>
+      ${bs.map((b) => `<tr><td>${lagos(b.createdAt)}</td><td>${esc(b.from)}</td><td>${esc(b.to)}</td><td>${esc(b.wine)}</td><td>${BAND_NAMES[b.band] || ""}</td><td>${naira(b.price)}</td><td><span class="tag">${esc(b.status)}</span></td>
+        <td class="muted">${b.notice ? (b.notice.ok ? "Sent" : "Not sent" + (b.notice.skip ? " (" + esc(b.notice.skip) + ")" : "")) : ""}</td></tr>`).join("")}</table></div>`);
+  }
+  function unmet(list) {
+    const cells = {}; for (const u of list) { const k = u.lat.toFixed(2) + "," + u.lng.toFixed(2); cells[k] = (cells[k] || 0) + 1; }
+    const rows = Object.entries(cells).sort((a, b) => b[1] - a[1]);
+    shell(`<div class="card"><h2>Where people tried to claim with no venue near (${list.length})</h2><p class="muted">Each row is a 1km square. Use it to choose where to list next.</p>
+      <table><tr><th>Area</th><th>Attempts</th><th></th></tr>${rows.map(([k, n]) => `<tr><td>${k}</td><td><b>${n}</b></td><td><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${k}">Open map</a></td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet.</td></tr>`}</table></div>`);
+  }
+
+  if (ak) call({ action: "venues" }).then((r) => { if (r.ok) { data.venues = r; venues(); } }); else login();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+<title>Outside · Amabile di Rosa</title>
+<meta name="description" content="Send a friend an Amabile to their table. It comes to them the next time they're outside.">
+<meta name="theme-color" content="#7d1d1d">
+<meta property="og:title" content="Outside">
+<meta property="og:description" content="Someone's sending an Amabile to your table. For next time you're outside.">
+<meta property="og:image" content="/outside/og.png">
+<link rel="icon" href="/favicon-32.png">
+<link rel="manifest" href="/outside/manifest.webmanifest">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="/outside/outside.css">
+</head>
+<body>
+<div id="app">
+  <div id="map" aria-label="Map of Lagos"><div id="world"><img id="base" alt="" draggable="false"><div id="layer"></div></div></div>
+
+  <header id="top">
+    <div class="brand"><span class="logo">Outside</span><span class="by">by Amabile di Rosa</span></div>
+    <button id="meBtn" class="me-btn" aria-label="Me"></button>
+  </header>
+
+  <div id="lightBar"></div>
+  <div id="outsideNow"></div>
+  <div id="ticketBar"></div>
+
+  <nav id="dock">
+    <button data-tab="bottles"><span class="ic" data-icon="bottle"></span><span>Bottles</span><b id="bagCount"></b></button>
+    <button data-tab="send" class="primary"><span class="ic" data-icon="plus"></span><span>Send</span></button>
+    <button data-tab="friends"><span class="ic" data-icon="people"></span><span>Friends</span></button>
+    <button data-tab="drops"><span class="ic" data-icon="spark"></span><span>Drops</span><b id="dropCount"></b></button>
+  </nav>
+
+  <section id="sheet" class="sheet" aria-hidden="true"><div class="grab"></div><div id="sheetBody"></div></section>
+  <div id="modal" class="modal" aria-hidden="true"><div class="card" id="modalCard"></div></div>
+  <div id="glow" aria-hidden="true"></div>
+  <div id="toast"></div>
+  <footer class="legal">Drink responsibly. 18+.</footer>
+</div>
+<script src="/outside/art.js"></script>
+<script src="/outside/outside.js"></script>
+</body>
+</html>

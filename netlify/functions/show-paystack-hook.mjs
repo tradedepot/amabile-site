@@ -21,6 +21,12 @@ export default async (req) => {
 
   const tx = evt.data || {};
   const md = tx.metadata || {};
+  // Outside (the bottle game) payments: bottles and top-ups.
+  if (md.app === "outside") {
+    const { handleOutsidePayment } = await import("./_outside_pay.mjs");
+    await handleOutsidePayment(tx).catch((e) => console.error("outside payment", e));
+    return json({ ok: true });
+  }
   // Trade self-serve orders (from initPayment) carry paymentReference + orderId → route to the trade backend.
   // Same Amabile Paystack business, one webhook; we branch on metadata and hand trade events to paymentNotification.
   if (md.paymentReference || md.orderId) {

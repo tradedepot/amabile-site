@@ -1,0 +1,13 @@
+{
+  "name": "Outside by Amabile di Rosa",
+  "short_name": "Outside",
+  "start_url": "/outside/",
+  "scope": "/outside/",
+  "display": "standalone",
+  "background_color": "#2e1119",
+  "theme_color": "#7d1d1d",
+  "icons": [
+    { "src": "/outside/icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "/outside/icon-512.png", "sizes": "512x512", "type": "image/png" }
+  ]
+}

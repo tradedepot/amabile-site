@@ -144,3 +144,30 @@
   from = "/bachelor/*"
   to = "/show.html"
   status = 200
+
+
+# Outside: the Amabile bottle game. App, claim links, runner board and admin.
+# Once the game's own domain is registered, add it to this Netlify site as a domain alias and
+# uncomment the two rules at the end so the domain root serves the game.
+[[redirects]]
+  from = "/outside/c/*"
+  to = "/outside/index.html"
+  status = 200
+[[redirects]]
+  from = "/outside/board"
+  to = "/outside/board.html"
+  status = 200
+[[redirects]]
+  from = "/outside/admin"
+  to = "/outside/admin.html"
+  status = 200
+# [[redirects]]
+#   from = "https://outside.ng/c/*"
+#   to = "/outside/index.html"
+#   status = 200
+#   force = true
+# [[redirects]]
+#   from = "https://outside.ng/*"
+#   to = "/outside/:splat"
+#   status = 200
+#   force = true

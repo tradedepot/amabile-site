@@ -1,0 +1,179 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Runner board · Outside</title>
+<meta name="robots" content="noindex">
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
+<style>
+  :root { --wine:#7d1d1d; --gold:#f2c66b; --ink:#3a2a20; --card:#fffdf7; --cream:#efe4cf; --late:#c2410c; }
+  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: #2e1119; color: var(--ink); min-height: 100vh; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--wine); color: #fff; border-bottom: 3px solid var(--ink); }
+  header h1 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: 22px; margin: 0; flex: 1; }
+  header .stat { font-weight: 900; font-size: 13px; background: rgba(255,255,255,.15); padding: 5px 10px; border-radius: 999px; }
+  main { padding: 14px; display: grid; gap: 14px; max-width: 760px; margin: 0 auto; }
+  .card { background: var(--card); border: 3px solid var(--ink); border-radius: 22px; padding: 14px; box-shadow: 0 5px 0 rgba(0,0,0,.35); }
+  .t { display: grid; grid-template-columns: 74px 1fr; gap: 14px; align-items: center; }
+  .t.new { animation: flash 1s ease-in-out 4; } @keyframes flash { 50% { background: #ffe9a8; } }
+  .t.late { border-color: var(--late); box-shadow: 0 5px 0 var(--late); }
+  .bc { width: 74px; height: 74px; border-radius: 50%; border: 4px solid var(--ink); }
+  .bcn { text-align: center; font-weight: 900; font-size: 12px; margin-top: 4px; }
+  .who { font-size: 24px; font-weight: 900; line-height: 1.1; }
+  .what { font-size: 17px; font-weight: 800; margin-top: 2px; }
+  .where { font-size: 16px; margin-top: 4px; } .lbl { font-size: 13px; color: #6b5646; margin-top: 2px; }
+  .acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
+  button { font: inherit; font-weight: 900; border: 3px solid var(--ink); border-radius: 999px; padding: 12px 16px; background: var(--card); color: var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+  button.go { background: var(--wine); color: #fff; } button.gold { background: var(--gold); } button.small { padding: 7px 11px; font-size: 13px; }
+  button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
+  .badge { display: inline-block; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 999px; border: 2px solid var(--ink); background: var(--gold); margin-left: 6px; vertical-align: middle; }
+  .badge.late { background: var(--late); color: #fff; } .badge.drop { background: var(--wine); color: #fff; }
+  .done { opacity: .6; } h2 { color: #E9CF9B; font-family: "DM Serif Display", Georgia, serif; font-weight: 400; margin: 10px 0 0; }
+  .login { max-width: 420px; margin: 60px auto; } input { width: 100%; font: inherit; font-size: 22px; padding: 12px; border: 3px solid var(--ink); border-radius: 14px; letter-spacing: 2px; }
+  .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; } .pad button { font-size: 24px; padding: 14px; }
+  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: flex-end; justify-content: center; z-index: 10; padding: 12px; }
+  .modal.open { display: flex; } .modal .card { width: 100%; max-width: 440px; }
+  .code { font-family: "DM Serif Display", Georgia, serif; font-size: 52px; letter-spacing: 12px; text-align: center; min-height: 64px; color: var(--wine); }
+  .empty { color: #E9CF9B; text-align: center; padding: 40px 10px; font-weight: 800; }
+  .mgr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .paused { background: var(--late); color: #fff; text-align: center; padding: 10px; font-weight: 900; }
+</style>
+</head>
+<body>
+<div id="root"></div>
+<div class="modal" id="m"><div class="card" id="mc"></div></div>
+<script>
+(() => {
+  const API = "/api/outside-board";
+  const q = new URLSearchParams(location.search);
+  const venueId = (q.get("v") || "").replace(/[^a-z0-9]/gi, "");
+  const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} }, del(k) { try { localStorage.removeItem(k); } catch {} } };
+  const BEACONS = { gold: ["#F2B705", "Gold"], pink: ["#FF4FA3", "Pink"], blue: ["#2F8CFF", "Blue"], green: ["#19C37D", "Green"], orange: ["#FF7A1A", "Orange"], purple: ["#9B5CFF", "Purple"] };
+  const WINE = { rosso: "Frizzante Rosso", bianco: "Frizzante Bianco", rosato: "Frizzante Rosato", "sp-rose": "Spumante Rosé", "sp-bianco": "Spumante Bianco" };
+  const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  let key = LS.get("board." + venueId) || "", runner = LS.get("board.runner") || "", cursor = "", tickets = new Map(), info = null, role = "runner", seen = new Set(), first = true, audio;
+  const root = document.getElementById("root");
+
+  function beep() {
+    try {
+      audio = audio || new (window.AudioContext || window.webkitAudioContext)();
+      [0, 0.18, 0.36].forEach((t, i) => { const o = audio.createOscillator(), g = audio.createGain(); o.frequency.value = [880, 1175, 1568][i]; o.connect(g); g.connect(audio.destination);
+        g.gain.setValueAtTime(0.0001, audio.currentTime + t); g.gain.exponentialRampToValueAtTime(0.4, audio.currentTime + t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + t + 0.16);
+        o.start(audio.currentTime + t); o.stop(audio.currentTime + t + 0.2); });
+    } catch {}
+    try { navigator.vibrate && navigator.vibrate([200, 80, 200]); } catch {}
+  }
+  async function call(body) {
+    const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ v: venueId, k: key, runner, ...body }) });
+    return r.json().catch(() => ({ ok: false }));
+  }
+  function login(msg) {
+    root.innerHTML = `<div class="card login"><h1 style="font-family:'DM Serif Display',serif;font-weight:400;color:var(--wine);margin:0 0 6px">Runner board</h1>
+      <p>Enter the code Amabile gave this venue.</p><input id="k" autocomplete="off" placeholder="Code" value="">
+      <p style="margin-top:12px">Your name</p><input id="r" placeholder="e.g. Emeka" value="${esc(runner)}">
+      <p style="margin-top:14px"><button class="go" id="go" style="width:100%">Open the board</button></p><p style="color:var(--late);font-weight:800">${esc(msg || "")}</p></div>`;
+    document.getElementById("go").onclick = () => { key = document.getElementById("k").value.trim(); runner = document.getElementById("r").value.trim() || "Runner"; LS.set("board.runner", runner); poll(true); };
+  }
+  async function poll(full) {
+    if (!venueId) return (root.innerHTML = `<p class="empty">This board link is missing its venue. Ask Amabile for the board link.</p>`);
+    if (!key) return login();
+    const r = await fetch(API + "?v=" + venueId + "&k=" + encodeURIComponent(key) + (full || !cursor ? "" : "&after=" + encodeURIComponent(cursor)));
+    if (r.status === 401) { LS.del("board." + venueId); key = ""; return login("That code didn't work."); }
+    const d = await r.json().catch(() => null); if (!d || !d.ok) return;
+    LS.set("board." + venueId, key);
+    info = d.venue; role = d.role; cursor = d.cursor;
+    if (d.full) tickets = new Map();
+    let fresh = false;
+    for (const t of d.tickets) { if (!seen.has(t.id) && t.status === "open" && !first) fresh = true; seen.add(t.id); tickets.set(t.id, t); }
+    first = false;
+    if (fresh) beep();
+    render(fresh);
+  }
+  const mins = (t) => Math.max(0, Math.round((Date.now() - t) / 60000));
+  function render(fresh) {
+    const all = [...tickets.values()];
+    const open = all.filter((t) => ["open", "taken"].includes(t.status)).sort((a, b) => a.createdAt - b.createdAt);
+    const done = all.filter((t) => t.status === "served").sort((a, b) => b.servedAt - a.servedAt).slice(0, 10);
+    const card = (t, live) => {
+      const [hex, bn] = BEACONS[t.beacon] || ["#ccc", "No colour"];
+      const late = live && mins(t.createdAt) >= 15;
+      const where = [t.table ? "Table " + t.table : "", t.spot].filter(Boolean).join(" · ") || "Look for the colour";
+      return `<div class="card t${live && fresh && t.status === "open" ? " new" : ""}${late ? " late" : ""}${live ? "" : " done"}">
+        <div><div class="bc" style="background:${hex}"></div><div class="bcn">${esc(bn)}</div></div>
+        <div><div class="who">${esc(t.name || "Table " + (t.table || ""))}${t.kind === "drop" ? '<span class="badge drop">Drop</span>' : ""}${late ? '<span class="badge late">' + mins(t.createdAt) + ' min</span>' : live ? '<span class="badge">' + mins(t.createdAt) + ' min</span>' : ""}</div>
+          <div class="what">${esc(WINE[t.wine] || t.wine)}${t.swapFrom ? " (was " + esc(WINE[t.swapFrom]) + ")" : ""}</div>
+          <div class="where">${esc(where)}</div><div class="lbl">${esc(t.label || "")}${t.last ? " · " + esc(t.last) : ""}${t.status === "taken" ? " · " + esc(t.runner) + " has it" : ""}</div></div>
+        ${live ? `<div class="acts">${t.status === "open" ? `<button class="gold" data-a="take" data-id="${t.id}">I've got it</button>` : ""}
+          <button class="go" data-a="serve" data-id="${t.id}">Delivered</button>
+          <button class="small" data-a="more" data-id="${t.id}">More</button></div>` : ""}</div>`;
+    };
+    root.innerHTML = `<header><h1>${esc(info ? info.name : "")}</h1><span class="stat">${open.length} open</span><span class="stat">${done.length} served</span></header>
+      ${info && info.paused ? `<div class="paused">Paused. Players can't claim here right now.</div>` : ""}
+      <main>${open.length ? open.map((t) => card(t, true)).join("") : `<p class="empty">No bottles waiting. New ones ping here.</p>`}
+      ${done.length ? `<h2>Served tonight</h2>` + done.map((t) => card(t, false)).join("") : ""}
+      <div class="card"><div class="mgr"><b>${esc(runner)}</b> · <button class="small" id="who">Change name</button>${role === "manager" ? `<button class="small" id="mgr">Manager</button>` : ""}
+      <button class="small" id="sound">Test sound</button></div><p class="lbl">Keep this screen open. Tickets ping and flash when they arrive.</p></div></main>`;
+    root.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => act(b.dataset.a, tickets.get(b.dataset.id))));
+    document.getElementById("who").onclick = () => { runner = prompt("Your name", runner) || runner; LS.set("board.runner", runner); render(); };
+    document.getElementById("sound").onclick = beep;
+    const m = document.getElementById("mgr"); if (m) m.onclick = manager;
+  }
+  function modal(html, mount) { const m = document.getElementById("m"), c = document.getElementById("mc"); c.innerHTML = html; m.classList.add("open"); mount && mount(c); }
+  const close = () => document.getElementById("m").classList.remove("open");
+  document.getElementById("m").onclick = (e) => { if (e.target.id === "m") close(); };
+  async function act(a, t) {
+    if (!t) return;
+    if (a === "take") { const r = await call({ action: "take", id: t.id }); if (!r.ok && r.error === "taken") alert("Someone else has this one."); return poll(true); }
+    if (a === "serve") {
+      if (!t.hasPlayer) { if (!confirm("Delivered to table " + (t.table || "") + "?")) return; await call({ action: "serve", id: t.id }); return poll(true); }
+      let code = "";
+      modal(`<h2 style="color:var(--wine);margin:0">Their code</h2><p>Ask ${esc(t.name || "them")} for the 4-digit code on their screen.</p><div class="code" id="cd"></div>
+        <div class="pad">${[1,2,3,4,5,6,7,8,9,"←",0,"OK"].map((k) => `<button data-k="${k}"${k === "OK" ? ' class="go"' : ""}>${k}</button>`).join("")}</div><p id="er" style="color:var(--late);font-weight:800"></p>`, (c) => {
+        c.querySelectorAll("[data-k]").forEach((b) => (b.onclick = async () => {
+          const k = b.dataset.k;
+          if (k === "←") code = code.slice(0, -1); else if (k === "OK") {
+            const r = await call({ action: "serve", id: t.id, code });
+            if (r.ok) { close(); return poll(true); }
+            c.querySelector("#er").textContent = r.error === "code" ? "That code doesn't match. Check their screen." : "Couldn't save. Try again.";
+            code = "";
+          } else if (code.length < 4) code += k;
+          c.querySelector("#cd").textContent = code;
+        }));
+      });
+      return;
+    }
+    if (a === "more") {
+      modal(`<h2 style="color:var(--wine);margin:0 0 10px">${esc(t.name || "This table")}</h2><div style="display:grid;gap:10px">
+        ${t.kind !== "drop" || t.name ? `<button data-m="I'm at the bar with your bottle. Where are you sitting?">Message: I'm at the bar, where are you?</button><button data-m="I'm walking round with your bottle. Tap Glow on your phone so I can see you.">Message: tap Glow</button>` : ""}
+        <button data-sw>Out of this wine, swap it</button>${t.status === "taken" ? `<button data-undo>Put it back for anyone</button>` : ""}
+        <button data-rel>Can't find them, release it</button><button class="small" data-x>Close</button></div>`, (c) => {
+        c.querySelectorAll("[data-m]").forEach((b) => (b.onclick = async () => { await call({ action: "cantfind", id: t.id, message: b.dataset.m }); close(); }));
+        c.querySelector("[data-sw]").onclick = () => modal(`<h2 style="color:var(--wine);margin:0 0 10px">Swap to</h2><div style="display:grid;gap:10px">${Object.entries(WINE).filter(([k]) => k !== t.wine).map(([k, n]) => `<button data-w="${k}">${esc(n)}</button>`).join("")}</div>`, (c2) => {
+          c2.querySelectorAll("[data-w]").forEach((b) => (b.onclick = async () => { await call({ action: "swap", id: t.id, wine: b.dataset.w }); close(); poll(true); }));
+        });
+        const u = c.querySelector("[data-undo]"); if (u) u.onclick = async () => { await call({ action: "undo", id: t.id }); close(); poll(true); };
+        c.querySelector("[data-rel]").onclick = async () => { if (!confirm("Release this bottle? The player keeps it for another time.")) return; await call({ action: "release", id: t.id }); close(); poll(true); };
+        c.querySelector("[data-x]").onclick = close;
+      });
+    }
+  }
+  function manager() {
+    const out = (info && info.outOf) || {};
+    modal(`<h2 style="color:var(--wine);margin:0 0 10px">Manager</h2>
+      <p><button class="${info.paused ? "go" : ""}" id="pz">${info.paused ? "Resume claims" : "Pause claims"}</button></p>
+      <p><b>Out of stock</b></p><div style="display:grid;gap:8px">${Object.entries(WINE).map(([k, n]) => `<label style="display:flex;gap:10px;align-items:center;font-weight:800"><input type="checkbox" data-w="${k}" style="width:22px;height:22px"${out[k] ? " checked" : ""}> ${esc(n)}</label>`).join("")}</div>
+      <p><button class="small" id="x">Done</button></p>`, (c) => {
+      c.querySelector("#pz").onclick = async () => { await call({ action: info.paused ? "resume" : "pause" }); close(); poll(true); };
+      c.querySelectorAll("[data-w]").forEach((b) => (b.onchange = async () => { await call({ action: "stock", stock: { [b.dataset.w]: b.checked } }); }));
+      c.querySelector("#x").onclick = () => { close(); poll(true); };
+    });
+  }
+  poll(true);
+  setInterval(() => { if (key) poll(false); }, 5000);
+  setInterval(() => { if (key) render(false); }, 30000);
+  try { navigator.wakeLock && navigator.wakeLock.request("screen"); } catch {}
+})();
+</script>
+</body>
+</html>
