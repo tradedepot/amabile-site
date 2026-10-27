@@ -495,22 +495,7 @@
   }
 
   // ---------- light ----------
-  async function startLight() {
-    modal(`<h2>I'm outside</h2><p class="muted">Your people see you're outside, never where. We check you're at a partner venue, once.</p>${whereFields()}
-      <label class="toggle"><input type="checkbox" id="vis"> Visible here: people in this room can send to my table</label>
-      <button class="btn block gold" id="go">I'm outside</button><p class="muted" id="msg"></p>`, (c) => {
-      let venueId;
-      c.querySelector("#go").onclick = async () => {
-        c.querySelector("#msg").textContent = "Finding you...";
-        const loc = await getLocation();
-        if (!loc) return (c.querySelector("#msg").textContent = "Turn on location for this site, then try again.");
-        const r = await api("light", { on: true, ...loc, venueId, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, visible: c.querySelector("#vis").checked });
-        if (r.error === "choose") return chooseVenue(r.venues, (vid) => { venueId = vid; startLight.retry = true; c.querySelector("#go").click(); });
-        if (!r.ok) return (c.querySelector("#msg").textContent = r.error === "no_venue" ? "You're not at a partner venue. Find one on the map." : errMsg(r.error));
-        closeModal(); await loadMe(); toast("You're outside. Your people can see it.");
-      };
-    });
-  }
+
 
   // ---------- send ----------
   function sendFlow(pre) {
@@ -704,29 +689,19 @@
   }
 
   // ---------- me ----------
-  const BADGE = { "first-light": "First Light", early: "Early", "pass-it-on": "Pass It On", plug: "Plug", "birthday-table": "Birthday Table" };
   async function meCard() {
     const p = S.me.player;
-    const stamps = (p.stamps || []).map((id) => venueOf(id)).filter(Boolean);
-    let room = [];
-    if (S.me.light) { const r = await api("room"); room = r.ok ? r.room : []; }
-    modal(`<div class="row"><div>${A.avatar(p.avatar, 96)}</div><div class="grow"><h2 style="margin:0">${esc(p.name)}</h2><span class="tag wine">${esc(p.rank)}</span>
-      <div class="muted" style="margin-top:6px">${p.nights || 0} nights out · ${p.sentCount || 0} bottles sent</div></div></div>
-      ${S.me.light ? `<div class="outbox on"><span class="dot"></span><div class="grow"><b>You're outside</b><small>${venueOf(S.me.light.venueId) ? "At " + esc(spotName(venueOf(S.me.light.venueId).band)) + ", until " : "Until "}${timeShort(S.me.light.until)}. Your people see you're out, never where.</small></div><button class="btn small ghost" id="lightOff">Home</button></div>`
-        : `<div class="outbox"><div class="grow"><b>Out somewhere?</b><small>Let your people know you're outside, so they can send to your table. Claiming a bottle does this for you.</small></div><button class="btn small gold" id="lightOn">I'm outside</button></div>`}
-      <h3>Lagos Passport</h3>${stamps.length ? `<div class="passport">${stamps.map((v) => `<div class="stamp">${A.venueArt(v.art, false, 40)}<br>${esc(v.name)}</div>`).join("")}</div>` : `<p class="muted">Claim at a spot to get its stamp.</p>`}
-      ${(p.badges || []).length ? `<h3>Badges</h3><div class="badges">${p.badges.map((b) => `<span class="tag gold">${esc(BADGE[b] || b)}</span>`).join("")}</div>` : ""}
-      ${S.me.light ? `<h3>In this room</h3><label class="toggle"><input type="checkbox" id="vis"${S.me.light.visible ? " checked" : ""}> Visible here</label>
-        ${room.length ? `<div class="list">${room.map((r) => `<div class="item"><div class="bt">${A.avatar(r.avatar, 40)}</div><div class="grow"><h4>${esc(r.name)}</h4><div class="sub">${r.table ? "Table " + esc(r.table) : ""}</div></div>${r.table ? `<button class="btn small" data-t="${esc(r.table)}">Send</button>` : ""}</div>`).join("")}</div>` : `<p class="muted">Nobody visible in the room yet.</p>`}` : ""}
+    // Kept bare on purpose: nothing here suggests anyone can see where you are.
+    modal(`<div class="row"><div>${A.avatar(p.avatar, 96)}</div><div class="grow"><h2 style="margin:0">${esc(p.name)}</h2>
+      <div class="muted" style="margin-top:6px">${p.sentCount || 0} bottles sent</div></div></div>
+      ${S.me.light ? `<p class="muted" style="margin-top:14px">Your people can see you're out tonight. Never where. <button class="link" id="lightOff">Turn off</button></p>` : ""}
       <p></p><button class="btn block ghost" id="look">Change my look</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
-      const lo = c.querySelector("#lightOn"); if (lo) lo.onclick = () => startLight();
-      const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done. You're home."); };
+      const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
       c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };
-      const vis = c.querySelector("#vis"); if (vis) vis.onchange = async () => { await api("visible", { visible: vis.checked }); loadMe(); };
-      c.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => sendFlow({ table: b.dataset.t })));
     });
   }
+
 
   // ---------- boot ----------
   async function boot() {
