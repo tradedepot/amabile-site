@@ -81,11 +81,16 @@ export async function markTopupPaid(s, b, tx, via) {
   if (b.status === "waiting" && v) {
     const p = await getJSON(s, K.player(b.to));
     const { pickBeacon } = await import("./_outside.mjs");
-    const t = newTicket({ venueId: v.id, kind: "gift", bottleId: b.id, wine: b.wine, table: b.topup.table, beacon: await pickBeacon(s, v.id), name: (p && p.name) || "",
+    const t = newTicket({ venueId: v.id, kind: "gift", ...(b.topup.qr ? { via: "qr" } : {}), bottleId: b.id, wine: b.wine, table: b.topup.table, beacon: await pickBeacon(s, v.id), name: (p && p.name) || "",
       label: "From " + (b.anon ? "someone" : (b.fromName || "a friend")), playerPhone: b.to, payout: venuePrice(v, b.wine) });
     await saveTicket(s, t);
     b.status = "on_way"; b.venueId = v.id; b.table = b.topup.table; b.ticketId = t.id; b.claimedAt = Date.now();
-    await lightOn(s, b.to, v.id, b.topup.table, {});
+    let quiet = false;
+    if (b.topup.qr) {
+      const q = await getJSON(s, K.qr(b.topup.qr));
+      if (q) { quiet = !!q.quiet; q.status = "claimed"; q.ticketId = t.id; q.claimedAt = Date.now(); await s.setJSON(K.qr(q.code), q); }
+    }
+    if (!quiet) await lightOn(s, b.to, v.id, b.topup.table, {});
   }
   await saveBottle(s, b);
   return b;
@@ -130,7 +135,7 @@ export async function openTicketsFor(s, phone, bottles) {
   for (const b of bottles) {
     if (b.status !== "on_way" || !b.ticketId || !b.venueId) continue;
     const t = await getJSON(s, K.ticket(b.venueId, b.ticketId));
-    if (t && ["open", "taken"].includes(t.status)) out.push({ ticketId: t.id, bottleId: b.id, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, kind: t.kind });
+    if (t && ["open", "taken"].includes(t.status)) out.push({ ticketId: t.id, bottleId: b.id, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, kind: t.kind, via: t.via || "" });
   }
   return out;
 }

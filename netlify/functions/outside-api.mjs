@@ -317,17 +317,36 @@ export default async (req) => {
       return json({ ok: true, venue: publicVenue(v), ticket: { id: t.id, code: t.code, table, spot, beacon: t.beacon }, light: !!light });
     }
 
+    // Claim by QR: show it to a runner, they scan it on the board.
+    if (route === "qr") {
+      const { createQr } = await import("./_outside_qr.mjs");
+      const r = await createQr(s, me, d);
+      return r.ok ? json(r) : bad(r.error, r.error === "not_found" ? 404 : 409);
+    }
+    if (route === "qr-status") {
+      const { qrStatus } = await import("./_outside_qr.mjs");
+      const r = await qrStatus(s, me, url.searchParams.get("code") || d.code);
+      return r.ok ? json(r) : bad(r.error, 404);
+    }
+
     if (route === "topup") {
       const b = await getJSON(s, K.bottle(clean(d.bottleId, 20)));
       if (!b || b.to !== me || b.status !== "waiting") return bad("state", 409);
-      const where = await locate(s, d);
+      let where, qr = null;
+      if (d.qr) {
+        // After a runner scanned the QR: the scan fixed the venue.
+        const { qrVenueFor, normCode } = await import("./_outside_qr.mjs");
+        const v = await qrVenueFor(s, me, d.qr, b.id);
+        if (!v) return bad("qr_expired");
+        where = { venue: v, table: "" }; qr = normCode(d.qr);
+      } else where = await locate(s, d);
       if (!where.venue) return bad("no_venue");
-      const table = clean(where.table || d.table, 12); if (!table) return bad("table");
+      const table = clean(where.table || d.table, 12); if (!table && !qr) return bad("table");
       const chk = claimCheck(await getBands(s), b, where.venue);
       if (chk.ok) return bad("no_topup_needed");
       if (!chk.topup) return bad(chk.reason || "not_stocked");
       const ref = "OUT-T-" + b.id + "-" + rid(4);
-      b.topup = { ref, amount: chk.topup, venueId: where.venue.id, table, at: Date.now(), status: "pending" };
+      b.topup = { ref, amount: chk.topup, venueId: where.venue.id, table, at: Date.now(), status: "pending", ...(qr ? { qr } : {}) };
       await saveBottle(s, b);
       await s.set(K.ref(ref), "T:" + b.id);
       const init = await paystackInit({ email: payEmail(me), amount: chk.topup, reference: ref,

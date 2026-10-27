@@ -47,8 +47,11 @@
 (() => {
   const API = "/api/outside-board";
   const q = new URLSearchParams(location.search);
-  const venueId = (q.get("v") || "").replace(/[^a-z0-9]/gi, "");
   const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} }, del(k) { try { localStorage.removeItem(k); } catch {} } };
+  // A player's QR opens this page as /board?q=CODE. On a phone already signed in to a venue's board, that venue takes it.
+  let pendingQ = (q.get("q") || "").toUpperCase().replace(/[^A-Z0-9]/g, "").slice(0, 6);
+  const venueId = (q.get("v") || (pendingQ ? LS.get("board.last") || "" : "")).replace(/[^a-z0-9]/gi, "");
+  const naira = (n) => "₦" + Number(n || 0).toLocaleString("en-NG");
   const BEACONS = { gold: ["#F2B705", "Gold"], pink: ["#FF4FA3", "Pink"], blue: ["#2F8CFF", "Blue"], green: ["#19C37D", "Green"], orange: ["#FF7A1A", "Orange"], purple: ["#9B5CFF", "Purple"] };
   const WINE = { rosso: "Frizzante Rosso", bianco: "Frizzante Bianco", rosato: "Frizzante Rosato", "sp-rose": "Spumante Rosé", "sp-bianco": "Spumante Bianco" };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -76,12 +79,12 @@
     document.getElementById("go").onclick = () => { key = document.getElementById("k").value.trim(); runner = document.getElementById("r").value.trim() || "Runner"; LS.set("board.runner", runner); poll(true); };
   }
   async function poll(full) {
-    if (!venueId) return (root.innerHTML = `<p class="empty">This board link is missing its venue. Ask Amabile for the board link.</p>`);
+    if (!venueId) return (root.innerHTML = pendingQ ? `<p class="empty">To claim this bottle, open your venue's runner board on this phone once, then scan again.</p>` : `<p class="empty">This board link is missing its venue. Ask Amabile for the board link.</p>`);
     if (!key) return login();
     const r = await fetch(API + "?v=" + venueId + "&k=" + encodeURIComponent(key) + (full || !cursor ? "" : "&after=" + encodeURIComponent(cursor)));
     if (r.status === 401) { LS.del("board." + venueId); key = ""; return login("That code didn't work."); }
     const d = await r.json().catch(() => null); if (!d || !d.ok) return;
-    LS.set("board." + venueId, key);
+    LS.set("board." + venueId, key); LS.set("board.last", venueId);
     info = d.venue; role = d.role; cursor = d.cursor;
     if (d.full) tickets = new Map();
     let fresh = false;
@@ -89,6 +92,7 @@
     first = false;
     if (fresh) beep();
     render(fresh);
+    if (pendingQ) { const c = pendingQ; pendingQ = ""; try { history.replaceState(null, "", location.pathname + "?v=" + venueId); } catch {} claimQr(c); }
   }
   const mins = (t) => Math.max(0, Math.round((Date.now() - t) / 60000));
   function render(fresh) {
@@ -98,7 +102,7 @@
     const card = (t, live) => {
       const [hex, bn] = BEACONS[t.beacon] || ["#ccc", "No colour"];
       const late = live && mins(t.createdAt) >= 15;
-      const where = [t.table ? "Table " + t.table : "", t.spot].filter(Boolean).join(" · ") || "Look for the colour";
+      const where = t.via === "qr" ? "Claimed by QR at the bar" + (t.runner ? " with " + t.runner : "") : [t.table ? "Table " + t.table : "", t.spot].filter(Boolean).join(" · ") || "Look for the colour";
       return `<div class="card t${live && fresh && t.status === "open" ? " new" : ""}${late ? " late" : ""}${live ? "" : " done"}">
         <div><div class="bc" style="background:${hex}"></div><div class="bcn">${esc(bn)}</div></div>
         <div><div class="who">${esc(t.name || "Table " + (t.table || ""))}${t.kind === "drop" ? '<span class="badge drop">Drop</span>' : ""}${late ? '<span class="badge late">' + mins(t.createdAt) + ' min</span>' : live ? '<span class="badge">' + mins(t.createdAt) + ' min</span>' : ""}</div>
@@ -108,7 +112,7 @@
           <button class="go" data-a="serve" data-id="${t.id}">Delivered</button>
           <button class="small" data-a="more" data-id="${t.id}">More</button></div>` : ""}</div>`;
     };
-    root.innerHTML = `<header><h1>${esc(info ? info.name : "")}</h1><span class="stat">${open.length} open</span><span class="stat">${done.length} served</span></header>
+    root.innerHTML = `<header><h1>${esc(info ? info.name : "")}</h1><button class="gold small" id="scan">Scan QR</button><span class="stat">${open.length} open</span><span class="stat">${done.length} served</span></header>
       ${info && info.paused ? `<div class="paused">Paused. Players can't claim here right now.</div>` : ""}
       <main>${open.length ? open.map((t) => card(t, true)).join("") : `<p class="empty">No bottles waiting. New ones ping here.</p>`}
       ${done.length ? `<h2>Served tonight</h2>` + done.map((t) => card(t, false)).join("") : ""}
@@ -117,16 +121,17 @@
     root.querySelectorAll("[data-a]").forEach((b) => (b.onclick = () => act(b.dataset.a, tickets.get(b.dataset.id))));
     document.getElementById("who").onclick = () => { runner = prompt("Your name", runner) || runner; LS.set("board.runner", runner); render(); };
     document.getElementById("sound").onclick = beep;
+    document.getElementById("scan").onclick = scanner;
     const m = document.getElementById("mgr"); if (m) m.onclick = manager;
   }
   function modal(html, mount) { const m = document.getElementById("m"), c = document.getElementById("mc"); c.innerHTML = html; m.classList.add("open"); mount && mount(c); }
-  const close = () => document.getElementById("m").classList.remove("open");
+  const close = () => { stopCam(); document.getElementById("m").classList.remove("open"); };
   document.getElementById("m").onclick = (e) => { if (e.target.id === "m") close(); };
   async function act(a, t) {
     if (!t) return;
     if (a === "take") { const r = await call({ action: "take", id: t.id }); if (!r.ok && r.error === "taken") alert("Someone else has this one."); return poll(true); }
     if (a === "serve") {
-      if (!t.hasPlayer) { if (!confirm("Delivered to table " + (t.table || "") + "?")) return; await call({ action: "serve", id: t.id }); return poll(true); }
+      if (!t.hasPlayer || t.via === "qr") { if (!confirm(t.via === "qr" ? "Delivered to " + (t.name || "them") + "?" : "Delivered to table " + (t.table || "") + "?")) return; await call({ action: "serve", id: t.id }); return poll(true); }
       let code = "";
       modal(`<h2 style="color:var(--wine);margin:0">Their code</h2><p>Ask ${esc(t.name || "them")} for the 4-digit code on their screen.</p><div class="code" id="cd"></div>
         <div class="pad">${[1,2,3,4,5,6,7,8,9,"←",0,"OK"].map((k) => `<button data-k="${k}"${k === "OK" ? ' class="go"' : ""}>${k}</button>`).join("")}</div><p id="er" style="color:var(--late);font-weight:800"></p>`, (c) => {
@@ -158,6 +163,73 @@
       });
     }
   }
+  // ---------- scan a player's QR ----------
+  let stream = null, scanning = false;
+  function stopCam() { scanning = false; try { stream && stream.getTracks().forEach((t) => t.stop()); } catch {} stream = null; }
+  function loadJsQR() {
+    return window.jsQR ? Promise.resolve() : new Promise((ok, no) => { const sc = document.createElement("script"); sc.src = "/outside/vendor/jsqr.min.js"; sc.onload = ok; sc.onerror = no; document.head.appendChild(sc); });
+  }
+  const codeFrom = (text) => { try { return new URL(text).searchParams.get("q") || ""; } catch { return text; } };
+  async function scanner() {
+    modal(`<h2 style="color:var(--wine);margin:0 0 8px">Scan their QR</h2>
+      <video id="cam" playsinline muted style="width:100%;aspect-ratio:1;object-fit:cover;border-radius:16px;background:#000;border:3px solid var(--ink)"></video>
+      <p class="lbl" style="margin-top:10px">Or type the code under their QR</p>
+      <input id="qc" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="e.g. K7M3QX" style="text-transform:uppercase">
+      <p style="display:flex;gap:8px;margin-top:10px"><button class="go" id="mgo" style="flex:1">Claim</button><button id="mx">Close</button></p>
+      <p id="er" style="color:var(--late);font-weight:800"></p>`, (c) => {
+      c.querySelector("#mx").onclick = () => { stopCam(); close(); };
+      c.querySelector("#mgo").onclick = () => { const v = c.querySelector("#qc").value; if (v.trim()) { stopCam(); claimQr(v); } };
+    });
+    const video = document.getElementById("cam");
+    try { stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" }, audio: false }); }
+    catch { document.getElementById("er").textContent = "Camera not available. Type the code instead."; return; }
+    video.srcObject = stream; await video.play().catch(() => {});
+    scanning = true;
+    let detect;
+    if ("BarcodeDetector" in window) {
+      const det = new BarcodeDetector({ formats: ["qr_code"] });
+      detect = async () => { const r = await det.detect(video); return r[0] && r[0].rawValue; };
+    } else {
+      await loadJsQR().catch(() => {});
+      const cv = document.createElement("canvas"), cx = cv.getContext("2d", { willReadFrequently: true });
+      detect = async () => {
+        if (!window.jsQR || !video.videoWidth) return null;
+        const w = 480, h = Math.round(480 * video.videoHeight / video.videoWidth); cv.width = w; cv.height = h; cx.drawImage(video, 0, 0, w, h);
+        const r = window.jsQR(cx.getImageData(0, 0, w, h).data, w, h); return r && r.data;
+      };
+    }
+    const tick = async () => {
+      if (!scanning || !document.getElementById("cam")) return stopCam();
+      const text = await detect().catch(() => null);
+      if (text) { stopCam(); return claimQr(codeFrom(text)); }
+      setTimeout(tick, 250);
+    };
+    tick();
+  }
+  async function claimQr(code) {
+    const r = await call({ action: "scan", code });
+    if (r.ok) {
+      const t = r.ticket;
+      beep();
+      modal(`<h2 style="color:var(--wine);margin:0">Bring it to ${esc(t.name || "them")}</h2>
+        <p class="what" style="font-size:26px;margin:8px 0">${esc(WINE[t.wine] || t.wine)}</p><p class="lbl">${esc(t.label || "")}${r.again ? " · already claimed, same bottle" : ""}</p>
+        <p style="display:flex;gap:8px"><button class="go" id="dl" style="flex:1">Delivered</button><button id="lt">Later</button></p>`, (c) => {
+        c.querySelector("#dl").onclick = async () => { await call({ action: "serve", id: t.id }); close(); poll(true); };
+        c.querySelector("#lt").onclick = () => { close(); poll(true); };
+      });
+      return;
+    }
+    const msg = {
+      topup: `This bottle is for cheaper spots. They can top up ${naira(r.topup)} on their phone, then it appears here.`,
+      not_stocked: `This venue doesn't have ${esc(WINE[r.wine] || "this wine")} on the board. They keep the bottle for another night.`,
+      qr_expired: "That QR has expired. Ask them to show a fresh one.", qr_used: "That bottle has already been claimed.",
+      qr_unknown: "That isn't an Outside bottle code.", paused: "Claims are paused here. A manager can resume them."
+    }[r.error] || "Couldn't claim it. Try again.";
+    modal(`<h2 style="color:var(--wine);margin:0 0 8px">Not this time</h2><p style="font-size:18px">${msg}</p><p style="display:flex;gap:8px"><button class="go" id="ag" style="flex:1">Scan another</button><button id="cl">Close</button></p>`, (c) => {
+      c.querySelector("#ag").onclick = scanner; c.querySelector("#cl").onclick = close;
+    });
+  }
+
   function manager() {
     const out = (info && info.outOf) || {};
     modal(`<h2 style="color:var(--wine);margin:0 0 10px">Manager</h2>

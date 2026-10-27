@@ -180,6 +180,7 @@ export const K = {
   phash: (h) => "ph/" + h,                       // player number hash -> phone key
   waitingFor: (h) => "rh/" + h,                  // contacts of a non-player yet: owners who saved them
   contacts: (ph) => "cx/" + phoneKey(ph),         // hashes a player picked from their contacts
+  qr: (c) => "qr/" + c,                           // a bottle shown as a QR to a runner
   request: (id) => "rq/" + id,                    // a venue's request to join Outside
   requestPrefix: "rq/"
 };

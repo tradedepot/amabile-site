@@ -1,7 +1,7 @@
 // Outside: runner board API for one venue. Owns /api/outside-board.
 //   GET  ?v=venueId&k=runnerKey[&after=cursor]   tickets (all open + today's, or changed since cursor)
 //   POST {v, k, action, id?, runner?, code?, wine?, message?}
-//        take | serve (code) | undo | cantfind (message to player) | swap (wine) | release (drop table not found)
+//        scan {code} (a player's QR) | take | serve (code) | undo | cantfind (message to player) | swap (wine) | release (drop table not found)
 //        manager (mk = manager key): pause | resume | stock {wine: bool}
 import { store, json, clean, K, getJSON, listKeys, fetchAll, saveTicket, boardView, hashKey, wine, sendText, RULES } from "./_outside.mjs";
 import { ticketServed } from "./_outside_flow.mjs";
@@ -65,6 +65,12 @@ export default async (req) => {
     return json({ ok: true, paused: !!venue.paused, outOf: venue.outOf || {} });
   }
 
+  if (d.action === "scan") {
+    const { scanQr } = await import("./_outside_qr.mjs");
+    const r = await scanQr(s, venue, d.code, d.runner);
+    return json(r, r.ok ? 200 : 409);
+  }
+
   const t = await getJSON(s, K.ticket(venue.id, clean(d.id, 20)));
   if (!t) return json({ ok: false, error: "not_found" }, 404);
   const runner = clean(d.runner, 30) || "Runner";
@@ -77,7 +83,8 @@ export default async (req) => {
   } else if (d.action === "serve") {
     if (!["open", "taken"].includes(t.status)) return json({ ok: false, error: "state", ticket: boardView(t) }, 409);
     // Drop and pass-it-on tables have no player code; the runner confirms by hand.
-    if (t.playerPhone && String(d.code || "").trim() !== t.code) return json({ ok: false, error: "code" }, 400);
+    // A QR claim was made face to face with the runner, so no code is asked for.
+    if (t.playerPhone && t.via !== "qr" && String(d.code || "").trim() !== t.code) return json({ ok: false, error: "code" }, 400);
     t.runner = t.runner || runner;
     await ticketServed(s, t, "runner:" + runner);
   } else if (d.action === "undo") {

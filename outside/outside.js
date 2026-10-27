@@ -59,7 +59,8 @@
     gone: "All gone. Next time.", one_a_night: "One drop a night. Enjoy the rest of it.", not_here: "You need to be at the venue to claim this drop.",
     two_plus: "Drops are for tables of two or more.", not_yet: "Not live yet.", over: "This drop has ended.", band_price: "That level isn't open for this wine yet.",
     payment_init: "Payment didn't start. Try again.", not_stocked_there: "That wine isn't available where they are.", cant_send: "You can't send to this number.",
-    self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again."
+    self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again.",
+    qr_expired: "That QR has expired. Show a fresh one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
   };
   const errMsg = (e) => ERR[e] || "Something went wrong.";
 
@@ -228,14 +229,16 @@
     const si = $("#signInPill"); if (si) si.onclick = () => signIn();
 
     const out = me ? me.circle.filter((c) => c.out) : [];
+    // Docked in the chrome, never on the map: friends show as outside and the kind of place, never where.
     $("#outsideNow").innerHTML = out.length
-      ? `<div class="lead">${out.length} of your<br>people are<br>outside</div>` + out.map((c) => `<button class="friend" data-send="${c.key}"><div class="av">${A.avatar(c.avatar, 56)}</div><span>${esc(c.name)}</span></button>`).join("")
+      ? `<div class="onow"><span class="onow-h"><i></i>Outside now</span><div class="onow-list">${out.map((c) => `<button class="fchip" data-send="${c.key}"><span class="av">${A.avatar(c.avatar, 28)}</span><span class="nm">${esc(c.name)}<small>${c.band ? esc(spotName(c.band)) : "Outside"}</small></span></button>`).join("")}</div></div>`
       : "";
     $("#outsideNow").querySelectorAll("[data-send]").forEach((b) => (b.onclick = () => sendFlow({ friend: out.find((c) => c.key === b.dataset.send) })));
 
     const tickets = me ? me.tickets : [];
     $("#ticketBar").innerHTML = tickets.map((t) => {
       const bc = beaconOf(t.beacon);
+      if (t.via === "qr") return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(wineOf(t.wine).name)} is on its way</b><div class="muted">The runner who scanned you is bringing it.</div></div></div>`;
       return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(wineOf(t.wine).name)} is on its way</b><div class="muted">Code ${esc(t.code)} · tap Glow when you see the runner</div></div>` +
         `<button class="btn small gold" data-glow="${t.ticketId}">Glow</button></div>`;
     }).join("");
@@ -365,7 +368,7 @@
     const items = bag.map((b) => `<div class="item"><div class="bt">${A.bottle(b.wine, 52)}</div><div class="grow"><h4>From ${esc(b.from)}</h4>
       <div class="sub">${esc(wineOf(b.wine).label)} · ${b.kind === "gift" ? esc(bandName(b.band)) + " and below" : "on its way"}</div>${b.note ? `<div class="note">"${esc(b.note)}"</div>` : ""}
       <div class="row" style="margin-top:8px;flex-wrap:wrap">${b.status === "waiting"
-        ? `<button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small ghost" data-spots="${b.id}">Where?</button><button class="link" data-more="${b.id}">More</button>`
+        ? `<button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button><button class="btn small ghost" data-spots="${b.id}">Where?</button><button class="link" data-more="${b.id}">More</button>`
         : `<span class="tag gold">On its way</span><button class="link" data-cancel="${b.id}">Not here any more</button>`}</div></div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => `<div class="item"><div class="bt">${A.bottle(x.wine, 40)}</div><div class="grow"><h4>To ${esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div><span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span></div>`).join("");
     return `<h2>Your bottles</h2>${items || `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
@@ -374,6 +377,7 @@
   function bindSheet(tab) {
     const body = $("#sheetBody");
     body.querySelectorAll("[data-claim]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.claim)));
+    body.querySelectorAll("[data-qr]").forEach((b) => (b.onclick = () => qrFlow(b.dataset.qr)));
     body.querySelectorAll("[data-spots]").forEach((b) => (b.onclick = () => {
       const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); focusSpots(S.cfg.venues.filter((v) => claimableAt(x, v)));
     }));
@@ -405,7 +409,9 @@
     closeSheet();
     modal(`<h2>Bring it here</h2><p class="muted">We'll find the venue from your location, once. Nobody else sees it.</p>${whereFields()}
       <label class="toggle"><input type="checkbox" id="quiet"> Quiet claim: don't tell my people I'm outside</label>
-      <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>`, (c) => {
+      <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>
+      <p class="muted" style="text-align:center">Or call a runner over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
+      c.querySelector("#qr").onclick = () => qrFlow(id, c.querySelector("#quiet").checked);
       c.querySelector("#go").onclick = async () => {
         const go = c.querySelector("#go"); go.disabled = true; c.querySelector("#msg").textContent = "Finding you...";
         const loc = await getLocation();
@@ -437,6 +443,51 @@
       };
     });
   }
+  // ---------- claim by QR ----------
+  // Call a runner over, show the QR, they scan it on the venue's board. No location needed: the board is the venue.
+  function qrSvg(text) {
+    if (!window.qrcode) return "";
+    const q = window.qrcode(0, "M"); q.addData(text); q.make();
+    const n = q.getModuleCount(), m = 2; let d = "";
+    for (let y = 0; y < n; y++) for (let x = 0; x < n; x++) if (q.isDark(y, x)) d += `M${x + m} ${y + m}h1v1h-1z`;
+    return `<svg viewBox="0 0 ${n + 2 * m} ${n + 2 * m}" shape-rendering="crispEdges" role="img" aria-label="QR code"><rect width="100%" height="100%" fill="#fff"/><path d="${d}" fill="#1a0f0a"/></svg>`;
+  }
+  let qrTimer = null;
+  async function qrFlow(id, quiet = false) {
+    const b = S.me.bag.find((x) => x.id === id); if (!b) return;
+    closeSheet(); clearInterval(qrTimer);
+    const r = await api("qr", { bottleId: id, quiet });
+    if (!r.ok) return toast(errMsg(r.error));
+    const c = modal(`<h2>Show a runner</h2><p class="muted">Call a runner over and say you have a bottle to claim. They scan this and bring your ${esc(wineOf(b.wine).label)}.</p>
+      <div class="qrbox" data-code="${esc(r.code)}">${qrSvg(r.url)}</div><div class="qrtxt">${esc(r.code)}</div>
+      <label class="toggle"><input type="checkbox" id="quiet"${quiet ? " checked" : ""}> Quiet claim: don't tell my people I'm outside</label>
+      <p class="muted" id="msg">Works once, at any partner venue, for the next 20 minutes.</p>`, (c) => {
+      c.querySelector("#quiet").onchange = (e) => qrFlow(id, e.target.checked);
+    });
+    const live = () => $("#modal").classList.contains("open") && c.querySelector(`.qrbox[data-code="${r.code}"]`);
+    qrTimer = setInterval(async () => {
+      if (!live()) return clearInterval(qrTimer);
+      const st = await api("qr-status?code=" + encodeURIComponent(r.code));
+      if (!st.ok || !live()) return;
+      if (st.status === "claimed") { clearInterval(qrTimer); closeModal(); await loadMe(); toast("Scanned. Your bottle is coming."); }
+      else if (st.status === "topup") { clearInterval(qrTimer); qrTopup(b, r.code, st); }
+      else if (st.status === "refused") c.querySelector("#msg").textContent = st.reason === "not_stocked" ? `${st.venue ? st.venue.name : "This venue"} doesn't have ${wineOf(b.wine).name} right now. Your bottle keeps waiting.` : errMsg(st.reason);
+      else if (st.status === "expired") { clearInterval(qrTimer); qrFlow(id, quiet); }
+    }, 2500);
+  }
+  function qrTopup(b, code, st) {
+    modal(`<h2>Top up to claim here</h2><p>This bottle fits ${esc(bandName(b.band))} spots. ${esc(st.venue.name)} is ${esc(spotName(st.venue.band))}.</p>
+      <p><b>Top up ${naira(st.topup)}</b> and the runner brings it, or keep it for another night.</p>
+      <button class="btn block" id="go">Top up ${naira(st.topup)}</button><p></p><button class="btn block ghost" data-x3>Keep it for another night</button>`, (c) => {
+      c.querySelector("[data-x3]").onclick = closeModal;
+      c.querySelector("#go").onclick = async () => {
+        const t = await api("topup", { bottleId: b.id, qr: code });
+        if (!t.ok) return toast(errMsg(t.error));
+        location.href = t.authorization_url;
+      };
+    });
+  }
+
   function glowPrompt(t) {
     modal(`<div class="empty"><div class="art"><div style="width:90px;height:90px;border-radius:50%;border:3px solid var(--ink);background:${beaconOf(t.beacon).hex}"></div></div></div>
       <h2>Your bottle is coming</h2><p>When you see the runner come out, tap Glow and hold your phone up. Your colour is <b>${esc(beaconOf(t.beacon).name)}</b>.</p>
