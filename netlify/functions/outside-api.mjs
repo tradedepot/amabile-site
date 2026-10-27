@@ -166,6 +166,13 @@ export default async (req) => {
       return json({ ok: true, player: publicPlayer(p) });
     }
 
+    // A venue owner or manager asks to put their venue on Outside. Needs a verified number, not a player profile.
+    if (route === "venue-request") {
+      const { createVenueRequest } = await import("./_outside_venues.mjs");
+      const r = await createVenueRequest(s, me, d);
+      return r.ok ? json(r) : bad(r.error);
+    }
+
     const player = await getJSON(s, K.player(me));
     if (!player || !player.name) return bad("profile", 409);
 

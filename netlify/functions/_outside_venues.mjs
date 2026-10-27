@@ -1,0 +1,198 @@
+// Outside: venues joining on their own.
+//
+// A venue owner or manager registers on /outside/venue with a verified WhatsApp number. The request lands
+// in admin as "requested". Ops books a visit, lists the venue (location, prices, tables) and concludes
+// the listing purchase. Once the purchase is recorded or found in the sales data, ops takes it live and
+// the venue appears on the map with its runner board.
+//
+// Venues can be linked to the outlet account we already hold for them. Linking fills in the location
+// and contact, and lets admin confirm the listing purchase from the sales data.
+import {
+  K, getJSON, rid, clean, now, phoneE164, maskPhone, hashKey, BAND_ORDER, VENUE_KINDS, SITE, WINES, sendText
+} from "./_outside.mjs";
+import { outletsByPhone, getOutlet } from "./_outside_bq.mjs";
+
+const KIND_LABEL = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
+
+export async function createVenueRequest(s, phone, d) {
+  const name = clean(d.name, 60);
+  if (name.length < 2) return { ok: false, error: "venue_name" };
+  const contactName = clean(d.contactName, 40);
+  if (!contactName) return { ok: false, error: "contact_name" };
+  const kind = VENUE_KINDS.includes(d.kind) ? d.kind : "lounge";
+  const area = clean(d.area, 40);
+  if (!area) return { ok: false, error: "area" };
+
+  // One open request per number at a time.
+  const mine = (await listRequests(s)).filter((r) => r.phone === phone && !["live", "declined"].includes(r.stage));
+  if (mine.length >= 3) return { ok: false, error: "too_many_requests" };
+
+  const r = {
+    id: rid(8), stage: "requested", createdAt: now(), updatedAt: now(),
+    phone, contactName, role: ["owner", "manager", "other"].includes(d.role) ? d.role : "manager",
+    email: clean(d.email, 80), name, kind, area, address: clean(d.address, 120), mapsLink: clean(d.mapsLink, 300),
+    instagram: clean(d.instagram, 40).replace(/^@/, ""), tables: Math.max(0, Math.min(500, Number(d.tables) || 0)),
+    nights: clean(d.nights, 60), stocksAmabile: ["yes", "no", "not_sure"].includes(d.stocksAmabile) ? d.stocksAmabile : "not_sure",
+    visitTime: clean(d.visitTime, 60), note: clean(d.note, 300),
+    history: [{ at: now(), stage: "requested", by: "venue" }]
+  };
+  // Suggest an existing outlet account with the same contact number.
+  const match = await outletsByPhone(phone).catch(() => ({ rows: [] }));
+  r.suggested = (match.rows || []).map((o) => ({ id: o.id, name: o.name, number: o.number, lga: o.lga, lat: o.lat, lng: o.lng }));
+  await s.setJSON(K.request(r.id), r);
+  notifyOps(r).catch(() => {});
+  contactInRespond(r).catch(() => {});
+  return { ok: true, id: r.id };
+}
+
+export async function listRequests(s) {
+  const { blobs } = await s.list({ prefix: K.requestPrefix });
+  const out = await Promise.all(blobs.map((b) => getJSON(s, b.key)));
+  return out.filter(Boolean).sort((a, b) => b.createdAt - a.createdAt);
+}
+
+// Stage changes from admin. Going live is separate (goLive) because it has checks.
+export async function updateRequest(s, id, d, by) {
+  const r = await getJSON(s, K.request(id));
+  if (!r) return { ok: false, error: "not_found" };
+  if (d.visit) {
+    r.visit = { by: clean(d.visit.by, 40), date: clean(d.visit.date, 30), note: clean(d.visit.note, 200) };
+    if (r.stage === "requested") r.stage = "visit_booked";
+  }
+  if (d.note !== undefined) r.opsNote = clean(d.note, 500);
+  if (d.decline) { r.stage = "declined"; r.declineReason = clean(d.decline, 200); }
+  if (d.reopen && r.stage === "declined") r.stage = r.venueId ? "listed" : "requested";
+  r.history = [...(r.history || []), { at: now(), stage: r.stage, by }].slice(-30);
+  r.updatedAt = now();
+  await s.setJSON(K.request(id), r);
+  return { ok: true, request: r };
+}
+
+// Create the venue (not yet live) from a request, filling what we know from the request and any linked outlet.
+export async function listFromRequest(s, id, by) {
+  const r = await getJSON(s, K.request(id));
+  if (!r) return { ok: false, error: "not_found" };
+  if (r.venueId) return { ok: true, venueId: r.venueId };
+  const v = {
+    id: rid(6), name: r.name, area: r.area, art: r.kind, band: "lounge", prices: {}, taxIncluded: false,
+    lat: null, lng: null, radius: 60, tables: r.tables || 20, runnerFee: 2000, tonight: "",
+    contact: { name: r.contactName, phone: r.phone }, payout: {}, active: false, stage: "listed",
+    requestId: r.id, createdAt: now(), updatedAt: now()
+  };
+  await s.setJSON(K.venue(v.id), v);
+  r.venueId = v.id; r.stage = "listed";
+  r.history = [...(r.history || []), { at: now(), stage: "listed", by }];
+  r.updatedAt = now();
+  await s.setJSON(K.request(r.id), r);
+  return { ok: true, venueId: v.id };
+}
+
+// Link a venue to an existing outlet account. Fills location and contact where the venue has none.
+export async function linkOutlet(s, venueId, outletId, by) {
+  const v = await getJSON(s, K.venue(venueId));
+  if (!v) return { ok: false, error: "not_found" };
+  if (!outletId) { v.outlet = null; await s.setJSON(K.venue(v.id), v); return { ok: true, venue: v }; }
+  const o = await getOutlet(outletId, "2025-01-01");
+  if (!o.ok) return { ok: false, error: o.error === "not_configured" ? "sales_data_not_connected" : "outlet_not_found" };
+  const x = o.outlet;
+  v.outlet = { id: x.id, name: x.name, number: x.number, contactPerson: x.contactPerson, contactPhone: x.contactPhone, linkedAt: now(), linkedBy: by };
+  if ((v.lat == null || v.lng == null) && x.lat && x.lng) { v.lat = x.lat; v.lng = x.lng; v.locationFrom = "outlet"; }
+  if (!v.contact || !v.contact.phone) v.contact = { name: x.contactPerson, phone: x.contactPhone };
+  v.updatedAt = now();
+  await s.setJSON(K.venue(v.id), v);
+  return { ok: true, venue: v, purchases: o.purchases };
+}
+
+// The listing purchase: recorded by hand, or confirmed from the linked outlet's sales since the request.
+export async function recordPurchase(s, venueId, d, by) {
+  const v = await getJSON(s, K.venue(venueId));
+  if (!v) return { ok: false, error: "not_found" };
+  if (d.fromSales) {
+    if (!v.outlet) return { ok: false, error: "link_outlet_first" };
+    const req = v.requestId ? await getJSON(s, K.request(v.requestId)) : null;
+    // From a request: anything bought since a week before they asked. Added directly by ops (an account we already supply): the last 90 days.
+    const since = new Date(req ? req.createdAt - 7 * 864e5 : now() - 90 * 864e5).toISOString().slice(0, 10);
+    const o = await getOutlet(v.outlet.id, since);
+    if (!o.ok) return { ok: false, error: "sales_data_not_connected" };
+    if (!o.purchases.length) return { ok: false, error: "no_purchase_found", since };
+    const cases = o.purchases.reduce((n, p) => n + Number(p.cases || 0), 0);
+    const amount = o.purchases.reduce((n, p) => n + Number(p.amount || 0), 0);
+    v.purchase = { source: "sales", week: o.purchases[0].week, cases, amount, lines: o.purchases.slice(0, 6), at: now(), by };
+  } else {
+    const ref = clean(d.ref, 40);
+    if (!ref) return { ok: false, error: "order_ref" };
+    v.purchase = { source: "manual", ref, cases: Number(d.cases) || 0, amount: Number(String(d.amount || "").replace(/[^\d.]/g, "")) || 0, date: clean(d.date, 12), at: now(), by };
+  }
+  if (!v.active) v.stage = "purchased";
+  v.updatedAt = now();
+  await s.setJSON(K.venue(v.id), v);
+  if (v.requestId) {
+    const r = await getJSON(s, K.request(v.requestId));
+    if (r && r.stage !== "live") { r.stage = "purchased"; r.history = [...(r.history || []), { at: now(), stage: "purchased", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }
+  }
+  return { ok: true, venue: v };
+}
+
+// What still stops a venue going live.
+export function liveChecks(v) {
+  const missing = [];
+  if (typeof v.lat !== "number" || typeof v.lng !== "number" || !isFinite(v.lat)) missing.push("location");
+  if (!BAND_ORDER.includes(v.band)) missing.push("price level");
+  if (!Object.values(v.prices || {}).some((p) => p > 0)) missing.push("menu prices");
+  if (!v.purchase) missing.push("listing purchase");
+  const warnings = [];
+  if (!v.payout || !v.payout.account) warnings.push("payout account");
+  if (!v.outlet) warnings.push("linked outlet account");
+  return { missing, warnings };
+}
+
+export async function goLive(s, venueId, by) {
+  const v = await getJSON(s, K.venue(venueId));
+  if (!v) return { ok: false, error: "not_found" };
+  const { missing, warnings } = liveChecks(v);
+  if (missing.length) return { ok: false, error: "not_ready", missing };
+  let keys = null;
+  if (!v.runnerKeyHash) {
+    keys = { runner: rid(6), manager: rid(8) };
+    v.runnerKeyHash = hashKey(keys.runner); v.managerKeyHash = hashKey(keys.manager);
+  }
+  v.active = true; v.stage = "live"; v.liveAt = now(); v.updatedAt = now();
+  await s.setJSON(K.venue(v.id), v);
+  if (v.requestId) {
+    const r = await getJSON(s, K.request(v.requestId));
+    if (r) { r.stage = "live"; r.history = [...(r.history || []), { at: now(), stage: "live", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }
+  }
+  // Tell the manager, best effort. Codes are also handed over in person on the visit.
+  const ph = phoneE164(v.contact && v.contact.phone);
+  if (ph) sendText(ph, `${v.name} is live on Outside. Runner board: ${SITE}/board?v=${v.id}` + (keys ? ` Runner code: ${keys.runner}. Manager code: ${keys.manager}.` : "")).catch(() => {});
+  const { runnerKeyHash, managerKeyHash, ...view } = v;
+  return { ok: true, venue: view, keys, warnings, board: SITE + "/board?v=" + v.id };
+}
+
+async function notifyOps(r) {
+  const to = String(process.env.OUTSIDE_OPS_EMAIL || "").split(",").map((x) => x.trim()).filter(Boolean);
+  if (!to.length || !process.env.BREVO_API_KEY) return;
+  const { sendEmail } = await import("./_lib.mjs");
+  const rows = [
+    ["Venue", r.name], ["Type", KIND_LABEL[r.kind] || r.kind], ["Area", r.area], ["Address", r.address], ["Instagram", r.instagram ? "@" + r.instagram : ""],
+    ["Contact", r.contactName + " (" + r.role + ")"], ["Phone", r.phone], ["Email", r.email], ["Tables", r.tables || ""], ["Open", r.nights],
+    ["Stocks Amabile", { yes: "Yes", no: "No", not_sure: "Not sure" }[r.stocksAmabile]], ["Best time to visit", r.visitTime], ["Note", r.note],
+    ["Possible existing account", (r.suggested || []).map((o) => o.name + " #" + o.number).join(", ")]
+  ].filter(([, v]) => v);
+  const esc = (x) => String(x).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
+  const html = `<p>A venue has asked to join Outside.</p><table>${rows.map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#6b5646">${esc(k)}</td><td style="padding:3px 0"><b>${esc(v)}</b></td></tr>`).join("")}</table>
+    <p><a href="${SITE}/admin">Open Outside admin</a></p>`;
+  for (const addr of to) await sendEmail(process.env.BREVO_API_KEY, addr, "Outside venue request: " + r.name, html);
+}
+
+async function contactInRespond(r) {
+  const key = process.env.RESPONDIO_API_KEY; if (!key) return;
+  const hdr = { Authorization: "Bearer " + key, "Content-Type": "application/json" };
+  const id = "phone:" + r.phone;
+  await fetch("https://api.respond.io/v2/contact/create_or_update/" + id, { method: "POST", headers: hdr, body: JSON.stringify({
+    firstName: r.contactName.split(/\s+/)[0], phone: r.phone, email: r.email || undefined,
+    custom_fields: [{ name: "amb_outlet_name", value: r.name }, { name: "amb_outlet_type", value: KIND_LABEL[r.kind] || r.kind }] }) });
+  await fetch("https://api.respond.io/v2/contact/" + id + "/tag", { method: "POST", headers: hdr, body: JSON.stringify(["amb_src_outside_venue", "amb_outside_requested"]) });
+}
+
+export { KIND_LABEL, maskPhone, WINES };

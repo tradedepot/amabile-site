@@ -267,7 +267,7 @@
   function signIn(next) {
     modal(`<h2>Sign in</h2><p class="muted">Your number is your account. We send a code on WhatsApp.</p>
       <label class="field"><span>Phone number</span><input id="ph" type="tel" inputmode="tel" placeholder="0803 000 0000" autocomplete="tel"></label>
-      <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p>`, (c) => {
+      <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
       c.querySelector("#go").onclick = async () => {
         const phone = c.querySelector("#ph").value;
         if (!e164(phone)) return (c.querySelector("#msg").textContent = errMsg("phone"));
@@ -656,7 +656,7 @@
       ${(p.badges || []).length ? `<h3>Badges</h3><div class="badges">${p.badges.map((b) => `<span class="tag gold">${esc(BADGE[b] || b)}</span>`).join("")}</div>` : ""}
       ${S.me.light ? `<h3>In this room</h3><label class="toggle"><input type="checkbox" id="vis"${S.me.light.visible ? " checked" : ""}> Visible here</label>
         ${room.length ? `<div class="list">${room.map((r) => `<div class="item"><div class="bt">${A.avatar(r.avatar, 40)}</div><div class="grow"><h4>${esc(r.name)}</h4><div class="sub">${r.table ? "Table " + esc(r.table) : ""}</div></div>${r.table ? `<button class="btn small" data-t="${esc(r.table)}">Send</button>` : ""}</div>`).join("")}</div>` : `<p class="muted">Nobody visible in the room yet.</p>`}` : ""}
-      <p></p><button class="btn block ghost" id="look">Change my look</button><p></p><button class="link" id="out">Sign out</button>`, (c) => {
+      <p></p><button class="btn block ghost" id="look">Change my look</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
       c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };
       const vis = c.querySelector("#vis"); if (vis) vis.onchange = async () => { await api("visible", { visible: vis.checked }); loadMe(); };

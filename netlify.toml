@@ -161,6 +161,10 @@
   from = "/outside/admin"
   to = "/outside/admin.html"
   status = 200
+[[redirects]]
+  from = "/outside/venue"
+  to = "/outside/venue.html"
+  status = 200
 # [[redirects]]
 #   from = "https://outside.ng/c/*"
 #   to = "/outside/index.html"

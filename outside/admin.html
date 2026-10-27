@@ -24,6 +24,7 @@
   input[type=checkbox] { width: auto; }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 10px; }
   button.b { font: inherit; font-weight: 900; border: 2px solid var(--ink); border-radius: 999px; padding: 9px 14px; background: var(--wine); color: #fff; cursor: pointer; }
+  button.b:disabled { opacity: .4; cursor: default; }
   button.b.ghost { background: #fff; color: var(--ink); } button.b.small { padding: 5px 10px; font-size: 13px; }
   .row { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
   .note { background: #fff7df; border: 2px dashed var(--wine); border-radius: 12px; padding: 12px; margin: 10px 0; }
@@ -38,7 +39,10 @@
 (() => {
   const API = "/api/outside-admin";
   const LS = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch {} } };
-  let ak = LS.get("outside.ak") || "", tab = "venues", data = {};
+  let ak = LS.get("outside.ak") || "", tab = "requests", data = {};
+  const STAGE = { requested: "Requested", visit_booked: "Visit booked", listed: "Listed", purchased: "Purchased", live: "Live", declined: "Declined", paused: "Offline" };
+  const KIND = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
+  const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
   const BAND_NAMES = { everyday: "Chill", lounge: "Enjoyment", premium: "Soft Life", top: "Odogwu" };
   const ARTS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
@@ -53,14 +57,15 @@
   }
   function login(msg) {
     root.innerHTML = `<div class="card login"><h2>Outside admin</h2><label>Admin password</label><input id="k" type="password"><p><button class="b" id="go">Sign in</button></p><p class="muted">${esc(msg || "")}</p></div>`;
-    document.getElementById("go").onclick = async () => { ak = document.getElementById("k").value; const r = await call({ action: "venues" }); if (r.ok) { LS.set("outside.ak", ak); data.venues = r; show("venues"); } };
+    document.getElementById("go").onclick = async () => { ak = document.getElementById("k").value; const r = await call({ action: "venues" }); if (r.ok) { LS.set("outside.ak", ak); data.venues = r; show("requests"); } };
   }
   function shell(inner) {
-    root.innerHTML = `<header><h1>Outside admin</h1><nav class="row">${["venues", "bands", "drops", "payouts", "bottles", "unmet"].map((t) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</nav></header><main>${inner}</main>`;
+    root.innerHTML = `<header><h1>Outside admin</h1><nav class="row">${["requests", "venues", "bands", "drops", "payouts", "bottles", "unmet"].map((t) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</nav></header><main>${inner}</main>`;
     root.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => show(b.dataset.t)));
   }
   async function show(t) {
     tab = t;
+    if (t === "requests") { const [q, v] = await Promise.all([call({ action: "requests" }), call({ action: "venues" })]); data.requests = q.requests || []; data.venues = v; return requests(); }
     if (t === "venues") { const r = await call({ action: "venues" }); data.venues = r; return venues(); }
     if (t === "bands") { const r = await call({ action: "venues" }); data.venues = r; return bands(); }
     if (t === "drops") { const [v, d] = await Promise.all([call({ action: "venues" }), call({ action: "drops" })]); data.venues = v; data.drops = d.drops || []; return drops(); }
@@ -69,15 +74,61 @@
     if (t === "unmet") { const r = await call({ action: "unmet" }); return unmet(r.unmet || []); }
   }
 
+  // ---------- requests ----------
+  function requests(filter) {
+    const rs = data.requests || [];
+    const f = filter || "open";
+    const shown = rs.filter((r) => f === "all" ? true : f === "open" ? !["live", "declined"].includes(r.stage) : r.stage === f);
+    const count = (st) => rs.filter((r) => r.stage === st).length;
+    shell(`<div class="card"><div class="row" style="justify-content:space-between"><h2>Venues asking to join</h2>
+      <a class="muted" href="/outside/venue" target="_blank">Public sign-up page</a></div>
+      <div class="row" style="margin-bottom:10px">${[["open", "Open (" + rs.filter((r) => !["live", "declined"].includes(r.stage)).length + ")"], ...Object.keys(STAGE).filter((k) => k !== "paused").map((k) => [k, STAGE[k] + " (" + count(k) + ")"]), ["all", "All"]]
+        .map(([k, n]) => `<button class="b small ${k === f ? "" : "ghost"}" data-f="${k}">${esc(n)}</button>`).join("")}</div>
+      <table><tr><th>Asked</th><th>Venue</th><th>Contact</th><th>Stocks Amabile</th><th>Stage</th><th></th></tr>
+      ${shown.map((r) => `<tr><td>${lagos(r.createdAt)}</td><td><b>${esc(r.name)}</b><div class="muted">${esc(KIND[r.kind] || r.kind)} · ${esc(r.area)}</div>${(r.suggested || []).length ? `<div class="muted">Maybe existing account: ${esc(r.suggested[0].name)}</div>` : ""}</td>
+        <td>${esc(r.contactName)}<div class="muted">${esc(ROLE[r.role] || "")} · ${esc(r.phone)}</div></td><td>${{ yes: "Yes", no: "No", not_sure: "Not sure" }[r.stocksAmabile] || ""}</td>
+        <td><span class="tag ${r.stage === "live" ? "on" : r.stage === "declined" ? "off" : ""}">${STAGE[r.stage] || r.stage}</span>${r.visit && r.visit.date ? `<div class="muted">${esc(r.visit.by)} · ${esc(r.visit.date)}</div>` : ""}</td>
+        <td><button class="b small ghost" data-o="${r.id}">Open</button></td></tr>`).join("") || `<tr><td colspan="6" class="muted">Nothing here.</td></tr>`}</table></div>`);
+    root.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => requests(b.dataset.f)));
+    root.querySelectorAll("[data-o]").forEach((b) => (b.onclick = () => requestCard(rs.find((r) => r.id === b.dataset.o))));
+  }
+  function requestCard(r) {
+    const field = (k, v) => (v ? `<tr><td class="muted" style="width:180px">${esc(k)}</td><td>${v}</td></tr>` : "");
+    const venue = r.venueId ? (data.venues.venues || []).find((v) => v.id === r.venueId) : null;
+    shell(`<div class="card"><div class="row" style="justify-content:space-between"><h2>${esc(r.name)}</h2><span class="tag">${STAGE[r.stage] || r.stage}</span></div>
+      <table>${field("Type", esc(KIND[r.kind] || r.kind))}${field("Area", esc(r.area))}${field("Address", esc(r.address))}
+      ${field("Map link", r.mapsLink ? `<a target="_blank" href="${esc(r.mapsLink)}">Open</a>` : "")}${field("Instagram", r.instagram ? `<a target="_blank" href="https://instagram.com/${esc(r.instagram)}">@${esc(r.instagram)}</a>` : "")}
+      ${field("Contact", esc(r.contactName) + " · " + esc(ROLE[r.role] || ""))}${field("Phone", `<a href="https://wa.me/${esc(r.phone.replace(/\D/g, ""))}" target="_blank">${esc(r.phone)}</a>`)}${field("Email", esc(r.email))}
+      ${field("Tables", r.tables || "")}${field("Open", esc(r.nights))}${field("Stocks Amabile", { yes: "Yes", no: "No", not_sure: "Not sure" }[r.stocksAmabile])}
+      ${field("Best time to visit", esc(r.visitTime))}${field("Their note", esc(r.note))}
+      ${field("Possible existing account", (r.suggested || []).map((o) => `${esc(o.name)} #${esc(o.number)} · ${esc(o.lga)}`).join("<br>"))}</table></div>
+      <div class="card"><h2>1. Book the visit</h2><div class="grid"><div><label>Who visits</label><input id="vb" list="team" value="${esc((r.visit || {}).by || "")}"><datalist id="team"><option>Anita</option><option>Aylor</option></datalist></div>
+        <div><label>When</label><input id="vd" value="${esc((r.visit || {}).date || "")}" placeholder="Tue 4 Nov, 3pm"></div><div><label>Note</label><input id="vn" value="${esc((r.visit || {}).note || "")}"></div></div>
+        <p><button class="b" id="book">Save visit</button></p></div>
+      <div class="card"><h2>2. List the venue</h2>${venue ? `<p>Listed as <b>${esc(venue.name)}</b>. <button class="b small" id="openv">Open the venue</button></p>` : `<p class="muted">Creates the venue, not live yet. Location, prices, linked account and the listing purchase are finished on the venue page, usually during the visit.</p><p><button class="b" id="list">List this venue</button></p>`}</div>
+      <div class="card"><h2>Notes and decline</h2><label>Ops notes</label><textarea id="on">${esc(r.opsNote || "")}</textarea>
+        <p class="row"><button class="b ghost" id="savenote">Save notes</button>${r.stage === "declined" ? `<button class="b ghost" id="reopen">Reopen</button>` : `<button class="b ghost" id="decline">Decline</button>`}<button class="b ghost" id="back">Back</button></p><p class="muted" id="msg"></p></div>`);
+    const $ = (id) => document.getElementById(id);
+    const reload = async (id) => { const [q, v] = await Promise.all([call({ action: "requests" }), call({ action: "venues" })]); data.requests = q.requests || []; data.venues = v; requestCard(data.requests.find((x) => x.id === id)); };
+    $("back").onclick = () => requests();
+    $("book").onclick = async () => { await call({ action: "request-update", id: r.id, visit: { by: $("vb").value, date: $("vd").value, note: $("vn").value } }); reload(r.id); };
+    $("savenote").onclick = async () => { await call({ action: "request-update", id: r.id, note: $("on").value }); $("msg").textContent = "Saved."; };
+    const dc = $("decline"); if (dc) dc.onclick = async () => { const why = prompt("Reason (kept internal)"); if (why === null) return; await call({ action: "request-update", id: r.id, decline: why || "Declined" }); reload(r.id); };
+    const ro = $("reopen"); if (ro) ro.onclick = async () => { await call({ action: "request-update", id: r.id, reopen: true }); reload(r.id); };
+    const ls = $("list"); if (ls) ls.onclick = async () => { const x = await call({ action: "request-list", id: r.id }); if (x.ok) { data.venues = await call({ action: "venues" }); venueForm(data.venues.venues.find((v) => v.id === x.venueId)); } };
+    const ov = $("openv"); if (ov) ov.onclick = () => venueForm(venue);
+  }
+
   // ---------- venues ----------
   function venues(flash) {
-    const vs = (data.venues.venues || []).sort((a, b) => a.name.localeCompare(b.name));
+    const vs = (data.venues.venues || []).sort((a, b) => (b.active - a.active) || a.name.localeCompare(b.name));
     shell(`${flash || ""}<div class="card"><div class="row" style="justify-content:space-between"><h2>Venues (${vs.length})</h2><button class="b" id="new">Add a venue</button></div>
-      <table><tr><th>Venue</th><th>Area</th><th>Level</th><th>Prices</th><th>Status</th><th></th></tr>
+      <table><tr><th>Venue</th><th>Area</th><th>Level</th><th>Account</th><th>Status</th><th></th></tr>
       ${vs.map((v) => `<tr><td><b>${esc(v.name)}</b><div class="muted">${esc(v.art)} · ${v.tables || ""} tables</div></td><td>${esc(v.area)}</td><td>${BAND_NAMES[v.band] || v.band}</td>
-        <td class="muted">${Object.entries(v.prices || {}).map(([w, p]) => esc(w) + " " + naira(p)).join("<br>")}${v.taxIncluded ? "" : "<br>(before tax)"}</td>
-        <td><span class="tag ${v.active ? "on" : "off"}">${v.active ? "Live" : "Off"}</span>${v.paused ? ' <span class="tag off">Paused</span>' : ""}</td>
-        <td><button class="b small ghost" data-e="${v.id}">Edit</button> <button class="b small ghost" data-k="${v.id}">New board codes</button></td></tr>`).join("")}</table></div>`);
+        <td class="muted">${v.outlet ? esc(v.outlet.name) + " #" + esc(v.outlet.number) : "Not linked"}</td>
+        <td><span class="tag ${v.active ? "on" : "off"}">${v.active ? "Live" : STAGE[v.stage] || "Off"}</span>${v.paused ? ' <span class="tag off">Paused by venue</span>' : ""}
+          ${!v.active && v.checks && v.checks.missing.length ? `<div class="muted">Needs: ${esc(v.checks.missing.join(", "))}</div>` : ""}</td>
+        <td><button class="b small ghost" data-e="${v.id}">Open</button>${v.active ? ` <button class="b small ghost" data-k="${v.id}">New board codes</button>` : ""}</td></tr>`).join("")}</table></div>`);
     document.getElementById("new").onclick = () => venueForm({});
     root.querySelectorAll("[data-e]").forEach((b) => (b.onclick = () => venueForm(vs.find((v) => v.id === b.dataset.e))));
     root.querySelectorAll("[data-k]").forEach((b) => (b.onclick = async () => {
@@ -86,37 +137,75 @@
     }));
   }
   const keysNote = (r, name) => `<div class="note"><b>Board codes for ${esc(name)}</b>. Shown once, save them now.<br>Board link: <a href="${esc(r.board)}" target="_blank">${esc(r.board)}</a><br>Runner code: <b style="font-size:20px">${esc(r.keys.runner)}</b> · Manager code: <b style="font-size:20px">${esc(r.keys.manager)}</b></div>`;
-  function venueForm(v) {
+  async function reopenVenue(id, flash) { data.venues = await call({ action: "venues" }); venueForm(data.venues.venues.find((v) => v.id === id), flash); }
+  function venueForm(v, flash) {
     const W = data.venues.wines || [];
-    shell(`<div class="card"><h2>${v.id ? "Edit " + esc(v.name) : "Add a venue"}</h2>
+    const ch = v.checks || { missing: [], warnings: [] };
+    shell(`${flash || ""}<div class="card"><div class="row" style="justify-content:space-between"><h2>${v.id ? esc(v.name) : "Add a venue"}</h2>${v.id ? `<span class="tag ${v.active ? "on" : ""}">${v.active ? "Live" : STAGE[v.stage] || "Not live"}</span>` : ""}</div>
       <div class="grid"><div><label>Name</label><input id="name" value="${esc(v.name || "")}"></div><div><label>Area</label><input id="area" value="${esc(v.area || "")}" placeholder="Victoria Island"></div>
       <div><label>Price level</label><select id="band">${Object.entries(BAND_NAMES).map(([k, n]) => `<option value="${k}"${v.band === k ? " selected" : ""}>${n}</option>`).join("")}</select></div>
       <div><label>Building on the map</label><select id="art">${ARTS.map((a) => `<option${v.art === a ? " selected" : ""}>${a}</option>`).join("")}</select></div></div>
       <label>Menu price per bottle, ₦ (leave blank if not stocked)</label><div class="grid">${W.map((w) => `<div><label class="muted">${esc(w.label)}</label><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div>`).join("")}</div>
       <label><input type="checkbox" id="tax"${v.taxIncluded ? " checked" : ""}> Menu prices include VAT, consumption tax and service</label>
-      <h2 style="margin-top:16px">Location</h2><p class="muted">Stand inside the venue and tap Use my location, or paste a Google Maps link.</p>
+      <h2 style="margin-top:16px">Location</h2><p class="muted">Stand inside the venue and tap Use my location, paste a Google Maps link, or link the outlet account below to use its saved location.${v.locationFrom === "outlet" ? " <b>Currently from the linked account.</b>" : ""}</p>
       <div class="row"><button class="b ghost" id="here">Use my location</button><input id="gm" placeholder="Paste a Google Maps link" style="flex:1;min-width:220px"></div>
       <div class="grid"><div><label>Latitude</label><input id="lat" value="${v.lat ?? ""}"></div><div><label>Longitude</label><input id="lng" value="${v.lng ?? ""}"></div>
       <div><label>Radius, metres</label><input id="radius" value="${v.radius || 60}"></div><div><label>Tables</label><input id="tables" value="${v.tables || 20}"></div></div>
       <div class="grid"><div><label>Runner fee for drop bottles, ₦</label><input id="fee" value="${v.runnerFee || 2000}"></div><div><label>Tonight (shown to players)</label><input id="tonight" value="${esc(v.tonight || "")}" placeholder="DJ from 9pm"></div></div>
       <h2 style="margin-top:16px">Contact and payouts</h2><div class="grid"><div><label>Manager name</label><input id="cn" value="${esc((v.contact || {}).name || "")}"></div><div><label>Manager phone</label><input id="cp" value="${esc((v.contact || {}).phone || "")}"></div>
       <div><label>Bank</label><input id="bk" value="${esc((v.payout || {}).bank || "")}"></div><div><label>Account number</label><input id="ac" value="${esc((v.payout || {}).account || "")}"></div><div><label>Account name</label><input id="an" value="${esc((v.payout || {}).name || "")}"></div></div>
-      <label style="margin-top:14px"><input type="checkbox" id="active"${v.active || !v.id ? " checked" : ""}> Live in the game</label>
-      <p class="row"><button class="b" id="save">Save</button><button class="b ghost" id="back">Back</button></p><p id="msg" class="muted"></p></div>`);
+      <p class="row"><button class="b" id="save">Save</button><button class="b ghost" id="back">Back</button></p><p id="msg" class="muted"></p></div>
+      ${v.id ? `<div class="card"><h2>Outlet account</h2>
+        ${v.outlet ? `<p>Linked to <b>${esc(v.outlet.name)}</b> #${esc(v.outlet.number)} · ${esc(v.outlet.contactPerson || "")} ${esc(v.outlet.contactPhone || "")} <button class="b small ghost" id="unlink">Unlink</button></p>` : `<p class="muted">Link the account we already hold for this venue. It fills in the location and contact, and lets the listing purchase be confirmed from the sales data.</p>`}
+        <div class="row"><input id="oq" placeholder="Search by outlet name or phone" style="flex:1;min-width:220px"><button class="b ghost" id="os">Search</button></div><div id="ores"></div></div>
+      <div class="card"><h2>Listing purchase</h2>
+        ${v.purchase ? `<p>${v.purchase.source === "sales" ? `Found in the sales data: <b>${v.purchase.cases} cases</b>, week of ${esc(v.purchase.week)}${v.purchase.amount ? ", " + naira(v.purchase.amount) : ""}.` : `Recorded: order <b>${esc(v.purchase.ref)}</b>${v.purchase.cases ? ", " + v.purchase.cases + " cases" : ""}${v.purchase.amount ? ", " + naira(v.purchase.amount) : ""}${v.purchase.date ? ", " + esc(v.purchase.date) : ""}.`}</p>` : ""}
+        <p class="row"><button class="b ghost" id="fromsales"${v.outlet ? "" : " disabled"}>Find it in the sales data</button><span class="muted">${v.outlet ? "" : "Link the outlet account first."}</span></p>
+        <div class="grid"><div><label>Or order reference</label><input id="pref"></div><div><label>Cases</label><input id="pcases" inputmode="numeric"></div><div><label>Amount, ₦</label><input id="pamt" inputmode="numeric"></div><div><label>Date</label><input id="pdate" type="date"></div></div>
+        <p><button class="b ghost" id="precord">Record purchase</button></p></div>
+      <div class="card"><h2>${v.active ? "Live" : "Go live"}</h2>
+        ${v.active ? `<p>On the map since ${v.liveAt ? lagos(v.liveAt) : ""}. <a target="_blank" href="/outside/board?v=${esc(v.id)}">Runner board</a></p><p><button class="b ghost" id="off">Take offline</button></p>`
+          : `${ch.missing.length ? `<p>Still needed: <b>${esc(ch.missing.join(", "))}</b>.</p>` : `<p>Ready.</p>`}${ch.warnings.length ? `<p class="muted">Worth adding: ${esc(ch.warnings.join(", "))}.</p>` : ""}
+             <p><button class="b" id="live"${ch.missing.length ? " disabled" : ""}>Go live</button></p>`}</div>` : ""}`);
     const $ = (id) => document.getElementById(id);
-    $("back").onclick = () => venues();
-    $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); $("msg").textContent = "Location set, accuracy about " + Math.round(p.coords.accuracy) + "m."; }, () => ($("msg").textContent = "Location not available."), { enableHighAccuracy: true, timeout: 15000 });
-    $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; $("msg").textContent = "Location read from the link."; } };
+    $("back").onclick = () => (v.requestId ? show("requests") : venues());
+    $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); $("msg").textContent = "Location set, accuracy about " + Math.round(p.coords.accuracy) + "m. Save to keep it."; }, () => ($("msg").textContent = "Location not available."), { enableHighAccuracy: true, timeout: 15000 });
+    $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; $("msg").textContent = "Location read from the link. Save to keep it."; } };
     $("save").onclick = async () => {
       const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
       const venue = { id: v.id, name: $("name").value, area: $("area").value, band: $("band").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
-        lat: Number($("lat").value), lng: Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
-        contact: { name: $("cn").value, phone: $("cp").value }, payout: { bank: $("bk").value, account: $("ac").value, name: $("an").value }, active: $("active").checked };
+        lat: $("lat").value === "" ? null : Number($("lat").value), lng: $("lng").value === "" ? null : Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
+        contact: { name: $("cn").value, phone: $("cp").value }, payout: { bank: $("bk").value, account: $("ac").value, name: $("an").value }, active: !!v.active };
       const r = await call({ action: "venue-save", venue });
-      if (!r.ok) return ($("msg").textContent = r.error === "location" ? "Set the location first." : "Couldn't save: " + r.error);
-      data.venues = await call({ action: "venues" });
-      venues(r.keys ? keysNote(r, r.venue.name) : `<div class="note">Saved ${esc(r.venue.name)}.</div>`);
+      if (!r.ok) return ($("msg").textContent = "Couldn't save: " + r.error);
+      reopenVenue(r.venue.id, `<div class="note">Saved.</div>`);
     };
+    if (!v.id) return;
+    $("os").onclick = async () => {
+      $("ores").innerHTML = `<p class="muted">Searching...</p>`;
+      const r = await call({ action: "outlet-search", q: $("oq").value });
+      if (!r.ok) return ($("ores").innerHTML = `<p class="muted">${r.error === "not_configured" ? "The sales data isn't connected on this site yet." : "Search failed."}</p>`);
+      $("ores").innerHTML = r.rows.length ? `<table><tr><th>Outlet</th><th>Contact</th><th>Area</th><th>Amabile</th><th></th></tr>${r.rows.map((o) => `<tr><td><b>${esc(o.name)}</b><div class="muted">#${esc(o.number)} · ${esc(o.type)}</div></td><td>${esc(o.contactPerson)}<div class="muted">${esc(o.contactPhone)}</div></td><td>${esc(o.lga)}</td><td>${o.lastBought ? esc(o.cases) + " cases, last " + esc(o.lastBought) : "No purchases in a year"}</td><td><button class="b small" data-l="${esc(o.id)}">Link</button></td></tr>`).join("")}</table>` : `<p class="muted">No outlet found.</p>`;
+      $("ores").querySelectorAll("[data-l]").forEach((b) => (b.onclick = async () => {
+        const x = await call({ action: "venue-link", venueId: v.id, outletId: b.dataset.l });
+        reopenVenue(v.id, x.ok ? `<div class="note">Linked. ${x.venue.locationFrom === "outlet" ? "Location taken from the account." : ""}</div>` : `<div class="note">Couldn't link: ${esc(x.error)}</div>`);
+      }));
+    };
+    const ul = $("unlink"); if (ul) ul.onclick = async () => { await call({ action: "venue-link", venueId: v.id, outletId: "" }); reopenVenue(v.id); };
+    $("fromsales").onclick = async () => {
+      const x = await call({ action: "venue-purchase", venueId: v.id, fromSales: true });
+      reopenVenue(v.id, x.ok ? `<div class="note">Purchase found in the sales data.</div>` : `<div class="note">${x.error === "no_purchase_found" ? "No Amabile purchase found for this account since " + esc(x.since) + ". Sales data can lag a few days; record the order reference instead." : "Couldn't check: " + esc(x.error)}</div>`);
+    };
+    $("precord").onclick = async () => {
+      const x = await call({ action: "venue-purchase", venueId: v.id, ref: $("pref").value, cases: $("pcases").value, amount: $("pamt").value, date: $("pdate").value });
+      reopenVenue(v.id, x.ok ? `<div class="note">Purchase recorded.</div>` : `<div class="note">${x.error === "order_ref" ? "Add the order reference." : "Couldn't record: " + esc(x.error)}</div>`);
+    };
+    const lv = $("live"); if (lv) lv.onclick = async () => {
+      const x = await call({ action: "venue-live", venueId: v.id });
+      if (!x.ok) return reopenVenue(v.id, `<div class="note">Not ready: ${esc((x.missing || []).join(", ") || x.error)}</div>`);
+      reopenVenue(v.id, (x.keys ? keysNote(x, v.name) : "") + `<div class="note">${esc(v.name)} is live on the map.${x.warnings && x.warnings.length ? " Still worth adding: " + esc(x.warnings.join(", ")) + "." : ""}</div>`);
+    };
+    const off = $("off"); if (off) off.onclick = async () => { if (!confirm("Take this venue off the map?")) return; await call({ action: "venue-off", venueId: v.id }); reopenVenue(v.id); };
   }
 
   // ---------- bands ----------
@@ -185,7 +274,7 @@
       <table><tr><th>Area</th><th>Attempts</th><th></th></tr>${rows.map(([k, n]) => `<tr><td>${k}</td><td><b>${n}</b></td><td><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${k}">Open map</a></td></tr>`).join("") || `<tr><td colspan="3" class="muted">None yet.</td></tr>`}</table></div>`);
   }
 
-  if (ak) call({ action: "venues" }).then((r) => { if (r.ok) { data.venues = r; venues(); } }); else login();
+  if (ak) call({ action: "venues" }).then((r) => { if (r.ok) { data.venues = r; show("requests"); } }); else login();
 })();
 </script>
 </body>

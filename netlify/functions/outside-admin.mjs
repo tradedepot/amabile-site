@@ -19,6 +19,9 @@ import {
   wine, tentToken, SITE, computeGlow, maskPhone
 } from "./_outside.mjs";
 
+import { listRequests, updateRequest, listFromRequest, linkOutlet, recordPurchase, liveChecks, goLive } from "./_outside_venues.mjs";
+import { searchOutlets, getOutlet } from "./_outside_bq.mjs";
+
 export const config = { path: "/api/outside-admin" };
 
 const num = (x) => { const n = Math.round(Number(String(x).replace(/[^\d.]/g, ""))); return Number.isFinite(n) && n > 0 ? n : 0; };
@@ -32,7 +35,7 @@ export default async (req) => {
 
   if (a === "venues") {
     const vs = await fetchAll(s, await listKeys(s, K.venuePrefix));
-    return json({ ok: true, venues: vs.map(({ runnerKeyHash, managerKeyHash, ...v }) => ({ ...v, hasKeys: !!runnerKeyHash })), bands: await getBands(s), wines: WINES, bandOrder: BAND_ORDER });
+    return json({ ok: true, venues: vs.map(({ runnerKeyHash, managerKeyHash, ...v }) => ({ ...v, hasKeys: !!runnerKeyHash, checks: liveChecks(v) })), bands: await getBands(s), wines: WINES, bandOrder: BAND_ORDER });
   }
 
   if (a === "venue-save") {
@@ -57,15 +60,19 @@ export default async (req) => {
       contact: { name: clean(x.contact && x.contact.name, 40), phone: clean(x.contact && x.contact.phone, 20) },
       active: !!x.active, updatedAt: Date.now()
     };
-    if (!Number.isFinite(v.lat) || !Number.isFinite(v.lng)) return json({ ok: false, error: "location" }, 400);
+    if (!Number.isFinite(v.lat) || !Number.isFinite(v.lng) || (v.lat === 0 && v.lng === 0)) { v.lat = null; v.lng = null; }
+    // A venue only goes live once it is listed and its listing purchase is in.
+    const checks = liveChecks(v);
+    if (v.active && checks.missing.length) { v.active = false; v.blockedLive = checks.missing; } else delete v.blockedLive;
+    if (v.active) v.stage = "live";
     let keys = null;
-    if (!v.runnerKeyHash || d.newKeys) {
+    if (v.active && (!v.runnerKeyHash || d.newKeys)) {
       keys = { runner: rid(6), manager: rid(8) };
       v.runnerKeyHash = hashKey(keys.runner); v.managerKeyHash = hashKey(keys.manager);
     }
     await s.setJSON(K.venue(id), v);
     const { runnerKeyHash, managerKeyHash, ...view } = v;
-    return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null });
+    return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null, checks });
   }
 
   if (a === "venue-keys") {
@@ -182,6 +189,21 @@ export default async (req) => {
   if (a === "unmet") {
     const keys = (await listKeys(s, K.unmetPrefix)).slice(-1000);
     return json({ ok: true, unmet: await fetchAll(s, keys) });
+  }
+
+  // ---------- venues joining ----------
+  const by = clean(d.by, 30) || "admin";
+  if (a === "requests") return json({ ok: true, requests: await listRequests(s) });
+  if (a === "request-update") { const r = await updateRequest(s, clean(d.id, 20), d, by); return json(r, r.ok ? 200 : 404); }
+  if (a === "request-list") { const r = await listFromRequest(s, clean(d.id, 20), by); return json(r, r.ok ? 200 : 404); }
+  if (a === "outlet-search") return json(await searchOutlets(d.q));
+  if (a === "outlet-get") return json(await getOutlet(clean(d.id, 40), clean(d.since, 10) || "2025-01-01"));
+  if (a === "venue-link") { const r = await linkOutlet(s, clean(d.venueId, 20), clean(d.outletId, 40), by); return json(r, r.ok ? 200 : 400); }
+  if (a === "venue-purchase") { const r = await recordPurchase(s, clean(d.venueId, 20), d, by); return json(r, r.ok ? 200 : 400); }
+  if (a === "venue-live") { const r = await goLive(s, clean(d.venueId, 20), by); return json(r, r.ok ? 200 : 400); }
+  if (a === "venue-off") {
+    const v = await getJSON(s, K.venue(clean(d.venueId, 20))); if (!v) return json({ ok: false, error: "not_found" }, 404);
+    v.active = false; v.stage = "paused"; v.updatedAt = Date.now(); await s.setJSON(K.venue(v.id), v); return json({ ok: true });
   }
 
   if (a === "glow") return json({ ok: true, glow: await computeGlow(s, true) });

@@ -179,8 +179,14 @@ export const K = {
   block: (ph, other) => "x/" + phoneKey(ph) + "/" + phoneKey(other),
   phash: (h) => "ph/" + h,                       // player number hash -> phone key
   waitingFor: (h) => "rh/" + h,                  // contacts of a non-player yet: owners who saved them
-  contacts: (ph) => "cx/" + phoneKey(ph)          // hashes a player picked from their contacts
+  contacts: (ph) => "cx/" + phoneKey(ph),         // hashes a player picked from their contacts
+  request: (id) => "rq/" + id,                    // a venue's request to join Outside
+  requestPrefix: "rq/"
 };
+
+// A venue's journey onto the map. Only "live" venues are active in the game.
+export const REQUEST_STAGES = ["requested", "visit_booked", "listed", "purchased", "live", "declined"];
+export const VENUE_KINDS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
 export const numberHash = (e164) => crypto.createHash("sha256").update("outside:" + e164).digest("hex").slice(0, 32);
 
 // Beacon colours for finding a table without tents: the runner sees the colour, the player's screen glows it.
