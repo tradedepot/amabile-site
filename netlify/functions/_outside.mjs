@@ -333,7 +333,7 @@ export function isAdult(dob) {
 // Counts gifts that reached you (drops from Amabile don't count). You can't send to yourself.
 export const LEVELS = [
   { at: 0, name: "JJC" }, { at: 1, name: "Known Face" }, { at: 3, name: "Correct Person" }, { at: 7, name: "Big Deal" },
-  { at: 15, name: "Celeb" }, { at: 30, name: "Agba" }, { at: 60, name: "Lagos Royalty" }
+  { at: 15, name: "Celeb" }, { at: 30, name: "Agba" }, { at: 60, name: "Chairman" }
 ];
 export function levelFor(received) {
   const n = Number(received) || 0;
