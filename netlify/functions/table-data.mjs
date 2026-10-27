@@ -46,7 +46,8 @@ export default async (req, context) => {
   const summary = { seatedCount: stand.seatedCount, cap: stand.cap, full: stand.full, waitCount: stand.waitCount };
 
   // No valid token → the room is invisible. Enough to render an "invite only" message.
-  if (!guest) return json({ ok: true, invited: false, edition: { title: pub.title }, summary });
+  // The photo page (sent after the day) reads the playlist link from here, so it is kept in Table admin like everything else.
+  if (!guest) return json({ ok: true, invited: false, edition: { title: pub.title, playlistUrl: edition.playlistUrl || "" }, summary });
 
   const mine = rsvps.find((r) => r.gid === guest.gid) || null;
   const your = mine
