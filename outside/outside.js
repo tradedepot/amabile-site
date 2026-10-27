@@ -62,7 +62,7 @@
     two_plus: "Drops are for tables of two or more.", not_yet: "Not live yet.", over: "This drop has ended.", band_price: "That level isn't open for this wine yet.",
     payment_init: "Payment didn't start. Try again.", not_stocked_there: "That wine isn't available where they are.", cant_send: "You can't send to this number.",
     self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again.",
-    qr_expired: "That QR has expired. Show a fresh one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
+    qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
   };
   const errMsg = (e) => ERR[e] || "Something went wrong.";
 
@@ -369,7 +369,11 @@
            <div class="links"><button class="link" data-spots="${b.id}">Where to claim</button><span>·</span><button class="link" data-more="${b.id}">More</button></div>`
         : `<div class="acts one"><span class="tag gold">On its way</span></div><div class="links"><button class="link" data-cancel="${b.id}">Not here any more</button></div>`}
       </div></div>`).join("");
-    const s2 = sent.slice(0, 12).map((x) => `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>To ${esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div><span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span></div>`).join("");
+    const s2 = sent.slice(0, 12).map((x) => {
+      const isLink = x.via === "link" && x.giftUrl;
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? "Link" + (x.forLabel ? " for " + esc(x.forLabel) : "") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div>` +
+        (isLink ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
+    }).join("");
     return `<h2>Your bottles</h2>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
@@ -377,6 +381,7 @@
     const body = $("#sheetBody");
     body.querySelectorAll("[data-claim]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.claim)));
     body.querySelectorAll("[data-qr]").forEach((b) => (b.onclick = () => qrFlow(b.dataset.qr)));
+    body.querySelectorAll("[data-gs]").forEach((b) => (b.onclick = () => { closeSheet(); giftShare(S.me.sent.find((x) => x.id === b.dataset.gs)); }));
     body.querySelectorAll("[data-spots]").forEach((b) => (b.onclick = () => {
       const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); focusSpots(S.cfg.venues.filter((v) => claimableAt(x, v)));
     }));
@@ -442,6 +447,102 @@
       };
     });
   }
+  // ---------- a bottle sent as a link (Instagram, Snapchat) ----------
+  // The sender gets a sealed card to send themselves. Opening it is staged; keeping it hands over to WhatsApp.
+  // Snapchat's Creative Kit for the web: no app id needed. The card's page carries the sticker (snapchat:sticker).
+  function snapButtons() {
+    const els = document.getElementsByClassName("snapchat-creative-kit-share");
+    if (window.snap && window.snap.creativekit) { try { window.snap.creativekit.initalizeShareButtons(els); } catch {} return; }
+    if (document.getElementById("snapkit")) return;
+    window.snapKitInit = () => { try { window.snap.creativekit.initalizeShareButtons(document.getElementsByClassName("snapchat-creative-kit-share")); } catch {} };
+    const sc = document.createElement("script"); sc.id = "snapkit"; sc.src = "https://sdk.snapkit.com/js/v1/create.js";
+    sc.onerror = () => [...document.querySelectorAll(".snapwrap")].forEach((w) => w.remove());
+    document.head.appendChild(sc);
+  }
+  function giftShare(b) {
+    if (!b || !b.giftUrl) return;
+    const url = b.giftUrl;
+    modal(`<div class="sealcard">${A.envelope.closed()}</div>
+      <h2>Now send it${b.forLabel ? " to " + esc(b.forLabel) : ""}</h2>
+      <p class="muted">Send this card on Instagram, Snapchat or anywhere you talk. The first person to open it and keep it gets the bottle, and Amabile takes it from there on WhatsApp.</p>
+      <div class="sharegrid"><button class="btn block" id="sh">Share the card</button>
+        <div class="snapwrap"><div class="snapchat-creative-kit-share" data-theme="light" data-size="large" data-text="true" data-share-url="${esc(url)}"></div></div>
+        <button class="btn block ghost" id="cp">Copy link</button></div>
+      <p class="fine" style="text-align:center">Sent it to the wrong person? <button class="link" id="nw">Get a new link</button> The old one stops working.</p>`, (c) => {
+      c.querySelector("#sh").onclick = async () => {
+        if (navigator.share) { try { await navigator.share({ title: "Something's coming to your table", text: "Something's coming to your table. Open it.", url }); } catch {} }
+        else { try { await navigator.clipboard.writeText(url); toast("Link copied. Paste it in their DMs."); } catch {} }
+      };
+      c.querySelector("#cp").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Copied."); } catch { prompt("Copy this link", url); } };
+      c.querySelector("#nw").onclick = async () => {
+        const r = await api("gift-reissue", { bottleId: b.id });
+        if (!r.ok) return toast(errMsg(r.error));
+        await loadMe(); toast("New link ready. The old one is dead."); giftShare({ ...b, giftUrl: r.url });
+      };
+      snapButtons();
+    });
+  }
+
+  function corkPop() {
+    try {
+      const ac = new (window.AudioContext || window.webkitAudioContext)(), t = ac.currentTime;
+      const n = ac.createBuffer(1, ac.sampleRate * 0.5, ac.sampleRate), d = n.getChannelData(0);
+      for (let i = 0; i < d.length; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / d.length, 6);
+      const pop = ac.createBufferSource(); pop.buffer = n;
+      const bp = ac.createBiquadFilter(); bp.type = "bandpass"; bp.frequency.setValueAtTime(1400, t); bp.frequency.exponentialRampToValueAtTime(260, t + 0.12); bp.Q.value = 2.5;
+      const g = ac.createGain(); g.gain.setValueAtTime(1.6, t); g.gain.exponentialRampToValueAtTime(0.001, t + 0.18);
+      pop.connect(bp); bp.connect(g); g.connect(ac.destination); pop.start(t);
+      const fz = ac.createBufferSource(); fz.buffer = n; const hp = ac.createBiquadFilter(); hp.type = "highpass"; hp.frequency.value = 5000;
+      const g2 = ac.createGain(); g2.gain.setValueAtTime(0.0001, t + 0.1); g2.gain.exponentialRampToValueAtTime(0.25, t + 0.2); g2.gain.exponentialRampToValueAtTime(0.0001, t + 1.4);
+      fz.connect(hp); hp.connect(g2); g2.connect(ac.destination); fz.start(t + 0.1);
+    } catch {}
+    try { navigator.vibrate && navigator.vibrate(30); } catch {}
+  }
+
+  async function giftOpen(code) {
+    const g = await api("gift?code=" + encodeURIComponent(code));
+    const el = $("#gift");
+    const close = () => { el.classList.remove("show"); el.innerHTML = ""; };
+    if (!g.ok || ["gone", "taken", "not_ready"].includes(g.state)) {
+      el.innerHTML = `<div class="gtop">OUTSIDE</div><div class="gstage"><div class="genv opened empty">${A.envelope.back("e-back")}${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}</div></div>
+        <div class="gcard"><h2>${g.state === "taken" ? "Already opened" : g.state === "not_ready" ? "Nearly there" : "This link doesn't work"}</h2>
+        <p>${g.state === "taken" ? "Someone has already opened this one and kept it." : g.state === "not_ready" ? "It's still on its way. Try the link again in a minute." : "Ask whoever sent it for a new link."}</p>
+        <button class="btn block" id="gx">See Outside</button></div>`;
+      el.classList.add("show"); el.querySelector("#gx").onclick = close; return;
+    }
+    const from = esc(g.from.split(/\s+/)[0]);
+    el.innerHTML = `<div class="gtop">OUTSIDE</div>
+      <div class="gmsg"><h2>${from}'s sending you something.</h2><p>Tap the seal.</p></div>
+      <div class="gstage"><div class="genv">${A.envelope.back("e-back")}<div class="gpocket"><img class="gbottle" src="/outside/img/bottle-${esc(g.wine)}.jpg" alt=""></div>${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}
+        <button class="gseal" aria-label="Break the seal">${A.envelope.seal("l", "e-seal l")}${A.envelope.seal("r", "e-seal r")}</button></div></div>
+      <div class="gcard" hidden>
+        <div class="wn">${esc(g.wineLabel)}</div>
+        <h2>${from}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
+        ${g.note ? `<p class="q">"${esc(g.note)}"</p>` : ""}${g.forLabel ? `<p class="for">For ${esc(g.forLabel)}</p>` : ""}
+        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<button class="btn block" id="gk">Keep it</button><p class="fine">You'll confirm your WhatsApp number. That's where Amabile sends it.</p>`}
+        <p class="muted" id="gm"></p></div>`;
+    el.classList.add("show");
+    const env = el.querySelector(".genv"), card = el.querySelector(".gcard");
+    const reveal = () => { el.querySelector(".gmsg").classList.add("gone"); card.hidden = false; requestAnimationFrame(() => card.classList.add("up")); };
+    env.onclick = () => {
+      if (env.classList.contains("open")) return;
+      corkPop(); env.classList.add("open");
+      setTimeout(reveal, matchMedia("(prefers-reduced-motion: reduce)").matches ? 50 : 1900);
+    };
+    const keep = async () => {
+      const r = await api("gift-accept", { code });
+      if (!r.ok) return (el.querySelector("#gm").textContent = errMsg(r.error));
+      await loadMe(); close();
+      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Check WhatsApp: Amabile has sent it to you there too. Claim it at any partner venue next time you're outside.</p>
+        <button class="btn block" id="gb">See where to claim it</button>`, (c) => { c.querySelector("#gb").onclick = () => { closeModal(); openSheet("bottles"); }; });
+    };
+    el.querySelector("#gk").onclick = () => {
+      if (g.state === "mine") { close(); return openSheet("bottles"); }
+      if (!S.token || !S.me) return signIn(keep);
+      keep();
+    };
+  }
+
   // ---------- claim by QR ----------
   // Call a runner over, show the QR, they scan it on the venue's board. No location needed: the board is the venue.
   function qrSvg(text) {
@@ -500,7 +601,7 @@
   // ---------- send ----------
   function sendFlow(pre) {
     closeSheet();
-    const st = { mode: pre.friend ? "light" : pre.table ? "table" : "number", friend: pre.friend || null, table: pre.table || "", to: "", wine: null, band: "lounge", note: "", anon: false };
+    const st = { mode: pre.friend ? "light" : pre.table ? "table" : "number", friend: pre.friend || null, table: pre.table || "", to: "", forLabel: "", wine: null, band: "lounge", note: "", anon: false };
     const out = S.me.circle.filter((c) => c.out);
     const draw = () => {
       const wines = st.mode === "light" ? S.cfg.wines.filter((w) => (st.friend.wines || []).includes(w.id)) : S.cfg.wines.filter((w) => anyBand(w.id));
@@ -509,24 +610,28 @@
       const who = st.mode === "light"
         ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
         : st.mode === "table" ? `<div class="to-card"><div class="grow"><b>Table ${esc(st.table)}</b><small>In this room, from you.</small></div></div>`
-        : `<div class="tofield"><input id="to" type="tel" inputmode="tel" placeholder="Their number, 0803 000 0000" value="${esc(st.to)}">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
-           ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`;
-      const bands = st.mode === "number" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
+        : `<div class="seg"><button class="${st.mode === "number" ? "on" : ""}" data-m="number">Phone number</button><button class="${st.mode === "link" ? "on" : ""}" data-m="link">Instagram or Snap</button></div>
+           ${st.mode === "link" ? `<div class="tofield"><input id="forl" maxlength="40" placeholder="Who's it for? @tolu.b or Tolu" value="${esc(st.forLabel)}"></div>
+             <p class="hint">You'll get a sealed card to send them yourself. Only they see this name, when they open it.</p>`
+           : `<div class="tofield"><input id="to" type="tel" inputmode="tel" placeholder="Their number, 0803 000 0000" value="${esc(st.to)}">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
+           ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`}`;
+      const bands = st.mode === "number" || st.mode === "link" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
       return `<h2>Send an Amabile</h2>
         <div class="sec"><div class="lab">To</div>${who}</div>
         <div class="sec"><div class="lab">Wine</div><div class="wpick">${wines.map((w) => `<button class="wcard${st.wine === w.id ? " on" : ""}" data-w="${w.id}"><span class="pic">${photo(w.id, 118)}</span><b>${esc(w.name)}</b><small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div></div>
         ${bands.length ? `<div class="sec"><div class="lab">Where they can claim it</div><div class="bandlist">${bands.map((b) => { const n = spotsFor(b, st.wine);
           return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))} spots</b><small>${n} spot${n === 1 ? "" : "s"}${b !== bands[0] ? " and anywhere cheaper" : ""}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
-          <label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label></div>
+          ${st.mode === "link" ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="fine">They claim it at a partner venue next time they're outside. You'll see Waiting, then Delivered. You never see where they are.</p></div>`;
+        <p class="fine">${st.mode === "link" ? "The first person to open your card and keep it gets the bottle. You can get a new link until they do." : "They claim it at a partner venue next time they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
-      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
+      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
       const redraw = () => { keep(); modal(draw(), mount); };
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { st.wine = b.dataset.w; redraw(); }));
       c.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { st.band = b.dataset.b; redraw(); }));
+      c.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { keep(); st.mode = b.dataset.m; if (st.mode === "link") st.anon = false; redraw(); }));
       c.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { st.mode = "light"; st.friend = out.find((x) => x.key === b.dataset.f); redraw(); }));
       const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
       const pick = c.querySelector("#pick");
@@ -535,6 +640,7 @@
         keep();
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
         if (st.mode === "number") { if (!e164(st.to)) return (c.querySelector("#msg").textContent = errMsg("phone")); body.to = st.to; body.band = st.band; }
+        if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
         c.querySelector("#pay").disabled = true;
@@ -551,7 +657,7 @@
   const spotsFor = (b, wineId) => S.cfg.venues.filter((v) => v.wines.includes(wineId) && bandRank(v.band) <= bandRank(b)).length;
   function priceFor(st) {
     if (!st.wine) return 0;
-    if (st.mode === "number") return bandPrice(st.band, st.wine) || 0;
+    if (st.mode === "number" || st.mode === "link") return bandPrice(st.band, st.wine) || 0;
     if (st.mode === "light") return bandPrice(st.friend.band, st.wine) || 1; // Odogwu spots price at the venue; shown at checkout
     return 1;
   }
@@ -563,6 +669,7 @@
       if (r.ok && r.paid) {
         await loadMe();
         if (topup) { closeModal(); const t = S.me.tickets.find((x) => x.bottleId === r.bottleId); toast("Topped up. It's coming."); if (t) glowPrompt(t); return; }
+        if (r.bottle.via === "link" && r.bottle.giftUrl) return giftShare(r.bottle);
         return modal(`<div class="reveal">${photo(r.bottle.wine, 220)}</div><h2>Sent.</h2>
           <p>${esc(r.bottle.toMasked)} gets it ${r.bottle.status === "Waiting" ? "the next time they're outside" : "at their table now"}. You'll see Delivered when it lands.</p>
           <button class="btn block" data-x4>Cheers</button>`, (c) => (c.querySelector("[data-x4]").onclick = closeModal));
@@ -729,8 +836,10 @@
     if (S.token) await loadMe();
     if (S.invite && S.me) { await afterSignIn(); }
     else if (S.invite && !S.me) signIn();
+    const gc = url.searchParams.get("g");
     const paid = url.searchParams.get("paid") || url.searchParams.get("topup");
-    if (paid) { history.replaceState(null, "", BASE + "/"); paidReturn(paid, !!url.searchParams.get("topup")); }
+    if (gc) { history.replaceState(null, "", BASE + "/"); giftOpen(gc.replace(/[^a-z0-9]/gi, "").slice(0, 12)); }
+    else if (paid) { history.replaceState(null, "", BASE + "/"); paidReturn(paid, !!url.searchParams.get("topup")); }
     else if (!S.token && !S.invite) welcome();
     setInterval(() => { setDayNight(); if (document.visibilityState === "visible") loadMe(); }, 30000);
     setInterval(() => { if (document.visibilityState === "visible") loadConfig(); }, 60000);

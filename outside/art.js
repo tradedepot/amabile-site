@@ -147,5 +147,43 @@
       `</svg>`;
   }
 
-  g.OutsideArt = { avatar, venueArt, landmarkArt, bottle, LANDMARKS, SKINS, OUTFITS, HAIRS, FACES, VENUE_KINDS: Object.keys(VENUE) };
+  // ---------- the sealed envelope (a bottle sent as a link) ----------
+  // One drawing, in parts, so the game can break the seal and open the flap. viewBox 0 0 400 320.
+  const PAPER = "#F3E3C5", PAPER_D = "#E6CFA6", PAPER_L = "#FAEED8", WAX = "#8E1B22", WAX_D = "#5b1414";
+  const ENV_VB = "0 0 400 320";
+  const envBack = () => `<rect x="40" y="100" width="320" height="200" rx="16" fill="${PAPER_D}" stroke="${INK}" stroke-width="6"/>` +
+    `<path d="M52 112 L200 214 L348 112" fill="none" stroke="${INK}" stroke-width="3" opacity=".18"/>`;
+  const envFront = () => `<path d="M40 114 L200 222 L360 114 L360 284 Q360 300 344 300 L56 300 Q40 300 40 284 Z" fill="${PAPER}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>` +
+    `<path d="M44 296 L172 206 M356 296 L228 206" stroke="${INK}" stroke-width="3" opacity=".22" fill="none" stroke-linecap="round"/>`;
+  const envFlap = () => `<path d="M40 114 Q40 100 56 100 L344 100 Q360 100 360 114 L214 224 Q200 234 186 224 Z" fill="${PAPER_L}" stroke="${INK}" stroke-width="6" stroke-linejoin="round"/>`;
+  function sealPath(cx, cy, r1, r2, n) {
+    let d = "";
+    for (let i = 0; i <= n * 2; i++) {
+      const a = (Math.PI * i) / n, r = i % 2 ? r2 : r1;
+      d += (i ? "L" : "M") + (cx + r * Math.cos(a)).toFixed(1) + " " + (cy + r * Math.sin(a)).toFixed(1);
+    }
+    return d + "Z";
+  }
+  // side: "both" (whole seal), "l" or "r" (halves, split along a crack).
+  function envSeal(side = "both") {
+    const crack = "M200 178 L194 196 L206 210 L196 226 L207 240 L199 266";
+    const clipL = `M120 150 L200 150 ${crack.replace(/^M200 178/, "L200 178")} L200 290 L120 290 Z`;
+    const clipR = `M280 150 L200 150 ${crack.replace(/^M200 178/, "L200 178")} L200 290 L280 290 Z`;
+    const id = "sc" + side + Math.floor(Math.random() * 1e6);
+    const body = `<path d="${sealPath(200, 222, 40, 35, 14)}" fill="${WAX}" stroke="${INK}" stroke-width="4" stroke-linejoin="round"/>` +
+      `<circle cx="200" cy="222" r="25" fill="none" stroke="${WAX_D}" stroke-width="3"/>` +
+      `<text x="200" y="234" text-anchor="middle" font-family="DM Serif Display, Georgia, serif" font-size="34" fill="#E9CF9B">A</text>` +
+      `<path d="M182 206 Q188 200 196 199" stroke="#fff" stroke-width="3" opacity=".35" fill="none" stroke-linecap="round"/>`;
+    if (side === "both") return body;
+    return `<defs><clipPath id="${id}"><path d="${side === "l" ? clipL : clipR}"/></clipPath></defs><g clip-path="url(#${id})">${body}</g>`;
+  }
+  const envSvg = (inner, cls = "", w = "") => `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${ENV_VB}"${w ? ` width="${w}"` : ""}${cls ? ` class="${cls}"` : ""}>${inner}</svg>`;
+  const envelope = {
+    back: (c) => envSvg(envBack(), c), front: (c) => envSvg(envFront(), c), flap: (c) => envSvg(envFlap(), c),
+    seal: (side, c) => envSvg(envSeal(side), c),
+    closed: (w) => envSvg(envBack() + envFront() + envFlap() + envSeal("both"), "", w),
+    inner: () => envBack() + envFront() + envFlap() + envSeal("both")
+  };
+
+  g.OutsideArt = { avatar, venueArt, landmarkArt, bottle, envelope, LANDMARKS, SKINS, OUTFITS, HAIRS, FACES, VENUE_KINDS: Object.keys(VENUE) };
 })(typeof window !== "undefined" ? window : globalThis);

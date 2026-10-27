@@ -254,3 +254,53 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .status small b { display: inline; font-size: 12px; color: var(--ink); }
 .status .bar { height: 8px; border-radius: 4px; background: var(--rule); margin-top: 8px; overflow: hidden; }
 .status .bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--gold), var(--wine)); border-radius: 4px; }
+
+/* ---------- send: number or link ---------- */
+.seg { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; padding: 4px; border: 3px solid var(--ink); border-radius: 16px; background: #fff; margin-bottom: 10px; }
+.seg button { padding: 10px 6px; border-radius: 11px; font-weight: 900; font-size: 14px; color: var(--ink-2); }
+.seg button.on { background: var(--wine); color: #fff; }
+.hint { font-size: 12px; color: var(--ink-2); font-weight: 700; margin: 6px 2px 0; }
+
+/* ---------- share the sealed card ---------- */
+.sealcard { width: 70%; max-width: 260px; margin: 8px auto 4px; filter: drop-shadow(0 10px 14px rgba(0,0,0,.18)); transform: rotate(-4deg); }
+.sealcard svg { width: 100%; height: auto; display: block; }
+.sharegrid { display: grid; gap: 10px; margin: 14px 0 6px; }
+.snapwrap { display: flex; justify-content: center; min-height: 44px; }
+
+/* ---------- opening a bottle link ---------- */
+.gift { position: absolute; inset: 0; z-index: 38; display: none; flex-direction: column; align-items: center; overflow: hidden;
+  background: radial-gradient(120% 80% at 50% 38%, #a3302c 0%, #7d1d1d 50%, #4e1013 100%); color: #FFF6E6; padding: calc(18px + var(--safe-t)) 16px calc(16px + var(--safe-b)); }
+.gift.show { display: flex; }
+.gift .gtop { font-family: var(--sans); font-weight: 900; letter-spacing: 6px; font-size: 13px; color: #E9CF9B; }
+.gift .gmsg { text-align: center; margin-top: 7vh; transition: opacity .4s, transform .4s; }
+.gift .gmsg h2 { color: #FFF6E6; font-size: 30px; margin: 0; } .gift .gmsg p { color: #F2C66B; font-weight: 800; margin: 8px 0 0; }
+.gift .gmsg.gone { opacity: 0; transform: translateY(-10px); }
+.gstage { flex: 1; display: flex; align-items: center; justify-content: center; width: 100%; perspective: 900px; min-height: 0; }
+.genv { position: relative; width: min(82vw, 360px); aspect-ratio: 400 / 320; margin-top: 10vh; animation: hover 3.2s ease-in-out infinite; }
+.genv > svg, .gseal > svg { position: absolute; inset: 0; width: 100%; height: 100%; }
+.genv .e-back { z-index: 1; } .genv .e-front { z-index: 3; pointer-events: none; }
+.genv .e-flap { z-index: 4; transform-origin: 50% 31.25%; pointer-events: none; }
+.gpocket { position: absolute; inset: 0; z-index: 2; clip-path: inset(-300% 6% 6.5% 6%); pointer-events: none; }
+.gbottle { position: absolute; left: 33%; width: 34%; top: 34%; aspect-ratio: 3 / 5; height: auto; border-radius: 12px; border: 3px solid var(--ink); background: #f3f2ec; object-fit: cover; }
+.gseal { position: absolute; inset: 0; z-index: 5; background: none; border: 0; padding: 0; pointer-events: none; }
+.genv:not(.open) { cursor: pointer; }
+.genv:not(.open) .gseal { animation: sealpulse 1.6s ease-in-out infinite; }
+.genv.open { animation: none; }
+.genv.open .e-seal.l { animation: sealL .55s ease-in forwards; } .genv.open .e-seal.r { animation: sealR .55s ease-in forwards; }
+.genv.open .e-flap { animation: flap .7s .35s cubic-bezier(.4,.1,.3,1) forwards; }
+.genv.open .gbottle { animation: rise 1s .95s cubic-bezier(.2,.9,.25,1.05) forwards; box-shadow: 0 0 0 0 rgba(255,210,122,0); }
+.genv.opened .e-flap { transform: rotateX(180deg); z-index: 1; }
+@keyframes hover { 50% { transform: translateY(-8px) rotate(-1.5deg); } }
+@keyframes sealpulse { 50% { transform: scale(1.04); } }
+@keyframes sealL { to { transform: translate(-14%, 30%) rotate(-28deg); opacity: 0; } }
+@keyframes sealR { to { transform: translate(14%, 30%) rotate(28deg); opacity: 0; } }
+@keyframes flap { 0% { transform: rotateX(0); z-index: 4; } 49% { z-index: 4; } 50% { transform: rotateX(90deg); z-index: 1; } 100% { transform: rotateX(180deg); z-index: 1; } }
+@keyframes rise { to { transform: translateY(-40%); box-shadow: 0 0 40px 10px rgba(255,210,122,.55); } }
+.gcard { width: 100%; max-width: 460px; background: var(--card); color: var(--ink); border: 3px solid var(--ink); border-radius: 26px; padding: 18px; box-shadow: var(--shadow);
+  transform: translateY(40px); opacity: 0; transition: transform .45s cubic-bezier(.2,.9,.3,1.1), opacity .3s; }
+.gcard.up, .genv.empty ~ .gcard, .gift .gstage + .gcard:not([hidden]) { transform: none; opacity: 1; }
+.gcard .wn { font-size: 12px; font-weight: 900; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); }
+.gcard h2 { margin: 4px 0 2px; font-size: 26px; } .gcard p { margin: 4px 0; }
+.gcard .q { font-family: var(--serif); font-size: 19px; color: var(--wine); } .gcard .for { font-size: 13px; font-weight: 800; color: var(--ink-2); }
+.gcard .btn { margin-top: 10px; } .gcard .fine { font-size: 12px; color: var(--ink-2); text-align: center; margin-top: 8px; }
+@media (prefers-reduced-motion: reduce) { .genv, .genv * { animation-duration: .01s !important; animation-delay: 0s !important; } }

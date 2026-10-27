@@ -6,11 +6,12 @@ import {
 
 // A bottle as its sender may see it: never where, never when beyond the day, never a decline.
 export function senderView(b) {
-  const status = { pending: "Paying", waiting: "Waiting", on_way: "Waiting", served: "Delivered",
+  const status = { pending: "Paying", link: "Not opened yet", waiting: "Waiting", on_way: "Waiting", served: "Delivered",
     declined: "Waiting", passed: "Passed on", refunded: "Not claimed", review: "Checking payment", expired: "Not claimed" }[b.status] || "Waiting";
   // A decline shows as Waiting until 30 days, then Not claimed.
   const shown = b.status === "declined" && Date.now() - (b.paidAt || b.createdAt) > 30 * 864e5 ? "Not claimed" : status;
-  return { id: b.id, toMasked: b.toName || b.toMasked || "", wine: b.wine, note: b.note || "", status: shown,
+  return { id: b.id, toMasked: b.toName || b.toMasked || "", wine: b.wine, note: b.note || "", status: shown, via: b.via || "",
+    ...(b.via === "link" && b.status === "link" ? { giftUrl: SITE + "/g/" + b.giftCode, forLabel: b.forLabel || "" } : {}),
     day: b.servedAt ? new Date(b.servedAt).toISOString().slice(0, 10) : null, createdAt: b.createdAt };
 }
 
@@ -39,7 +40,7 @@ export async function markBottlePaid(s, b, tx, via) {
   const sender = await getJSON(s, K.player(b.from));
   if (sender) {
     sender.sentCount = (sender.sentCount || 0) + 1;
-    sender.sentTo = [...new Set([...(sender.sentTo || []), b.to])].slice(-200);
+    if (b.to) sender.sentTo = [...new Set([...(sender.sentTo || []), b.to])].slice(-200);
     sender.rank = rankFor(sender);
     await s.setJSON(K.player(b.from), sender);
   }
@@ -59,6 +60,13 @@ export async function markBottlePaid(s, b, tx, via) {
     await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
     const from = b.anon ? "Someone" : (b.fromName || "A friend");
     sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Outside and tap Glow when you see the runner.").catch(() => {});
+    return b;
+  }
+
+  if (b.via === "link") {
+    // Waits for someone to open the link and keep it (see _outside_gift.mjs).
+    b.status = "link";
+    await saveBottle(s, b);
     return b;
   }
 

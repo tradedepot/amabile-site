@@ -53,6 +53,7 @@ export const RULES = {
   lightHardOffHour: 2,        // and always at 2am Lagos time
   glowMin: 5,                 // venues glow only from this many lights
   glowCacheMs: 5 * 60 * 1000, // glow recomputed every 5 minutes
+  maxOpenLinks: 5,            // bottle links one sender can have out that nobody has kept yet
   maxPendingToNumber: 3,      // unclaimed bottles one sender can have waiting for one number (30 days)
   maxTableSendsPerNight: 2,
   ticketEscalateMin: 15,
@@ -180,6 +181,7 @@ export const K = {
   phash: (h) => "ph/" + h,                       // player number hash -> phone key
   waitingFor: (h) => "rh/" + h,                  // contacts of a non-player yet: owners who saved them
   contacts: (ph) => "cx/" + phoneKey(ph),         // hashes a player picked from their contacts
+  gift: (c) => "g/" + c,                          // a bottle sent as a link (Instagram, Snapchat): code to bottle
   qr: (c) => "qr/" + c,                           // a bottle shown as a QR to a runner
   request: (id) => "rq/" + id,                    // a venue's request to join Outside
   requestPrefix: "rq/"

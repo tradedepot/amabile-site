@@ -137,6 +137,13 @@ export default async (req) => {
       return json({ ok: true, token: sessionToken(t.p), bottleId: t.b, needsProfile: !(p && p.name && p.dob) });
     }
 
+    // A bottle sent as a link: anyone holding the link can see the opening.
+    if (route === "gift") {
+      const { giftView } = await import("./_outside_gift.mjs");
+      const r = await giftView(s, url.searchParams.get("code") || d.code, me);
+      return r.ok ? json(r) : bad(r.error, 404);
+    }
+
     // ---------- signed in ----------
     if (!me) return bad("signin", 401);
 
@@ -176,6 +183,17 @@ export default async (req) => {
     const player = await getJSON(s, K.player(me));
     if (!player || !player.name) return bad("profile", 409);
 
+    if (route === "gift-accept") {
+      const { acceptGift } = await import("./_outside_gift.mjs");
+      const r = await acceptGift(s, me, player, d.code);
+      return r.ok ? json(r) : bad(r.error, r.error === "gift_unknown" ? 404 : 409);
+    }
+    if (route === "gift-reissue") {
+      const { reissueGift } = await import("./_outside_gift.mjs");
+      const r = await reissueGift(s, me, d.bottleId);
+      return r.ok ? json(r) : bad(r.error, 409);
+    }
+
     if (route === "me") {
       const inKeys = await listKeys(s, K.inboxPrefix(me));
       const bag = (await fetchAll(s, inKeys.map((k) => K.bottle(k.split("/").pop()))))
@@ -207,12 +225,23 @@ export default async (req) => {
 
     if (route === "send") {
       const w = wine(d.wine); if (!w) return bad("wine");
-      const mode = ["number", "light", "table"].includes(d.mode) ? d.mode : "number";
+      const mode = ["number", "light", "table", "link"].includes(d.mode) ? d.mode : "number";
       const bands = await getBands(s);
       const note = clean(d.note, 140);
       const b = { id: rid(10), from: me, fromName: player.name, anon: !!d.anon, wine: w.id, note, createdAt: Date.now(), status: "pending", kind: "gift" };
 
-      if (mode === "number" || mode === "light") {
+      if (mode === "link") {
+        // For someone you know on Instagram or Snapchat: a link you send them yourself.
+        const band = BAND_ORDER.includes(d.band) ? d.band : "lounge";
+        const price = bandPrice(bands, band, w.id);
+        if (!price) return bad("band_price");
+        const outKeys = await listKeys(s, K.outboxPrefix(me));
+        const open = (await fetchAll(s, outKeys.slice(-60).map((k) => K.bottle(k.split("/").pop())))).filter((x) => x.via === "link" && x.status === "link");
+        if (open.length >= RULES.maxOpenLinks) return bad("limit");
+        b.band = band; b.price = price;
+        const { attachGift } = await import("./_outside_gift.mjs");
+        await attachGift(s, b, d.forLabel);
+      } else if (mode === "number" || mode === "light") {
         const to = mode === "light" ? null : phoneE164(d.to);
         let toPhone = to;
         if (mode === "light") {
