@@ -27,11 +27,11 @@ export const CURRENCY = "NGN";
 
 // ---------- wines ----------
 export const WINES = [
-  { id: "rosso",   family: "frizzante", name: "Rosso",   label: "Frizzante Rosso",   kind: "Sweet Red" },
-  { id: "bianco",  family: "frizzante", name: "Bianco",  label: "Frizzante Bianco",  kind: "Sweet White" },
-  { id: "rosato",  family: "frizzante", name: "Rosato",  label: "Frizzante Rosato",  kind: "Sweet Rosé" },
-  { id: "sp-rose", family: "spumante",  name: "Spumante Rosé",   label: "Spumante Rosé",   kind: "Sparkling Rosé" },
-  { id: "sp-bianco", family: "spumante", name: "Spumante Bianco", label: "Spumante Bianco", kind: "Sparkling White" }
+  { id: "rosso",   family: "frizzante", name: "Rosso",   label: "Amabile Rosso",   kind: "Sweet Red" },
+  { id: "bianco",  family: "frizzante", name: "Bianco",  label: "Amabile Bianco",  kind: "Sweet White" },
+  { id: "rosato",  family: "frizzante", name: "Rosato",  label: "Amabile Rosato",  kind: "Sweet Rosé" },
+  { id: "sp-rose", family: "spumante",  name: "Sparkling Rosé",   label: "Amabile Sparkling Rosé",   kind: "Sparkling Moscato Rosé" },
+  { id: "sp-bianco", family: "spumante", name: "Sparkling White", label: "Amabile Sparkling White", kind: "Sparkling Moscato" }
 ];
 export const wine = (id) => WINES.find((w) => w.id === id) || null;
 

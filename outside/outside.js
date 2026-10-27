@@ -44,6 +44,8 @@
   const isNight = () => { const h = lagosHour(); return h >= 18 || h < 6; };
   const bandRank = (b) => (S.cfg ? S.cfg.bandOrder.indexOf(b) : 0);
   const bandName = (b) => (S.cfg && S.cfg.bandNames[b]) || b;
+  // The real bottle, as a product tile. Illustrations stay for the map.
+  const photo = (w, h) => `<img class="bph" src="/outside/img/bottle-${esc(w)}.jpg" alt="${esc(wineOf(w).label || "Amabile")}" style="height:${h}px" loading="lazy">`;
   const spotName = (b) => { const n = bandName(b); return (/^[AEIOU]/i.test(n) ? "an " : "a ") + n + " spot"; };
   const wineOf = (id) => (S.cfg && S.cfg.wines.find((w) => w.id === id)) || { name: id, label: id };
   const venueOf = (id) => (S.cfg && S.cfg.venues.find((v) => v.id === id)) || null;
@@ -229,11 +231,9 @@
     const si = $("#signInPill"); if (si) si.onclick = () => signIn();
 
     const out = me ? me.circle.filter((c) => c.out) : [];
-    // Docked in the chrome, never on the map: friends show as outside and the kind of place, never where.
-    $("#outsideNow").innerHTML = out.length
-      ? `<div class="onow"><span class="onow-h"><i></i>Outside now</span><div class="onow-list">${out.map((c) => `<button class="fchip" data-send="${c.key}"><span class="av">${A.avatar(c.avatar, 28)}</span><span class="nm">${esc(c.name)}<small>${c.band ? esc(spotName(c.band)) : "Outside"}</small></span></button>`).join("")}</div></div>`
-      : "";
-    $("#outsideNow").querySelectorAll("[data-send]").forEach((b) => (b.onclick = () => sendFlow({ friend: out.find((c) => c.key === b.dataset.send) })));
+    // Friends outside live in the Friends tab, never on the map. The dock shows how many.
+    const nOut = me ? me.circle.filter((c) => c.out).length : 0;
+    $("#friendCount").textContent = nOut || "";
 
     const tickets = me ? me.tickets : [];
     $("#ticketBar").innerHTML = tickets.map((t) => {
@@ -350,10 +350,10 @@
     const b = S.me && S.me.bag.find((x) => x.id === id);
     if (!b) return;
     const spots = S.cfg.venues.filter((v) => claimableAt(b, v));
-    modal(`<div class="empty"><div class="art">${A.bottle(b.wine, 120)}</div></div>
+    modal(`<div class="reveal">${photo(b.wine, 260)}<div class="wn">${esc(wineOf(b.wine).label)}<small>${esc(wineOf(b.wine).kind || "")}</small></div></div>
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
-      <p class="muted">It's a ${esc(wineOf(b.wine).label)}. Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Outside and tap Bring it here.</p>
+      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Outside and tap Bring it here.</p>
       <button class="btn block" data-x2>See the spots</button>`, (c) => {
       c.querySelector("[data-x2]").onclick = () => { closeModal(); focusSpots(spots); };
     });
@@ -365,12 +365,12 @@
   }
   function bottlesTab() {
     const me = S.me; const bag = me.bag, sent = me.sent || [];
-    const items = bag.map((b) => `<div class="item"><div class="bt">${A.bottle(b.wine, 52)}</div><div class="grow"><h4>From ${esc(b.from)}</h4>
+    const items = bag.map((b) => `<div class="item bag"><div class="bt ph">${photo(b.wine, 110)}</div><div class="grow"><h4>From ${esc(b.from)}</h4>
       <div class="sub">${esc(wineOf(b.wine).label)} · ${b.kind === "gift" ? esc(bandName(b.band)) + " and below" : "on its way"}</div>${b.note ? `<div class="note">"${esc(b.note)}"</div>` : ""}
       <div class="row" style="margin-top:8px;flex-wrap:wrap">${b.status === "waiting"
         ? `<button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button><button class="btn small ghost" data-spots="${b.id}">Where?</button><button class="link" data-more="${b.id}">More</button>`
         : `<span class="tag gold">On its way</span><button class="link" data-cancel="${b.id}">Not here any more</button>`}</div></div></div>`).join("");
-    const s2 = sent.slice(0, 12).map((x) => `<div class="item"><div class="bt">${A.bottle(x.wine, 40)}</div><div class="grow"><h4>To ${esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div><span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span></div>`).join("");
+    const s2 = sent.slice(0, 12).map((x) => `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>To ${esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div><span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span></div>`).join("");
     return `<h2>Your bottles</h2>${items || `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
@@ -527,7 +527,7 @@
           : st.mode === "table" ? `<div class="item"><div class="grow"><h4>Table ${esc(st.table)}</h4><div class="sub">In this room, from you.</div></div></div>`
           : `<label class="field"><span>Their number</span><div class="row"><input id="to" type="tel" placeholder="0803 000 0000" value="${esc(st.to)}" class="grow">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div></label>
              ${out.length ? `<p class="muted">Or someone outside now:</p><div class="chips">${out.map((c) => `<button class="chip" data-f="${c.key}">${esc(c.name)}</button>`).join("")}</div>` : ""}`}
-        <h3>Wine</h3><div class="wines">${wines.map((w) => `<button class="wine${st.wine === w.id ? " on" : ""}" data-w="${w.id}">${A.bottle(w.id, 64)}<br>${esc(w.name)}<small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div>
+        <h3>Wine</h3><div class="wines">${wines.map((w) => `<button class="wine${st.wine === w.id ? " on" : ""}" data-w="${w.id}">${photo(w.id, 96)}<br>${esc(w.name)}<small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div>
         ${st.mode === "number" ? `<h3>Where it can be claimed</h3><div class="chips">${S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)).map((b) => `<button class="chip${st.band === b ? " on" : ""}" data-b="${b}">${esc(bandName(b))} spots<small>${naira(bandPrice(b, st.wine))} · ${spotsFor(b, st.wine)} spot${spotsFor(b, st.wine) === 1 ? "" : "s"}</small></button>`).join("")}</div>` : ""}
         <label class="field"><span>A note (optional)</span><textarea id="note" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea></label>
         <label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>
@@ -574,7 +574,7 @@
       if (r.ok && r.paid) {
         await loadMe();
         if (topup) { closeModal(); const t = S.me.tickets.find((x) => x.bottleId === r.bottleId); toast("Topped up. It's coming."); if (t) glowPrompt(t); return; }
-        return modal(`<div class="empty"><div class="art">${A.bottle(r.bottle.wine, 120)}</div></div><h2>Sent.</h2>
+        return modal(`<div class="reveal">${photo(r.bottle.wine, 220)}</div><h2>Sent.</h2>
           <p>${esc(r.bottle.toMasked)} gets it ${r.bottle.status === "Waiting" ? "the next time they're outside" : "at their table now"}. You'll see Delivered when it lands.</p>
           <button class="btn block" data-x4>Cheers</button>`, (c) => (c.querySelector("[data-x4]").onclick = closeModal));
       }
@@ -586,15 +586,20 @@
   // ---------- friends ----------
   function friendsTab() {
     const c = S.me.circle;
-    const out = c.filter((x) => x.out), mutual = c.filter((x) => x.mutual && !x.out), pending = c.filter((x) => !x.mutual);
-    const row = (x, extra) => `<div class="item"><div class="bt">${x.avatar ? A.avatar(x.avatar, 44) : A.avatar({}, 44)}</div><div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">${extra}</div></div>` +
-      (x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : "") + `</div>`;
+    // One list. People outside right now come first, lit; then everyone else.
+    const rank = (x) => (x.out ? 0 : x.mutual ? 1 : 2);
+    const people = c.filter((x) => x.mutual || x.out).sort((a, b) => rank(a) - rank(b) || String(a.name).localeCompare(String(b.name)));
+    const pending = c.filter((x) => !x.mutual && !x.out);
+    const row = (x) => `<div class="item${x.out ? " lit" : ""}"><div class="bt av">${A.avatar(x.avatar || {}, 44)}${x.out ? "<i></i>" : ""}</div>
+      <div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">${x.out ? "Outside now, at " + esc(spotName(x.band)) : x.level === "hidden" ? "Hidden from your light" : "Sees your light"}</div></div>
+      ${x.out ? `<button class="btn small" data-sendto="${x.key}">Send</button>` : ""}
+      ${x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : ""}</div>`;
+    const nOut = people.filter((x) => x.out).length;
     return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Outside and have your number too. They see when you're outside, never where.</p>
       <div class="row" style="flex-wrap:wrap;gap:8px;margin:10px 0">${hasPicker() ? `<button class="btn small" id="pickMany">Pick from contacts</button>` : ""}
       <button class="btn small ghost" id="addNum">Add a number</button><button class="btn small ghost" id="share">Share my link</button></div>
-      ${out.length ? `<h3>Outside now</h3><div class="list">${out.map((x) => row(x, "At " + esc(spotName(x.band)) + ` · <button class="link" data-sendto="${x.key}">Send a bottle</button>`)).join("")}</div>` : ""}
-      <h3>Everyone</h3>${mutual.length ? `<div class="list">${mutual.map((x) => row(x, x.level === "hidden" ? "Hidden from your light" : "Sees your light")).join("")}</div>` : `<p class="muted">Nobody yet. Pick friends from your contacts or share your link.</p>`}
-      ${pending.length ? `<h3>Waiting for them</h3><div class="list">${pending.map((x) => row(x, "They need to add you back, or join Outside")).join("")}</div>` : ""}`;
+      ${people.length ? `<h3>${nOut ? nOut + " outside now" : "Nobody outside right now"}</h3><div class="list">${people.map(row).join("")}</div>` : `<p class="muted">Nobody yet. Pick friends from your contacts or share your link.</p>`}
+      ${pending.length ? `<h3>Waiting for them</h3><div class="list">${pending.map((x) => `<div class="item"><div class="bt av">${A.avatar({}, 44)}</div><div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">They need to add you back, or join Outside</div></div></div>`).join("")}</div>` : ""}`;
   }
   function bindFriends(body) {
     const pm = body.querySelector("#pickMany");
@@ -631,7 +636,7 @@
     if (!ds.length) return `<h2>Drops</h2><div class="empty"><div class="art">${A.bottle("bianco", 80)}</div>No drops right now. Amabile places bottles at real spots around Lagos. Check back on Friday.</div>`;
     return `<h2>Drops</h2><p class="muted">Bottles placed at real spots. Be there to claim one for your table.</p><div class="list">` + ds.map((d) => {
       const v = venueOf(d.venueId);
-      return `<button class="item" data-dropgo="${d.id}" style="text-align:left"><div class="bt">${A.bottle((d.wines || [])[0] || "rosso", 52)}</div><div class="grow"><h4>${d.hidden ? "Somewhere in Lagos" : esc(v ? v.name : "")}</h4>
+      return `<button class="item" data-dropgo="${d.id}" style="text-align:left"><div class="bt ph">${photo((d.wines || [])[0] || "rosso", 80)}</div><div class="grow"><h4>${d.hidden ? "Somewhere in Lagos" : esc(v ? v.name : "")}</h4>
         <div class="sub">${esc(KIND[d.kind] || "")}${d.reward ? " · " + esc(d.reward) : ""}</div>
         <div class="row" style="margin-top:6px">${d.state === "live" ? `<span class="tag wine">Live · ${d.left} of ${d.bottles} left</span><span class="muted">ends ${timeShort(d.end)}</span>` : `<span class="tag">${new Date(d.start).toLocaleDateString("en-NG", { weekday: "long", timeZone: "Africa/Lagos" })} ${timeShort(d.start)}</span>`}</div></div></button>`;
     }).join("") + `</div>`;
@@ -640,7 +645,7 @@
     const d = (S.cfg.drops || []).find((x) => x.id === id); if (!d) return;
     const v = venueOf(d.venueId);
     closeSheet();
-    modal(`<div class="empty"><div class="art">${A.bottle((d.wines || [])[0] || "rosso", 110)}</div></div>
+    modal(`<div class="reveal">${photo((d.wines || [])[0] || "rosso", 200)}</div>
       <h2>${d.hidden ? "A hidden drop" : "Drop at " + esc(v ? v.name : "")}</h2>
       <p>${esc(KIND[d.kind] || "")}. ${d.state === "live" ? `<b>${d.left} of ${d.bottles}</b> left, ends ${timeShort(d.end)}.` : `Starts ${timeShort(d.start)}.`}</p>
       ${d.clue ? `<p class="note" style="font-family:var(--serif);font-size:19px;color:var(--wine)">${esc(d.clue)}</p>` : ""}
@@ -687,7 +692,7 @@
       ${v.tonight ? `<p>${esc(v.tonight)}</p>` : ""}
       <p class="muted">Pours ${v.wines.map((w) => esc(wineOf(w).name)).join(", ")}.</p>
       ${drop ? `<button class="item" data-d="${drop.id}" style="width:100%;text-align:left"><div class="bt">${A.bottle("rosso", 40)}</div><div class="grow"><h4>Drop ${drop.state === "live" ? "live now" : timeShort(drop.start)}</h4><div class="sub">${drop.left} of ${drop.bottles} left</div></div></button>` : ""}
-      ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt">${A.bottle(b.wine, 40)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Bring it here</button></div>`).join("")}</div>` : ""}
+      ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt ph">${photo(b.wine, 56)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Bring it here</button></div>`).join("")}</div>` : ""}
       <p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>`, (c) => {
       c.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.c, v.id)));
       c.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => dropCard(b.dataset.d)));
