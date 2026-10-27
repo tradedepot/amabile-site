@@ -296,7 +296,7 @@
     const opts = (key, map) => Object.entries(map).map(([k, v]) =>
       key === "skin" ? `<button class="swatch${av.skin === k ? " on" : ""}" data-k="skin" data-v="${k}" style="background:${v}" aria-label="Skin tone"></button>`
         : `<button class="${av[key] === k ? "on" : ""}" data-k="${key}" data-v="${k}">${esc(typeof v === "string" ? v : v.label)}</button>`).join("");
-    modal(`<h2>${edit ? "Your look" : "One more thing"}</h2>
+    modal(`<h2>${edit ? "Your avatar" : "One more thing"}</h2>
       ${edit ? "" : `<label class="field"><span>First name</span><input id="nm" autocomplete="given-name" maxlength="24"></label>
       <label class="field"><span>Date of birth</span><input id="dob" type="date"></label>`}
       <div class="av-builder"><div class="av-preview" id="avp">${A.avatar(av, 120)}</div>
@@ -406,7 +406,7 @@
   function claimFlow(id, venueId) {
     const b = S.me.bag.find((x) => x.id === id); if (!b) return;
     closeSheet();
-    modal(`<h2>Bring it here</h2><p class="muted">We'll find the venue from your location, once. Nobody else sees it.</p>${whereFields()}
+    modal(`<h2>Bring it here</h2><p class="muted">We check which venue you're at, once. No one can see where you are.</p>${whereFields()}
       <label class="toggle"><input type="checkbox" id="quiet"> Quiet claim: don't tell my people I'm outside</label>
       <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>
       <p class="muted" style="text-align:center">Or call a runner over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
@@ -520,7 +520,7 @@
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
           <label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label></div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="fine">They claim it at a partner venue next time they're outside. You'll see Waiting, then Delivered. Never where.</p></div>`;
+        <p class="fine">They claim it at a partner venue next time they're outside. You'll see Waiting, then Delivered. You never see where they are.</p></div>`;
     };
     const mount = (c) => {
       const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
@@ -584,7 +584,7 @@
       ${x.out ? `<button class="btn small" data-sendto="${x.key}">Send</button>` : ""}
       ${x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : ""}</div>`;
     const nOut = people.filter((x) => x.out).length;
-    return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Outside and have your number too. They see when you're outside, never where.</p>
+    return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Outside and have your number too. No one can see where you are. They just know when you're outside.</p>
       <div class="row" style="flex-wrap:wrap;gap:8px;margin:10px 0">${hasPicker() ? `<button class="btn small" id="pickMany">Pick from contacts</button>` : ""}
       <button class="btn small ghost" id="addNum">Add a number</button><button class="btn small ghost" id="share">Share my link</button></div>
       ${people.length ? `<h3>${nOut ? nOut + " outside now" : "Nobody outside right now"}</h3><div class="list">${people.map(row).join("")}</div>` : `<p class="muted">Nobody yet. Pick friends from your contacts or share your link.</p>`}
@@ -694,8 +694,8 @@
     // Kept bare on purpose: nothing here suggests anyone can see where you are.
     modal(`<div class="row"><div>${A.avatar(p.avatar, 96)}</div><div class="grow"><h2 style="margin:0">${esc(p.name)}</h2>
       <div class="muted" style="margin-top:6px">${p.sentCount || 0} bottles sent</div></div></div>
-      ${S.me.light ? `<p class="muted" style="margin-top:14px">Your people can see you're out tonight. Never where. <button class="link" id="lightOff">Turn off</button></p>` : ""}
-      <p></p><button class="btn block ghost" id="look">Change my look</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
+      ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
+      <p></p><button class="btn block ghost" id="look">Change my avatar</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
       const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
       c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };
