@@ -40,7 +40,7 @@
   const API = "/api/outside-admin";
   const LS = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch {} } };
   let ak = LS.get("outside.ak") || "", tab = "requests", data = {};
-  const STAGE = { requested: "Requested", visit_booked: "Visit booked", listed: "Listed", purchased: "Purchased", live: "Live", declined: "Declined", paused: "Offline" };
+  const STAGE = { requested: "Requested", visit_booked: "Visit booked", listed: "Listed", stocked: "Stock noted", live: "Live", declined: "Declined", paused: "Offline" };
   const KIND = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
   const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
   const BAND_NAMES = { everyday: "Chill", lounge: "Enjoyment", premium: "Soft Life", top: "Odogwu" };
@@ -105,7 +105,7 @@
       <div class="card"><h2>1. Book the visit</h2><div class="grid"><div><label>Who visits</label><input id="vb" list="team" value="${esc((r.visit || {}).by || "")}"><datalist id="team"><option>Anita</option><option>Aylor</option></datalist></div>
         <div><label>When</label><input id="vd" value="${esc((r.visit || {}).date || "")}" placeholder="Tue 4 Nov, 3pm"></div><div><label>Note</label><input id="vn" value="${esc((r.visit || {}).note || "")}"></div></div>
         <p><button class="b" id="book">Save visit</button></p></div>
-      <div class="card"><h2>2. List the venue</h2>${venue ? `<p>Listed as <b>${esc(venue.name)}</b>. <button class="b small" id="openv">Open the venue</button></p>` : `<p class="muted">Creates the venue, not live yet. Location, prices, linked account and the listing purchase are finished on the venue page, usually during the visit.</p><p><button class="b" id="list">List this venue</button></p>`}</div>
+      <div class="card"><h2>2. List the venue</h2>${venue ? `<p>Listed as <b>${esc(venue.name)}</b>. <button class="b small" id="openv">Open the venue</button></p>` : `<p class="muted">Creates the venue, not live yet. Location, prices, linked account and how they get Amabile are finished on the venue page, usually during the visit.</p><p><button class="b" id="list">List this venue</button></p>`}</div>
       <div class="card"><h2>Notes and decline</h2><label>Ops notes</label><textarea id="on">${esc(r.opsNote || "")}</textarea>
         <p class="row"><button class="b ghost" id="savenote">Save notes</button>${r.stage === "declined" ? `<button class="b ghost" id="reopen">Reopen</button>` : `<button class="b ghost" id="decline">Decline</button>`}<button class="b ghost" id="back">Back</button></p><p class="muted" id="msg"></p></div>`);
     const $ = (id) => document.getElementById(id);
@@ -156,13 +156,20 @@
       <div><label>Bank</label><input id="bk" value="${esc((v.payout || {}).bank || "")}"></div><div><label>Account number</label><input id="ac" value="${esc((v.payout || {}).account || "")}"></div><div><label>Account name</label><input id="an" value="${esc((v.payout || {}).name || "")}"></div></div>
       <p class="row"><button class="b" id="save">Save</button><button class="b ghost" id="back">Back</button></p><p id="msg" class="muted"></p></div>
       ${v.id ? `<div class="card"><h2>Outlet account</h2>
-        ${v.outlet ? `<p>Linked to <b>${esc(v.outlet.name)}</b> #${esc(v.outlet.number)} · ${esc(v.outlet.contactPerson || "")} ${esc(v.outlet.contactPhone || "")} <button class="b small ghost" id="unlink">Unlink</button></p>` : `<p class="muted">Link the account we already hold for this venue. It fills in the location and contact, and lets the listing purchase be confirmed from the sales data.</p>`}
+        ${v.outlet ? `<p>Linked to <b>${esc(v.outlet.name)}</b> #${esc(v.outlet.number)} · ${esc(v.outlet.contactPerson || "")} ${esc(v.outlet.contactPhone || "")} <button class="b small ghost" id="unlink">Unlink</button></p>` : `<p class="muted">Link the account we already hold for this venue. It fills in the location and contact, and lets a purchase from us be found in the sales data.</p>`}
         <div class="row"><input id="oq" placeholder="Search by outlet name or phone" style="flex:1;min-width:220px"><button class="b ghost" id="os">Search</button></div><div id="ores"></div></div>
-      <div class="card"><h2>Listing purchase</h2>
-        ${v.purchase ? `<p>${v.purchase.source === "sales" ? `Found in the sales data: <b>${v.purchase.cases} cases</b>, week of ${esc(v.purchase.week)}${v.purchase.amount ? ", " + naira(v.purchase.amount) : ""}.` : `Recorded: order <b>${esc(v.purchase.ref)}</b>${v.purchase.cases ? ", " + v.purchase.cases + " cases" : ""}${v.purchase.amount ? ", " + naira(v.purchase.amount) : ""}${v.purchase.date ? ", " + esc(v.purchase.date) : ""}.`}</p>` : ""}
+      <div class="card"><h2>How they get Amabile</h2>
+        ${v.supply ? `<p>${v.supply.source === "sales" ? `From us, found in the sales data: <b>${v.supply.cases} cases</b>, week of ${esc(v.supply.week)}${v.supply.amount ? ", " + naira(v.supply.amount) : ""}.`
+          : v.supply.source === "manual" ? `From us: order <b>${esc(v.supply.ref)}</b>${v.supply.cases ? ", " + v.supply.cases + " cases" : ""}${v.supply.amount ? ", " + naira(v.supply.amount) : ""}${v.supply.date ? ", " + esc(v.supply.date) : ""}.`
+          : `Through <b>${esc(v.supply.supplier)}</b>${v.supply.note ? ". " + esc(v.supply.note) : ""}.`}</p>`
+          : v.purchase ? `<p>From us: order <b>${esc(v.purchase.ref || v.purchase.week || "")}</b>.</p>` : `<p class="muted">Not noted yet. Optional: it does not stop the venue going live.</p>`}
+        <h3>From us</h3>
         <p class="row"><button class="b ghost" id="fromsales"${v.outlet ? "" : " disabled"}>Find it in the sales data</button><span class="muted">${v.outlet ? "" : "Link the outlet account first."}</span></p>
         <div class="grid"><div><label>Or order reference</label><input id="pref"></div><div><label>Cases</label><input id="pcases" inputmode="numeric"></div><div><label>Amount, ₦</label><input id="pamt" inputmode="numeric"></div><div><label>Date</label><input id="pdate" type="date"></div></div>
-        <p><button class="b ghost" id="precord">Record purchase</button></p></div>
+        <p><button class="b ghost" id="precord">Record order</button></p>
+        <h3>Another supplier</h3>
+        <div class="grid"><div><label>Distributor or wholesaler</label><input id="osup" list="sups"><datalist id="sups">${[...new Set(((data.venues && data.venues.venues) || []).map((x) => x.supply && x.supply.supplier).filter(Boolean))].map((n) => `<option>${esc(n)}</option>`).join("")}</datalist></div><div><label>Note</label><input id="onote" placeholder="e.g. Frizzante Rosso only, reorders monthly"></div></div>
+        <p><button class="b ghost" id="orecord">Save supplier</button></p></div>
       <div class="card"><h2>${v.active ? "Live" : "Go live"}</h2>
         ${v.active ? `<p>On the map since ${v.liveAt ? lagos(v.liveAt) : ""}. <a target="_blank" href="/outside/board?v=${esc(v.id)}">Runner board</a></p><p><button class="b ghost" id="off">Take offline</button></p>`
           : `${ch.missing.length ? `<p>Still needed: <b>${esc(ch.missing.join(", "))}</b>.</p>` : `<p>Ready.</p>`}${ch.warnings.length ? `<p class="muted">Worth adding: ${esc(ch.warnings.join(", "))}.</p>` : ""}
@@ -193,12 +200,16 @@
     };
     const ul = $("unlink"); if (ul) ul.onclick = async () => { await call({ action: "venue-link", venueId: v.id, outletId: "" }); reopenVenue(v.id); };
     $("fromsales").onclick = async () => {
-      const x = await call({ action: "venue-purchase", venueId: v.id, fromSales: true });
-      reopenVenue(v.id, x.ok ? `<div class="note">Purchase found in the sales data.</div>` : `<div class="note">${x.error === "no_purchase_found" ? "No Amabile purchase found for this account since " + esc(x.since) + ". Sales data can lag a few days; record the order reference instead." : "Couldn't check: " + esc(x.error)}</div>`);
+      const x = await call({ action: "venue-supply", venueId: v.id, fromSales: true });
+      reopenVenue(v.id, x.ok ? `<div class="note">Order found in the sales data.</div>` : `<div class="note">${x.error === "no_purchase_found" ? "No Amabile purchase found for this account since " + esc(x.since) + ". Sales data can lag a few days. Record the order reference, or name their supplier if they buy elsewhere." : "Couldn't check: " + esc(x.error)}</div>`);
     };
     $("precord").onclick = async () => {
-      const x = await call({ action: "venue-purchase", venueId: v.id, ref: $("pref").value, cases: $("pcases").value, amount: $("pamt").value, date: $("pdate").value });
-      reopenVenue(v.id, x.ok ? `<div class="note">Purchase recorded.</div>` : `<div class="note">${x.error === "order_ref" ? "Add the order reference." : "Couldn't record: " + esc(x.error)}</div>`);
+      const x = await call({ action: "venue-supply", venueId: v.id, ref: $("pref").value, cases: $("pcases").value, amount: $("pamt").value, date: $("pdate").value });
+      reopenVenue(v.id, x.ok ? `<div class="note">Order recorded.</div>` : `<div class="note">${x.error === "order_ref" ? "Add the order reference." : "Couldn't record: " + esc(x.error)}</div>`);
+    };
+    $("orecord").onclick = async () => {
+      const x = await call({ action: "venue-supply", venueId: v.id, via: "other", supplier: $("osup").value, note: $("onote").value });
+      reopenVenue(v.id, x.ok ? `<div class="note">Supplier saved.</div>` : `<div class="note">${x.error === "supplier" ? "Add the supplier's name." : "Couldn't save: " + esc(x.error)}</div>`);
     };
     const lv = $("live"); if (lv) lv.onclick = async () => {
       const x = await call({ action: "venue-live", venueId: v.id });

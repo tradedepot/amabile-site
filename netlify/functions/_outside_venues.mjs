@@ -1,12 +1,12 @@
 // Outside: venues joining on their own.
 //
 // A venue owner or manager registers on /outside/venue with a verified WhatsApp number. The request lands
-// in admin as "requested". Ops books a visit, lists the venue (location, prices, tables) and concludes
-// the listing purchase. Once the purchase is recorded or found in the sales data, ops takes it live and
-// the venue appears on the map with its runner board.
+// in admin as "requested". Ops books a visit, lists the venue (location, prices, tables), notes how the
+// venue gets its Amabile, and takes it live. The venue then appears on the map with its runner board.
+// Supply is recorded, never required: a venue may buy from us, or from a distributor or wholesaler.
 //
 // Venues can be linked to the outlet account we already hold for them. Linking fills in the location
-// and contact, and lets admin confirm the listing purchase from the sales data.
+// and contact, and lets admin confirm a purchase from us in the sales data.
 import {
   K, getJSON, rid, clean, now, phoneE164, maskPhone, hashKey, BAND_ORDER, VENUE_KINDS, SITE, WINES, sendText
 } from "./_outside.mjs";
@@ -103,11 +103,17 @@ export async function linkOutlet(s, venueId, outletId, by) {
   return { ok: true, venue: v, purchases: o.purchases };
 }
 
-// The listing purchase: recorded by hand, or confirmed from the linked outlet's sales since the request.
-export async function recordPurchase(s, venueId, d, by) {
+// How the venue gets its Amabile. From us: found in the linked outlet's sales, or an order recorded by hand.
+// Or through another supplier (a distributor or wholesaler), named by ops. Recorded for the stock picture;
+// it does not gate going live.
+export async function recordSupply(s, venueId, d, by) {
   const v = await getJSON(s, K.venue(venueId));
   if (!v) return { ok: false, error: "not_found" };
-  if (d.fromSales) {
+  if (d.via === "other") {
+    const supplier = clean(d.supplier, 60);
+    if (!supplier) return { ok: false, error: "supplier" };
+    v.supply = { source: "other", supplier, note: clean(d.note, 160), at: now(), by };
+  } else if (d.fromSales) {
     if (!v.outlet) return { ok: false, error: "link_outlet_first" };
     const req = v.requestId ? await getJSON(s, K.request(v.requestId)) : null;
     // From a request: anything bought since a week before they asked. Added directly by ops (an account we already supply): the last 90 days.
@@ -117,18 +123,19 @@ export async function recordPurchase(s, venueId, d, by) {
     if (!o.purchases.length) return { ok: false, error: "no_purchase_found", since };
     const cases = o.purchases.reduce((n, p) => n + Number(p.cases || 0), 0);
     const amount = o.purchases.reduce((n, p) => n + Number(p.amount || 0), 0);
-    v.purchase = { source: "sales", week: o.purchases[0].week, cases, amount, lines: o.purchases.slice(0, 6), at: now(), by };
+    v.supply = { source: "sales", week: o.purchases[0].week, cases, amount, lines: o.purchases.slice(0, 6), at: now(), by };
   } else {
     const ref = clean(d.ref, 40);
     if (!ref) return { ok: false, error: "order_ref" };
-    v.purchase = { source: "manual", ref, cases: Number(d.cases) || 0, amount: Number(String(d.amount || "").replace(/[^\d.]/g, "")) || 0, date: clean(d.date, 12), at: now(), by };
+    v.supply = { source: "manual", ref, cases: Number(d.cases) || 0, amount: Number(String(d.amount || "").replace(/[^\d.]/g, "")) || 0, date: clean(d.date, 12), at: now(), by };
   }
-  if (!v.active) v.stage = "purchased";
+  delete v.purchase;
+  if (!v.active) v.stage = "stocked";
   v.updatedAt = now();
   await s.setJSON(K.venue(v.id), v);
   if (v.requestId) {
     const r = await getJSON(s, K.request(v.requestId));
-    if (r && r.stage !== "live") { r.stage = "purchased"; r.history = [...(r.history || []), { at: now(), stage: "purchased", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }
+    if (r && r.stage !== "live") { r.stage = "stocked"; r.history = [...(r.history || []), { at: now(), stage: "stocked", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }
   }
   return { ok: true, venue: v };
 }
@@ -139,8 +146,8 @@ export function liveChecks(v) {
   if (typeof v.lat !== "number" || typeof v.lng !== "number" || !isFinite(v.lat)) missing.push("location");
   if (!BAND_ORDER.includes(v.band)) missing.push("price level");
   if (!Object.values(v.prices || {}).some((p) => p > 0)) missing.push("menu prices");
-  if (!v.purchase) missing.push("listing purchase");
   const warnings = [];
+  if (!v.supply && !v.purchase) warnings.push("how they get Amabile");
   if (!v.payout || !v.payout.account) warnings.push("payout account");
   if (!v.outlet) warnings.push("linked outlet account");
   return { missing, warnings };

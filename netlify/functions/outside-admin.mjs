@@ -19,7 +19,7 @@ import {
   wine, tentToken, SITE, computeGlow, maskPhone
 } from "./_outside.mjs";
 
-import { listRequests, updateRequest, listFromRequest, linkOutlet, recordPurchase, liveChecks, goLive } from "./_outside_venues.mjs";
+import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "./_outside_venues.mjs";
 import { searchOutlets, getOutlet } from "./_outside_bq.mjs";
 
 export const config = { path: "/api/outside-admin" };
@@ -61,7 +61,7 @@ export default async (req) => {
       active: !!x.active, updatedAt: Date.now()
     };
     if (!Number.isFinite(v.lat) || !Number.isFinite(v.lng) || (v.lat === 0 && v.lng === 0)) { v.lat = null; v.lng = null; }
-    // A venue only goes live once it is listed and its listing purchase is in.
+    // A venue only goes live with a location, a price level and menu prices.
     const checks = liveChecks(v);
     if (v.active && checks.missing.length) { v.active = false; v.blockedLive = checks.missing; } else delete v.blockedLive;
     if (v.active) v.stage = "live";
@@ -199,7 +199,7 @@ export default async (req) => {
   if (a === "outlet-search") return json(await searchOutlets(d.q));
   if (a === "outlet-get") return json(await getOutlet(clean(d.id, 40), clean(d.since, 10) || "2025-01-01"));
   if (a === "venue-link") { const r = await linkOutlet(s, clean(d.venueId, 20), clean(d.outletId, 40), by); return json(r, r.ok ? 200 : 400); }
-  if (a === "venue-purchase") { const r = await recordPurchase(s, clean(d.venueId, 20), d, by); return json(r, r.ok ? 200 : 400); }
+  if (a === "venue-supply" || a === "venue-purchase") { const r = await recordSupply(s, clean(d.venueId, 20), d, by); return json(r, r.ok ? 200 : 400); }
   if (a === "venue-live") { const r = await goLive(s, clean(d.venueId, 20), by); return json(r, r.ok ? 200 : 400); }
   if (a === "venue-off") {
     const v = await getJSON(s, K.venue(clean(d.venueId, 20))); if (!v) return json({ ok: false, error: "not_found" }, 404);

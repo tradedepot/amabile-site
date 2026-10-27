@@ -185,7 +185,7 @@ export const K = {
 };
 
 // A venue's journey onto the map. Only "live" venues are active in the game.
-export const REQUEST_STAGES = ["requested", "visit_booked", "listed", "purchased", "live", "declined"];
+export const REQUEST_STAGES = ["requested", "visit_booked", "listed", "stocked", "live", "declined"];
 export const VENUE_KINDS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
 export const numberHash = (e164) => crypto.createHash("sha256").update("outside:" + e164).digest("hex").slice(0, 32);
 
