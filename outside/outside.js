@@ -519,7 +519,7 @@
         <div class="wn">${esc(g.wineLabel)}</div>
         <h2>${from}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
         ${g.note ? `<p class="q">"${esc(g.note)}"</p>` : ""}${g.forLabel ? `<p class="for">For ${esc(g.forLabel)}</p>` : ""}
-        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<button class="btn block" id="gk">Keep it</button><p class="fine">You'll confirm your WhatsApp number. That's where Amabile sends it.</p>`}
+        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<button class="btn block" id="gk">Keep it</button>`}
         <p class="muted" id="gm"></p></div>`;
     el.classList.add("show");
     const env = el.querySelector(".genv"), card = el.querySelector(".gcard");
@@ -533,7 +533,7 @@
       const r = await api("gift-accept", { code });
       if (!r.ok) return (el.querySelector("#gm").textContent = errMsg(r.error));
       await loadMe(); close();
-      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Check WhatsApp: Amabile has sent it to you there too. Claim it at any partner venue next time you're outside.</p>
+      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it at any partner venue next time you're outside.</p>
         <button class="btn block" id="gb">See where to claim it</button>`, (c) => { c.querySelector("#gb").onclick = () => { closeModal(); openSheet("bottles"); }; });
     };
     el.querySelector("#gk").onclick = () => {
