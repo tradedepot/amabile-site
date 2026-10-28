@@ -13,7 +13,7 @@
 //   bottle            {id | ref}       look up one bottle
 //   bottles           recent bottles (last 200)
 //   unmet             failed claims (for the sales team)
-//   glow              recompute glow now
+//   glow              {force?}         venues with people outside now (cached unless force)
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone
@@ -211,7 +211,7 @@ export default async (req) => {
     v.active = false; v.stage = "paused"; v.updatedAt = Date.now(); await s.setJSON(K.venue(v.id), v); return json({ ok: true });
   }
 
-  if (a === "glow") return json({ ok: true, glow: await computeGlow(s, true) });
+  if (a === "glow") return json({ ok: true, glow: await computeGlow(s, !!d.force) });
 
   return json({ ok: false, error: "action" }, 400);
 };
