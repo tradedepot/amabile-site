@@ -1,0 +1,87 @@
+{
+  "updated": "2026-10-28",
+  "send": {
+    "live": false,
+    "url": "https://weoutside.ng"
+  },
+  "places": [
+    {
+      "kind": "room",
+      "name": "The A Steakhouse",
+      "district": "Victoria Island",
+      "maps": "https://www.google.com/maps/search/?api=1&query=The%20A%20Steakhouse%2C%201%20Karimu%20Kotun%20Street%2C%20Victoria%20Island%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "room",
+      "name": "Maison Privé",
+      "district": "Victoria Island",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Maison%20Priv%C3%A9%2C%2025%20Maritime%20Lane%2C%20Victoria%20Island%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "room",
+      "name": "Sora",
+      "district": "Victoria Island",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Sora%20Restaurant%2C%20Trinity%20Towers%2C%20Chief%20Yesufu%20Abiodun%20Oniru%20Road%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "room",
+      "name": "Knowhere",
+      "district": "Victoria Island",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Knowhere%20Lagos%2C%2017%20Adeola%20Odeku%20Street%2C%20Victoria%20Island%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "room",
+      "name": "Nómaada",
+      "district": "Victoria Island",
+      "maps": "https://www.google.com/maps/search/?api=1&query=N%C3%B3maada%20Restaurant%2C%204b%20Musa%20Yar%27Adua%20Street%2C%20Victoria%20Island%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "room",
+      "name": "Wheatbaker",
+      "district": "Ikoyi",
+      "maps": "https://www.google.com/maps/search/?api=1&query=The%20Wheatbaker%2C%204%20Lawrence%20Road%2C%20Ikoyi%2C%20Lagos",
+      "live": true,
+      "note": ""
+    },
+    {
+      "kind": "shop",
+      "name": "Renee, Ikoyi",
+      "district": "Ikoyi",
+      "address": "45 Cameron Road, Ikoyi",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Renee%20Supermarket%2C%2045%20Cameron%20Road%2C%20Ikoyi%2C%20Lagos",
+      "live": true
+    },
+    {
+      "kind": "shop",
+      "name": "Renee, Freedom Way",
+      "district": "Lekki Phase 1",
+      "address": "Freedom Way, Lekki Phase 1",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Renee%20Supermarket%2C%20Freedom%20Way%2C%20Lekki%20Phase%201%2C%20Lagos",
+      "live": true
+    },
+    {
+      "kind": "shop",
+      "name": "Renee, Central Mosque",
+      "district": "Victoria Island",
+      "address": "",
+      "maps": "https://www.google.com/maps/search/?api=1&query=Renee%20Supermarket%20Central%20Mosque%20Lagos",
+      "live": true
+    },
+    {
+      "kind": "online",
+      "name": "Drinks.ng",
+      "url": "",
+      "live": false
+    }
+  ]
+}

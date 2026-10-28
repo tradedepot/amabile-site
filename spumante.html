@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#efe4cf">
+<title>Spumante, Amabile di Rosa</title>
+<meta name="description" content="Rosé and Bianco. Where it is pouring in Lagos, and where to take a bottle home.">
+<link rel="canonical" href="https://www.amabiledirosa.com/spumante">
+<link rel="icon" type="image/png" sizes="256x256" href="/favicon-256.png">
+<link rel="icon" href="/favicon.ico" sizes="any">
+<link rel="icon" type="image/png" sizes="32x32" href="/favicon-32.png">
+<link rel="apple-touch-icon" href="/apple-touch-icon.png">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://www.amabiledirosa.com/spumante">
+<meta property="og:title" content="Spumante, Amabile di Rosa">
+<meta property="og:description" content="Rosé and Bianco. Where it is pouring in Lagos, and where to take a bottle home.">
+<meta property="og:image" content="https://www.amabiledirosa.com/spumante/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Spumante, Amabile di Rosa">
+<meta name="twitter:description" content="Rosé and Bianco. Where it is pouring in Lagos, and where to take a bottle home.">
+<meta name="twitter:image" content="https://www.amabiledirosa.com/spumante/og.jpg">
+<script src="/assets/js/analytics.js" defer></script>
+<style>
+/* Spumante identity (the Table pages), not the main site's party look. Laptop first:
+   centred opening over a wide hero, districts as labelled rows of cards, Tables two across.
+   Phones stack. */
+:root{--ground:#efe4cf;--card:#fffdf7;--ink:#2a1207;--body:#4a3a2c;--muted:#8a6d4a;--gold:#b08d57;--wine:#7d1d1d;--line:#e6d3a8;--rule:#c9a15a}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:Georgia,"Times New Roman",serif;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+.wrap{max-width:1160px;margin:0 auto;padding:40px 32px 70px}
+header{text-align:center;padding:16px 0 26px}
+.eyebrow{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.34em;text-transform:uppercase;color:var(--gold);margin-bottom:16px}
+h1{margin:0 0 8px;font-size:52px;line-height:1;font-weight:normal}
+.sub{font-size:17px;font-style:italic;color:var(--gold)}
+.rule{width:46px;height:2px;background:var(--rule);margin:22px auto}
+.lead{max-width:34em;margin:0 auto;font-size:18px;line-height:1.7;color:var(--body)}
+.stage{display:grid;grid-template-columns:3fr 3.6fr 4.2fr;grid-template-rows:1fr 1fr;gap:6px;height:600px;background:#1a0f0b;border-radius:12px;overflow:hidden;padding:6px}
+.stage>*{min-width:0;min-height:0;border-radius:7px;overflow:hidden;background:#000}
+.stage video,.stage img{display:block;width:100%;height:100%;object-fit:cover}
+.stage .s1{object-position:50% 20%}
+.stage .film{grid-row:1/3}
+.stage .s1{grid-row:1/3}
+@media(max-width:1000px){.stage{height:520px}}
+/* sections */
+section{margin-top:56px;scroll-margin-top:24px}
+.sh{margin-bottom:14px}
+h2{font-size:28px;font-weight:normal;margin:0 0 6px}
+.line{margin:0;font-size:16px;line-height:1.6;color:var(--body)}
+.group{display:grid;grid-template-columns:220px 1fr;gap:32px;align-items:start;padding:18px 0;border-top:1px solid var(--line)}
+.group:last-child{border-bottom:1px solid var(--line)}
+.gl{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.22em;text-transform:uppercase;color:var(--gold);padding-top:14px}
+.cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+.card{display:flex;flex-direction:column;justify-content:space-between;gap:10px;min-height:92px;padding:16px 18px;background:var(--card);border:1px solid var(--line);border-radius:10px;color:inherit;text-decoration:none}
+a.card:hover{border-color:var(--rule);background:#fffcf2}
+.card .n{font-size:19px;line-height:1.25}
+.card .a{font-size:14px;color:var(--body);line-height:1.4;margin-top:4px}
+.card .note{font-size:14px;font-style:italic;color:var(--muted);margin-top:4px}
+.card .d{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-top:4px}
+.card .pin{color:var(--gold);flex:none;align-self:flex-end}
+a.card:hover .pin{color:var(--wine)}
+.btn{display:inline-block;background:var(--wine);color:#fffdf7;text-decoration:none;font-family:Arial,sans-serif;font-weight:bold;font-size:14px;letter-spacing:.03em;padding:12px 26px;border-radius:999px;text-align:center}
+.btn.ghost{background:transparent;color:var(--wine);border:2px solid var(--wine);padding:10px 24px}
+/* the Table */
+.after{margin-top:56px}
+.after .sh{margin-bottom:20px}
+.tiles{display:grid;grid-template-columns:repeat(2,1fr);gap:20px}
+.tbl{display:block;text-decoration:none;color:inherit;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--card)}
+.tbl .pics{display:grid;grid-template-columns:repeat(3,1fr);gap:3px;background:var(--line)}
+.tbl .pics img{display:block;width:100%;aspect-ratio:5/4;object-fit:cover}
+.tbl .cap{display:flex;align-items:baseline;justify-content:space-between;gap:12px;padding:14px 18px}
+.tbl .cap .t{font-size:19px}
+.tbl .cap .w{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);text-align:right}
+.tbl:hover .cap .t{color:var(--wine)}
+.hide{display:none}
+.empty{font-size:15px;color:var(--muted);font-style:italic}
+footer{text-align:center;padding:56px 0 0}
+footer .b{font-style:italic;font-size:15px;color:var(--muted)}
+footer .c{font-family:Arial,sans-serif;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:#b09a8c;margin-top:6px}
+@media(max-width:1000px){.cards{grid-template-columns:repeat(2,1fr)}.group{grid-template-columns:180px 1fr;gap:20px}h1{font-size:44px}}
+@media(max-width:760px){
+  .wrap{padding:28px 16px 60px}
+  header{padding:8px 0 20px}h1{font-size:38px}.lead{font-size:16px}
+  .stage{height:auto;grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:4px;padding:4px;border-radius:10px}
+  .stage>*{border-radius:6px}
+  .stage .film{grid-row:1;grid-column:1;aspect-ratio:9/16}
+  .stage .s1{grid-row:1;grid-column:2;aspect-ratio:9/16}
+  .stage .s2{grid-row:2;grid-column:1/3;aspect-ratio:3/2}
+  .stage .s3{grid-row:3;grid-column:1/3;aspect-ratio:16/10}
+  section{margin-top:40px}
+  .group{grid-template-columns:1fr;gap:6px;padding:14px 0}.gl{padding-top:0}
+  .cards{grid-template-columns:1fr;gap:8px}
+  .card{flex-direction:row;align-items:center;min-height:0;padding:15px 16px}.card .pin{align-self:center}
+  .tiles{grid-template-columns:1fr;gap:14px}
+  .tbl .cap{flex-direction:column;gap:3px}.tbl .cap .w{text-align:left}
+  .btn{display:block;width:100%}
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">AMABILE DI ROSA</div>
+    <h1>Spumante</h1>
+    <div class="sub">Sparkling Moscato, Lagos</div>
+    <div class="rule"></div>
+    <p class="lead">Rosé and Bianco, a few good rooms, a few good shops. This page says where.</p>
+  </header>
+  <!-- The stage: the film and three stills from the shoot. -->
+  <div class="stage">
+    <div class="film"><video src="/spumante/film.mp4" poster="/spumante/film-poster.jpg" autoplay muted loop playsinline preload="metadata" aria-label="Spumante, the film"></video></div>
+    <img class="s1" src="/spumante/img/her-s.jpg" srcset="/spumante/img/her-s.jpg 800w, /spumante/img/her.jpg 1600w" sizes="(max-width: 760px) 50vw, 380px" width="800" height="800" alt="" loading="eager" decoding="async">
+    <img class="s2" src="/spumante/img/him-s.jpg" srcset="/spumante/img/him-s.jpg 800w, /spumante/img/him.jpg 1600w" sizes="(max-width: 760px) 100vw, 440px" width="800" height="800" alt="" loading="eager" decoding="async">
+    <img class="s3" src="/spumante/img/piano-s.jpg" srcset="/spumante/img/piano-s.jpg 800w, /spumante/img/piano.jpg 1600w" sizes="(max-width: 760px) 100vw, 440px" width="800" height="533" alt="" loading="eager" decoding="async">
+  </div>
+
+  <section id="rooms">
+    <div class="sh"><h2>Pouring tonight</h2><p class="line">Ask for it by the bottle. It comes in the Rosa Stem.</p></div>
+    <div id="roomsList"></div>
+  </section>
+
+  <section id="buy">
+    <div class="sh"><h2>Take a bottle home</h2><p class="line">Shops that carry it.</p></div>
+    <div id="shopsList"></div>
+    <div id="onlineList"></div>
+  </section>
+
+  <section id="send" class="hide">
+    <div class="sh"><h2>Send one to a friend's table</h2><p class="line">Outside sends a bottle to someone who is out tonight, at the rooms above.</p></div>
+    <div class="group"><div class="gl"></div><div><a class="btn ghost" id="sendBtn" href="https://weoutside.ng" target="_blank" rel="noopener" data-ev="spumante_send_tap">Open Outside</a></div></div>
+  </section>
+
+  <div class="after" id="tables">
+    <div class="sh"><h2>The Amabile Table</h2><p class="line">A long table, good people, an afternoon. It is how most people first meet Spumante.</p></div>
+    <div class="tiles" id="tablesList"></div>
+  </div>
+
+  <footer><div class="b">Amabile di Rosa</div><div class="c">Lagos, Nigeria</div><div class="c">Drink responsibly</div></footer>
+</div>
+
+<script>
+(function(){
+  function esc(s){return String(s==null?"":s).replace(/[&<>"]/g,function(c){return{"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c];});}
+  function track(ev,name){
+    var p=name?{name:name}:{};
+    try{if(window.gtag)gtag("event",ev,p);}catch(e){}
+    try{if(window.fbq)fbq("trackCustom",ev,p);}catch(e){}
+    try{if(window.ttq)ttq.track("ClickButton",{content_name:ev,name:name||""});}catch(e){}
+    try{window.dataLayer=window.dataLayer||[];dataLayer.push(Object.assign({event:ev},p));}catch(e){}
+  }
+  document.addEventListener("click",function(e){
+    var a=e.target.closest("[data-ev]");if(!a)return;
+    track(a.getAttribute("data-ev"),a.getAttribute("data-name")||"");
+  });
+
+  /* One card: name, district or address, optional note. The whole card is the link when a
+     Maps URL exists; without one it is a plain card. */
+  var PIN='<svg class="pin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>';
+  var OUT='<svg class="pin" viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3zM5 5h6v2H7v10h10v-4h2v6H5V5z"/></svg>';
+  function card(p,ev,grouped){
+    var inner='<div><div class="n">'+esc(p.name)+'</div>'+
+      (p.district&&!grouped?'<div class="d">'+esc(p.district)+'</div>':'')+
+      (p.note?'<div class="note">'+esc(p.note)+'</div>':'')+'</div>';
+    var href=p.maps||p.url||"";
+    if(href)return '<a class="card" href="'+esc(href)+'" target="_blank" rel="noopener" data-ev="'+ev+'" data-name="'+esc(p.name)+'" title="'+(p.maps?"Open in Maps":"Open the shop")+'">'+inner+(p.maps?PIN:OUT)+'</a>';
+    return '<div class="card">'+inner+'</div>';
+  }
+  var ORDER=["Ikoyi","Victoria Island","Lekki Phase 1"];
+  function byDistrict(list){
+    var g={};list.forEach(function(p){var k=p.district||"Lagos";(g[k]=g[k]||[]).push(p);});
+    var keys=Object.keys(g).sort(function(a,b){
+      var ia=ORDER.indexOf(a),ib=ORDER.indexOf(b);
+      if(a==="Lagos")return 1;if(b==="Lagos")return -1;
+      return (ia<0?99:ia)-(ib<0?99:ib)||a.localeCompare(b);
+    });
+    return keys.map(function(k){return {district:k,items:g[k]};});
+  }
+  function render(d){
+    var places=(d.places||[]).filter(function(p){return p.live;});
+    var rooms=places.filter(function(p){return p.kind==="room";});
+    var shops=places.filter(function(p){return p.kind==="shop";});
+    var online=places.filter(function(p){return p.kind==="online"&&p.url;});
+
+    var rl=document.getElementById("roomsList");
+    rl.innerHTML=rooms.length?byDistrict(rooms).map(function(g){
+      return '<div class="group"><div class="gl">'+esc(g.district)+'</div><div class="cards">'+g.items.map(function(p){return card(p,"spumante_room_tap",true);}).join("")+'</div></div>';
+    }).join(""):'<p class="empty">Nowhere tonight. Check back soon.</p>';
+
+    var sl=document.getElementById("shopsList");
+    sl.innerHTML=shops.length?'<div class="group"><div class="gl">In store</div><div class="cards">'+shops.map(function(p){return card(p,"spumante_shop_tap",false);}).join("")+'</div></div>':'';
+
+
+    var ol=document.getElementById("onlineList");
+    ol.innerHTML=online.length?'<div class="group"><div class="gl">Online</div><div class="cards">'+online.map(function(p){return card(p,"spumante_shop_tap",true);}).join("")+'</div></div>':'';
+
+    if(d.send&&d.send.live){
+      if(d.send.url)document.getElementById("sendBtn").href=d.send.url;
+      document.getElementById("send").classList.remove("hide");
+    }
+
+    /* Anchors from ads and links: scroll once the blocks have their height. */
+    if(location.hash){var t=document.querySelector(location.hash);if(t)requestAnimationFrame(function(){t.scrollIntoView({block:"start"});});}
+  }
+  fetch("/spumante/places.json",{cache:"no-store"}).then(function(r){return r.json();}).then(render).catch(function(){
+    document.getElementById("roomsList").innerHTML='<p class="empty">The list did not load. Please try again in a moment.</p>';
+  });
+
+  /* The Tables that have happened, from the Table records: three headline pictures each,
+     oldest first, each tile a link to that Table's photo page. */
+  function renderTables(j){
+    var tl=document.getElementById("tablesList");
+    var eds=(j&&j.editions)||[];
+    if(!eds.length){document.getElementById("tables").style.display="none";return;}
+    tl.innerHTML=eds.map(function(t){
+      var pics=(t.photos||[]).slice(0,3).map(function(src){return '<img src="'+esc(src)+'" alt="" loading="lazy" decoding="async">';}).join("");
+      return '<a class="tbl" href="'+esc(t.url)+'" data-ev="spumante_table_tap" data-name="'+esc(t.title)+'">'+
+        (pics?'<div class="pics">'+pics+'</div>':'')+
+        '<div class="cap"><span class="t">'+esc(t.title)+'</span>'+(t.venue?'<span class="w">'+esc(t.venue)+'</span>':'')+'</div></a>';
+    }).join("");
+  }
+  fetch("/.netlify/functions/table-editions").then(function(r){return r.json();}).then(renderTables).catch(function(){
+    document.getElementById("tables").style.display="none";
+  });
+})();
+</script>
+</body>
+</html>

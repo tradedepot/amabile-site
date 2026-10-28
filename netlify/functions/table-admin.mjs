@@ -6,7 +6,7 @@ import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "./_
 import {
   tstore, edId, kEdition, kGuests, kRsvp, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM,
-  whenCellOf
+  whenCellOf, THANKS_DEFAULTS, editionPathId
 } from "./_table.mjs";
 
 function authed(d) {
@@ -62,11 +62,7 @@ function inviteEmailHtml({ name, hostName, title, whenCell, venue, cardParagraph
 // The thank-you card, sent the week after to guests who came. Same shell as the invitation;
 // a strip of three pictures from the day, one button to the photo page, one to the playlist.
 // Photos live at /table/<edition>/p/<name>.jpg on the site; the edition stores which three.
-// Per-edition fallbacks for the thank-you card, used only when the edition fields are blank.
-const THANKS_DEFAULTS = {
-  "1": { photos: "SP2R1413-s,AT02-s,SP2R1822-s", playlist: "https://open.spotify.com/playlist/1zziPNUCwGtezVH72qZntB" },
-  "2": { photos: "3O0A8082-s,SHEY0152-s,SHEY0820-s", playlist: "" },
-};
+// Per-edition fallbacks (THANKS_DEFAULTS) live in _table.mjs, shared with the public editions read.
 
 function thanksEmailHtml({ name, title, dateLabel, venue, paragraph, photos, photosUrl, playlistUrl, signoff }) {
   const strip = photos.length ? `<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 22px"><tr>${
@@ -264,7 +260,7 @@ export default async (req) => {
     const dateLabel = edition.dateISO ? fmtDate(edition.dateISO) : (edition.dateLabel || "");
     // Edition fields win; when they are blank, fall back to what was agreed for that edition.
     // The site folder is /table/<number>/ while the edition id is e.g. "no-1".
-    const pathId = clean(edition.pathId, 20) || ((String(ed).match(/\d+/) || [ed])[0]);
+    const pathId = editionPathId(edition, ed);
     const dflt = THANKS_DEFAULTS[pathId] || THANKS_DEFAULTS[ed] || {};
     const weekday = dateLabel ? dateLabel.split(" ")[0] : "";
     const paragraph = clean(edition.thanksParagraph, 1600) || `Thank you for ${weekday || "coming"}. It was a lovely afternoon and you were a big part of that. Some pictures from the day, and the playlist, are below.`;

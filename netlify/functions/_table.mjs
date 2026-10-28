@@ -169,6 +169,24 @@ export function whenCellOf(edition) {
   const p = whenPartsOf(edition);
   return e(p.date) + (p.time ? "<br>" + e(p.time) : "");
 }
+// Site path for an edition: id "no-1" lives at /table/1/. An explicit pathId wins.
+export function editionPathId(edition, ed) {
+  const explicit = edition && clean(edition.pathId, 20);
+  return explicit || ((String(ed).match(/\d+/) || [ed])[0]);
+}
+// Per-edition fallbacks for the three headline pictures (thank-you card, Spumante page),
+// used only when the edition's thanksPhotos is blank.
+export const THANKS_DEFAULTS = {
+  "1": { photos: "SP2R1413-s,AT02-s,SP2R1822-s", playlist: "https://open.spotify.com/playlist/1zziPNUCwGtezVH72qZntB" },
+  "2": { photos: "3O0A8082-s,SHEY0152-s,SHEY0820-s", playlist: "" }
+};
+// The three headline pictures for an edition, as site paths (small versions).
+export function headlinePhotos(edition, ed) {
+  const pathId = editionPathId(edition, ed);
+  const dflt = THANKS_DEFAULTS[pathId] || THANKS_DEFAULTS[ed] || {};
+  return (clean(edition.thanksPhotos, 300) || dflt.photos || "").split(",").map((x) => x.trim()).filter(Boolean).slice(0, 3)
+    .map((n) => `/table/${pathId}/p/${n.replace(/\.jpe?g$/i, "")}.jpg`);
+}
 export function deadlinePassed(edition) {
   if (!edition || !edition.deadlineISO) return false;
   const t = Date.parse(edition.deadlineISO);

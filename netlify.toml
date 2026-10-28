@@ -74,6 +74,22 @@
   status = 302
   force = true
 
+# Spumante: where it is pouring, where to buy, how to send one. Indexable; data in /spumante/places.json.
+[[redirects]]
+  from = "/spumante"
+  to = "/spumante.html"
+  status = 200
+[[redirects]]
+  from = "/spumante-ig"
+  to = "/spumante?utm_source=instagram&utm_medium=profile&utm_campaign=link_in_bio&utm_content=spumante"
+  status = 302
+  force = true
+[[redirects]]
+  from = "/pouring"
+  to = "/spumante?utm_source=offline&utm_medium=campaign&utm_campaign=spumante&utm_content=pouring#rooms"
+  status = 302
+  force = true
+
 # Bamboa × Amabile "Predict & Win" watch-party subsite (adr.wine/predict on the QR).
 [[redirects]]
   from = "/predict"

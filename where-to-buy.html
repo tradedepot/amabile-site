@@ -124,6 +124,12 @@
         <select class="ship-sel" id="marketSel" aria-label="Choose your country"></select>
       </div>
       <p class="shop-note" id="shopNote"></p>
+      <!-- Spumante (Nigeria only): rooms and shops live on /spumante -->
+      <div class="shop-grid one" id="spumanteCard" style="display:none;margin-bottom:22px">
+        <div class="shop-fallback"><h3>Spumante</h3>
+          <p>Rosé and Bianco, in a few Lagos rooms and shops.</p>
+          <div class="fb-btns"><a class="btn red" href="/spumante">Where it is pouring</a></div></div>
+      </div>
       <div class="shop-grid" id="shopGrid"></div>
     </div>
   </section>
@@ -331,6 +337,7 @@ function shopCard(r){
 }
 function renderShops(m){
   document.getElementById("shopNote").textContent=m.onlineNote;
+  var sp=document.getElementById("spumanteCard");if(sp)sp.style.display=(m===MARKETS.NG)?"":"none";
   var grid=document.getElementById("shopGrid");
   if(!m.retailers.length){
     grid.className="shop-grid one";
