@@ -88,6 +88,12 @@ async function dropTaken(s, dr) {
   return intents.filter((k) => !rel.has(k.split("/").pop())).length;
 }
 
+function renewSession(req, phone) {
+  const h = req.headers.get("authorization") || "";
+  const p = verify(h.startsWith("Bearer ") ? h.slice(7) : "");
+  return p && p.e && p.e - Date.now() < 89 * 24 * 3600 * 1000 ? sessionToken(phone) : undefined;
+}
+
 export default async (req) => {
   const s = store();
   const url = new URL(req.url);
@@ -222,7 +228,9 @@ export default async (req) => {
       }
       return json({ ok: true, player: { ...publicPlayer(player), phone: maskPhone(me), invite: player.hash || numberHash(me), nights: (player.nights || []).length },
         bag: bag.map(bagView), sent, light: lightIsOn(light) ? { venueId: light.venueId, table: light.table, until: light.until, visible: !!light.visible, manual: !!light.manual } : null,
-        circle, tickets: [...await openTicketsFor(s, me, bag), ...await dropTicketFor(s, light)], night: nightKey() });
+        circle, tickets: [...await openTicketsFor(s, me, bag), ...await dropTicketFor(s, light)], night: nightKey(),
+        // Remembered from visit to visit: each visit pushes the 90 days out again (re-issued at most once a day).
+        token: renewSession(req, me) });
     }
 
     if (route === "send") {

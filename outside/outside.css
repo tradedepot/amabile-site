@@ -320,3 +320,4 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .welcome { text-align: center; }
 /* The real bottle stands in the panel and rises above it. Multiply drops the photo's white backdrop into the panel and the card. */
 .hero .popbottle { position: absolute; left: 50%; bottom: 14px; height: 250px; transform: translateX(-50%); mix-blend-mode: multiply; filter: brightness(1.07) contrast(1.05); pointer-events: none; }
+.notyou { text-align: center; color: var(--muted, #7a6656); font-size: 14px; margin: 16px 0 0; }

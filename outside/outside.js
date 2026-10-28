@@ -270,7 +270,8 @@
     friends: "Your people are the ones already in your phone.",
     me: "Your status and avatar live on your number.",
     pay: "Last step. So they know it's from you.",
-    drop: "So it comes to your table."
+    drop: "So it comes to your table.",
+    switch: "Your bottles and people come with you."
   };
   function needSignIn(next, why) { if (S.me) return next(); signIn(next, why); }
   function signIn(next, why) {
@@ -295,7 +296,7 @@
       c.querySelector("#go").onclick = async () => {
         const r = await api("auth/verify", { phone, code: c.querySelector("#cd").value });
         if (!r.ok) return (c.querySelector("#msg").textContent = errMsg(r.error));
-        S.token = r.token; LS.set("outside.token", r.token);
+        S.token = r.token; LS.set("outside.token", r.token); S.me = null;
         if (r.needsProfile) { S.suggestedName = r.suggestedName || ""; return profileStep(next); }
         await afterSignIn(); closeModal(); next && next();
       };
@@ -341,6 +342,7 @@
   async function loadMe() {
     if (!S.token) { S.me = null; renderChrome(); return; }
     const r = await api("me");
+    if (r.ok && r.token) { S.token = r.token; LS.set("outside.token", r.token); }
     if (r.ok) S.me = r;
     else if (r.error === "profile") { S.me = null; profileStep(); }
     else S.me = null;
@@ -857,10 +859,12 @@
       <div class="status"><div class="n">${p.received || 0}</div><div class="grow"><b>bottle${p.received === 1 ? "" : "s"} sent to your table</b>
         <div class="bar"><i style="width:${pct}%"></i></div><small>${p.next ? `${p.toNext} more to <b>${esc(p.next)}</b>` : "As high as it goes."}</small></div></div>
       ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
-      <p></p><button class="btn block ghost" id="look">Change my name or avatar</button><p></p><button class="link" id="out">Sign out</button>`, (c) => {
+      <p></p><button class="btn block ghost" id="look">Change my name or avatar</button>
+      <p class="notyou">Not ${esc(p.name)}? <button class="link" id="out">Use another number</button></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
       const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
-      c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };
+      // Someone else on this phone: ask for their number. This phone stays with the current person until the new code is confirmed.
+      c.querySelector("#out").onclick = () => signIn(() => { renderMap(); meCard(); }, WHY.switch);
     });
   }
 
