@@ -17,6 +17,12 @@ export default async (req) => {
 
   let evt;
   try { evt = JSON.parse(raw); } catch { return json({ ok: true }); }
+  // Andiamo payouts to venues (Paystack Transfers): transfer.success / transfer.failed / transfer.reversed.
+  if (/^transfer\./.test(evt.event || "")) {
+    const { isOurTransfer, handleTransferEvent } = await import("./_outside_payout.mjs");
+    if (isOurTransfer(evt)) await handleTransferEvent(evt).catch((e) => console.error("outside transfer", e));
+    return json({ ok: true });
+  }
   if (evt.event !== "charge.success") return json({ ok: true });
 
   const tx = evt.data || {};

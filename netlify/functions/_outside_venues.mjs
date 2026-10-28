@@ -147,7 +147,7 @@ export function liveChecks(v) {
   if (!Object.values(v.prices || {}).some((p) => p > 0)) missing.push("menu prices");
   const warnings = [];
   if (!v.supply && !v.purchase) warnings.push("how they get Amabile");
-  if (!v.payout || !v.payout.account) warnings.push("payout account");
+  if (!v.payout || !v.payout.recipient) warnings.push("verified payout account");
   if (!v.outlet) warnings.push("linked outlet account");
   return { missing, warnings };
 }

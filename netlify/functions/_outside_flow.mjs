@@ -3,6 +3,7 @@ import {
   K, getJSON, fetchAll, listKeys, saveTicket, newTicket, wine, venuePrice, sendBottleNotice, sendText,
   newLightUntil, lightIsOn, addNight, addStamp, addBadge, rankFor, nightKey, RULES, SITE, naira
 } from "./_outside.mjs";
+import { autoPayout } from "./_outside_payout.mjs";
 
 // A bottle as its sender may see it: never where, never when beyond the day, never a decline.
 export function senderView(b) {
@@ -119,8 +120,11 @@ export async function ticketServed(s, t, by) {
   await saveTicket(s, t);
   const v = await getJSON(s, K.venue(t.venueId));
   const amount = t.kind === "drop" ? (v && v.runnerFee) || 2000 : (t.payout || 0);
-  await s.setJSON(K.ledger(t.venueId, t.id), { venueId: t.venueId, ticketId: t.id, kind: t.kind, bottleId: t.bottleId || null,
+  const lk = K.ledger(t.venueId, t.id);
+  await s.setJSON(lk, { venueId: t.venueId, ticketId: t.id, kind: t.kind, bottleId: t.bottleId || null,
     dropId: t.dropId || null, wine: t.wine, amount, settle: t.kind === "drop" ? "fee" : "menu", at: Date.now(), paid: false });
+  // Pay the venue straight away when automatic payouts are on and the venue's account is verified.
+  await autoPayout(s, lk, v);
   if (t.bottleId) {
     const b = await getJSON(s, K.bottle(t.bottleId));
     if (b) { b.status = "served"; b.servedAt = Date.now(); await saveBottle(s, b); }

@@ -9,7 +9,8 @@
 //   drop-save         {drop}
 //   drop-cancel       {id}
 //   ledger            {from?, to?}     payouts owed per venue
-//   ledger-paid       {keys: []}       mark ledger lines paid
+//   ledger-paid       {keys: []}       mark ledger lines paid by hand (skips lines Paystack is paying)
+//   banks | payout-account {venueId, bankCode, account} | payout-send {keys} | balance   Paystack Transfers to venues
 //   bottle            {id | ref}       look up one bottle
 //   bottles           recent bottles (last 200)
 //   unmet             failed claims (for the sales team)
@@ -21,6 +22,7 @@ import {
 
 import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "./_outside_venues.mjs";
 import { searchOutlets, getOutlet } from "./_outside_bq.mjs";
+import { listBanks, resolveAccount, setPayoutAccount, sendPayout, autoPayoutsOn, paystackBalance } from "./_outside_payout.mjs";
 
 export const config = { path: "/api/outside-admin" };
 
@@ -56,7 +58,7 @@ export default async (req) => {
       tables: Math.max(1, Math.min(200, Number(x.tables) || prev.tables || 20)),
       art: clean(x.art, 16) || prev.art || "lounge",
       tonight: clean(x.tonight, 80),
-      payout: { bank: clean(x.payout && x.payout.bank, 40), account: clean(x.payout && x.payout.account, 12), name: clean(x.payout && x.payout.name, 60) },
+      payout: prev.payout || {}, // set only through payout-account, which checks it with the bank
       contact: { name: clean(x.contact && x.contact.name, 40), phone: clean(x.contact && x.contact.phone, 20) },
       active: !!x.active, updatedAt: Date.now()
     };
@@ -158,11 +160,17 @@ export default async (req) => {
       const keys = await listKeys(s, K.ledgerPrefix(v.id));
       const lines = (await fetchAll(s, keys)).map((l, i) => ({ ...l, key: keys[i] }));
       const owed = lines.filter((l) => !l.paid);
-      out.push({ venueId: v.id, name: v.name, payout: v.payout || {}, owed: owed.reduce((n, l) => n + l.amount, 0),
+      const st = (l) => (l.transfer && l.transfer.status) || "";
+      const day = Date.now() - 24 * 3600e3;
+      const paidToday = lines.filter((l) => l.paid && (l.paidAt || 0) > day);
+      out.push({ venueId: v.id, name: v.name, payout: { bank: (v.payout || {}).bank || "", account: (v.payout || {}).account || "", name: (v.payout || {}).name || "", verified: !!(v.payout && v.payout.recipient) },
+        owed: owed.reduce((n, l) => n + l.amount, 0),
         lines: owed.length, menu: owed.filter((l) => l.settle === "menu").length, drops: owed.filter((l) => l.settle === "fee").length,
-        keys: owed.map((l) => l.key) });
+        pending: owed.filter((l) => st(l) === "pending").length, failed: owed.filter((l) => ["failed", "reversed", "held"].includes(st(l))).map((l) => ({ key: l.key, amount: l.amount, error: l.transfer.error || "" })),
+        paidToday: paidToday.reduce((n, l) => n + l.amount, 0), paidTodayAuto: paidToday.filter((l) => l.paidVia === "paystack").length,
+        keys: owed.filter((l) => !["pending", "success"].includes(st(l))).map((l) => l.key), sendable: owed.filter((l) => !["pending", "success"].includes(st(l))).reduce((n, l) => n + l.amount, 0) });
     }
-    return json({ ok: true, ledger: out.sort((x, y) => y.owed - x.owed) });
+    return json({ ok: true, auto: autoPayoutsOn(), ledger: out.sort((x, y) => y.owed - x.owed) });
   }
 
   if (a === "ledger-paid") {
@@ -170,6 +178,7 @@ export default async (req) => {
     for (const k of (d.keys || []).slice(0, 500)) {
       if (!String(k).startsWith("lg/")) continue;
       const l = await getJSON(s, k); if (!l || l.paid) continue;
+      if (l.transfer && ["pending", "success"].includes(l.transfer.status)) continue; // Paystack is already paying it
       l.paid = true; l.paidAt = Date.now(); l.paidRef = clean(d.ref, 60);
       await s.setJSON(k, l); n++;
     }
@@ -210,6 +219,17 @@ export default async (req) => {
     const v = await getJSON(s, K.venue(clean(d.venueId, 20))); if (!v) return json({ ok: false, error: "not_found" }, 404);
     v.active = false; v.stage = "paused"; v.updatedAt = Date.now(); await s.setJSON(K.venue(v.id), v); return json({ ok: true });
   }
+
+  // ---------- paying venues through Paystack ----------
+  if (a === "banks") return json({ ok: true, banks: await listBanks(s) });
+  if (a === "payout-resolve") { const r = await resolveAccount(s, { bankCode: d.bankCode, account: d.account }); return json(r, r.ok ? 200 : 400); }
+  if (a === "payout-account") { const r = await setPayoutAccount(s, clean(d.venueId, 20), { bankCode: d.bankCode, account: d.account }); return json(r, r.ok ? 200 : 400); }
+  if (a === "payout-send") {
+    const out = [];
+    for (const k of (d.keys || []).slice(0, 200)) if (String(k).startsWith("lg/")) out.push(await sendPayout(s, k));
+    return json({ ok: true, sent: out.filter((x) => x.ok && !x.skipped).length, failed: out.filter((x) => !x.ok).map((x) => x.error) });
+  }
+  if (a === "balance") return json({ ok: true, balance: await paystackBalance(), auto: autoPayoutsOn() });
 
   if (a === "glow") return json({ ok: true, glow: await computeGlow(s, !!d.force) });
 

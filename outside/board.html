@@ -37,7 +37,7 @@
   header button.gold { box-shadow: 0 3px 0 var(--ink); }
   button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
   .badge { display: inline-block; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 999px; border: 2px solid var(--ink); background: var(--gold); margin-left: 6px; vertical-align: middle; }
-  .badge.late { background: var(--late); color: var(--ink); } .badge.drop { background: var(--wine); color: #fff; }
+  .badge.late { background: var(--late); color: var(--ink); } .badge.paid { background: #1E8E4E; color: #fff; border-color: #1E8E4E; } .badge.drop { background: var(--wine); color: #fff; }
   .done { opacity: .62; } h2 { color: var(--cream); font-family: "DM Serif Display", Georgia, serif; font-weight: 400; margin: 10px 0 0; }
   .login { max-width: 420px; margin: 40px auto; } .login .brand { display: inline-block; margin-bottom: 18px; }
   .loginwrap { padding: 16px; }
@@ -119,7 +119,7 @@
       const where = t.via === "qr" ? "Claimed by QR at the bar" + (t.runner ? " with " + t.runner : "") : [t.table ? "Table " + t.table : "", t.spot].filter(Boolean).join(" · ") || "Look for the colour";
       return `<div class="card t${live && fresh && t.status === "open" ? " new" : ""}${late ? " late" : ""}${live ? "" : " done"}">
         <div><div class="bc" style="background:${hex}"></div><div class="bcn">${esc(bn)}</div></div>
-        <div><div class="who">${esc(t.name || "Table " + (t.table || ""))}${t.kind === "drop" ? '<span class="badge drop">Drop</span>' : ""}${late ? '<span class="badge late">' + mins(t.createdAt) + ' min</span>' : live ? '<span class="badge">' + mins(t.createdAt) + ' min</span>' : ""}</div>
+        <div><div class="who">${esc(t.name || "Table " + (t.table || ""))}${t.kind === "drop" ? '<span class="badge drop">Drop</span>' : ""}${late ? '<span class="badge late">' + mins(t.createdAt) + ' min</span>' : live ? '<span class="badge">' + mins(t.createdAt) + ' min</span>' : ""}${!live && t.paidOut ? '<span class="badge paid">Paid ' + naira(t.paidOut.amount) + '</span>' : ""}</div>
           <div class="what">${esc(t.item || WINE[t.wine] || t.wine)}${t.swapFrom ? " (was " + esc(WINE[t.swapFrom]) + ")" : ""}</div>
           <div class="where">${esc(where)}</div><div class="lbl">${esc(t.label || "")}${t.last ? " · " + esc(t.last) : ""}${t.status === "taken" ? " · " + esc(t.runner) + " has it" : ""}</div></div>
         ${live ? `<div class="acts">${t.status === "open" ? `<button class="gold" data-a="take" data-id="${t.id}">I've got it</button>` : ""}

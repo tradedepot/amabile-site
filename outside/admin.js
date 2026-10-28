@@ -12,7 +12,7 @@
   const VKIND = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
   const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
   const ARTS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
-  const BST = { pending: ["Awaiting payment", ""], link: ["Card shared", "gold"], waiting: ["Waiting", "gold"], topup: ["Needs top-up", "warn"], on_way: ["On the way", "red"], claimed: ["Delivered", "ok"], paid: ["Paid", "gold"],
+  const BST = { pending: ["Awaiting payment", ""], link: ["Card shared", "gold"], waiting: ["Waiting", "gold"], topup: ["Needs top-up", "warn"], on_way: ["On the way", "red"], claimed: ["Delivered", "ok"], served: ["Delivered", "ok"], paid: ["Paid", "gold"],
     review: ["Review", "warn"], refused: ["Refused", "warn"], declined: ["Declined", ""], cancelled: ["Cancelled", ""] };
   const ICON = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
@@ -82,7 +82,7 @@
   }
   const LOAD = {
     venues: () => call({ action: "venues" }), drops: () => call({ action: "drops" }), bottles: () => call({ action: "bottles" }),
-    ledger: () => call({ action: "ledger" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" })
+    ledger: () => call({ action: "ledger" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" })
   };
   async function load(...keys) {
     const rs = await Promise.all(keys.map((k) => LOAD[k]()));
@@ -90,6 +90,8 @@
       const r = rs[i];
       if (k === "venues") D.venues = r.ok ? r : D.venues || { venues: [], wines: [], bands: {}, bandOrder: [] };
       else if (k === "glow") D.glow = r.ok ? r.glow : { glow: {} };
+      else if (k === "balance") D.balance = r.ok ? r.balance : null;
+      else if (k === "ledger") { D.ledger = r.ok ? r.ledger || [] : D.ledger || []; D.ledgerAuto = !!(r.ok && r.auto); }
       else D[k] = r.ok ? r[k === "ledger" ? "ledger" : k] || [] : D[k] || [];
     });
     navCounts();
@@ -152,7 +154,7 @@
       if (p === "venues") { await load("venues"); venues(); }
       if (p === "requests") { await load("requests", "venues"); requests(); }
       if (p === "bottles") { await load("bottles", "venues"); bottles(); }
-      if (p === "payouts") { await load("ledger"); payouts(); }
+      if (p === "payouts") { await load("ledger", "balance"); payouts(); }
       if (p === "prices") { await load("venues"); prices(); }
       if (p === "gaps") { await load("unmet", "venues"); gaps(); }
     } catch {}
@@ -164,7 +166,7 @@
     const vs = venuesAll(), live = vs.filter((v) => v.active), ds = D.drops || [], bs = D.bottles || [], led = D.ledger || [], rq = D.requests || [];
     const wk = Date.now() - 7 * DAY;
     const sent = bs.filter((b) => b.createdAt > wk && !["pending", "cancelled"].includes(b.status));
-    const delivered = bs.filter((b) => b.createdAt > wk && b.status === "claimed");
+    const delivered = bs.filter((b) => b.createdAt > wk && ["served", "claimed"].includes(b.status));
     const owed = led.reduce((n, r) => n + r.owed, 0);
     const liveDrops = ds.filter((d) => dropState(d) === "live");
     const weekDrops = ds.filter((d) => d.status !== "cancelled" && dayOffset(d.start) >= 0 && dayOffset(d.start) < 7);
@@ -211,6 +213,8 @@
     if (vs.some((v) => v.active) && bare.length) out.push({ icon: "drops", title: `Nothing dropping ${dayIn(bare[0])}`, text: "Friday and Saturday nights are when people are out. We've lined up ideas.", cta: "Plan a drop", go: () => nav("drops") });
     const owed = led.filter((r) => r.owed);
     if (owed.length) out.push({ icon: "cash", tone: "ink", title: `${naira(owed.reduce((n, r) => n + r.owed, 0))} owed to ${plural(owed.length, "venue")}`, text: `${esc(owed[0].name)} is owed the most. Pay by transfer, then mark it paid.`, cta: "Pay venues", go: () => nav("payouts") });
+    const pfail = led.reduce((n, r) => n + ((r.failed || []).length), 0);
+    if (pfail) out.unshift({ icon: "cash", tone: "gold", title: `${plural(pfail, "payout")} to venues failed`, text: `${esc((led.find((r) => (r.failed || []).length) || {}).name || "A venue")} is waiting. Check the reason and send it again.`, cta: "Fix payouts", go: () => nav("payouts") });
     const failed = bs.filter((b) => b.notice && !b.notice.ok && Date.now() - b.createdAt < 3 * DAY);
     if (failed.length) out.push({ icon: "send", tone: "gold", title: `${plural(failed.length, "bottle message")} didn't go out`, text: "The recipient wasn't told on WhatsApp. Check the template and token.", cta: "See bottles", go: () => nav("bottles") });
     const hot = gapCells().filter((c) => c.n >= 3);
@@ -447,13 +451,13 @@
         <div class="row"><button class="btn sec" id="here">${ic("gaps")} Use my location</button><input id="gm" placeholder="Paste a Google Maps link" style="flex:1;min-width:220px"></div>
         <div class="grid"><div><label class="lb">Latitude</label><input id="lat" value="${v.lat ?? ""}"></div><div><label class="lb">Longitude</label><input id="lng" value="${v.lng ?? ""}"></div><div><label class="lb">Radius, metres</label><input id="radius" value="${v.radius || 60}"></div></div>
         ${v.lat ? `<p style="margin:12px 0 0"><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${v.lat},${v.lng}">Check it on Google Maps</a></p>` : ""}</div>
-      <div class="card"><div class="ch"><h2>Contact and payouts</h2></div><div class="grid"><div><label class="lb">Manager name</label><input id="cn" value="${esc((v.contact || {}).name || "")}"></div><div><label class="lb">Manager phone</label><input id="cp" value="${esc((v.contact || {}).phone || "")}"></div></div>
-        <div class="grid"><div><label class="lb">Bank</label><input id="bk" value="${esc((v.payout || {}).bank || "")}"></div><div><label class="lb">Account number</label><input id="ac" value="${esc((v.payout || {}).account || "")}"></div><div><label class="lb">Account name</label><input id="an" value="${esc((v.payout || {}).name || "")}"></div></div></div>
+      <div class="card"><div class="ch"><h2>Manager</h2></div><div class="grid"><div><label class="lb">Name</label><input id="cn" value="${esc((v.contact || {}).name || "")}"></div><div><label class="lb">Phone</label><input id="cp" value="${esc((v.contact || {}).phone || "")}"></div></div></div>
       <div class="row" style="margin-top:16px"><button class="btn lg" id="save">Save venue</button><span class="muted" id="msg"></span></div></div>
       <div>${v.id ? `<div class="card"><div class="ch"><h2>${v.active ? "Live" : "Go live"}</h2></div>
           ${v.active ? `<p style="margin:0 0 12px">On the map since ${v.liveAt ? esc(dayLong(v.liveAt)) : "launch"}.</p><div class="row"><a class="btn sec sm" target="_blank" href="/outside/board?v=${esc(v.id)}">Runner board</a><button class="btn sec sm" id="off">Take offline</button></div>`
           : `<div class="check">${NEED.map((k) => `<div class="${ch.missing.includes(k) ? "n" : "y"}"><i>${ch.missing.includes(k) ? "!" : "✓"}</i>${k[0].toUpperCase() + k.slice(1)}</div>`).join("")}${ch.missing.filter((k) => !NEED.includes(k)).map((k) => `<div class="n"><i>!</i>${esc(k)}</div>`).join("")}${(ch.warnings || []).map((k) => `<div class="w"><i>·</i>${esc(k[0].toUpperCase() + k.slice(1))}, worth adding</div>`).join("")}</div>
              <button class="btn" id="live" style="width:100%"${ch.missing.length ? " disabled" : ""}>Go live</button>${ch.missing.length ? '<p class="faint" style="margin:8px 0 0">Save the missing pieces first.</p>' : ""}`}</div>
+        <div class="card"><div class="ch"><h2>Payout account</h2>${v.payout && v.payout.recipient ? '<span class="pill ok">Verified</span>' : ""}</div><div id="payacct"></div></div>
         <div class="card"><div class="ch"><h2>Outlet account</h2></div>
           ${v.outlet ? `<p style="margin:0 0 10px"><b>${esc(v.outlet.name)}</b> #${esc(v.outlet.number)}<br><span class="muted">${esc(v.outlet.contactPerson || "")} ${esc(v.outlet.contactPhone || "")}</span></p><button class="btn sm sec" id="unlink">Unlink</button>` : `<p class="muted" style="margin:0 0 10px">Link the account we already hold. It fills in location and contact, and finds their orders in the sales data.</p>`}
           <div class="row" style="margin-top:10px"><input id="oq" placeholder="Outlet name or phone" style="flex:1"><button class="btn sm sec" id="os">Search</button></div><div id="ores"></div></div>
@@ -474,7 +478,7 @@
       const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
       const venue = { id: v.id, name: $("name").value, area: $("area").value, band: $("band").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
         lat: $("lat").value === "" ? null : Number($("lat").value), lng: $("lng").value === "" ? null : Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
-        contact: { name: $("cn").value, phone: $("cp").value }, payout: { bank: $("bk").value, account: $("ac").value, name: $("an").value }, active: !!v.active };
+        contact: { name: $("cn").value, phone: $("cp").value }, active: !!v.active };
       const r = await call({ action: "venue-save", venue });
       if (!r.ok) return ($("msg").textContent = "Couldn't save: " + r.error);
       toast("Saved."); reopenVenue(r.venue.id);
@@ -490,6 +494,7 @@
         reopenVenue(v.id, x.ok ? `<div class="note">Linked. ${x.venue.locationFrom === "outlet" ? "Location taken from the account." : ""}</div>` : `<div class="note red">Couldn't link: ${esc(x.error)}</div>`);
       }));
     };
+    payAccount(v);
     const ul = $("unlink"); if (ul) ul.onclick = async () => { await call({ action: "venue-link", venueId: v.id, outletId: "" }); reopenVenue(v.id); };
     $("fromsales").onclick = async () => {
       const x = await call({ action: "venue-supply", venueId: v.id, fromSales: true });
@@ -509,6 +514,38 @@
       reopenVenue(v.id, (x.keys ? keysNote(x, v.name) : "") + `<div class="note">${esc(v.name)} is live on the map.${x.warnings && x.warnings.length ? " Still worth adding: " + esc(x.warnings.join(", ")) + "." : ""}</div>`);
     };
     const off = $("off"); if (off) off.onclick = async () => { if (!(await dialog({ title: "Take it off the map?", html: `${esc(v.name)} disappears for players. Waiting bottles can't be claimed there.`, okText: "Take offline", danger: true }))) return; await call({ action: "venue-off", venueId: v.id }); reopenVenue(v.id); };
+  }
+
+  // The venue's bank account, checked with the bank and registered with Paystack so we can pay them the moment a bottle is served.
+  async function payAccount(v, editing) {
+    const el = $("payacct"); if (!el) return;
+    const p = v.payout || {};
+    if (p.recipient && !editing) {
+      el.innerHTML = `<p style="margin:0 0 4px"><b>${esc(p.name)}</b></p><p class="muted" style="margin:0 0 12px">${esc(p.bank)} · ${esc(p.account)}</p><p class="faint" style="margin:0 0 12px">Every bottle served here is paid to this account straight away.</p><button class="btn sm sec" id="pchange">Change account</button>`;
+      $("pchange").onclick = () => payAccount(v, true); return;
+    }
+    el.innerHTML = `<p class="muted" style="margin:0 0 4px">We check the name with the bank before saving.</p><label class="lb">Bank</label><select id="pbank"><option value="">Loading banks...</option></select>
+      <label class="lb">Account number</label><input id="pacct" inputmode="numeric" maxlength="10" placeholder="10 digits" value="${esc(p.account || "")}">
+      <div class="row" style="margin-top:12px"><button class="btn sm" id="pverify">Check and save</button>${p.recipient ? '<button class="btn sm sec" id="pcancel">Cancel</button>' : ""}</div><p class="faint" id="pmsg" style="margin:10px 0 0"></p>`;
+    if (!D.banks) { const r = await call({ action: "banks" }); D.banks = r.ok ? r.banks : []; }
+    const sel = $("pbank"); if (!sel) return;
+    sel.innerHTML = D.banks.length ? `<option value="">Choose the bank</option>` + D.banks.map((b) => `<option value="${esc(b.code)}"${b.code === p.bankCode ? " selected" : ""}>${esc(b.name)}</option>`).join("") : `<option value="">Couldn't load banks from Paystack</option>`;
+    const cn = $("pcancel"); if (cn) cn.onclick = () => payAccount(v);
+    $("pverify").onclick = async () => {
+      const bankCode = $("pbank").value, account = $("pacct").value.replace(/\D/g, "");
+      if (!bankCode) return ($("pmsg").textContent = "Choose the bank.");
+      if (account.length !== 10) return ($("pmsg").textContent = "Account numbers have 10 digits.");
+      $("pverify").disabled = true; $("pmsg").textContent = "Checking with the bank...";
+      const fail = (r) => { $("pverify").disabled = false; $("pmsg").textContent = r.error === "resolve" ? "The bank doesn't recognise that account. Check the number and bank." : r.error === "recipient" ? "Paystack couldn't add the account: " + (r.message || "try again") : "Couldn't check: " + r.error; };
+      const q = await call({ action: "payout-resolve", bankCode, account });
+      if (!q.ok) return fail(q);
+      $("pmsg").textContent = ""; $("pverify").disabled = false;
+      if (!(await dialog({ title: "Is this " + (v.name || "the venue") + "'s account?", html: `<b>${esc(q.name)}</b><br>${esc(q.bank)} · ${esc(q.account)}`, okText: "Yes, save it", cancel: "No" }))) return;
+      $("pverify").disabled = true; $("pmsg").textContent = "Saving...";
+      const r = await call({ action: "payout-account", venueId: v.id, bankCode, account });
+      if (!r.ok) return fail(r);
+      toast("Payout account saved."); reopenVenue(v.id);
+    };
   }
 
   // ---------- requests ----------
@@ -555,7 +592,7 @@
   let bFilter = "all";
   function bottles() {
     const all = D.bottles || [];
-    const groups = { all: () => true, waiting: (b) => ["waiting", "link", "topup"].includes(b.status), on_way: (b) => b.status === "on_way", claimed: (b) => b.status === "claimed", other: (b) => !["waiting", "link", "topup", "on_way", "claimed"].includes(b.status) };
+    const groups = { all: () => true, waiting: (b) => ["waiting", "link", "topup"].includes(b.status), on_way: (b) => b.status === "on_way", claimed: (b) => ["served", "claimed"].includes(b.status), other: (b) => !["waiting", "link", "topup", "on_way", "claimed", "served"].includes(b.status) };
     const bs = all.filter(groups[bFilter]);
     const failed = all.filter((b) => b.notice && !b.notice.ok).length;
     P().innerHTML = head("Bottles", `The last ${all.length} sent.${failed ? ` ${plural(failed, "WhatsApp message")} didn't go out.` : ""}`) +
@@ -568,18 +605,32 @@
 
   // ---------- payouts ----------
   function payouts() {
-    const rows = D.ledger || [], owing = rows.filter((r) => r.lines), total = owing.reduce((n, r) => n + r.owed, 0);
-    P().innerHTML = head("Payouts", "Gift bottles are owed at the venue's menu price. Drop handovers are owed the runner fee.") +
-      `<div class="kpis" style="grid-template-columns:repeat(3,1fr)"><div class="kpi${total ? " hot" : ""}"><div class="k">Owed now</div><div class="v money">${naira(total)}</div><div class="s">${plural(owing.length, "venue")}</div></div>
-        <div class="kpi"><div class="k">Gift bottles</div><div class="v">${owing.reduce((n, r) => n + r.menu, 0)}</div><div class="s">At menu price</div></div>
-        <div class="kpi"><div class="k">Drop handovers</div><div class="v">${owing.reduce((n, r) => n + r.drops, 0)}</div><div class="s">At the runner fee</div></div></div>
-      <div class="card"><div class="tw"><table class="t"><tr><th>Venue</th><th>Owed</th><th>For</th><th>Pay to</th><th></th></tr>
-      ${owing.map((r) => `<tr><td><b>${esc(r.name)}</b></td><td class="money"><b style="font-size:16px">${naira(r.owed)}</b></td><td class="muted">${plural(r.menu, "gift")} · ${plural(r.drops, "drop handover")}</td>
-        <td>${r.payout.name ? `${esc(r.payout.name)}<div class="faint">${esc(r.payout.bank || "")} ${esc(r.payout.account || "")}</div>` : '<span class="pill warn">No account yet</span>'}</td>
-        <td style="text-align:right"><button class="btn sm" data-p="${r.venueId}">Mark paid</button></td></tr>`).join("") || `<tr><td colspan="5"><div class="empty"><b>All square.</b><br>Nothing owed to any venue.</div></td></tr>`}</table></div></div>`;
+    const rows = D.ledger || [], auto = D.ledgerAuto, owing = rows.filter((r) => r.lines);
+    const waiting = owing.reduce((n, r) => n + r.owed, 0), onWay = owing.reduce((n, r) => n + r.pending, 0), failedN = owing.reduce((n, r) => n + r.failed.length, 0);
+    const today = rows.reduce((n, r) => n + (r.paidToday || 0), 0), noAcct = rows.filter((r) => !r.payout.verified).length;
+    P().innerHTML = head("Payouts", auto ? "Venues are paid to their bank the moment a bottle is served." : "Automatic payouts are off. Pay by transfer, then mark it paid.",
+        auto ? '<span class="pill ok"><span class="dot"></span>Automatic payouts on</span>' : '<span class="pill warn">Automatic payouts off</span>') +
+      `<div class="kpis" style="grid-template-columns:repeat(4,1fr)"><div class="kpi${failedN ? " hot" : ""}"><div class="k">Still owed</div><div class="v money">${naira(waiting)}</div><div class="s">${failedN ? plural(failedN, "payout") + " failed" : plural(owing.length, "venue")}</div></div>
+        <div class="kpi"><div class="k">On the way</div><div class="v">${onWay}</div><div class="s">Waiting for the bank</div></div>
+        <div class="kpi"><div class="k">Paid last 24h</div><div class="v money">${naira(today)}</div><div class="s">${rows.reduce((n, r) => n + (r.paidTodayAuto || 0), 0)} sent automatically</div></div>
+        <div class="kpi"><div class="k">Paystack balance</div><div class="v money">${D.balance == null ? "·" : naira(D.balance)}</div><div class="s">${D.balance != null && D.balance < waiting ? "Too low to pay what's owed" : "Payouts come from here"}</div></div></div>
+      ${auto && noAcct ? `<div class="note">${plural(noAcct, "venue")} ${noAcct === 1 ? "has" : "have"} no verified account, so ${noAcct === 1 ? "it" : "they"} can't be paid automatically. Add it on the venue's page.</div>` : ""}
+      <div class="card"><div class="tw"><table class="t"><tr><th>Venue</th><th>Owed</th><th>For</th><th>Account</th><th></th></tr>
+      ${owing.map((r) => `<tr><td><b>${esc(r.name)}</b>${r.pending ? `<div><span class="pill gold" style="margin-top:4px">${r.pending} on the way</span></div>` : ""}${r.failed.length ? `<div class="faint" style="color:var(--red-2);margin-top:4px">Failed: ${esc(r.failed[0].error || "unknown")}</div>` : ""}</td>
+        <td class="money"><b style="font-size:16px">${naira(r.owed)}</b></td><td class="muted">${plural(r.menu, "gift")} · ${plural(r.drops, "drop handover")}</td>
+        <td>${r.payout.verified ? `${esc(r.payout.name)}<div class="faint">${esc(r.payout.bank)} ${esc(r.payout.account)}</div>` : `<button class="lnk" data-acct="${r.venueId}">Add a verified account</button>`}</td>
+        <td style="text-align:right;white-space:nowrap">${r.keys.length && r.payout.verified ? `<button class="btn sm" data-send="${r.venueId}">${r.failed.length ? "Send again" : "Pay now"}</button> ` : ""}${r.keys.length ? `<button class="btn sm sec" data-p="${r.venueId}">Mark paid</button>` : ""}</td></tr>`).join("")
+        || `<tr><td colspan="5"><div class="empty"><b>All square.</b><br>Nothing owed to any venue.</div></td></tr>`}</table></div></div>`;
+    P().querySelectorAll("[data-acct]").forEach((b) => (b.onclick = async () => { await load("venues"); venueForm(venueById(b.dataset.acct)); }));
+    P().querySelectorAll("[data-send]").forEach((b) => (b.onclick = async () => {
+      const r = rows.find((x) => x.venueId === b.dataset.send);
+      if (!(await dialog({ title: `Pay ${r.name} now?`, html: `${naira(r.sendable)} to ${esc(r.payout.name)}, ${esc(r.payout.bank)} ${esc(r.payout.account)}, through Paystack.`, okText: "Send it" }))) return;
+      b.disabled = true; const x = await call({ action: "payout-send", keys: r.keys });
+      toast(x.failed && x.failed.length ? `${x.sent} sent, ${x.failed.length} failed.` : `${plural(x.sent || 0, "payout")} sent.`); nav("payouts");
+    }));
     P().querySelectorAll("[data-p]").forEach((b) => (b.onclick = async () => {
       const r = rows.find((x) => x.venueId === b.dataset.p);
-      const ref = await dialog({ title: `Paid ${r.name}?`, html: `${naira(r.owed)} to ${esc(r.payout.name || "their account")}. Add the transfer reference.`, input: "Transfer reference", okText: "Mark paid" });
+      const ref = await dialog({ title: `Paid ${r.name} by hand?`, html: `Only for money you've already sent yourself. Add the transfer reference.`, input: "Transfer reference", okText: "Mark paid" });
       if (ref === null) return;
       await call({ action: "ledger-paid", keys: r.keys, ref }); toast("Marked paid."); nav("payouts");
     }));
