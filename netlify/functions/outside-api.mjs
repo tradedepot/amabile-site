@@ -3,7 +3,7 @@
 //   POST auth/start {phone}          send a sign-in code on WhatsApp
 //   POST auth/verify {phone, code}   → session token
 //   POST auth/link {token}           claim-link from WhatsApp → session token + bottle id
-//   POST profile {name, dob, avatar}
+//   POST profile {name, avatar}
 //   GET  me                          player, bag, sent, light, circle, open tickets
 //   POST send {to, wine, band, note, anon, mode, table}   → Paystack
 //   GET  pay?ref=                    payment status (self-heals with Paystack)
@@ -126,7 +126,7 @@ export default async (req) => {
       await s.delete(K.otp(ph));
       const p = await getJSON(s, K.player(ph));
       if (p && p.blockedUntil && Date.now() < p.blockedUntil) return bad("not_now", 403);
-      return json({ ok: true, token: sessionToken(ph), needsProfile: !(p && p.name && p.dob) });
+      return json({ ok: true, token: sessionToken(ph), needsProfile: !(p && p.name) });
     }
 
     if (route === "auth/link") {
@@ -134,7 +134,7 @@ export default async (req) => {
       if (!t || t.k !== "c") return bad("link");
       const p = await getJSON(s, K.player(t.p));
       if (p && p.blockedUntil && Date.now() < p.blockedUntil) return bad("not_now", 403);
-      return json({ ok: true, token: sessionToken(t.p), bottleId: t.b, needsProfile: !(p && p.name && p.dob) });
+      return json({ ok: true, token: sessionToken(t.p), bottleId: t.b, needsProfile: !(p && p.name) });
     }
 
     // A bottle sent as a link: anyone holding the link can see the opening.
@@ -151,13 +151,14 @@ export default async (req) => {
       const existing = await getJSON(s, K.player(me));
       const name = clean(d.name, 24).split(/\s+/)[0] || (existing && existing.name) || "";
       if (!name) return bad("name");
+      // Date of birth is no longer asked. If one is given and it is under 18, the number is refused.
       if (!d.dob && existing && existing.dob) d.dob = existing.dob;
-      if (!isAdult(d.dob)) {
+      if (d.dob && !isAdult(d.dob)) {
         await s.setJSON(K.player(me), { phone: me, blockedUntil: Date.now() + 30 * 864e5, createdAt: Date.now() });
         return bad("age", 403);
       }
       const p = (await getJSON(s, K.player(me))) || { phone: me, createdAt: Date.now(), rank: "JJC" };
-      p.name = name; p.dob = d.dob;
+      p.name = name; if (d.dob) p.dob = d.dob;
       if (d.avatar && typeof d.avatar === "object") p.avatar = {
         face: clean(d.avatar.face, 12), hair: clean(d.avatar.hair, 12), outfit: clean(d.avatar.outfit, 12), skin: clean(d.avatar.skin, 12) };
       const isNew = !p.hash;

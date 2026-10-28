@@ -298,7 +298,7 @@
         : `<button class="${av[key] === k ? "on" : ""}" data-k="${key}" data-v="${k}">${esc(typeof v === "string" ? v : v.label)}</button>`).join("");
     modal(`<h2>${edit ? "Your avatar" : "One more thing"}</h2>
       ${edit ? "" : `<label class="field"><span>First name</span><input id="nm" autocomplete="given-name" maxlength="24"></label>
-      <label class="field"><span>Date of birth</span><input id="dob" type="date"></label>`}
+`}
       <div class="av-builder"><div class="av-preview" id="avp">${A.avatar(av, 120)}</div>
       <div class="opts">${opts("skin", A.SKINS)}</div><div class="opts">${opts("hair", A.HAIRS)}</div>
       <div class="opts">${opts("face", A.FACES)}</div><div class="opts">${opts("outfit", A.OUTFITS)}</div></div>
@@ -309,11 +309,10 @@
         c.querySelector("#avp").innerHTML = A.avatar(av, 120);
       }));
       c.querySelector("#go").onclick = async () => {
-        const body = edit ? { name: S.me.player.name, dob: S.dob || "", avatar: av } : { name: c.querySelector("#nm").value, dob: c.querySelector("#dob").value, avatar: av };
-        if (edit && !S.dob) { body.dob = LS.get("outside.dob") || ""; }
+        const body = { name: edit ? S.me.player.name : c.querySelector("#nm").value, avatar: av };
         const r = await api("profile", body);
         if (!r.ok) return (c.querySelector("#msg").textContent = r.error === "name" ? "Add your first name." : errMsg(r.error));
-        if (!edit) LS.set("outside.dob", body.dob);
+
         await afterSignIn(); closeModal(); next && next();
       };
     });
@@ -519,7 +518,7 @@
         <div class="wn">${esc(g.wineLabel)}</div>
         <h2>${from}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
         ${g.note ? `<p class="q">"${esc(g.note)}"</p>` : ""}${g.forLabel ? `<p class="for">For ${esc(g.forLabel)}</p>` : ""}
-        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<div class="gkeep"><button class="btn block" id="gk">Keep it</button></div>`}
+        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<div class="gkeep"><button class="btn block" id="gk">Bank it</button></div>`}
         <p class="muted" id="gm"></p></div>`;
     el.classList.add("show");
     const env = el.querySelector(".genv"), card = el.querySelector(".gcard");
@@ -560,13 +559,10 @@
       };
     });
     const askName = () => step(`<label class="field"><span>Your first name</span><input id="gnm" autocomplete="given-name" maxlength="24"></label>
-      <label class="field"><span>Date of birth</span><input id="gdb" type="date"></label>
-      <button class="btn block" id="gs">Keep it</button>`, (b) => {
+      <button class="btn block" id="gs">Bank it</button>`, (b) => {
       b.querySelector("#gs").onclick = async () => {
-        const dob = b.querySelector("#gdb").value;
-        const r = await api("profile", { name: b.querySelector("#gnm").value, dob, avatar: { skin: "s3", hair: "low", face: "smile", outfit: "ankara" } });
+        const r = await api("profile", { name: b.querySelector("#gnm").value, avatar: { skin: "s3", hair: "low", face: "smile", outfit: "ankara" } });
         if (!r.ok) return msg(errMsg(r.error));
-        LS.set("outside.dob", dob);
         keep();
       };
     });
