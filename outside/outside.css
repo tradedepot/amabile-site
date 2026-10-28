@@ -91,7 +91,7 @@ body.day .legal { color: rgba(58,42,32,.55); }
 
 /* ---------- sheet ---------- */
 .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 30; background: var(--card); border-top: 3px solid var(--ink); border-radius: 28px 28px 0 0; box-shadow: 0 -10px 30px rgba(0,0,0,.25);
-  max-height: 82vh; transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.9,.3,1.1); display: flex; flex-direction: column; padding-bottom: calc(96px + var(--safe-b)); }
+  max-height: 82vh; max-height: 82dvh; transform: translateY(105%); transition: transform .28s cubic-bezier(.2,.9,.3,1.1); display: flex; flex-direction: column; padding-bottom: calc(96px + var(--safe-b)); }
 .sheet.open { transform: translateY(0); }
 .sheet .grab { width: 54px; height: 6px; border-radius: 3px; background: var(--rule); margin: 10px auto 2px; flex: none; }
 #sheetBody { overflow-y: auto; padding: 6px 18px 18px; }
@@ -137,14 +137,14 @@ p { margin: 6px 0; line-height: 1.45; }
 /* ---------- modal ---------- */
 .modal { position: absolute; inset: 0; z-index: 40; background: rgba(30, 10, 14, .55); display: none; align-items: flex-end; justify-content: center; padding: 12px; }
 .modal.open { display: flex; }
-.modal .card { width: 100%; max-width: 460px; max-height: 92vh; overflow-y: auto; background: var(--card); border: 3px solid var(--ink); border-radius: 28px; padding: 20px 18px calc(18px + var(--safe-b)); box-shadow: var(--shadow); animation: up .25s cubic-bezier(.2,.9,.3,1.15); }
+.modal .card { width: 100%; max-width: 460px; max-height: 92vh; max-height: calc(100dvh - 24px); overflow-y: auto; overscroll-behavior: contain; background: var(--card); border: 3px solid var(--ink); border-radius: 28px; padding: 20px 18px calc(18px + var(--safe-b)); box-shadow: var(--shadow); animation: up .25s cubic-bezier(.2,.9,.3,1.15); }
 @media (min-width: 700px) { .modal { align-items: center; } }
 @keyframes up { from { transform: translateY(40px); opacity: 0; } }
-.close { float: right; width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--ink); font-weight: 900; font-size: 18px; line-height: 1; background: #fff; }
+.close { float: right; margin: 0 0 8px 12px; width: 38px; height: 38px; border-radius: 50%; border: 3px solid var(--ink); font-weight: 900; font-size: 18px; line-height: 1; background: #fff; }
 .code { font-family: var(--serif); font-size: 64px; letter-spacing: 10px; color: var(--wine); text-align: center; margin: 6px 0; }
 .av-builder { display: grid; gap: 10px; }
 .av-preview { display: flex; justify-content: center; }
-.opts { display: flex; gap: 8px; overflow-x: auto; padding-bottom: 4px; }
+.opts { display: flex; flex-wrap: wrap; gap: 8px; padding-bottom: 4px; }
 .opts button { flex: none; padding: 7px 11px; border-radius: 12px; border: 3px solid var(--ink); background: #fff; font-weight: 800; font-size: 13px; }
 .opts button.on { background: var(--gold-2); }
 .swatch { width: 34px; height: 34px; border-radius: 50%; padding: 0 !important; }
@@ -268,7 +268,7 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .snapwrap { display: flex; justify-content: center; min-height: 44px; }
 
 /* ---------- opening a bottle link ---------- */
-.gift { position: absolute; inset: 0; z-index: 38; display: none; flex-direction: column; align-items: center; overflow: hidden;
+.gift { position: absolute; inset: 0; z-index: 38; display: none; flex-direction: column; align-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
   background: radial-gradient(120% 80% at 50% 38%, #a3302c 0%, #7d1d1d 50%, #4e1013 100%); color: #FFF6E6; padding: calc(18px + var(--safe-t)) 16px calc(16px + var(--safe-b)); }
 .gift.show { display: flex; }
 .gift .gtop { font-family: var(--sans); font-weight: 900; letter-spacing: 6px; font-size: 13px; color: #E9CF9B; }
@@ -318,8 +318,8 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .hero .a.right { right: 0; transform: rotate(6deg); }
 .prizepic { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 3 / 5; background: #F4E6CF; border-radius: 14px; }
 .welcome { text-align: center; }
-/* The real bottle stands in the panel and rises above it. Multiply drops the photo's white backdrop into the panel and the card. */
-.hero .popbottle { position: absolute; left: 50%; bottom: 14px; height: 250px; transform: translateX(-50%); mix-blend-mode: multiply; filter: brightness(1.07) contrast(1.05); pointer-events: none; }
+/* The real bottle stands in the panel and rises above it. The PNG's backdrop is transparent (shadow kept soft), so it works in every browser. */
+.hero .popbottle { position: absolute; left: 50%; bottom: 14px; height: 250px; transform: translateX(-50%); pointer-events: none; }
 .notyou { text-align: center; color: var(--muted, #7a6656); font-size: 14px; margin: 16px 0 0; }
 
 /* ---------- laptops and tablets: the map fills the screen; the game sits in a phone-width column ---------- */

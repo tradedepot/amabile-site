@@ -9,7 +9,7 @@
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
   :root { --wine:#7d1d1d; --gold:#f2c66b; --ink:#3a2a20; --card:#fffdf7; --cream:#efe4cf; --late:#c2410c; }
-  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: #2e1119; color: var(--ink); min-height: 100vh; }
+  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: #2e1119; color: var(--ink); min-height: 100vh; min-height: 100dvh; }
   header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--wine); color: #fff; border-bottom: 3px solid var(--ink); }
   header h1 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: 22px; margin: 0; flex: 1; }
   header .stat { font-weight: 900; font-size: 13px; background: rgba(255,255,255,.15); padding: 5px 10px; border-radius: 999px; }
@@ -33,7 +33,7 @@
   .login { max-width: 420px; margin: 60px auto; } input { width: 100%; font: inherit; font-size: 22px; padding: 12px; border: 3px solid var(--ink); border-radius: 14px; letter-spacing: 2px; }
   .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; } .pad button { font-size: 24px; padding: 14px; }
   .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: flex-end; justify-content: center; z-index: 10; padding: 12px; }
-  .modal.open { display: flex; } .modal .card { width: 100%; max-width: 440px; }
+  .modal.open { display: flex; } .modal .card { width: 100%; max-width: 440px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
   .code { font-family: "DM Serif Display", Georgia, serif; font-size: 52px; letter-spacing: 12px; text-align: center; min-height: 64px; color: var(--wine); }
   .empty { color: #E9CF9B; text-align: center; padding: 40px 10px; font-weight: 800; }
   .mgr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
