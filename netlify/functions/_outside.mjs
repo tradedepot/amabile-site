@@ -186,7 +186,14 @@ export const K = {
   waName: (ph) => "wn/" + phoneKey(ph),             // WhatsApp profile name, from messages they sent us
   qr: (c) => "qr/" + c,                           // a bottle shown as a QR to a runner
   request: (id) => "rq/" + id,                    // a venue's request to join Outside
-  requestPrefix: "rq/"
+  requestPrefix: "rq/",
+  // WhatsApp inbox (answered from Slack #outside-inbox). Our copy is the record; Slack is the screen.
+  conv: (ph) => "wc/" + phoneKey(ph),             // one per person: Slack thread, last message each way
+  convMsg: (ph) => "wm/" + phoneKey(ph) + "/" + tsKey(),  // every message, both ways
+  convMsgPrefix: (ph) => "wm/" + phoneKey(ph) + "/",
+  slackThread: (ts) => "st/" + ts,                // Slack thread -> phone
+  waOut: (id) => "wo/" + id,                      // our WhatsApp message id -> phone and Slack thread
+  seen: (id) => "seen/" + id                      // webhook deliveries already handled
 };
 
 // A venue's journey onto the map. Only "live" venues are active in the game.
@@ -380,8 +387,10 @@ async function wa(to, msg) {
   }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
   const t = await r.text().catch(() => "");
   if (!r.ok) console.warn("whatsapp", r.status, t.slice(0, 300));
-  let id = null; try { id = JSON.parse(t).messages[0].id; } catch {}
-  return { ok: !!r.ok, status: r.status, id };
+  let j = {}; try { j = JSON.parse(t); } catch {}
+  const id = (j.messages && j.messages[0] && j.messages[0].id) || null;
+  const err = j.error ? { code: j.error.code, message: (j.error.error_data && j.error.error_data.details) || j.error.message || "" } : null;
+  return { ok: !!r.ok, status: r.status, id, error: err };
 }
 // Template parameters may not contain new lines, tabs or runs of spaces.
 const waParam = (t) => String(t).replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, "   ").slice(0, 300);
@@ -415,7 +424,20 @@ export async function sendBottleNotice(bottle) {
 }
 // Free text only reaches someone who messaged the number in the last 24 hours; otherwise WhatsApp drops it.
 export async function sendText(e164, text) {
-  return wa(e164, { type: "text", text: { body: String(text).slice(0, 1000) } });
+  return wa(e164, { type: "text", text: { body: String(text).slice(0, 4096) } });
+}
+// A photo, voice note or file someone sent us. Meta gives a short-lived URL that needs the same token.
+export async function waMedia(mediaId, maxBytes = 8 * 1024 * 1024) {
+  const token = process.env.WA_TOKEN, v = process.env.WA_API_VERSION || "v23.0";
+  if (!token || !mediaId) return null;
+  try {
+    const m = await (await fetch(`https://graph.facebook.com/${v}/${mediaId}`, { headers: { Authorization: "Bearer " + token } })).json();
+    if (!m || !m.url || Number(m.file_size || 0) > maxBytes) return null;
+    const r = await fetch(m.url, { headers: { Authorization: "Bearer " + token } });
+    if (!r.ok) return null;
+    const bytes = Buffer.from(await r.arrayBuffer());
+    return bytes.length && bytes.length <= maxBytes ? { bytes, mime: m.mime_type || "application/octet-stream" } : null;
+  } catch { return null; }
 }
 export async function sendCode(e164, code) {
   const tpl = process.env.OUTSIDE_TPL_CODE;

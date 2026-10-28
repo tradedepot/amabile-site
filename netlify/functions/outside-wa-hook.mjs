@@ -1,9 +1,9 @@
 // Outside: WhatsApp webhook from Meta (WhatsApp Cloud API). Set this URL in the Meta app's WhatsApp webhook,
 // with the same verify token as WA_VERIFY_TOKEN, and subscribe to "messages".
-// Keeps one thing: the WhatsApp profile name of people who message the Outside number, so the game can
-// fill in their first name without asking. Delivery failures are logged.
+// Messages people send to the Outside number go to Slack #outside-inbox (see _outside_inbox.mjs).
+// Their WhatsApp profile name is kept so the game can fill in their first name without asking.
 import crypto from "node:crypto";
-import { store, K } from "./_outside.mjs";
+import { handleInbound, handleStatuses } from "./_outside_inbox.mjs";
 
 export const config = { path: "/api/outside-wa" };
 
@@ -23,14 +23,12 @@ export default async (req) => {
     if (sig.length !== want.length || !crypto.timingSafeEqual(Buffer.from(sig), Buffer.from(want))) return new Response("bad signature", { status: 401 });
   }
   let d; try { d = JSON.parse(raw); } catch { return new Response("ok"); }
-  const s = store();
   for (const e of d.entry || []) for (const c of e.changes || []) {
     const v = c.value || {};
-    for (const ct of v.contacts || []) {
-      const name = String((ct.profile && ct.profile.name) || "").trim().slice(0, 60);
-      if (ct.wa_id && name) await s.set(K.waName("+" + ct.wa_id), name).catch(() => {});
-    }
-    for (const st of v.statuses || []) if (st.status === "failed") console.warn("whatsapp failed", st.recipient_id, JSON.stringify(st.errors || []).slice(0, 300));
+    try {
+      await handleInbound(v);
+      await handleStatuses(v);
+    } catch (err) { console.error("outside-wa", String(err && err.stack || err).slice(0, 500)); }
   }
   return new Response("ok");
 };
