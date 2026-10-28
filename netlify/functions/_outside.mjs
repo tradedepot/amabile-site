@@ -31,8 +31,8 @@ export const WINES = [
   { id: "rosso",   family: "frizzante", name: "Rosso",   label: "Amabile Rosso",   kind: "Sweet Red" },
   { id: "bianco",  family: "frizzante", name: "Bianco",  label: "Amabile Bianco",  kind: "Sweet White" },
   { id: "rosato",  family: "frizzante", name: "Rosato",  label: "Amabile Rosato",  kind: "Sweet Rosé" },
-  { id: "sp-rose", family: "spumante",  name: "Sparkling Rosé",   label: "Amabile Sparkling Rosé",   kind: "Sparkling Moscato Rosé" },
-  { id: "sp-bianco", family: "spumante", name: "Sparkling White", label: "Amabile Sparkling White", kind: "Sparkling Moscato" }
+  { id: "sp-rose", family: "spumante",  name: "Spumante Rosé",   label: "Amabile Spumante Rosé",   kind: "" },
+  { id: "sp-bianco", family: "spumante", name: "Spumante Bianco", label: "Amabile Spumante Bianco", kind: "" }
 ];
 export const wine = (id) => WINES.find((w) => w.id === id) || null;
 
@@ -43,7 +43,7 @@ export const wine = (id) => WINES.find((w) => w.id === id) || null;
 export const BAND_ORDER = ["everyday", "lounge", "premium", "top"];
 export const DEFAULT_BANDS = {
   frizzante: { everyday: 40000, lounge: 60000, premium: 80000, top: null },
-  spumante:  { everyday: null,  lounge: null,  premium: null,  top: null } // set from menus before launch
+  spumante:  { everyday: null,  lounge: null,  premium: 200000, top: null } // Premium only for now; revisit once venue menus are in
 };
 export const BAND_NAMES = { everyday: "Chill", lounge: "Classy", premium: "Premium", top: "VIP" };
 export const bandRank = (b) => BAND_ORDER.indexOf(b);

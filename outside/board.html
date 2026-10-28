@@ -53,7 +53,7 @@
   const venueId = (q.get("v") || (pendingQ ? LS.get("board.last") || "" : "")).replace(/[^a-z0-9]/gi, "");
   const naira = (n) => "₦" + Number(n || 0).toLocaleString("en-NG");
   const BEACONS = { gold: ["#F2B705", "Gold"], pink: ["#FF4FA3", "Pink"], blue: ["#2F8CFF", "Blue"], green: ["#19C37D", "Green"], orange: ["#FF7A1A", "Orange"], purple: ["#9B5CFF", "Purple"] };
-  const WINE = { rosso: "Amabile Rosso", bianco: "Amabile Bianco", rosato: "Amabile Rosato", "sp-rose": "Amabile Sparkling Rosé", "sp-bianco": "Amabile Sparkling White" };
+  const WINE = { rosso: "Amabile Rosso", bianco: "Amabile Bianco", rosato: "Amabile Rosato", "sp-rose": "Amabile Spumante Rosé", "sp-bianco": "Amabile Spumante Bianco" };
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   let key = LS.get("board." + venueId) || "", runner = LS.get("board.runner") || "", cursor = "", tickets = new Map(), info = null, role = "runner", seen = new Set(), first = true, audio;
   const root = document.getElementById("root");

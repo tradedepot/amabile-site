@@ -394,7 +394,7 @@
     const me = S.me; const bag = me.bag, sent = me.sent || [];
     const items = bag.map((b) => `<div class="bagcard"><div class="pic">${photo(b.wine, 132)}</div><div class="info">
       <div class="from">From <b>${esc(b.from)}</b></div><div class="wname">${esc(wineOf(b.wine).label)}</div>
-      <div class="meta">${esc(wineOf(b.wine).kind || "")}${b.kind === "gift" ? " · " + esc(bandName(b.band)) + " spots and below" : ""}</div>
+      <div class="meta">${esc([wineOf(b.wine).kind, b.kind === "gift" ? bandName(b.band) + " spots and below" : ""].filter(Boolean).join(" · "))}</div>
       ${b.note ? `<div class="q">"${esc(b.note)}"</div>` : ""}
       ${b.status === "waiting"
         ? `<div class="acts"><button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button></div>
@@ -675,6 +675,11 @@
     const draw = () => {
       const wines = st.mode === "light" ? S.cfg.wines.filter((w) => (st.friend.wines || []).includes(w.id)) : S.cfg.wines.filter((w) => anyBand(w.id));
       if (!st.wine || !wines.some((w) => w.id === st.wine)) st.wine = wines[0] && wines[0].id;
+      // A wine may only be sold at some levels (Spumante: Premium only). Keep the pick on a level it has.
+      if ((st.mode === "number" || st.mode === "link") && st.wine && !bandPrice(st.band, st.wine)) {
+        const ok = S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine));
+        if (ok.length) st.band = ok.includes("lounge") ? "lounge" : ok[0];
+      }
       const price = priceFor(st);
       const who = st.mode === "light"
         ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
@@ -687,7 +692,7 @@
       const bands = st.mode === "number" || st.mode === "link" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
       return `<h2>Send an Amabile</h2>
         <div class="sec"><div class="lab">To</div>${who}</div>
-        <div class="sec"><div class="lab">Wine</div><div class="wpick">${wines.map((w) => `<button class="wcard${st.wine === w.id ? " on" : ""}" data-w="${w.id}"><span class="pic">${photo(w.id, 118)}</span><b>${esc(w.name)}</b><small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div></div>
+        <div class="sec"><div class="lab">Wine</div><div class="wpick">${wines.map((w) => `<button class="wcard${st.wine === w.id ? " on" : ""}" data-w="${w.id}"><span class="pic">${photo(w.id, 118)}</span><b>${esc(w.name)}</b>${w.kind ? `<small>${esc(w.kind)}</small>` : ""}</button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div></div>
         ${bands.length ? `<div class="sec"><div class="lab">Where they can claim it</div><div class="bandlist">${bands.map((b) => { const n = spotsFor(b, st.wine);
           return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))} spots</b><small>${n} spot${n === 1 ? "" : "s"}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
