@@ -155,6 +155,21 @@
     const [x, y] = P(lng, lat);
     view.x = innerWidth / 2 - x * view.s; view.y = innerHeight / 2 - y * view.s; apply();
   }
+  // Fit the view to the partner venues, clear of the header (top) and the dock (bottom).
+  function fitVenues() {
+    const vs = ((S.cfg && S.cfg.venues) || []).filter((v) => v.lat && v.lng);
+    if (!vs.length) return false;
+    const xy = vs.map((v) => P(v.lng, v.lat));
+    const x0 = Math.min(...xy.map((p) => p[0])), x1 = Math.max(...xy.map((p) => p[0]));
+    const y0 = Math.min(...xy.map((p) => p[1])), y1 = Math.max(...xy.map((p) => p[1]));
+    const padX = 140, top = 190, bottom = 170;
+    const sc = Math.max(limits().min, Math.min(3, (innerWidth - 2 * padX) / Math.max(40, x1 - x0), (innerHeight - top - bottom) / Math.max(40, y1 - y0)));
+    view.s = sc;
+    view.x = innerWidth / 2 - ((x0 + x1) / 2) * sc;
+    view.y = top + (innerHeight - top - bottom) / 2 - ((y0 + y1) / 2) * sc;
+    apply();
+    return true;
+  }
   const pts = new Map(); let pinch = null, moved = false, downAt = 0;
   mapEl.addEventListener("pointerdown", (e) => {
     mapEl.setPointerCapture(e.pointerId); pts.set(e.pointerId, { x: e.clientX, y: e.clientY }); moved = false; downAt = Date.now();
@@ -877,7 +892,9 @@
     const m = path.match(/^\/c\/([^/]+)/);
     if (url.searchParams.get("f")) S.invite = url.searchParams.get("f").replace(/[^0-9a-f]/g, "").slice(0, 32);
     await loadConfig();
-    centerOn(3.428, 6.432, Math.max(limits().min, innerWidth / 180));
+    // Phones and upright tablets open on Victoria Island. Laptops (wide and landscape) open on every partner venue at once.
+    const landscape = innerWidth >= 700 && innerWidth > innerHeight;
+    if (!(landscape && fitVenues())) centerOn(3.428, 6.432, Math.max(limits().min, innerWidth / Math.min(420, innerWidth * 0.46)));
     if (m) {
       const r = await api("auth/link", { token: decodeURIComponent(m[1]) });
       history.replaceState(null, "", BASE + "/");
