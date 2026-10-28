@@ -5,39 +5,53 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Runner board · Andiamo!</title>
 <meta name="robots" content="noindex">
+<meta name="theme-color" content="#E74529">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
 <style>
-  :root { --wine:#7d1d1d; --gold:#f2c66b; --ink:#3a2a20; --card:#fffdf7; --cream:#efe4cf; --late:#c2410c; }
-  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: #2e1119; color: var(--ink); min-height: 100vh; min-height: 100dvh; }
-  header { position: sticky; top: 0; z-index: 5; display: flex; align-items: center; gap: 10px; padding: 12px 14px; background: var(--wine); color: #fff; border-bottom: 3px solid var(--ink); }
-  header h1 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: 22px; margin: 0; flex: 1; }
-  header .stat { font-weight: 900; font-size: 13px; background: rgba(255,255,255,.15); padding: 5px 10px; border-radius: 999px; }
+  :root { --wine:#E74529; --red-2:#C8371D; --gold:#F2C66B; --ink:#2B1E17; --ink-2:#6E5D50; --card:#FBFAEB; --cream:#F4EBDD; --late:#F59E0B; --night:#1E1510; }
+  * { box-sizing: border-box; } body { margin: 0; font-family: Nunito, system-ui, sans-serif; background: var(--night); color: var(--ink); min-height: 100vh; min-height: 100dvh; }
+  header { position: sticky; top: 0; z-index: 5; display: flex; flex-direction: column; gap: 10px; padding: calc(10px + env(safe-area-inset-top)) 12px 12px; background: var(--wine); color: #fff; border-bottom: 3px solid var(--ink); }
+  header .hrow { display: flex; align-items: center; gap: 10px; max-width: 736px; width: 100%; margin: 0 auto; }
+  header .hrow .stat:first-of-type { margin-left: auto; }
+  header #scan { flex: 1; max-width: 220px; padding: 10px 16px; }
+  .brand { flex: none; background: var(--wine); color: #fff; border: 3px solid var(--ink); border-radius: 14px; padding: 4px 10px 5px; line-height: 1; box-shadow: 0 3px 0 rgba(0,0,0,.3); }
+  .brand b { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: 18px; display: block; }
+  .brand small { display: block; margin-top: 2px; font-size: 7.5px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase; }
+  header .brand { background: #fff; color: var(--wine); }
+  header h1 { font-family: "DM Serif Display", Georgia, serif; font-weight: 400; font-size: 26px; line-height: 1.1; margin: 0; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  header .stat { font-weight: 900; font-size: 13px; background: rgba(0,0,0,.16); padding: 5px 10px; border-radius: 999px; }
   main { padding: 14px; display: grid; gap: 14px; max-width: 760px; margin: 0 auto; }
-  .card { background: var(--card); border: 3px solid var(--ink); border-radius: 22px; padding: 14px; box-shadow: 0 5px 0 rgba(0,0,0,.35); }
+  .card { background: var(--card); border: 3px solid var(--ink); border-radius: 22px; padding: 14px; box-shadow: 0 5px 0 rgba(0,0,0,.45); }
   .t { display: grid; grid-template-columns: 74px 1fr; gap: 14px; align-items: center; }
-  .t.new { animation: flash 1s ease-in-out 4; } @keyframes flash { 50% { background: #ffe9a8; } }
-  .t.late { border-color: var(--late); box-shadow: 0 5px 0 var(--late); }
+  .t.new { animation: flash 1s ease-in-out 4; } @keyframes flash { 50% { background: #FFD9CF; box-shadow: 0 0 0 6px var(--wine), 0 5px 0 rgba(0,0,0,.45); } }
+  .t.late { border-color: var(--late); box-shadow: 0 0 0 3px var(--late), 0 5px 0 rgba(0,0,0,.45); }
   .bc { width: 74px; height: 74px; border-radius: 50%; border: 4px solid var(--ink); }
   .bcn { text-align: center; font-weight: 900; font-size: 12px; margin-top: 4px; }
   .who { font-size: 24px; font-weight: 900; line-height: 1.1; }
-  .what { font-size: 17px; font-weight: 800; margin-top: 2px; }
-  .where { font-size: 16px; margin-top: 4px; } .lbl { font-size: 13px; color: #6b5646; margin-top: 2px; }
+  .what { font-size: 17px; font-weight: 800; margin-top: 2px; color: var(--wine); }
+  .where { font-size: 16px; margin-top: 4px; } .lbl { font-size: 13px; color: var(--ink-2); margin-top: 2px; }
   .acts { grid-column: 1 / -1; display: flex; flex-wrap: wrap; gap: 8px; }
-  button { font: inherit; font-weight: 900; border: 3px solid var(--ink); border-radius: 999px; padding: 12px 16px; background: var(--card); color: var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
+  button { font: inherit; font-weight: 900; border: 3px solid var(--ink); border-radius: 999px; padding: 12px 16px; background: #fff; color: var(--ink); box-shadow: 0 3px 0 var(--ink); cursor: pointer; }
   button.go { background: var(--wine); color: #fff; } button.gold { background: var(--gold); } button.small { padding: 7px 11px; font-size: 13px; }
+  header button.gold { box-shadow: 0 3px 0 var(--ink); }
   button:active { transform: translateY(2px); box-shadow: 0 1px 0 var(--ink); }
   .badge { display: inline-block; font-size: 11px; font-weight: 900; padding: 2px 8px; border-radius: 999px; border: 2px solid var(--ink); background: var(--gold); margin-left: 6px; vertical-align: middle; }
-  .badge.late { background: var(--late); color: #fff; } .badge.drop { background: var(--wine); color: #fff; }
-  .done { opacity: .6; } h2 { color: #E9CF9B; font-family: "DM Serif Display", Georgia, serif; font-weight: 400; margin: 10px 0 0; }
-  .login { max-width: 420px; margin: 60px auto; } input { width: 100%; font: inherit; font-size: 22px; padding: 12px; border: 3px solid var(--ink); border-radius: 14px; letter-spacing: 2px; }
+  .badge.late { background: var(--late); color: var(--ink); } .badge.drop { background: var(--wine); color: #fff; }
+  .done { opacity: .62; } h2 { color: var(--cream); font-family: "DM Serif Display", Georgia, serif; font-weight: 400; margin: 10px 0 0; }
+  .login { max-width: 420px; margin: 40px auto; } .login .brand { display: inline-block; margin-bottom: 18px; }
+  .loginwrap { padding: 16px; }
+  input { width: 100%; font: inherit; font-size: 22px; padding: 12px; border: 3px solid var(--ink); border-radius: 14px; letter-spacing: 2px; background: #fff; color: var(--ink); }
+  input:focus { outline: none; border-color: var(--wine); box-shadow: 0 0 0 4px rgba(231,69,41,.18); }
   .pad { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 10px; } .pad button { font-size: 24px; padding: 14px; }
-  .modal { position: fixed; inset: 0; background: rgba(0,0,0,.6); display: none; align-items: flex-end; justify-content: center; z-index: 10; padding: 12px; }
+  .modal { position: fixed; inset: 0; background: rgba(20,12,8,.7); display: none; align-items: flex-end; justify-content: center; z-index: 10; padding: 12px; }
   .modal.open { display: flex; } .modal .card { width: 100%; max-width: 440px; max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); overflow-y: auto; }
   .code { font-family: "DM Serif Display", Georgia, serif; font-size: 52px; letter-spacing: 12px; text-align: center; min-height: 64px; color: var(--wine); }
-  .empty { color: #E9CF9B; text-align: center; padding: 40px 10px; font-weight: 800; }
+  .empty { color: var(--cream); text-align: center; padding: 48px 10px 36px; font-weight: 800; font-size: 17px; }
+  .empty .ring { width: 74px; height: 74px; border-radius: 50%; border: 4px dashed rgba(244,235,221,.35); margin: 0 auto 14px; animation: spin 12s linear infinite; }
+  @keyframes spin { to { transform: rotate(360deg); } }
   .mgr { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
-  .paused { background: var(--late); color: #fff; text-align: center; padding: 10px; font-weight: 900; }
+  .paused { background: var(--late); color: var(--ink); text-align: center; padding: 10px; font-weight: 900; }
 </style>
 </head>
 <body>
@@ -72,10 +86,10 @@
     return r.json().catch(() => ({ ok: false }));
   }
   function login(msg) {
-    root.innerHTML = `<div class="card login"><h1 style="font-family:'DM Serif Display',serif;font-weight:400;color:var(--wine);margin:0 0 6px">Runner board</h1>
+    root.innerHTML = `<div class="loginwrap"><div class="card login"><span class="brand"><b>Andiamo!</b><small>By Amabile di Rosa</small></span><h1 style="font-family:'DM Serif Display',serif;font-weight:400;color:var(--wine);margin:0 0 6px">Runner board</h1>
       <p>Enter the code Amabile gave this venue.</p><input id="k" autocomplete="off" placeholder="Code" value="">
       <p style="margin-top:12px">Your name</p><input id="r" placeholder="e.g. Emeka" value="${esc(runner)}">
-      <p style="margin-top:14px"><button class="go" id="go" style="width:100%">Open the board</button></p><p style="color:var(--late);font-weight:800">${esc(msg || "")}</p></div>`;
+      <p style="margin-top:14px"><button class="go" id="go" style="width:100%">Open the board</button></p><p style="color:var(--red-2);font-weight:800">${esc(msg || "")}</p></div></div>`;
     document.getElementById("go").onclick = () => { key = document.getElementById("k").value.trim(); runner = document.getElementById("r").value.trim() || "Runner"; LS.set("board.runner", runner); poll(true); };
   }
   async function poll(full) {
@@ -112,9 +126,9 @@
           <button class="go" data-a="serve" data-id="${t.id}">Delivered</button>
           <button class="small" data-a="more" data-id="${t.id}">More</button></div>` : ""}</div>`;
     };
-    root.innerHTML = `<header><h1>${esc(info ? info.name : "")}</h1><button class="gold small" id="scan">Scan QR</button><span class="stat">${open.length} open</span><span class="stat">${done.length} served</span></header>
+    root.innerHTML = `<header><div class="hrow"><span class="brand"><b>Andiamo!</b><small>Runner board</small></span><h1>${esc(info ? info.name : "")}</h1></div><div class="hrow"><button class="gold" id="scan">Scan QR</button><span class="stat">${open.length} open</span><span class="stat">${done.length} served</span></div></header>
       ${info && info.paused ? `<div class="paused">Paused. Players can't claim here right now.</div>` : ""}
-      <main>${open.length ? open.map((t) => card(t, true)).join("") : `<p class="empty">No bottles waiting. New ones ping here.</p>`}
+      <main>${open.length ? open.map((t) => card(t, true)).join("") : `<div class="empty"><div class="ring"></div>No bottles waiting. New ones ping here.</div>`}
       ${done.length ? `<h2>Served tonight</h2>` + done.map((t) => card(t, false)).join("") : ""}
       <div class="card"><div class="mgr"><b>${esc(runner)}</b> · <button class="small" id="who">Change name</button>${role === "manager" ? `<button class="small" id="mgr">Manager</button>` : ""}
       <button class="small" id="sound">Test sound</button></div><p class="lbl">Keep this screen open. Tickets ping and flash when they arrive.</p></div></main>`;
@@ -134,7 +148,7 @@
       if (!t.hasPlayer || t.via === "qr") { if (!confirm(t.via === "qr" ? "Delivered to " + (t.name || "them") + "?" : "Delivered to table " + (t.table || "") + "?")) return; await call({ action: "serve", id: t.id }); return poll(true); }
       let code = "";
       modal(`<h2 style="color:var(--wine);margin:0">Their code</h2><p>Ask ${esc(t.name || "them")} for the 4-digit code on their screen.</p><div class="code" id="cd"></div>
-        <div class="pad">${[1,2,3,4,5,6,7,8,9,"←",0,"OK"].map((k) => `<button data-k="${k}"${k === "OK" ? ' class="go"' : ""}>${k}</button>`).join("")}</div><p id="er" style="color:var(--late);font-weight:800"></p>`, (c) => {
+        <div class="pad">${[1,2,3,4,5,6,7,8,9,"←",0,"OK"].map((k) => `<button data-k="${k}"${k === "OK" ? ' class="go"' : ""}>${k}</button>`).join("")}</div><p id="er" style="color:var(--red-2);font-weight:800"></p>`, (c) => {
         c.querySelectorAll("[data-k]").forEach((b) => (b.onclick = async () => {
           const k = b.dataset.k;
           if (k === "←") code = code.slice(0, -1); else if (k === "OK") {
@@ -176,7 +190,7 @@
       <p class="lbl" style="margin-top:10px">Or type the code under their QR</p>
       <input id="qc" maxlength="6" autocapitalize="characters" autocomplete="off" placeholder="e.g. K7M3QX" style="text-transform:uppercase">
       <p style="display:flex;gap:8px;margin-top:10px"><button class="go" id="mgo" style="flex:1">Claim</button><button id="mx">Close</button></p>
-      <p id="er" style="color:var(--late);font-weight:800"></p>`, (c) => {
+      <p id="er" style="color:var(--red-2);font-weight:800"></p>`, (c) => {
       c.querySelector("#mx").onclick = () => { stopCam(); close(); };
       c.querySelector("#mgo").onclick = () => { const v = c.querySelector("#qc").value; if (v.trim()) { stopCam(); claimQr(v); } };
     });

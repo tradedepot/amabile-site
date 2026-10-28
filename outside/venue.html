@@ -4,139 +4,181 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Put your venue on Andiamo! · Amabile di Rosa</title>
-<meta name="description" content="Get your venue on the Andiamo map. People send Amabile to tables at your venue, and your runner brings it.">
+<meta name="description" content="Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.">
 <meta name="theme-color" content="#E74529">
 <meta property="og:title" content="Put your venue on Andiamo!">
-<meta property="og:description" content="People send Amabile to tables at your venue. Your runner brings it.">
+<meta property="og:description" content="Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.">
 <meta property="og:image" content="/outside/og.png">
 <link rel="icon" href="/favicon-32.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;600;800;900&display=swap" rel="stylesheet">
 <style>
-:root { --wine:#E74529; --gold:#c9a15a; --gold-2:#f2c66b; --cream:#F4EBDD; --card:#FBFAEB; --ink:#3a2a20; --ink-2:#6b5646; --rule:#e6d6b8; --ok:#2e8b57; --warn:#c2410c;
-  --shadow:0 6px 0 rgba(58,42,32,.18),0 12px 28px rgba(58,42,32,.16); --serif:"DM Serif Display",Georgia,serif; --sans:"Nunito",system-ui,-apple-system,Segoe UI,sans-serif; }
+:root { --red:#E74529; --red-2:#C8371D; --ink:#2B1E17; --ink-2:#6E5D50; --ink-3:#9C8B7D; --bg:#F6F1EA; --card:#fff; --cream:#FBFAEB; --line:#ECE2D5; --line-2:#F3ECE2; --gold:#F2C66B;
+  --serif:"DM Serif Display",Georgia,serif; --sans:"Nunito",system-ui,-apple-system,Segoe UI,sans-serif; }
 * { box-sizing:border-box; }
-body { margin:0; background:#F4E9D6; color:var(--ink); font-family:var(--sans); line-height:1.45; }
-.wrap { max-width:560px; margin:0 auto; padding:20px 16px 48px; }
-.brand { display:inline-block; background:var(--wine); color:#fff; border:3px solid var(--ink); border-radius:18px; padding:6px 14px 7px; box-shadow:var(--shadow); line-height:1; text-decoration:none; }
-.brand .logo { font-family:var(--serif); font-size:26px; display:block; }
-.brand .by { font-size:10px; letter-spacing:1.6px; text-transform:uppercase; opacity:.85; }
-h1 { font-family:var(--serif); font-weight:400; font-size:34px; line-height:1.1; margin:22px 0 8px; color:var(--wine); }
-.lede { font-size:17px; color:var(--ink-2); margin:0 0 18px; }
-.how { display:grid; gap:8px; margin:0 0 22px; padding:0; list-style:none; counter-reset:s; }
-.how li { counter-increment:s; display:flex; gap:10px; align-items:flex-start; font-weight:600; }
-.how li::before { content:counter(s); flex:none; width:26px; height:26px; border-radius:50%; background:var(--gold-2); border:2px solid var(--ink); display:grid; place-items:center; font-weight:900; font-size:13px; }
-.card { background:var(--card); border:3px solid var(--ink); border-radius:22px; box-shadow:var(--shadow); padding:18px 16px; margin-bottom:18px; }
-.card h2 { font-family:var(--serif); font-weight:400; font-size:22px; margin:0 0 12px; }
-label { display:block; font-weight:800; font-size:14px; margin:12px 0 5px; }
-label small { font-weight:600; color:var(--ink-2); }
-input, select, textarea { width:100%; font:inherit; color:var(--ink); padding:11px 12px; border:2px solid var(--rule); border-radius:12px; background:#fff; }
-input:focus, select:focus, textarea:focus { outline:none; border-color:var(--wine); }
-textarea { min-height:76px; resize:vertical; }
-.row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-.chips { display:flex; flex-wrap:wrap; gap:8px; }
-.chips label { margin:0; display:inline-flex; align-items:center; gap:6px; padding:8px 12px; border:2px solid var(--rule); border-radius:999px; background:#fff; font-weight:700; cursor:pointer; }
-.chips input { width:auto; margin:0; accent-color:var(--wine); }
-.chips label:has(input:checked) { border-color:var(--ink); background:var(--gold-2); }
-.btn { display:block; width:100%; margin-top:16px; padding:14px; border:3px solid var(--ink); border-radius:16px; background:var(--wine); color:#fff; font:inherit; font-weight:900; font-size:17px; box-shadow:0 4px 0 rgba(58,42,32,.3); cursor:pointer; }
+html, body { margin:0; }
+body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-height:1.45; -webkit-font-smoothing:antialiased; }
+.page { display:grid; grid-template-columns:minmax(0, 1fr) minmax(0, 1fr); min-height:100vh; min-height:100dvh; }
+/* the pitch */
+.side { position:sticky; top:0; height:100vh; height:100dvh; background:var(--red); color:#fff; display:flex; flex-direction:column; padding:36px 48px 40px; overflow:hidden; }
+.brand { display:inline-block; align-self:flex-start; background:#fff; color:var(--red); border:3px solid var(--ink); border-radius:16px; padding:6px 13px 7px; box-shadow:0 4px 0 rgba(43,30,23,.3); line-height:1; text-decoration:none; }
+.brand .logo { font-family:var(--serif); font-size:24px; display:block; }
+.brand .by { display:block; margin-top:3px; font-size:9.5px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; }
+.pitch { margin:auto 0; max-width:500px; padding:28px 0; }
+.kicker { font-size:12px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.8); margin:0 0 14px; }
+h1 { font-family:var(--serif); font-weight:400; font-size:clamp(40px, 4.6vw, 64px); line-height:1.02; margin:0 0 20px; letter-spacing:-.3px; }
+.lede { font-size:clamp(17px, 1.45vw, 20px); line-height:1.5; margin:0; color:rgba(255,255,255,.95); max-width:460px; }
+.lede b { color:#fff; font-weight:800; }
+.shot { margin-top:auto; border-radius:20px; overflow:hidden; border:3px solid var(--ink); box-shadow:0 6px 0 rgba(43,30,23,.28); max-width:520px; }
+.shot img { display:block; width:100%; aspect-ratio:16/9; object-fit:cover; object-position:50% 64%; }
+/* the form */
+.main { padding:36px 48px 40px; display:flex; flex-direction:column; }
+.formwrap { width:100%; max-width:520px; margin:auto; }
+.fh { margin:0 0 22px; }
+.fh h2 { font-family:var(--serif); font-weight:400; font-size:32px; line-height:1.1; margin:0 0 8px; }
+.fh p { margin:0; color:var(--ink-2); font-size:15px; }
+.steps { display:flex; gap:6px; margin:16px 0 0; }
+.steps span { flex:1; font-size:12px; font-weight:800; color:var(--ink-2); border-top:3px solid var(--line); padding-top:8px; }
+.steps span.on { border-color:var(--red); color:var(--ink); }
+.panel { background:var(--card); border:1px solid var(--line); border-radius:20px; box-shadow:0 1px 2px rgba(43,30,23,.05), 0 10px 30px rgba(43,30,23,.06); padding:8px 24px 24px; }
+.sec { padding:18px 0 4px; border-top:1px solid var(--line-2); }
+.sec:first-child { border-top:0; }
+.sec h3 { font-size:12px; font-weight:900; letter-spacing:1.2px; text-transform:uppercase; color:var(--ink-3); margin:0 0 2px; }
+label { display:block; font-weight:800; font-size:13.5px; margin:14px 0 6px; }
+label small { font-weight:600; color:var(--ink-3); }
+input, select, textarea { width:100%; font:inherit; font-size:16px; color:var(--ink); padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; background:#fff; transition:border-color .15s, box-shadow .15s; }
+input:focus, select:focus, textarea:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
+textarea { min-height:84px; resize:vertical; }
+.row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.kinds { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
+.kinds label { margin:0; cursor:pointer; position:relative; }
+.kinds input { position:absolute; opacity:0; pointer-events:none; }
+.kinds .k { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 4px 9px; border:1.5px solid var(--line); border-radius:14px; background:#fff; font-size:12.5px; font-weight:800; text-align:center; transition:all .12s; }
+.kinds .k svg { width:34px; height:34px; }
+.kinds label:hover .k { border-color:var(--ink-3); }
+.kinds input:checked + .k { border-color:var(--red); background:#FDECE7; box-shadow:0 0 0 3px rgba(231,69,41,.12); }
+.kinds input:focus-visible + .k { outline:2px solid var(--ink); }
+.seg { display:flex; background:var(--line-2); border-radius:12px; padding:4px; gap:3px; }
+.seg label { flex:1; margin:0; position:relative; cursor:pointer; }
+.seg input { position:absolute; opacity:0; pointer-events:none; }
+.seg span { display:block; text-align:center; padding:9px 6px; border-radius:9px; font-weight:800; font-size:14px; color:var(--ink-2); }
+.seg input:checked + span { background:#fff; color:var(--ink); box-shadow:0 1px 3px rgba(0,0,0,.1); }
+.btn { display:block; width:100%; margin-top:20px; padding:15px; border:0; border-radius:999px; background:var(--red); color:#fff; font:inherit; font-weight:900; font-size:16.5px; box-shadow:0 3px 0 var(--red-2); cursor:pointer; transition:background .15s; text-align:center; text-decoration:none; }
+.btn:hover { background:#ED543A; } .btn:active { transform:translateY(1px); box-shadow:none; }
 .btn:disabled { opacity:.55; cursor:default; }
-.btn.ghost { background:var(--card); color:var(--ink); }
-.err { color:var(--warn); font-weight:800; font-size:14px; margin-top:10px; min-height:1em; }
+.btn.ghost { background:#fff; color:var(--ink); border:1.5px solid var(--line); box-shadow:none; }
+.err { color:var(--red-2); font-weight:800; font-size:14px; margin-top:12px; min-height:1em; }
 .muted { color:var(--ink-2); font-size:14px; }
 .hidden { display:none !important; }
-.done { text-align:center; padding:28px 16px; }
-.done .big { font-family:var(--serif); font-size:30px; color:var(--wine); margin:6px 0 10px; }
-.legal { text-align:center; font-size:12px; color:var(--ink-2); margin-top:26px; }
-a { color:var(--wine); font-weight:800; }
+.done { text-align:center; padding:40px 24px 28px; }
+.done .tick { width:64px; height:64px; border-radius:50%; background:var(--red); color:#fff; display:flex; align-items:center; justify-content:center; margin:0 auto 16px; }
+.done .tick svg { width:30px; height:30px; }
+.done .big { font-family:var(--serif); font-size:32px; margin:0 0 10px; }
+.done p { color:var(--ink-2); margin:0 0 8px; }
+.legal { text-align:center; font-size:12px; color:var(--ink-3); margin:22px 0 0; }
+a { color:var(--red-2); font-weight:800; }
+@media (max-width: 900px) {
+  .page { grid-template-columns:1fr; }
+  .side { position:static; height:auto; padding:20px 18px 0; overflow:visible; }
+  .pitch { margin:0; padding:26px 0 22px; }
+  h1 { font-size:40px; margin-bottom:14px; }
+  .shot { margin:0 0 -40px; position:relative; z-index:1; }
+  .main { padding:64px 16px 32px; }
+  .panel { padding:4px 18px 20px; }
+  .kinds { grid-template-columns:repeat(4, 1fr); }
+}
+@media (max-width: 380px) { .kinds { grid-template-columns:repeat(2, 1fr); } .row { grid-template-columns:1fr; } }
 </style>
 </head>
 <body>
-<div class="wrap">
-  <a class="brand" href="/outside/"><span class="logo">Andiamo!</span><span class="by">by Amabile di Rosa</span></a>
+<div class="page">
+  <aside class="side">
+    <a class="brand" href="/outside/"><span class="logo">Andiamo!</span><span class="by">by Amabile di Rosa</span></a>
+    <div class="pitch" id="intro">
+      <p class="kicker">For bars, lounges and restaurants</p>
+      <h1>Put your venue on the map</h1>
+      <p class="lede">Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.</p>
+    </div>
+    <div class="shot"><img src="/outside/img/venue-hero.jpg" alt="Amabile Rosso, Bianco and Rosato"></div>
+  </aside>
 
-  <div id="intro">
-    <h1>Put your venue on the map</h1>
-    <p class="lede">People send each other Amabile to the table. When they're at your place, your runner brings it from your stock, and we pay you your menu price.</p>
-    <ul class="how">
-      <li>Tell us about your venue.</li>
-      <li>Our team visits and sets you up.</li>
-      <li>You go live on the map, with a runner board on your bar phone.</li>
-    </ul>
-  </div>
+  <main class="main"><div class="formwrap">
+    <form id="f" novalidate>
+      <div class="fh"><h2>Tell us about your venue</h2><p>Two minutes. Our team then visits to set you up.</p>
+        <div class="steps"><span class="on">Your details</span><span>Our visit</span><span>You go live</span></div></div>
+      <div class="panel">
+        <div class="sec"><h3>The venue</h3>
+          <label for="name">Venue name</label>
+          <input id="name" maxlength="60" autocomplete="organization" required>
+          <label>What kind of place</label>
+          <div class="kinds" id="kinds"></div>
+          <div class="row">
+            <div><label for="area">Area</label><input id="area" maxlength="40" placeholder="Lekki Phase 1" list="areas" required></div>
+            <div><label for="tables">Tables <small>roughly</small></label><input id="tables" type="number" min="0" max="500" inputmode="numeric" placeholder="20"></div>
+          </div>
+          <datalist id="areas"><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option></datalist>
+          <label for="address">Address</label>
+          <input id="address" maxlength="120" autocomplete="street-address">
+          <div class="row">
+            <div><label for="ig">Instagram <small>optional</small></label><input id="ig" maxlength="40" placeholder="@yourvenue"></div>
+            <div><label for="nights">Busiest nights</label><input id="nights" maxlength="60" placeholder="Thu to Sun"></div>
+          </div>
+          <label for="maps">Google Maps link <small>optional</small></label>
+          <input id="maps" maxlength="300" inputmode="url" placeholder="https://maps.app.goo.gl/...">
+          <label>Do you stock Amabile now?</label>
+          <div class="seg">
+            <label><input type="radio" name="stocks" value="yes"><span>Yes</span></label>
+            <label><input type="radio" name="stocks" value="no"><span>Not yet</span></label>
+            <label><input type="radio" name="stocks" value="not_sure" checked><span>Not sure</span></label>
+          </div>
+        </div>
+        <div class="sec"><h3>You</h3>
+          <div class="row">
+            <div><label for="contact">Your name</label><input id="contact" maxlength="40" autocomplete="name" required></div>
+            <div><label for="role">Your role</label>
+              <select id="role"><option value="owner">Owner</option><option value="manager" selected>Manager</option><option value="other">Other</option></select></div>
+          </div>
+          <div class="row">
+            <div><label for="email">Email <small>optional</small></label><input id="email" type="email" maxlength="80" autocomplete="email"></div>
+            <div><label for="visit">Best time to visit</label><input id="visit" maxlength="60" placeholder="Weekdays after 2pm"></div>
+          </div>
+          <label for="note">Anything else <small>optional</small></label>
+          <textarea id="note" maxlength="300"></textarea>
+        </div>
+        <div class="sec"><h3>Your WhatsApp number</h3>
+          <p class="muted" style="margin:6px 0 0">We'll send a code to confirm it. Our team will call you on it.</p>
+          <label for="phone">Number</label>
+          <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000" required>
+          <div id="codeBox" class="hidden">
+            <label for="code">Code from WhatsApp</label>
+            <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits">
+            <p class="muted" id="devNote"></p>
+          </div>
+          <button class="btn" id="go" type="submit">Send me a code</button>
+          <div class="err" id="err" role="alert"></div>
+        </div>
+      </div>
+    </form>
 
-  <form id="f" novalidate>
-    <div class="card">
-      <h2>Your venue</h2>
-      <label for="name">Venue name</label>
-      <input id="name" maxlength="60" autocomplete="organization" required>
-      <label>What kind of place</label>
-      <div class="chips" id="kinds"></div>
-      <div class="row">
-        <div><label for="area">Area</label><input id="area" maxlength="40" placeholder="e.g. Lekki Phase 1" list="areas" required></div>
-        <div><label for="tables">Tables <small>roughly</small></label><input id="tables" type="number" min="0" max="500" inputmode="numeric"></div>
-      </div>
-      <datalist id="areas"><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option></datalist>
-      <label for="address">Address</label>
-      <input id="address" maxlength="120" autocomplete="street-address">
-      <label for="maps">Google Maps link <small>optional</small></label>
-      <input id="maps" maxlength="300" inputmode="url" placeholder="https://maps.app.goo.gl/...">
-      <div class="row">
-        <div><label for="ig">Instagram <small>optional</small></label><input id="ig" maxlength="40" placeholder="@yourvenue"></div>
-        <div><label for="nights">Busiest nights</label><input id="nights" maxlength="60" placeholder="Thu to Sun"></div>
-      </div>
-      <label>Do you stock Amabile now?</label>
-      <div class="chips">
-        <label><input type="radio" name="stocks" value="yes"> Yes</label>
-        <label><input type="radio" name="stocks" value="no"> Not yet</label>
-        <label><input type="radio" name="stocks" value="not_sure" checked> Not sure</label>
-      </div>
+    <div id="done" class="panel done hidden">
+      <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
+      <div class="big">Got it, thank you.</div>
+      <p id="doneText">Our team will be in touch on WhatsApp to arrange a visit.</p>
+      <a class="btn ghost" href="/outside/">See the map</a>
     </div>
 
-    <div class="card">
-      <h2>You</h2>
-      <div class="row">
-        <div><label for="contact">Your name</label><input id="contact" maxlength="40" autocomplete="name" required></div>
-        <div><label for="role">Your role</label>
-          <select id="role"><option value="owner">Owner</option><option value="manager" selected>Manager</option><option value="other">Other</option></select></div>
-      </div>
-      <label for="email">Email <small>optional</small></label>
-      <input id="email" type="email" maxlength="80" autocomplete="email">
-      <label for="visit">Best time for us to visit</label>
-      <input id="visit" maxlength="60" placeholder="e.g. weekdays after 2pm">
-      <label for="note">Anything else <small>optional</small></label>
-      <textarea id="note" maxlength="300"></textarea>
-    </div>
-
-    <div class="card">
-      <h2>Your WhatsApp number</h2>
-      <p class="muted" style="margin:0">We'll send a code to confirm it. This is the number our team will call.</p>
-      <label for="phone">Number</label>
-      <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000" required>
-      <div id="codeBox" class="hidden">
-        <label for="code">Code from WhatsApp</label>
-        <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits">
-        <p class="muted" id="devNote"></p>
-      </div>
-      <button class="btn" id="go" type="submit">Send me a code</button>
-      <div class="err" id="err" role="alert"></div>
-    </div>
-  </form>
-
-  <div id="done" class="card done hidden">
-    <div class="big">Got it, thank you.</div>
-    <p id="doneText">Our team will be in touch on WhatsApp to arrange a visit.</p>
-    <a class="btn ghost" href="/outside/" style="text-decoration:none">See the map</a>
-  </div>
-
-  <p class="legal">Amabile di Rosa · Drink responsibly. 18+.</p>
+    <p class="legal">Amabile di Rosa · Drink responsibly. 18+.</p>
+  </div></main>
 </div>
+<script src="/outside/art.js"></script>
 <script>
 (() => {
   const API = "/api/outside/";
   const $ = (id) => document.getElementById(id);
   const KINDS = [["lounge","Lounge"],["restaurant","Restaurant"],["rooftop","Rooftop"],["club","Club"],["hotel","Hotel"],["beach","Beach"],["garden","Garden"],["brewery","Brewery"]];
-  $("kinds").innerHTML = KINDS.map(([v, l], i) => `<label><input type="radio" name="kind" value="${v}"${i ? "" : " checked"}> ${l}</label>`).join("");
+  const ART = window.OutsideArt;
+  $("kinds").innerHTML = KINDS.map(([v, l], i) => `<label><input type="radio" name="kind" value="${v}"${i ? "" : " checked"}><span class="k">${ART ? ART.venueArt(v, false, 34) : ""}${l}</span></label>`).join("");
 
   const ERR = {
     phone: "That number doesn't look right.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
@@ -196,7 +238,7 @@ a { color:var(--wine); font-weight:800; }
       }
       const r = await api("venue-request", d);
       if (!r.ok) return fail(r.error);
-      $("f").classList.add("hidden"); $("intro").classList.add("hidden");
+      $("f").classList.add("hidden");
       $("doneText").textContent = `We've got ${d.name}. Our team will be in touch on WhatsApp to arrange a visit${d.visitTime ? " (" + d.visitTime + ")" : ""}.`;
       $("done").classList.remove("hidden");
       window.scrollTo(0, 0);
