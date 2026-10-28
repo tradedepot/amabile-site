@@ -4,7 +4,8 @@
 import { store, K, getJSON, SITE } from "./_outside.mjs";
 import { giftCode } from "./_outside_gift.mjs";
 
-export const config = { path: "/outside/g/*" };
+// /g/* serves the same page on the game's own domain (weoutside.ng/g/<code>).
+export const config = { path: ["/outside/g/*", "/g/*"] };
 
 const esc = (s) => String(s || "").replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
 
@@ -20,7 +21,8 @@ export default async (req) => {
   } catch {}
   const title = from ? `${from}'s sending you an Amabile` : "Someone's sending you an Amabile";
   const desc = "Something's coming to your table. Open it to see what.";
-  const page = `${SITE}/g/${code}`, img = `${SITE}/img/gift-og.jpg`, game = `/outside/?g=${encodeURIComponent(code)}`;
+  const page = `${SITE}/g/${code}`, img = `${SITE}/img/gift-og.jpg`;
+  const game = (url.pathname.startsWith("/outside/") ? "/outside/" : "/") + "?g=" + encodeURIComponent(code);
   const html = `<!doctype html><html lang="en"><head><meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>${esc(title)}</title>

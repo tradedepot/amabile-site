@@ -153,8 +153,8 @@
 
 
 # Outside: the Amabile bottle game. App, claim links, runner board and admin.
-# Once the game's own domain is registered, add it to this Netlify site as a domain alias and
-# uncomment the two rules at the end so the domain root serves the game.
+# The game's own domain, weoutside.ng (a domain alias on this site), serves the game from its root.
+# Paths without a matching file under /outside/ fall through to the game.
 [[redirects]]
   from = "/outside/c/*"
   to = "/outside/index.html"
@@ -171,13 +171,114 @@
   from = "/outside/venue"
   to = "/outside/venue.html"
   status = 200
-# [[redirects]]
-#   from = "https://outside.ng/c/*"
-#   to = "/outside/index.html"
-#   status = 200
-#   force = true
-# [[redirects]]
-#   from = "https://outside.ng/*"
-#   to = "/outside/:splat"
-#   status = 200
-#   force = true
+# On weoutside.ng: API, functions and the game's own files pass through; everything else is the game.
+[[redirects]]
+  from = "https://weoutside.ng/api/*"
+  to = "/api/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/.netlify/*"
+  to = "/.netlify/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/outside/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/favicon-32.png"
+  to = "/favicon-32.png"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/g/*"
+  to = "/outside/g/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/c/*"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/board"
+  to = "/outside/board.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/admin"
+  to = "/outside/admin.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/venue"
+  to = "/outside/venue.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://weoutside.ng/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/api/*"
+  to = "/api/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/.netlify/*"
+  to = "/.netlify/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/outside/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/favicon-32.png"
+  to = "/favicon-32.png"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/g/*"
+  to = "/outside/g/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/c/*"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/board"
+  to = "/outside/board.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/admin"
+  to = "/outside/admin.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/venue"
+  to = "/outside/venue.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://www.weoutside.ng/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true
