@@ -371,7 +371,7 @@
       </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => {
       const isLink = x.via === "link" && x.giftUrl;
-      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? "Link" + (x.forLabel ? " for " + esc(x.forLabel) : "") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}</div></div>` +
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : ""}</div></div>` +
         (isLink ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
     return `<h2>Your bottles</h2>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
@@ -463,12 +463,12 @@
     if (!b || !b.giftUrl) return;
     const url = b.giftUrl;
     modal(`<div class="sealcard">${A.envelope.closed()}</div>
-      <h2>Now send it${b.forLabel ? " to " + esc(b.forLabel) : ""}</h2>
-      <p class="muted">Send this card on Instagram, Snapchat or anywhere you talk. The first person to open it and keep it gets the bottle, and Amabile takes it from there on WhatsApp.</p>
-      <div class="sharegrid"><button class="btn block" id="sh">Share the card</button>
+      <h2>Send it to ${b.forLabel ? esc(b.forLabel) : "them"}</h2>
+      <p class="muted">Send this card to ${b.forLabel ? esc(b.forLabel) : "them"} on Instagram or Snapchat. It can only be claimed once, so send it to ${b.forLabel ? esc(b.forLabel) : "them"} only.</p>
+      <div class="sharegrid"><button class="btn block" id="sh">Send the card</button>
         <div class="snapwrap"><div class="snapchat-creative-kit-share" data-theme="light" data-size="large" data-text="true" data-share-url="${esc(url)}"></div></div>
         <button class="btn block ghost" id="cp">Copy link</button></div>
-      <p class="fine" style="text-align:center">Sent it to the wrong person? <button class="link" id="nw">Get a new link</button> The old one stops working.</p>`, (c) => {
+      <p class="fine" style="text-align:center">Sent it to the wrong person? <button class="link" id="nw">Get a new card</button><br>The old one stops working.</p>`, (c) => {
       c.querySelector("#sh").onclick = async () => {
         if (navigator.share) { try { await navigator.share({ title: "Something's coming to your table", text: "Something's coming to your table. Open it.", url }); } catch {} }
         else { try { await navigator.clipboard.writeText(url); toast("Link copied. Paste it in their DMs."); } catch {} }
@@ -477,7 +477,7 @@
       c.querySelector("#nw").onclick = async () => {
         const r = await api("gift-reissue", { bottleId: b.id });
         if (!r.ok) return toast(errMsg(r.error));
-        await loadMe(); toast("New link ready. The old one is dead."); giftShare({ ...b, giftUrl: r.url });
+        await loadMe(); toast("New card ready. The old one no longer works."); giftShare({ ...b, giftUrl: r.url });
       };
       snapButtons();
     });
@@ -611,8 +611,8 @@
         ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
         : st.mode === "table" ? `<div class="to-card"><div class="grow"><b>Table ${esc(st.table)}</b><small>In this room, from you.</small></div></div>`
         : `<div class="seg"><button class="${st.mode === "number" ? "on" : ""}" data-m="number">Phone number</button><button class="${st.mode === "link" ? "on" : ""}" data-m="link">Instagram or Snap</button></div>
-           ${st.mode === "link" ? `<div class="tofield"><input id="forl" maxlength="40" placeholder="Who's it for? @tolu.b or Tolu" value="${esc(st.forLabel)}"></div>
-             <p class="hint">You'll get a sealed card to send them yourself. Only they see this name, when they open it.</p>`
+           ${st.mode === "link" ? `<div class="tofield"><input id="forl" maxlength="40" autocomplete="off" placeholder="Their name, e.g. Tolu" value="${esc(st.forLabel)}"></div>
+             <p class="hint">You'll get a sealed card to send to them on Instagram or Snapchat.</p>`
            : `<div class="tofield"><input id="to" type="tel" inputmode="tel" placeholder="Their number, 0803 000 0000" value="${esc(st.to)}">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
            ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`}`;
       const bands = st.mode === "number" || st.mode === "link" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
@@ -624,7 +624,7 @@
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
           ${st.mode === "link" ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="fine">${st.mode === "link" ? "The first person to open your card and keep it gets the bottle. You can get a new link until they do." : "They claim it at a partner venue next time they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
+        <p class="fine">${st.mode === "link" ? "It can only be claimed once." : "They claim it at a partner venue next time they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
       const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
