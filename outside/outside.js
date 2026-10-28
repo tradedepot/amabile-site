@@ -111,9 +111,9 @@
   $("#sheet .grab").onclick = closeSheet;
   document.querySelectorAll("#dock button").forEach((b) => b.addEventListener("click", () => {
     const tab = b.dataset.tab;
-    if (tab === "send") return needSignIn(() => sendFlow({}));
+    if (tab === "send") return sendFlow({});
     if (S.sheetTab === tab) return closeSheet();
-    if (!S.me && tab !== "drops") return needSignIn(() => openSheet(tab));
+    if (!S.me && tab !== "drops") return needSignIn(() => openSheet(tab), WHY[tab]);
     openSheet(tab);
   }));
 
@@ -222,8 +222,6 @@
     $("#meBtn").innerHTML = me ? A.avatar(me.player.avatar, 52) : A.avatar({ skin: "s3", hair: "low", face: "smile", outfit: "ankara" }, 52);
     // Being outside shows as a halo on your own avatar. Tap it to switch it on or off (in the Me card).
     $("#meBtn").classList.toggle("outside", !!(me && me.light));
-    $("#lightBar").innerHTML = !S.token || !me ? `<button class="pill" id="signInPill">Sign in</button>` : "";
-    const si = $("#signInPill"); if (si) si.onclick = () => signIn();
 
     const out = me ? me.circle.filter((c) => c.out) : [];
     // Friends outside live in the Friends tab, never on the map. The dock shows how many.
@@ -243,7 +241,7 @@
     const live = (S.cfg && S.cfg.drops || []).filter((d) => d.state === "live").length;
     $("#dropCount").textContent = live || "";
   }
-  $("#meBtn").onclick = () => (S.me ? meCard() : signIn());
+  $("#meBtn").onclick = () => (S.me ? meCard() : signIn(() => meCard(), WHY.me));
 
   // ---------- glow ----------
   let wake = null;
@@ -261,9 +259,17 @@
   }
 
   // ---------- sign in ----------
-  function needSignIn(next) { if (S.me) return next(); signIn(next); }
-  function signIn(next) {
-    modal(`<h2>Your WhatsApp number</h2><p class="muted">We'll send you a code.</p>
+  // Nothing asks for a number until it needs one. Each ask says why, in a line.
+  const WHY = {
+    bottles: "Bottles people send you are kept on your number.",
+    friends: "Your people are the ones already in your phone.",
+    me: "Your status and avatar live on your number.",
+    pay: "Last step. So they know it's from you.",
+    drop: "So the bottle comes to your table."
+  };
+  function needSignIn(next, why) { if (S.me) return next(); signIn(next, why); }
+  function signIn(next, why) {
+    modal(`<h2>Your WhatsApp number</h2><p class="muted">${why ? esc(why) + " " : ""}We'll send you a code.</p>
       <label class="field"><span>Number</span><input id="ph" type="tel" inputmode="tel" placeholder="0803 000 0000" autocomplete="tel"></label>
       <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p>`, (c) => {
       c.querySelector("#go").onclick = async () => {
@@ -301,7 +307,7 @@
       <div class="av-builder"><div class="av-preview" id="avp">${A.avatar(av, 120)}</div>
       <div class="opts">${opts("skin", A.SKINS)}</div><div class="opts">${opts("hair", A.HAIRS)}</div>
       <div class="opts">${opts("face", A.FACES)}</div><div class="opts">${opts("outfit", A.OUTFITS)}</div></div>
-      <button class="btn block" id="go" style="margin-top:14px">${edit ? "Save" : "Step outside"}</button><p class="muted" id="msg"></p>`, (c) => {
+      <button class="btn block" id="go" style="margin-top:14px">${edit ? "Save" : "That's me"}</button><p class="muted" id="msg"></p>`, (c) => {
       c.querySelectorAll(".opts button").forEach((b) => (b.onclick = () => {
         av[b.dataset.k] = b.dataset.v;
         b.parentElement.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
@@ -372,7 +378,7 @@
       return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : ""}</div></div>` +
         (isLink ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
-    return `<h2>Your bottles</h2>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
+    return `<h2>My bottles</h2><h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
   function bindSheet(tab) {
@@ -634,10 +640,10 @@
 
 
   // ---------- send ----------
-  function sendFlow(pre) {
+  function sendFlow(pre, resume) {
     closeSheet();
-    const st = { mode: pre.friend ? "light" : pre.table ? "table" : "number", friend: pre.friend || null, table: pre.table || "", to: "", forLabel: "", wine: null, band: "lounge", note: "", anon: false };
-    const out = S.me.circle.filter((c) => c.out);
+    const st = resume || { mode: pre.friend ? "light" : pre.table ? "table" : "number", friend: pre.friend || null, table: pre.table || "", to: "", forLabel: "", wine: null, band: "lounge", note: "", anon: false };
+    const out = S.me ? S.me.circle.filter((c) => c.out) : [];
     const draw = () => {
       const wines = st.mode === "light" ? S.cfg.wines.filter((w) => (st.friend.wines || []).includes(w.id)) : S.cfg.wines.filter((w) => anyBand(w.id));
       if (!st.wine || !wines.some((w) => w.id === st.wine)) st.wine = wines[0] && wines[0].id;
@@ -673,6 +679,8 @@
       if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { st.to = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
         keep();
+        if (st.mode === "number" && !e164(st.to)) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        if (!S.me) return signIn(() => sendFlow({}, { ...st, autopay: true }), WHY.pay);
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
         if (st.mode === "number") { if (!e164(st.to)) return (c.querySelector("#msg").textContent = errMsg("phone")); body.to = st.to; body.band = st.band; }
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
@@ -685,7 +693,10 @@
         location.href = r.authorization_url;
       };
     };
-    modal(draw(), mount);
+    modal(draw(), (c) => {
+      mount(c);
+      if (st.autopay) { delete st.autopay; c.querySelector("#pay").click(); }
+    });
   }
   const bandPrice = (b, wineId) => { const w = wineOf(wineId); const p = S.cfg.bands[w.family] && S.cfg.bands[w.family][b]; return p > 0 ? p : null; };
   const anyBand = (wineId) => S.cfg.bandOrder.some((b) => bandPrice(b, wineId));
@@ -765,7 +776,7 @@
   function dropsTab() {
     const ds = (S.cfg.drops || []).slice().sort((a, b) => a.start - b.start);
     if (!ds.length) return `<h2>Drops</h2><div class="empty"><div class="art">${A.bottle("bianco", 80)}</div>No drops right now. Amabile places bottles at real spots around Lagos. Check back on Friday.</div>`;
-    return `<h2>Drops</h2><p class="muted">Bottles placed at real spots. Be there to claim one for your table.</p><div class="list">` + ds.map((d) => {
+    return `<h2>Drops</h2><p class="muted">Free bottles at real spots. Be there to claim one for your table.</p><div class="list">` + ds.map((d) => {
       const v = venueOf(d.venueId);
       return `<button class="item" data-dropgo="${d.id}" style="text-align:left"><div class="bt ph">${photo((d.wines || [])[0] || "rosso", 80)}</div><div class="grow"><h4>${d.hidden ? "Somewhere in Lagos" : esc(v ? v.name : "")}</h4>
         <div class="sub">${esc(KIND[d.kind] || "")}${d.reward ? " · " + esc(d.reward) : ""}</div>
@@ -785,7 +796,7 @@
       <p class="muted">One bottle per table of two or more, shared. One drop a night.</p>
       ${d.state === "live" ? `<button class="btn block" id="go">I'm here. Claim one</button>` : ""}
       ${v && !d.hidden ? `<p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>` : ""}`, (c) => {
-      const go = c.querySelector("#go"); if (go) go.onclick = () => needSignIn(() => dropClaim(d));
+      const go = c.querySelector("#go"); if (go) go.onclick = () => needSignIn(() => dropClaim(d), WHY.drop);
     });
   }
   function dropClaim(d) {
@@ -870,7 +881,7 @@
     }
     if (S.token) await loadMe();
     if (S.invite && S.me) { await afterSignIn(); }
-    else if (S.invite && !S.me) signIn();
+    else if (S.invite && !S.me) signIn(null, WHY.friends);
     const gc = url.searchParams.get("g");
     const paid = url.searchParams.get("paid") || url.searchParams.get("topup");
     if (gc) { history.replaceState(null, "", BASE + "/"); giftOpen(gc.replace(/[^a-z0-9]/gi, "").slice(0, 12)); }
@@ -881,11 +892,10 @@
   }
   function welcome() {
     modal(`<div class="empty"><div class="art">${A.avatar({ skin: "s2", hair: "gele", face: "grin", outfit: "owambe" }, 92)}${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 92)}</div></div>
-      <h2>Lagos is outside.</h2><p>Send a friend an Amabile. It comes to their table the next time they're out. Find drops at real spots around the city.</p>
-      <button class="btn block" id="go">Sign in with your number</button><p></p><button class="btn block ghost" data-x5>Just look around</button>
+      <h2>Lagos is outside.</h2><p>Put a bottle on a friend's table, wherever they go out next. Catch free bottles at real spots around the city.</p>
+      <button class="btn block" id="go">Step outside</button>
       <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly.</p>`, (c) => {
-      c.querySelector("#go").onclick = () => signIn();
-      c.querySelector("[data-x5]").onclick = closeModal;
+      c.querySelector("#go").onclick = closeModal;
     });
   }
   boot();
