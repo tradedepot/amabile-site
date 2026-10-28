@@ -96,6 +96,7 @@
   function modal(html, onMount) {
     const m = $("#modal"), c = $("#modalCard");
     c.innerHTML = '<button class="close" data-x aria-label="Close">×</button>' + html;
+    c.dataset.kind = "";
     m.classList.add("open"); m.setAttribute("aria-hidden", "false");
     c.querySelector("[data-x]").onclick = closeModal;
     if (onMount) onMount(c);
@@ -317,6 +318,7 @@
       };
     });
   }
+  const profileOpen = () => $("#modal").classList.contains("open") && $("#modalCard").dataset.kind === "profile";
   function profileStep(next, edit) {
     const cur = (S.me && S.me.player.avatar) || { skin: "s3", hair: "low", face: "smile", outfit: "ankara" };
     const av = { ...cur };
@@ -329,6 +331,7 @@
       <div class="opts">${opts("skin", A.SKINS)}</div><div class="opts">${opts("hair", A.HAIRS)}</div>
       <div class="opts">${opts("face", A.FACES)}</div><div class="opts">${opts("outfit", A.OUTFITS)}</div></div>
       <button class="btn block" id="go" style="margin-top:14px">${edit ? "Save" : "That's me"}</button><p class="muted" id="msg"></p>`, (c) => {
+      c.dataset.kind = "profile";
       c.querySelectorAll(".opts button").forEach((b) => (b.onclick = () => {
         av[b.dataset.k] = b.dataset.v;
         b.parentElement.querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
@@ -354,15 +357,18 @@
     const r = await api("config");
     if (r.ok) { S.cfg = r; renderMap(); renderChrome(); }
   }
-  async function loadMe() {
+  // poll: the 30-second refresh. It updates what's on screen and never opens anything,
+  // so it can't wipe a form someone is filling in.
+  async function loadMe(poll) {
     if (!S.token) { S.me = null; renderChrome(); return; }
     const r = await api("me");
     if (r.ok && r.token) { S.token = r.token; LS.set("outside.token", r.token); }
     if (r.ok) S.me = r;
-    else if (r.error === "profile") { S.me = null; profileStep(); }
+    else if (r.error === "profile") { S.me = null; if (!poll && !profileOpen()) profileStep(); }
     else S.me = null;
     renderChrome(); renderMap();
-    if (S.sheetTab) openSheet(S.sheetTab);
+    // Redraw an open sheet, unless someone is typing in it.
+    if (S.sheetTab && !(poll && $("#sheet").contains(document.activeElement))) openSheet(S.sheetTab);
   }
 
   // ---------- bottles ----------
@@ -913,7 +919,7 @@
     if (gc) { history.replaceState(null, "", BASE + "/"); giftOpen(gc.replace(/[^a-z0-9]/gi, "").slice(0, 12)); }
     else if (paid) { history.replaceState(null, "", BASE + "/"); paidReturn(paid, !!url.searchParams.get("topup")); }
     else if (!S.token && !S.invite) welcome();
-    setInterval(() => { setDayNight(); if (document.visibilityState === "visible") loadMe(); }, 30000);
+    setInterval(() => { setDayNight(); if (document.visibilityState === "visible") loadMe(true); }, 30000);
     setInterval(() => { if (document.visibilityState === "visible") loadConfig(); }, 60000);
   }
   function welcome() {
