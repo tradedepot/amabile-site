@@ -43,7 +43,7 @@
   const STAGE = { requested: "Requested", visit_booked: "Visit booked", listed: "Listed", stocked: "Stock noted", live: "Live", declined: "Declined", paused: "Offline" };
   const KIND = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
   const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
-  const BAND_NAMES = { everyday: "Chill", lounge: "Enjoyment", premium: "Soft Life", top: "Odogwu" };
+  const BAND_NAMES = { everyday: "Chill", lounge: "Classy", premium: "Premium", top: "VIP" };
   const ARTS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const naira = (n) => (n ? "₦" + Number(n).toLocaleString("en-NG") : "");
@@ -222,7 +222,7 @@
   // ---------- bands ----------
   function bands() {
     const b = data.venues.bands, order = data.venues.bandOrder;
-    shell(`<div class="card"><h2>Gift prices by level</h2><p class="muted">What a sender pays for a waiting bottle. A bottle can be claimed at any venue at its level or below. Leave Odogwu blank: sends there are priced at the venue.</p>
+    shell(`<div class="card"><h2>Gift prices by level</h2><p class="muted">What a sender pays for a waiting bottle. A bottle can be claimed at any venue at its level or below. Leave VIP blank: sends there are priced at the venue.</p>
       ${Object.keys(b).map((fam) => `<h2 style="font-size:20px;margin-top:14px">${fam[0].toUpperCase() + fam.slice(1)}</h2><div class="grid">${order.map((k) => `<div><label>${BAND_NAMES[k]}</label><input data-f="${fam}" data-b="${k}" inputmode="numeric" value="${b[fam][k] || ""}"></div>`).join("")}</div>`).join("")}
       <p><button class="b" id="save">Save prices</button></p><p id="msg" class="muted"></p></div>`);
     document.getElementById("save").onclick = async () => {

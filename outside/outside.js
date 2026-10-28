@@ -683,7 +683,7 @@
         <div class="sec"><div class="lab">To</div>${who}</div>
         <div class="sec"><div class="lab">Wine</div><div class="wpick">${wines.map((w) => `<button class="wcard${st.wine === w.id ? " on" : ""}" data-w="${w.id}"><span class="pic">${photo(w.id, 118)}</span><b>${esc(w.name)}</b><small>${esc(w.kind)}</small></button>`).join("") || `<p class="muted">No wines available there right now.</p>`}</div></div>
         ${bands.length ? `<div class="sec"><div class="lab">Where they can claim it</div><div class="bandlist">${bands.map((b) => { const n = spotsFor(b, st.wine);
-          return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))} spots</b><small>${n} spot${n === 1 ? "" : "s"}${b !== bands[0] ? " and anywhere cheaper" : ""}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
+          return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))} spots</b><small>${n} spot${n === 1 ? "" : "s"}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
           ${st.mode === "link" ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
@@ -726,7 +726,7 @@
   function priceFor(st) {
     if (!st.wine) return 0;
     if (st.mode === "number" || st.mode === "link") return bandPrice(st.band, st.wine) || 0;
-    if (st.mode === "light") return bandPrice(st.friend.band, st.wine) || 1; // Odogwu spots price at the venue; shown at checkout
+    if (st.mode === "light") return bandPrice(st.friend.band, st.wine) || 1; // VIP spots price at the venue; shown at checkout
     return 1;
   }
 

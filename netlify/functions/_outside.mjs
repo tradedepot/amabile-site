@@ -45,7 +45,7 @@ export const DEFAULT_BANDS = {
   frizzante: { everyday: 40000, lounge: 60000, premium: 80000, top: null },
   spumante:  { everyday: null,  lounge: null,  premium: null,  top: null } // set from menus before launch
 };
-export const BAND_NAMES = { everyday: "Chill", lounge: "Enjoyment", premium: "Soft Life", top: "Odogwu" };
+export const BAND_NAMES = { everyday: "Chill", lounge: "Classy", premium: "Premium", top: "VIP" };
 export const bandRank = (b) => BAND_ORDER.indexOf(b);
 
 // ---------- rules ----------
