@@ -46,6 +46,11 @@
   const bandName = (b) => (S.cfg && S.cfg.bandNames[b]) || b;
   // The real bottle, as a product tile. Illustrations stay for the map.
   const photo = (w, h) => `<img class="bph" src="/outside/img/bottle-${esc(w)}.jpg" alt="${esc(wineOf(w).label || "Amabile")}" style="height:${h}px" loading="lazy">`;
+  // A drop is bottles, or something else from Amabile (card games, merch).
+  const isItem = (d) => d && d.prize === "item";
+  const dropArt = (d, size) => (isItem(d) ? A.prize(d.icon, size * 0.7) : A.bottle((d.wines || [])[0] || "rosso", size));
+  const dropPic = (d, h) => (isItem(d) ? `<span class="prizepic" style="height:${h}px">${A.prize(d.icon, h * 0.62)}</span>` : photo((d.wines || [])[0] || "rosso", h));
+  const ticketName = (t) => t.item || wineOf(t.wine).name;
   const spotName = (b) => { const n = bandName(b); return (/^[AEIOU]/i.test(n) ? "an " : "a ") + n + " spot"; };
   const wineOf = (id) => (S.cfg && S.cfg.wines.find((w) => w.id === id)) || { name: id, label: id };
   const venueOf = (id) => (S.cfg && S.cfg.venues.find((v) => v.id === id)) || null;
@@ -210,7 +215,7 @@
       const v = venueOf(d.venueId); if (!v) continue;
       const [x, y] = P(v.lng, v.lat);
       const label = d.state === "live" ? `<b>${d.left} of ${d.bottles}</b><small>ends ${timeShort(d.end)}</small>` : `<b>Drop ${timeShort(d.start)}</b><small>${new Date(d.start).toLocaleDateString("en-NG", { weekday: "short", timeZone: "Africa/Lagos" })}</small>`;
-      h += `<div class="mk drop ${d.state}" data-drop="${d.id}" style="left:${x}px;top:${y - 70}px"><div class="bubble">${A.bottle((d.wines || [])[0] || "rosso", 34)}<div>${label}</div></div><div class="tail"></div></div>`;
+      h += `<div class="mk drop ${d.state}" data-drop="${d.id}" style="left:${x}px;top:${y - 70}px"><div class="bubble">${dropArt(d, 34)}<div>${label}</div></div><div class="tail"></div></div>`;
     }
     layer.innerHTML = h;
     apply();
@@ -231,8 +236,8 @@
     const tickets = me ? me.tickets : [];
     $("#ticketBar").innerHTML = tickets.map((t) => {
       const bc = beaconOf(t.beacon);
-      if (t.via === "qr") return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(wineOf(t.wine).name)} is on its way</b><div class="muted">The runner who scanned you is bringing it.</div></div></div>`;
-      return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(wineOf(t.wine).name)} is on its way</b><div class="muted">Code ${esc(t.code)} · tap Glow when you see the runner</div></div>` +
+      if (t.via === "qr") return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">The runner who scanned you is bringing it.</div></div></div>`;
+      return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">Code ${esc(t.code)} · tap Glow when you see the runner</div></div>` +
         `<button class="btn small gold" data-glow="${t.ticketId}">Glow</button></div>`;
     }).join("");
     $("#ticketBar").querySelectorAll("[data-glow]").forEach((b) => (b.onclick = () => glow(tickets.find((t) => t.ticketId === b.dataset.glow))));
@@ -249,7 +254,7 @@
     if (!t) return;
     const bc = beaconOf(t.beacon), g = $("#glow");
     g.style.background = bc.hex;
-    g.innerHTML = `<div class="name">${esc(S.me.player.name)}</div><div style="margin:18px 0">${A.bottle(t.wine, 150)}</div><div class="hint">Hold your phone up. Code ${esc(t.code)}</div>` +
+    g.innerHTML = `<div class="name">${esc(S.me.player.name)}</div><div style="margin:18px 0">${t.item ? A.prize(t.icon, 120) : A.bottle(t.wine, 150)}</div><div class="hint">Hold your phone up. Code ${esc(t.code)}</div>` +
       `<div style="margin-top:22px;display:flex;gap:10px"><button class="btn ghost" data-rec>Got it</button><button class="btn ghost" data-close>Close</button></div>`;
     g.classList.add("open");
     try { wake = await navigator.wakeLock.request("screen"); } catch {}
@@ -265,7 +270,7 @@
     friends: "Your people are the ones already in your phone.",
     me: "Your status and avatar live on your number.",
     pay: "Last step. So they know it's from you.",
-    drop: "So the bottle comes to your table."
+    drop: "So it comes to your table."
   };
   function needSignIn(next, why) { if (S.me) return next(); signIn(next, why); }
   function signIn(next, why) {
@@ -775,10 +780,10 @@
   const KIND = { open: "First tables to claim", gathering: "Opens when the room fills up", hidden: "Find it from the clue", passiton: "Claim it, then send it to another table" };
   function dropsTab() {
     const ds = (S.cfg.drops || []).slice().sort((a, b) => a.start - b.start);
-    if (!ds.length) return `<h2>Drops</h2><div class="empty"><div class="art">${A.bottle("bianco", 80)}</div>No drops right now. Amabile places bottles at real spots around Lagos. Check back on Friday.</div>`;
-    return `<h2>Drops</h2><p class="muted">Free bottles at real spots. Be there to claim one for your table.</p><div class="list">` + ds.map((d) => {
+    if (!ds.length) return `<h2>Drops</h2><div class="empty"><div class="art">${A.bottle("bianco", 80)}</div>No drops right now. Amabile drops free bottles and cool stuff at real spots around Lagos. Check back on Friday.</div>`;
+    return `<h2>Drops</h2><p class="muted">Free bottles and cool stuff from Amabile at real spots. Be there to claim one for your table.</p><div class="list">` + ds.map((d) => {
       const v = venueOf(d.venueId);
-      return `<button class="item" data-dropgo="${d.id}" style="text-align:left"><div class="bt ph">${photo((d.wines || [])[0] || "rosso", 80)}</div><div class="grow"><h4>${d.hidden ? "Somewhere in Lagos" : esc(v ? v.name : "")}</h4>
+      return `<button class="item" data-dropgo="${d.id}" style="text-align:left"><div class="bt ph">${dropPic(d, 80)}</div><div class="grow"><h4>${d.hidden ? "Somewhere in Lagos" : esc(v ? v.name : "")}</h4>${isItem(d) ? `<div class="sub"><b>${esc(d.item)}</b></div>` : ""}
         <div class="sub">${esc(KIND[d.kind] || "")}${d.reward ? " · " + esc(d.reward) : ""}</div>
         <div class="row" style="margin-top:6px">${d.state === "live" ? `<span class="tag wine">Live · ${d.left} of ${d.bottles} left</span><span class="muted">ends ${timeShort(d.end)}</span>` : `<span class="tag">${new Date(d.start).toLocaleDateString("en-NG", { weekday: "long", timeZone: "Africa/Lagos" })} ${timeShort(d.start)}</span>`}</div></div></button>`;
     }).join("") + `</div>`;
@@ -787,13 +792,13 @@
     const d = (S.cfg.drops || []).find((x) => x.id === id); if (!d) return;
     const v = venueOf(d.venueId);
     closeSheet();
-    modal(`<div class="reveal">${photo((d.wines || [])[0] || "rosso", 200)}</div>
-      <h2>${d.hidden ? "A hidden drop" : "Drop at " + esc(v ? v.name : "")}</h2>
+    modal(`<div class="reveal">${dropPic(d, 200)}</div>
+      <h2>${d.hidden ? "A hidden drop" : "Drop at " + esc(v ? v.name : "")}</h2>${isItem(d) ? `<p><b>${esc(d.item)}</b>, free from Amabile.</p>` : ""}
       <p>${esc(KIND[d.kind] || "")}. ${d.state === "live" ? `<b>${d.left} of ${d.bottles}</b> left, ends ${timeShort(d.end)}.` : `Starts ${timeShort(d.start)}.`}</p>
       ${d.clue ? `<p class="note" style="font-family:var(--serif);font-size:19px;color:var(--wine)">${esc(d.clue)}</p>` : ""}
       ${d.kind === "gathering" ? `<p class="muted">Opens when ${d.gatheringLights} people are outside there.</p>` : ""}
       ${d.reward ? `<p class="muted">${esc(d.reward)}</p>` : ""}
-      <p class="muted">One bottle per table of two or more, shared. One drop a night.</p>
+      <p class="muted">One ${isItem(d) ? "" : "bottle "}per table of two or more, shared. One drop a night.</p>
       ${d.state === "live" ? `<button class="btn block" id="go">I'm here. Claim one</button>` : ""}
       ${v && !d.hidden ? `<p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>` : ""}`, (c) => {
       const go = c.querySelector("#go"); if (go) go.onclick = () => needSignIn(() => dropClaim(d), WHY.drop);
@@ -818,7 +823,7 @@
         await loadConfig(); await loadMe(); closeModal();
         const t = S.me.tickets.find((x) => x.ticketId === r.ticket.id);
         if (pt && pt.value) toast("Sent to table " + pt.value + ". Nice."); else if (t) glowPrompt(t);
-        if (r.last) toast("Last bottle. " + (d.reward || ""), 4000);
+        if (r.last) toast("Last one. " + (d.reward || ""), 4000);
       };
     });
   }
@@ -833,7 +838,7 @@
       ${glowNow ? `<span class="tag gold">${glowNow === "blazing" ? "Blazing tonight" : glowNow === "bright" ? "Busy tonight" : "People outside here"}</span>` : ""}</div></div>
       ${v.tonight ? `<p>${esc(v.tonight)}</p>` : ""}
       <p class="muted">Pours ${v.wines.map((w) => esc(wineOf(w).name)).join(", ")}.</p>
-      ${drop ? `<button class="item" data-d="${drop.id}" style="width:100%;text-align:left"><div class="bt">${A.bottle("rosso", 40)}</div><div class="grow"><h4>Drop ${drop.state === "live" ? "live now" : timeShort(drop.start)}</h4><div class="sub">${drop.left} of ${drop.bottles} left</div></div></button>` : ""}
+      ${drop ? `<button class="item" data-d="${drop.id}" style="width:100%;text-align:left"><div class="bt">${dropArt(drop, 40)}</div><div class="grow"><h4>${isItem(drop) ? esc(drop.item) + " drop" : "Drop"} ${drop.state === "live" ? "live now" : timeShort(drop.start)}</h4><div class="sub">${drop.left} of ${drop.bottles} left</div></div></button>` : ""}
       ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt ph">${photo(b.wine, 56)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Bring it here</button></div>`).join("")}</div>` : ""}
       <p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>`, (c) => {
       c.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.c, v.id)));
@@ -891,8 +896,10 @@
     setInterval(() => { if (document.visibilityState === "visible") loadConfig(); }, 60000);
   }
   function welcome() {
-    modal(`<div class="empty"><div class="art">${A.avatar({ skin: "s2", hair: "gele", face: "grin", outfit: "owambe" }, 92)}${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 92)}</div></div>
-      <h2>Lagos is outside.</h2><p>Send an Amabile to a friend's table.<br>Find free bottles from Amabile at real spots around the city.</p>
+    modal(`<div class="hero"><div class="panel"><img src="/outside/img/bottle-rosso.jpg" alt="Amabile Rosso"></div>
+      <span class="a left">${A.avatar({ skin: "s3", hair: "straight", face: "glam", outfit: "nightout" }, 96)}</span>
+      <span class="a right">${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 96)}</span></div>
+      <div class="welcome"><h2>Lagos is outside.</h2><p>Send an Amabile to a friend's table.<br>Find free bottles and cool stuff from Amabile at real spots around the city.</p></div>
       <button class="btn block" id="go">Step outside</button>
       <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly.</p>`, (c) => {
       c.querySelector("#go").onclick = closeModal;

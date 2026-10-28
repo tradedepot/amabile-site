@@ -11,10 +11,11 @@
     jersey:    { base: "#1F8A4C", label: "Jersey" },
     corporate: { base: "#2B3550", label: "Corporate" },
     owambe:    { base: "#C9A15A", label: "Owambe lace" },
-    street:    { base: "#4D7396", label: "Street" }
+    street:    { base: "#4D7396", label: "Street" },
+    nightout:  { base: "#2a1b1b", label: "Night out" }
   };
-  const HAIRS = { low: "Low cut", afro: "Afro", braids: "Braids", gele: "Gele", cap: "Cap", bald: "Clean", bun: "Bun" };
-  const FACES = { smile: "Smile", grin: "Big grin", shades: "Shades", wink: "Wink" };
+  const HAIRS = { low: "Low cut", afro: "Afro", braids: "Braids", straight: "Bone straight", bun: "Bun", gele: "Gele", cap: "Cap", bald: "Clean" };
+  const FACES = { smile: "Smile", grin: "Big grin", glam: "Glam", shades: "Shades", wink: "Wink" };
 
   function outfit(id) {
     const o = OUTFITS[id] || OUTFITS.ankara;
@@ -24,11 +25,13 @@
     if (id === "jersey") s += `<path d="M30 92 L30 120 M90 92 L90 120" stroke="#fff" stroke-width="6"/><path d="M48 84 L60 96 L72 84" fill="none" stroke="#fff" stroke-width="4"/><text x="60" y="114" text-anchor="middle" font-family="Arial Black,Arial" font-weight="900" font-size="12" fill="#fff">9</text>`;
     if (id === "corporate") s += `<path d="M48 84 L60 100 L72 84" fill="#fff" stroke="${INK}" stroke-width="2"/><path d="M57 96 L60 116 L63 96 Z" fill="${WINE}" stroke="${INK}" stroke-width="1.5"/>`;
     if (id === "owambe") s += `<g fill="none" stroke="#fff6dc" stroke-width="1.6" opacity=".9"><circle cx="38" cy="102" r="5"/><circle cx="60" cy="108" r="5"/><circle cx="82" cy="102" r="5"/><circle cx="49" cy="114" r="4"/><circle cx="71" cy="114" r="4"/></g>`;
+    if (id === "nightout") s += `<path d="M40 86 C46 98 74 98 80 86" fill="none" stroke="${GOLD}" stroke-width="2.5"/><circle cx="60" cy="97" r="3.2" fill="${GOLD}" stroke="${INK}" stroke-width="1.2"/><path d="M38 84 L42 120 M82 84 L78 120" stroke="#4a2e2e" stroke-width="2"/>`;
     if (id === "street") s += `<path d="M42 84 C46 96 74 96 78 84" fill="none" stroke="${INK}" stroke-width="2.5"/><path d="M54 92 L54 106 M66 92 L66 106" stroke="#fff" stroke-width="2.5" stroke-linecap="round"/>`;
     return s;
   }
   function hairBack(id) {
     if (id === "afro") return `<circle cx="60" cy="46" r="31" fill="#2a1a12" stroke="${INK}" stroke-width="3"/>`;
+    if (id === "straight") return `<path d="M34 40 C28 62 26 84 24 98 L44 98 C40 84 38 66 40 52 Z M86 40 C92 62 94 84 96 98 L76 98 C80 84 82 66 80 52 Z" fill="#1d120c" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
     if (id === "braids") return `<path d="M33 46 C30 70 32 86 36 92 M87 46 C90 70 88 86 84 92" stroke="#2a1a12" stroke-width="7" stroke-linecap="round" fill="none"/>`;
     return "";
   }
@@ -37,6 +40,7 @@
       case "low": return `<path d="M37 44 C38 26 82 26 83 44 C76 36 44 36 37 44 Z" fill="#2a1a12" stroke="${INK}" stroke-width="2.5"/>`;
       case "afro": return `<path d="M36 46 C40 30 80 30 84 46 C74 38 46 38 36 46 Z" fill="#2a1a12"/>`;
       case "braids": return `<path d="M36 46 C38 24 82 24 84 46 C76 36 44 36 36 46 Z" fill="#2a1a12" stroke="${INK}" stroke-width="2.5"/><path d="M48 30 L46 40 M60 28 L60 38 M72 30 L74 40" stroke="#5a3a26" stroke-width="2"/>`;
+      case "straight": return `<path d="M35 50 C30 22 90 22 85 50 C82 38 70 30 61 31 L59 31 C50 30 38 38 35 50 Z" fill="#1d120c" stroke="${INK}" stroke-width="2.5"/><path d="M60 26 L60 32" stroke="#4a3426" stroke-width="2"/><path d="M48 30 C44 33 41 37 40 42" stroke="#4a3426" stroke-width="1.6" fill="none" opacity=".8"/>`;
       case "gele": return `<path d="M30 42 C26 16 60 6 74 14 C92 10 98 30 88 44 C76 34 44 34 30 42 Z" fill="${WINE}" stroke="${INK}" stroke-width="3"/><path d="M40 24 C52 18 70 18 84 26 M36 34 C52 26 72 26 88 36" fill="none" stroke="${GOLD}" stroke-width="2.5"/><path d="M78 12 C90 2 100 12 92 20" fill="${WINE}" stroke="${INK}" stroke-width="2.5"/>`;
       case "cap": return `<path d="M36 42 C36 22 84 22 84 42 Z" fill="${WINE}" stroke="${INK}" stroke-width="3"/><path d="M80 40 C92 40 100 42 102 46 L82 46 Z" fill="${WINE}" stroke="${INK}" stroke-width="2.5"/><circle cx="60" cy="24" r="3" fill="${GOLD}"/>`;
       case "bun": return `<circle cx="60" cy="18" r="10" fill="#2a1a12" stroke="${INK}" stroke-width="2.5"/><path d="M36 46 C38 24 82 24 84 46 C76 36 44 36 36 46 Z" fill="#2a1a12" stroke="${INK}" stroke-width="2.5"/>`;
@@ -51,13 +55,19 @@
         : `<circle cx="49" cy="51" r="3.6" fill="${INK}"/><circle cx="71" cy="51" r="3.6" fill="${INK}"/><circle cx="50.2" cy="49.8" r="1.1" fill="#fff"/><circle cx="72.2" cy="49.8" r="1.1" fill="#fff"/>`;
     const mouth = id === "grin"
       ? `<path d="M48 62 C52 74 68 74 72 62 Z" fill="#fff" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`
-      : `<path d="M50 63 C55 69 65 69 70 63" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
-    return eyes + mouth + `<circle cx="42" cy="61" r="4" fill="#E88C79" opacity=".45"/><circle cx="78" cy="61" r="4" fill="#E88C79" opacity=".45"/>`;
+      : id === "glam"
+        ? `<path d="M50 63 C54 60 58 61 60 62.5 C62 61 66 60 70 63 C66 70 54 70 50 63 Z" fill="#B3263A" stroke="${INK}" stroke-width="2" stroke-linejoin="round"/>`
+        : `<path d="M50 63 C55 69 65 69 70 63" stroke="${INK}" stroke-width="3" fill="none" stroke-linecap="round"/>`;
+    // Glam: lashes, lipstick and gold drop earrings.
+    const lashes = id === "glam" ? `<path d="M44.5 47.5 L42.5 45 M47.5 46.5 L46.5 43.5 M75.5 47.5 L77.5 45 M72.5 46.5 L73.5 43.5" stroke="${INK}" stroke-width="2" stroke-linecap="round"/>` : "";
+    const ears = id === "glam" ? `<circle cx="36" cy="62" r="2.2" fill="${GOLD}" stroke="${INK}" stroke-width="1.2"/><path d="M36 64 L36 70" stroke="${GOLD}" stroke-width="2"/><circle cx="36" cy="72" r="3.2" fill="${GOLD}" stroke="${INK}" stroke-width="1.4"/>` +
+      `<circle cx="84" cy="62" r="2.2" fill="${GOLD}" stroke="${INK}" stroke-width="1.2"/><path d="M84 64 L84 70" stroke="${GOLD}" stroke-width="2"/><circle cx="84" cy="72" r="3.2" fill="${GOLD}" stroke="${INK}" stroke-width="1.4"/>` : "";
+    return eyes + lashes + mouth + ears + `<circle cx="42" cy="61" r="4" fill="#E88C79" opacity="${id === "glam" ? ".7" : ".45"}"/><circle cx="78" cy="61" r="4" fill="#E88C79" opacity="${id === "glam" ? ".7" : ".45"}"/>`;
   }
   function avatar(a, size = 120) {
     a = a || {};
     const skin = SKINS[a.skin] || SKINS.s3;
-    const bg = { ankara: "#FBE3C8", agbada: "#E9DCC0", jersey: "#D6EBDC", corporate: "#DCE3F0", owambe: "#F6E7C4", street: "#DCE8F2" }[a.outfit] || "#F6E7C4";
+    const bg = { ankara: "#FBE3C8", agbada: "#E9DCC0", jersey: "#D6EBDC", corporate: "#DCE3F0", owambe: "#F6E7C4", street: "#DCE8F2", nightout: "#F6D9DC" }[a.outfit] || "#F6E7C4";
     return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="${size}" height="${size}" role="img" aria-label="Avatar">` +
       `<defs><clipPath id="ac"><circle cx="60" cy="60" r="58"/></clipPath></defs>` +
       `<circle cx="60" cy="60" r="58" fill="${bg}"/>` +
@@ -147,6 +157,14 @@
       `</svg>`;
   }
 
+  // ---------- things Amabile drops that aren't bottles ----------
+  function prize(kind = "cards", size = 48) {
+    const cards = `<g transform="rotate(-14 30 52)"><rect x="12" y="20" width="30" height="42" rx="5" fill="#fff" stroke="${INK}" stroke-width="3"/><text x="20" y="34" font-family="Georgia,serif" font-weight="700" font-size="11" fill="${WINE}">A</text><path d="M27 46 C24 42 20 44 22 48 L27 53 L32 48 C34 44 30 42 27 46 Z" fill="#E74529"/></g>` +
+      `<g transform="rotate(10 40 52)"><rect x="24" y="18" width="30" height="42" rx="5" fill="${WINE}" stroke="${INK}" stroke-width="3"/><rect x="28.5" y="22.5" width="21" height="33" rx="3" fill="none" stroke="${GOLD}" stroke-width="1.8"/><text x="39" y="44" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="13" fill="${GOLD}">A</text></g>`;
+    const gift = `<rect x="12" y="30" width="40" height="30" rx="4" fill="#E74529" stroke="${INK}" stroke-width="3"/><rect x="8" y="22" width="48" height="11" rx="3" fill="#E74529" stroke="${INK}" stroke-width="3"/><path d="M32 22 L32 60" stroke="${GOLD}" stroke-width="5"/><path d="M32 22 C24 10 14 14 20 20 C24 23 30 22 32 22 C34 22 40 23 44 20 C50 14 40 10 32 22 Z" fill="${GOLD}" stroke="${INK}" stroke-width="2.5"/>`;
+    return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 70" width="${size}" height="${size * 70 / 64}">${kind === "gift" ? gift : cards}</svg>`;
+  }
+
   // ---------- the sealed envelope (a bottle sent as a link) ----------
   // One drawing, in parts, so the game can break the seal and open the flap. viewBox 0 0 400 320.
   const PAPER = "#F3E3C5", PAPER_D = "#E6CFA6", PAPER_L = "#FAEED8", WAX = "#8E1B22", WAX_D = "#5b1414";
@@ -185,5 +203,5 @@
     inner: () => envBack() + envFront() + envFlap() + envSeal("both")
   };
 
-  g.OutsideArt = { avatar, venueArt, landmarkArt, bottle, envelope, LANDMARKS, SKINS, OUTFITS, HAIRS, FACES, VENUE_KINDS: Object.keys(VENUE) };
+  g.OutsideArt = { avatar, venueArt, landmarkArt, bottle, prize, envelope, LANDMARKS, SKINS, OUTFITS, HAIRS, FACES, VENUE_KINDS: Object.keys(VENUE) };
 })(typeof window !== "undefined" ? window : globalThis);

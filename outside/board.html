@@ -106,7 +106,7 @@
       return `<div class="card t${live && fresh && t.status === "open" ? " new" : ""}${late ? " late" : ""}${live ? "" : " done"}">
         <div><div class="bc" style="background:${hex}"></div><div class="bcn">${esc(bn)}</div></div>
         <div><div class="who">${esc(t.name || "Table " + (t.table || ""))}${t.kind === "drop" ? '<span class="badge drop">Drop</span>' : ""}${late ? '<span class="badge late">' + mins(t.createdAt) + ' min</span>' : live ? '<span class="badge">' + mins(t.createdAt) + ' min</span>' : ""}</div>
-          <div class="what">${esc(WINE[t.wine] || t.wine)}${t.swapFrom ? " (was " + esc(WINE[t.swapFrom]) + ")" : ""}</div>
+          <div class="what">${esc(t.item || WINE[t.wine] || t.wine)}${t.swapFrom ? " (was " + esc(WINE[t.swapFrom]) + ")" : ""}</div>
           <div class="where">${esc(where)}</div><div class="lbl">${esc(t.label || "")}${t.last ? " · " + esc(t.last) : ""}${t.status === "taken" ? " · " + esc(t.runner) + " has it" : ""}</div></div>
         ${live ? `<div class="acts">${t.status === "open" ? `<button class="gold" data-a="take" data-id="${t.id}">I've got it</button>` : ""}
           <button class="go" data-a="serve" data-id="${t.id}">Delivered</button>
@@ -151,10 +151,10 @@
     if (a === "more") {
       modal(`<h2 style="color:var(--wine);margin:0 0 10px">${esc(t.name || "This table")}</h2><div style="display:grid;gap:10px">
         ${t.kind !== "drop" || t.name ? `<button data-m="I'm at the bar with your bottle. Where are you sitting?">Message: I'm at the bar, where are you?</button><button data-m="I'm walking round with your bottle. Tap Glow on your phone so I can see you.">Message: tap Glow</button>` : ""}
-        <button data-sw>Out of this wine, swap it</button>${t.status === "taken" ? `<button data-undo>Put it back for anyone</button>` : ""}
+        ${t.item ? "" : `<button data-sw>Out of this wine, swap it</button>`}${t.status === "taken" ? `<button data-undo>Put it back for anyone</button>` : ""}
         <button data-rel>Can't find them, release it</button><button class="small" data-x>Close</button></div>`, (c) => {
         c.querySelectorAll("[data-m]").forEach((b) => (b.onclick = async () => { await call({ action: "cantfind", id: t.id, message: b.dataset.m }); close(); }));
-        c.querySelector("[data-sw]").onclick = () => modal(`<h2 style="color:var(--wine);margin:0 0 10px">Swap to</h2><div style="display:grid;gap:10px">${Object.entries(WINE).filter(([k]) => k !== t.wine).map(([k, n]) => `<button data-w="${k}">${esc(n)}</button>`).join("")}</div>`, (c2) => {
+        if (c.querySelector("[data-sw]")) c.querySelector("[data-sw]").onclick = () => modal(`<h2 style="color:var(--wine);margin:0 0 10px">Swap to</h2><div style="display:grid;gap:10px">${Object.entries(WINE).filter(([k]) => k !== t.wine).map(([k, n]) => `<button data-w="${k}">${esc(n)}</button>`).join("")}</div>`, (c2) => {
           c2.querySelectorAll("[data-w]").forEach((b) => (b.onclick = async () => { await call({ action: "swap", id: t.id, wine: b.dataset.w }); close(); poll(true); }));
         });
         const u = c.querySelector("[data-undo]"); if (u) u.onclick = async () => { await call({ action: "undo", id: t.id }); close(); poll(true); };

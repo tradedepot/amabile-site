@@ -144,7 +144,7 @@ export async function openTicketsFor(s, phone, bottles) {
   for (const b of bottles) {
     if (b.status !== "on_way" || !b.ticketId || !b.venueId) continue;
     const t = await getJSON(s, K.ticket(b.venueId, b.ticketId));
-    if (t && ["open", "taken"].includes(t.status)) out.push({ ticketId: t.id, bottleId: b.id, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, kind: t.kind, via: t.via || "" });
+    if (t && ["open", "taken"].includes(t.status)) out.push({ ticketId: t.id, bottleId: b.id, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, item: t.item || "", icon: t.icon || "", kind: t.kind, via: t.via || "" });
   }
   return out;
 }

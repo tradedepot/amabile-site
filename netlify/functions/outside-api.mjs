@@ -69,7 +69,7 @@ async function liveDrops(s, glowCounts) {
     const taken = await dropTaken(s, dr);
     out.push({ id: dr.id, venueId: dr.venueId, kind: dr.kind, start: dr.start, end: dr.end, bottles: dr.bottles,
       left: Math.max(0, dr.bottles - taken), hidden: dr.visibility === "hidden", clue: dr.clue || "", reward: dr.reward || "",
-      gatheringLights: dr.gatheringLights || 0, wines: dr.wines || [], state: t < dr.start ? "soon" : t <= dr.end ? "live" : "gone" });
+      gatheringLights: dr.gatheringLights || 0, wines: dr.wines || [], prize: dr.prize || "bottle", item: dr.item || "", icon: dr.icon || "", state: t < dr.start ? "soon" : t <= dr.end ? "live" : "gone" });
   }
   // Hidden drops: never say where until found.
   return out.map((x) => (x.hidden ? { ...x, venueId: null } : x));
@@ -79,7 +79,7 @@ async function dropTicketFor(s, light) {
   if (!lightIsOn(light) || !light.dropTicket) return [];
   const t = await getJSON(s, K.ticket(light.dropTicket.venueId, light.dropTicket.id));
   if (!t || !["open", "taken"].includes(t.status)) return [];
-  return [{ ticketId: t.id, bottleId: null, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, kind: "drop" }];
+  return [{ ticketId: t.id, bottleId: null, venueId: t.venueId, code: t.code, status: t.status, table: t.table, spot: t.spot || "", beacon: t.beacon || null, wine: t.wine, item: t.item || "", icon: t.icon || "", kind: "drop" }];
 }
 
 async function dropTaken(s, dr) {
@@ -543,10 +543,12 @@ export default async (req) => {
         await s.delete(K.nightDrop(night, me));
         return bad("pass_table");
       }
+      const isItem = dr.prize === "item";
       const tk = newTicket({ venueId: dr.venueId, kind: "drop", dropId: dr.id, dropStart: dr.start, intentKey: ik,
-        wine: d.wine && dr.wines && dr.wines.includes(d.wine) ? d.wine : (dr.wines || [])[0] || "rosso",
+        wine: isItem ? null : d.wine && dr.wines && dr.wines.includes(d.wine) ? d.wine : (dr.wines || [])[0] || "rosso",
+        item: isItem ? dr.item : "", icon: isItem ? dr.icon || "cards" : "",
         table: passTo || table, spot: passTo ? "" : spot, beacon: passTo ? null : await pickBeacon(s, dr.venueId), name: passTo ? "" : player.name,
-        label: passTo ? ("Pass it on, from " + (table ? "table " + table : player.name)) : "Drop: one bottle for the table",
+        label: passTo ? ("Pass it on, from " + (table ? "table " + table : player.name)) : isItem ? "Drop: one for the table" : "Drop: one bottle for the table",
         last: rank === dr.bottles - 1 && dr.reward ? dr.reward : "", playerPhone: passTo ? null : me });
       await saveTicket(s, tk);
       if (passTo) { const { addBadge } = await import("./_outside.mjs"); addBadge(player, "pass-it-on"); await s.setJSON(K.player(me), player); }

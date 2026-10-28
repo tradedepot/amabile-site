@@ -125,16 +125,21 @@ export default async (req) => {
     const endLagos = new Date(end + 3600 * 1000), hh = endLagos.getUTCHours(), mm = endLagos.getUTCMinutes();
     if (hh >= 2 && hh < 6 && !(hh === 2 && mm === 0)) return json({ ok: false, error: "after_2am" }, 400);
     const kind = ["open", "gathering", "hidden", "passiton"].includes(x.kind) ? x.kind : "open";
+    // What drops: bottles, or something else from Amabile (card games, merch). The runner hands it over either way.
+    const prize = x.prize === "item" ? "item" : "bottle";
+    const item = prize === "item" ? clean(x.item, 40) : "";
+    if (prize === "item" && !item) return json({ ok: false, error: "item" }, 400);
     const dr = {
       id, venueId: v.id, kind, start, end,
       bottles: Math.max(1, Math.min(200, Number(x.bottles) || 20)),
-      wines: (Array.isArray(x.wines) ? x.wines : []).filter((w) => wine(w)),
+      prize, item, icon: prize === "item" ? (["cards", "gift"].includes(x.icon) ? x.icon : "cards") : "",
+      wines: prize === "item" ? [] : (Array.isArray(x.wines) ? x.wines : []).filter((w) => wine(w)),
       visibility: kind === "hidden" ? "hidden" : "public",
       clue: clean(x.clue, 140), reward: clean(x.reward, 80),
       gatheringLights: kind === "gathering" ? Math.max(5, Number(x.gatheringLights) || 15) : 0,
       status: "scheduled", updatedAt: Date.now()
     };
-    if (!dr.wines.length) dr.wines = ["rosso", "bianco"];
+    if (prize === "bottle" && !dr.wines.length) dr.wines = ["rosso", "bianco"];
     await s.setJSON(K.drop(id), dr);
     return json({ ok: true, drop: dr });
   }

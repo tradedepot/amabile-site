@@ -308,3 +308,13 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .gift.compact .gtop { display: none; }
 .gift.compact .genv { width: min(46vw, 190px); margin-top: 7vh; transition: width .35s, margin .35s; }
 .gift.compact .gcard h2 { font-size: 22px; }
+
+/* Welcome: a bottle between two friends */
+.hero { position: relative; height: 214px; margin: 34px 0 18px; }
+.hero .panel { position: absolute; left: 12%; right: 12%; top: 0; bottom: 18px; border-radius: 26px; background: #F4E6CF; overflow: hidden; display: flex; justify-content: center; }
+.hero .panel img { height: 104%; margin-bottom: -2%; align-self: flex-end; mix-blend-mode: multiply; filter: brightness(1.06) contrast(1.04); }
+.hero .a { position: absolute; bottom: 0; line-height: 0; border-radius: 50%; box-shadow: 0 6px 0 rgba(58,42,32,.18); }
+.hero .a.left { left: 0; transform: rotate(-6deg); }
+.hero .a.right { right: 0; transform: rotate(6deg); }
+.prizepic { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 3 / 5; background: #F4E6CF; border-radius: 14px; }
+.welcome { text-align: center; }

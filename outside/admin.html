@@ -239,20 +239,26 @@
       <div><label>Venue</label><select id="venue">${vs.filter((v) => v.active).map((v) => `<option value="${v.id}">${esc(v.name)}</option>`).join("")}</select></div>
       <div><label>Type</label><select id="kind"><option value="open">Open: first tables</option><option value="gathering">Gathering: opens when the room fills</option><option value="hidden">Hidden: clue only</option><option value="passiton">Pass it on</option></select></div>
       <div><label>Starts (Lagos time)</label><input id="start" type="datetime-local"></div><div><label>Ends (Lagos time, 2am latest)</label><input id="end" type="datetime-local"></div>
-      <div><label>Bottles</label><input id="bottles" value="20"></div><div><label>Lights needed (gathering)</label><input id="gl" value="15"></div></div>
-      <label>Wines</label><div class="row">${W.map((w) => `<label style="font-weight:700"><input type="checkbox" data-w="${w.id}"${w.family === "frizzante" && w.id !== "rosato" ? " checked" : ""}> ${esc(w.label)}</label>`).join("")}</div>
+      <div><label>What's dropping</label><select id="prize"><option value="bottle">Bottles</option><option value="item">Something else (playing cards, merch)</option></select></div>
+      <div><label>How many</label><input id="bottles" value="20"></div>
+      <div class="itemf" style="display:none"><label>What it is (players see this)</label><input id="item" maxlength="40" placeholder="Amabile playing cards"></div>
+      <div class="itemf" style="display:none"><label>Picture</label><select id="icon"><option value="cards">Cards</option><option value="gift">Gift</option></select></div>
+      <div><label>Lights needed (gathering)</label><input id="gl" value="15"></div></div>
+      <div id="winesf"><label>Wines</label><div class="row">${W.map((w) => `<label style="font-weight:700"><input type="checkbox" data-w="${w.id}"${w.family === "frizzante" && w.id !== "rosato" ? " checked" : ""}> ${esc(w.label)}</label>`).join("")}</div></div>
       <div class="grid"><div><label>Clue (hidden drops)</label><input id="clue"></div><div><label>Reward for the last table</label><input id="reward" placeholder="Suya platter for the last table"></div></div>
       <p><button class="b" id="save">Schedule drop</button></p><p id="msg" class="muted"></p></div>
       <div class="card"><h2>Drops</h2><table><tr><th>When</th><th>Venue</th><th>Type</th><th>Taken</th><th>Status</th><th></th></tr>
-      ${(data.drops || []).map((d) => `<tr><td>${lagos(d.start)}<div class="muted">to ${lagos(d.end)}</div></td><td>${esc(vn(d.venueId))}</td><td>${esc(d.kind)}</td><td>${d.taken} of ${d.bottles}</td>
+      ${(data.drops || []).map((d) => `<tr><td>${lagos(d.start)}<div class="muted">to ${lagos(d.end)}</div></td><td>${esc(vn(d.venueId))}</td><td>${esc(d.kind)}<div class="muted">${esc(d.prize === "item" ? d.item : "Bottles")}</div></td><td>${d.taken} of ${d.bottles}</td>
         <td>${d.status === "cancelled" ? '<span class="tag off">Cancelled</span>' : Date.now() > d.end ? '<span class="tag">Ended</span>' : Date.now() >= d.start ? '<span class="tag on">Live</span>' : '<span class="tag">Scheduled</span>'}</td>
         <td>${d.status !== "cancelled" && Date.now() < d.end ? `<button class="b small ghost" data-c="${d.id}">Cancel</button>` : ""}</td></tr>`).join("")}</table></div>`);
     const $ = (id) => document.getElementById(id);
+    const prizeUI = () => { const it = $("prize").value === "item"; document.querySelectorAll(".itemf").forEach((x) => (x.style.display = it ? "" : "none")); $("winesf").style.display = it ? "none" : ""; };
+    $("prize").onchange = prizeUI;
     $("save").onclick = async () => {
       const wines = [...document.querySelectorAll("[data-w]")].filter((i) => i.checked).map((i) => i.dataset.w);
       const toIso = (v) => (v ? new Date(Date.parse(v + ":00+01:00")).toISOString() : "");
-      const r = await call({ action: "drop-save", drop: { venueId: $("venue").value, kind: $("kind").value, start: toIso($("start").value), end: toIso($("end").value), bottles: $("bottles").value, gatheringLights: $("gl").value, wines, clue: $("clue").value, reward: $("reward").value } });
-      if (!r.ok) return ($("msg").textContent = r.error === "after_2am" ? "Drops must end by 2am." : r.error === "times" ? "Check the start and end times." : "Couldn't save: " + r.error);
+      const r = await call({ action: "drop-save", drop: { venueId: $("venue").value, kind: $("kind").value, start: toIso($("start").value), end: toIso($("end").value), bottles: $("bottles").value, prize: $("prize").value, item: $("item").value, icon: $("icon").value, gatheringLights: $("gl").value, wines, clue: $("clue").value, reward: $("reward").value } });
+      if (!r.ok) return ($("msg").textContent = r.error === "after_2am" ? "Drops must end by 2am." : r.error === "times" ? "Check the start and end times." : r.error === "item" ? "Say what's dropping." : "Couldn't save: " + r.error);
       show("drops");
     };
     root.querySelectorAll("[data-c]").forEach((b) => (b.onclick = async () => { if (confirm("Cancel this drop?")) { await call({ action: "drop-cancel", id: b.dataset.c }); show("drops"); } }));

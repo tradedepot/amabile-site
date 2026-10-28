@@ -97,7 +97,7 @@ export default async (req) => {
     t.messages = [...(t.messages || []), { at: Date.now(), msg }].slice(-5);
     await saveTicket(s, t);
   } else if (d.action === "swap") {
-    if (!wine(d.wine)) return json({ ok: false, error: "wine" }, 400);
+    if (!wine(d.wine) || t.item) return json({ ok: false, error: "wine" }, 400);
     t.swapFrom = t.swapFrom || t.wine; t.wine = d.wine;
     await saveTicket(s, t);
   } else if (d.action === "release") {
