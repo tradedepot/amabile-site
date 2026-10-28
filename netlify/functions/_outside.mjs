@@ -10,8 +10,9 @@
 // Env:
 //   OUTSIDE_SECRET          HMAC key for session and claim-link tokens (required)
 //   PAYSTACK_SECRET_KEY, PAYSTACK_PUBLIC_KEY
-//   RESPONDIO_API_KEY       WhatsApp through respond.io
-//   OUTSIDE_WA_CHANNEL      respond.io channel id for the WhatsApp number (optional)
+//   WA_TOKEN, WA_PHONE_ID   WhatsApp Cloud API (Meta): system user token and the number's phone number ID
+//   WA_VERIFY_TOKEN         any string, the same one entered for the webhook in the Meta app
+//   WA_APP_SECRET           the Meta app's secret, to check webhook signatures (recommended)
 //   OUTSIDE_TPL_BOTTLE      approved template for "x is sending an Amabile to your table" (name)
 //   OUTSIDE_TPL_CODE        approved authentication template for sign-in codes (name)
 //   OUTSIDE_TPL_LANG        template language code, default "en"
@@ -182,6 +183,7 @@ export const K = {
   waitingFor: (h) => "rh/" + h,                  // contacts of a non-player yet: owners who saved them
   contacts: (ph) => "cx/" + phoneKey(ph),         // hashes a player picked from their contacts
   gift: (c) => "g/" + c,                          // a bottle sent as a link (Instagram, Snapchat): code to bottle
+  waName: (ph) => "wn/" + phoneKey(ph),             // WhatsApp profile name, from messages they sent us
   qr: (c) => "qr/" + c,                           // a bottle shown as a QR to a runner
   request: (id) => "rq/" + id,                    // a venue's request to join Outside
   requestPrefix: "rq/"
@@ -365,43 +367,40 @@ export function addBadge(p, b) {
   return false;
 }
 
-// ---------- WhatsApp via respond.io ----------
-async function rio(path, body) {
-  const key = process.env.RESPONDIO_API_KEY;
-  if (!key) return { ok: false, skip: "no-key" };
-  const r = await fetch("https://api.respond.io/v2" + path, {
+// ---------- WhatsApp, straight from Meta (WhatsApp Cloud API) ----------
+// Only two things go out on WhatsApp: the sign-in code and "x is sending you a bottle". No selling, no prices.
+// Env: WA_TOKEN (system user token), WA_PHONE_ID (the number's ID in WhatsApp Manager), WA_API_VERSION (default v23.0).
+async function wa(to, msg) {
+  const token = process.env.WA_TOKEN, phoneId = process.env.WA_PHONE_ID, v = process.env.WA_API_VERSION || "v23.0";
+  if (!token || !phoneId) return { ok: false, skip: "no-whatsapp" };
+  const r = await fetch(`https://graph.facebook.com/${v}/${phoneId}/messages`, {
     method: "POST",
-    headers: { Authorization: "Bearer " + key, "Content-Type": "application/json" },
-    body: JSON.stringify(body)
-  });
+    headers: { Authorization: "Bearer " + token, "Content-Type": "application/json" },
+    body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: phoneKey(to), ...msg })
+  }).catch((e) => ({ ok: false, status: 0, text: async () => String(e) }));
   const t = await r.text().catch(() => "");
-  if (!r.ok) console.warn("respond.io", path, r.status, t.slice(0, 300));
-  return { ok: r.ok, status: r.status };
+  if (!r.ok) console.warn("whatsapp", r.status, t.slice(0, 300));
+  let id = null; try { id = JSON.parse(t).messages[0].id; } catch {}
+  return { ok: !!r.ok, status: r.status, id };
 }
-// The name on their WhatsApp, if they have ever messaged Amabile (respond.io holds their profile name).
+// Template parameters may not contain new lines, tabs or runs of spaces.
+const waParam = (t) => String(t).replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, "   ").slice(0, 300);
+function waTemplate(name, bodyParams, buttonParam) {
+  const components = [{ type: "body", parameters: bodyParams.map((t) => ({ type: "text", text: waParam(t) })) }];
+  if (buttonParam) components.push({ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: String(buttonParam) }] });
+  return { type: "template", template: { name, language: { code: process.env.OUTSIDE_TPL_LANG || "en" }, components } };
+}
+
+// The name on their WhatsApp profile, if they have ever messaged the Outside number (saved by outside-wa-hook).
 // Meta gives no way to look up the name of a number that has never messaged us.
 export async function contactFirstName(e164) {
-  const key = process.env.RESPONDIO_API_KEY;
-  if (!key || !e164) return "";
+  if (!e164) return "";
   try {
-    const r = await fetch("https://api.respond.io/v2/contact/phone:" + e164, { headers: { Authorization: "Bearer " + key } });
-    if (!r.ok) return "";
-    const c = await r.json().catch(() => ({}));
-    const first = String((c && (c.firstName || (c.data && c.data.firstName))) || "").trim().split(/\s+/)[0] || "";
+    const raw = String((await store().get(K.waName(e164))) || "");
+    const first = raw.trim().split(/\s+/)[0] || "";
     const name = first.replace(/[^\p{L}'-]/gu, "");
     return name.length >= 2 && name.length <= 24 && !/^\+?\d+$/.test(first) ? name.charAt(0).toUpperCase() + name.slice(1) : "";
   } catch { return ""; }
-}
-async function ensureContact(e164, firstName) {
-  return rio("/contact/create_or_update/phone:" + e164, { phone: e164, firstName: firstName || undefined });
-}
-function waMessage(template, bodyParams, buttonSuffix) {
-  const components = [{ type: "body", parameters: bodyParams.map((t) => ({ type: "text", text: String(t).slice(0, 300) })) }];
-  if (buttonSuffix) components.push({ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: buttonSuffix }] });
-  const msg = { type: "whatsapp_template", template: { name: template, languageCode: process.env.OUTSIDE_TPL_LANG || "en", components } };
-  const body = { message: msg };
-  if (process.env.OUTSIDE_WA_CHANNEL) body.channelId = Number(process.env.OUTSIDE_WA_CHANNEL);
-  return body;
 }
 
 // "Ada's sending an Amabile to your table. For next time you're outside." + note + [Claim it]
@@ -411,21 +410,18 @@ export async function sendBottleNotice(bottle) {
   const from = bottle.anon ? "Someone" : (bottle.fromName || "A friend");
   const note = bottle.note ? "“" + bottle.note + "”" : "No note.";
   if (!tpl) return { ok: false, skip: "no-template", link: SITE + "/c/" + link };
-  await ensureContact(bottle.to);
-  const r = await rio("/contact/phone:" + bottle.to + "/message", waMessage(tpl, [from, note], link));
+  const r = await wa(bottle.to, waTemplate(tpl, [from, note], link));
   return { ...r, link: SITE + "/c/" + link };
 }
-// Short service messages inside an open 24h window (for example to a player who just claimed).
+// Free text only reaches someone who messaged the number in the last 24 hours; otherwise WhatsApp drops it.
 export async function sendText(e164, text) {
-  const body = { message: { type: "text", text } };
-  if (process.env.OUTSIDE_WA_CHANNEL) body.channelId = Number(process.env.OUTSIDE_WA_CHANNEL);
-  return rio("/contact/phone:" + e164 + "/message", body);
+  return wa(e164, { type: "text", text: { body: String(text).slice(0, 1000) } });
 }
 export async function sendCode(e164, code) {
   const tpl = process.env.OUTSIDE_TPL_CODE;
   if (!tpl) return { ok: false, skip: "no-template" };
-  await ensureContact(e164);
-  return rio("/contact/phone:" + e164 + "/message", waMessage(tpl, [code], code));
+  // Authentication templates: the code fills the body and the copy-code button.
+  return wa(e164, waTemplate(tpl, [code], code));
 }
 
 // ---------- Paystack ----------

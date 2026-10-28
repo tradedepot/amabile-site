@@ -41,7 +41,6 @@ export async function createVenueRequest(s, phone, d) {
   r.suggested = (match.rows || []).map((o) => ({ id: o.id, name: o.name, number: o.number, lga: o.lga, lat: o.lat, lng: o.lng }));
   await s.setJSON(K.request(r.id), r);
   notifyOps(r).catch(() => {});
-  contactInRespond(r).catch(() => {});
   return { ok: true, id: r.id };
 }
 
@@ -192,14 +191,5 @@ async function notifyOps(r) {
   for (const addr of to) await sendEmail(process.env.BREVO_API_KEY, addr, "Outside venue request: " + r.name, html);
 }
 
-async function contactInRespond(r) {
-  const key = process.env.RESPONDIO_API_KEY; if (!key) return;
-  const hdr = { Authorization: "Bearer " + key, "Content-Type": "application/json" };
-  const id = "phone:" + r.phone;
-  await fetch("https://api.respond.io/v2/contact/create_or_update/" + id, { method: "POST", headers: hdr, body: JSON.stringify({
-    firstName: r.contactName.split(/\s+/)[0], phone: r.phone, email: r.email || undefined,
-    custom_fields: [{ name: "amb_outlet_name", value: r.name }, { name: "amb_outlet_type", value: KIND_LABEL[r.kind] || r.kind }] }) });
-  await fetch("https://api.respond.io/v2/contact/" + id + "/tag", { method: "POST", headers: hdr, body: JSON.stringify(["amb_src_outside_venue", "amb_outside_requested"]) });
-}
 
 export { KIND_LABEL, maskPhone, WINES };
