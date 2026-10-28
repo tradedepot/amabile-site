@@ -304,3 +304,7 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .gcard .q { font-family: var(--serif); font-size: 19px; color: var(--wine); } .gcard .for { font-size: 13px; font-weight: 800; color: var(--ink-2); }
 .gcard .btn { margin-top: 10px; } .gcard .fine { font-size: 12px; color: var(--ink-2); text-align: center; margin-top: 8px; }
 @media (prefers-reduced-motion: reduce) { .genv, .genv * { animation-duration: .01s !important; animation-delay: 0s !important; } }
+.gift .gcard { position: relative; z-index: 6; }
+.gift.compact .gtop { display: none; }
+.gift.compact .genv { width: min(46vw, 190px); margin-top: 7vh; transition: width .35s, margin .35s; }
+.gift.compact .gcard h2 { font-size: 22px; }

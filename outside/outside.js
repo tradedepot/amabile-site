@@ -263,9 +263,9 @@
   // ---------- sign in ----------
   function needSignIn(next) { if (S.me) return next(); signIn(next); }
   function signIn(next) {
-    modal(`<h2>Sign in</h2><p class="muted">Your number is your account. We send a code on WhatsApp.</p>
-      <label class="field"><span>Phone number</span><input id="ph" type="tel" inputmode="tel" placeholder="0803 000 0000" autocomplete="tel"></label>
-      <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
+    modal(`<h2>Your WhatsApp number</h2><p class="muted">We'll send you a code.</p>
+      <label class="field"><span>Number</span><input id="ph" type="tel" inputmode="tel" placeholder="0803 000 0000" autocomplete="tel"></label>
+      <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p>`, (c) => {
       c.querySelector("#go").onclick = async () => {
         const phone = c.querySelector("#ph").value;
         if (!e164(phone)) return (c.querySelector("#msg").textContent = errMsg("phone"));
@@ -519,7 +519,7 @@
         <div class="wn">${esc(g.wineLabel)}</div>
         <h2>${from}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
         ${g.note ? `<p class="q">"${esc(g.note)}"</p>` : ""}${g.forLabel ? `<p class="for">For ${esc(g.forLabel)}</p>` : ""}
-        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<button class="btn block" id="gk">Keep it</button>`}
+        ${g.state === "mine" ? `<button class="btn block" id="gk">It's yours. See where to claim it</button>` : `<div class="gkeep"><button class="btn block" id="gk">Keep it</button></div>`}
         <p class="muted" id="gm"></p></div>`;
     el.classList.add("show");
     const env = el.querySelector(".genv"), card = el.querySelector(".gcard");
@@ -533,13 +533,47 @@
       const r = await api("gift-accept", { code });
       if (!r.ok) return (el.querySelector("#gm").textContent = errMsg(r.error));
       await loadMe(); close();
-      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it at any partner venue next time you're outside.</p>
+      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it from your server when next you're outside.</p>
         <button class="btn block" id="gb">See where to claim it</button>`, (c) => { c.querySelector("#gb").onclick = () => { closeModal(); openSheet("bottles"); }; });
     };
+    // Keeping it asks only for what's needed, inline: the number to send it to, the code, and (first time) name and date of birth.
+    const step = (html, mount) => { el.classList.add("compact"); const b = card.querySelector(".gkeep"); b.innerHTML = html; msg(""); mount(b); const i = b.querySelector("input"); if (i) i.focus(); };
+    const msg = (t) => (card.querySelector("#gm").textContent = t);
+    const askNumber = () => step(`<label class="field"><span>Your WhatsApp number</span><input id="gph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000"></label>
+      <button class="btn block" id="gn">Send me the code</button>`, (b) => {
+      b.querySelector("#gn").onclick = async () => {
+        const phone = b.querySelector("#gph").value;
+        if (!e164(phone)) return msg(errMsg("phone"));
+        const r = await api("auth/start", { phone });
+        if (!r.ok) return msg(errMsg(r.error));
+        askCode(phone, r.devCode);
+      };
+    });
+    const askCode = (phone, devCode) => step(`<label class="field"><span>Code from WhatsApp${devCode ? " (test: " + devCode + ")" : ""}</span><input id="gcd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits"></label>
+      <button class="btn block" id="gc">Confirm</button>`, (b) => {
+      b.querySelector("#gc").onclick = async () => {
+        const r = await api("auth/verify", { phone, code: b.querySelector("#gcd").value });
+        if (!r.ok) return msg(errMsg(r.error));
+        S.token = r.token; LS.set("outside.token", r.token);
+        if (r.needsProfile) return askName();
+        keep();
+      };
+    });
+    const askName = () => step(`<label class="field"><span>Your first name</span><input id="gnm" autocomplete="given-name" maxlength="24"></label>
+      <label class="field"><span>Date of birth</span><input id="gdb" type="date"></label>
+      <button class="btn block" id="gs">Keep it</button>`, (b) => {
+      b.querySelector("#gs").onclick = async () => {
+        const dob = b.querySelector("#gdb").value;
+        const r = await api("profile", { name: b.querySelector("#gnm").value, dob, avatar: { skin: "s3", hair: "low", face: "smile", outfit: "ankara" } });
+        if (!r.ok) return msg(errMsg(r.error));
+        LS.set("outside.dob", dob);
+        keep();
+      };
+    });
     el.querySelector("#gk").onclick = () => {
       if (g.state === "mine") { close(); return openSheet("bottles"); }
-      if (!S.token || !S.me) return signIn(keep);
-      keep();
+      if (S.token && S.me) return keep();
+      askNumber();
     };
   }
 
@@ -624,7 +658,7 @@
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
           ${st.mode === "link" ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="fine">${st.mode === "link" ? "It can only be claimed once." : "They claim it at a partner venue next time they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
+        <p class="fine">${st.mode === "link" ? "It can only be claimed once." : "They claim it from their server when next they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
       const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
@@ -806,7 +840,7 @@
       <div class="status"><div class="n">${p.received || 0}</div><div class="grow"><b>bottle${p.received === 1 ? "" : "s"} sent to your table</b>
         <div class="bar"><i style="width:${pct}%"></i></div><small>${p.next ? `${p.toNext} more to <b>${esc(p.next)}</b>` : "As high as it goes."}</small></div></div>
       ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
-      <p></p><button class="btn block ghost" id="look">Change my avatar</button><p></p><button class="link" id="out">Sign out</button><p class="muted" style="text-align:center">Own a venue? <a href="/outside/venue">Get it on the map</a></p>`, (c) => {
+      <p></p><button class="btn block ghost" id="look">Change my avatar</button><p></p><button class="link" id="out">Sign out</button>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
       const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
       c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };
