@@ -168,8 +168,8 @@
   status = 200
 
 
-# Outside: the Amabile bottle game. App, claim links, runner board and admin.
-# The game's own domain, weoutside.ng (a domain alias on this site), serves the game from its root.
+# Andiamo! (formerly Outside): the Amabile bottle game. App, claim links, runner board and admin.
+# The game's own domain, andiamo.ng (a domain alias on this site), serves the game from its root.
 # Paths without a matching file under /outside/ fall through to the game.
 [[redirects]]
   from = "/outside/c/*"
@@ -187,122 +187,20 @@
   from = "/outside/venue"
   to = "/outside/venue.html"
   status = 200
-# On weoutside.ng: API, functions and the game's own files pass through; everything else is the game.
+# Andiamo! (formerly Outside) lives on andiamo.ng. www, andiamolagos.ng and the old weoutside.ng all forward there,
+# keeping the path, so card links already sent (/c/..., /g/...) still open.
 [[redirects]]
-  from = "https://weoutside.ng/api/*"
-  to = "/api/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/.netlify/*"
-  to = "/.netlify/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/outside/*"
-  to = "/outside/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/favicon-32.png"
-  to = "/favicon-32.png"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/g/*"
-  to = "/outside/g/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/"
-  to = "/outside/index.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/c/*"
-  to = "/outside/index.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/board"
-  to = "/outside/board.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/admin"
-  to = "/outside/admin.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://weoutside.ng/venue"
-  to = "/outside/venue.html"
-  status = 200
+  from = "https://www.andiamo.ng/*"
+  to = "https://andiamo.ng/:splat"
+  status = 301
   force = true
 [[redirects]]
   from = "https://weoutside.ng/*"
-  to = "/outside/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/api/*"
-  to = "/api/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/.netlify/*"
-  to = "/.netlify/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/outside/*"
-  to = "/outside/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/favicon-32.png"
-  to = "/favicon-32.png"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/g/*"
-  to = "/outside/g/:splat"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/"
-  to = "/outside/index.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/c/*"
-  to = "/outside/index.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/board"
-  to = "/outside/board.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/admin"
-  to = "/outside/admin.html"
-  status = 200
-  force = true
-[[redirects]]
-  from = "https://www.weoutside.ng/venue"
-  to = "/outside/venue.html"
-  status = 200
+  to = "https://andiamo.ng/:splat"
+  status = 301
   force = true
 [[redirects]]
   from = "https://www.weoutside.ng/*"
-  to = "/outside/:splat"
-  status = 200
-  force = true
-
-# Andiamo! now also answers on andiamo.ng. www.andiamo.ng and andiamolagos.ng forward there, keeping the path.
-# weoutside.ng keeps serving until andiamo.ng has its certificate, then it forwards too.
-[[redirects]]
-  from = "https://www.andiamo.ng/*"
   to = "https://andiamo.ng/:splat"
   status = 301
   force = true
@@ -316,6 +214,7 @@
   to = "https://andiamo.ng/:splat"
   status = 301
   force = true
+# On andiamo.ng: API, functions and the game's own files pass through; everything else is the game.
 [[redirects]]
   from = "https://andiamo.ng/api/*"
   to = "/api/:splat"
