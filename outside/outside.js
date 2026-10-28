@@ -892,7 +892,7 @@
   }
   function welcome() {
     modal(`<div class="empty"><div class="art">${A.avatar({ skin: "s2", hair: "gele", face: "grin", outfit: "owambe" }, 92)}${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 92)}</div></div>
-      <h2>Lagos is outside.</h2><p>Put a bottle on a friend's table, wherever they go out next. Catch free bottles at real spots around the city.</p>
+      <h2>Lagos is outside.</h2><p>Send a bottle to a friend's table. Amabile drops free ones at real spots around the city.</p>
       <button class="btn block" id="go">Step outside</button>
       <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly.</p>`, (c) => {
       c.querySelector("#go").onclick = closeModal;
