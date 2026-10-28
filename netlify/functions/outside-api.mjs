@@ -19,7 +19,7 @@ import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
   publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
-  payEmail, sendCode, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
+  payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "./_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "./_outside_flow.mjs";
 
@@ -126,7 +126,8 @@ export default async (req) => {
       await s.delete(K.otp(ph));
       const p = await getJSON(s, K.player(ph));
       if (p && p.blockedUntil && Date.now() < p.blockedUntil) return bad("not_now", 403);
-      return json({ ok: true, token: sessionToken(ph), needsProfile: !(p && p.name) });
+      const needsProfile = !(p && p.name);
+      return json({ ok: true, token: sessionToken(ph), needsProfile, suggestedName: needsProfile ? await contactFirstName(ph) : "" });
     }
 
     if (route === "auth/link") {

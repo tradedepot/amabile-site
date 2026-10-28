@@ -285,7 +285,7 @@
         const r = await api("auth/verify", { phone, code: c.querySelector("#cd").value });
         if (!r.ok) return (c.querySelector("#msg").textContent = errMsg(r.error));
         S.token = r.token; LS.set("outside.token", r.token);
-        if (r.needsProfile) return profileStep(next);
+        if (r.needsProfile) { S.suggestedName = r.suggestedName || ""; return profileStep(next); }
         await afterSignIn(); closeModal(); next && next();
       };
     });
@@ -296,9 +296,8 @@
     const opts = (key, map) => Object.entries(map).map(([k, v]) =>
       key === "skin" ? `<button class="swatch${av.skin === k ? " on" : ""}" data-k="skin" data-v="${k}" style="background:${v}" aria-label="Skin tone"></button>`
         : `<button class="${av[key] === k ? "on" : ""}" data-k="${key}" data-v="${k}">${esc(typeof v === "string" ? v : v.label)}</button>`).join("");
-    modal(`<h2>${edit ? "Your avatar" : "One more thing"}</h2>
-      ${edit ? "" : `<label class="field"><span>First name</span><input id="nm" autocomplete="given-name" maxlength="24"></label>
-`}
+    modal(`<h2>${edit ? "Your name and avatar" : "One more thing"}</h2>
+      <label class="field"><span>First name</span><input id="nm" autocomplete="given-name" maxlength="24" value="${edit ? esc(S.me.player.name) : esc(S.suggestedName || "")}"></label>
       <div class="av-builder"><div class="av-preview" id="avp">${A.avatar(av, 120)}</div>
       <div class="opts">${opts("skin", A.SKINS)}</div><div class="opts">${opts("hair", A.HAIRS)}</div>
       <div class="opts">${opts("face", A.FACES)}</div><div class="opts">${opts("outfit", A.OUTFITS)}</div></div>
@@ -309,7 +308,7 @@
         c.querySelector("#avp").innerHTML = A.avatar(av, 120);
       }));
       c.querySelector("#go").onclick = async () => {
-        const body = { name: edit ? S.me.player.name : c.querySelector("#nm").value, avatar: av };
+        const body = { name: c.querySelector("#nm").value || (edit ? S.me.player.name : ""), avatar: av };
         const r = await api("profile", body);
         if (!r.ok) return (c.querySelector("#msg").textContent = r.error === "name" ? "Add your first name." : errMsg(r.error));
 
@@ -554,7 +553,13 @@
         const r = await api("auth/verify", { phone, code: b.querySelector("#gcd").value });
         if (!r.ok) return msg(errMsg(r.error));
         S.token = r.token; LS.set("outside.token", r.token);
-        if (r.needsProfile) return askName();
+        if (r.needsProfile) {
+          // The name on their WhatsApp if Amabile has it, else the name the sender typed. No extra question. They can change it in Me.
+          const given = r.suggestedName || String(g.forLabel || "").replace(/^@+/, "").trim().split(/\s+/)[0];
+          if (!given) return askName();
+          const p = await api("profile", { name: given.charAt(0).toUpperCase() + given.slice(1), avatar: { skin: "s3", hair: "low", face: "smile", outfit: "ankara" } });
+          if (!p.ok) return askName();
+        }
         keep();
       };
     });
@@ -836,7 +841,7 @@
       <div class="status"><div class="n">${p.received || 0}</div><div class="grow"><b>bottle${p.received === 1 ? "" : "s"} sent to your table</b>
         <div class="bar"><i style="width:${pct}%"></i></div><small>${p.next ? `${p.toNext} more to <b>${esc(p.next)}</b>` : "As high as it goes."}</small></div></div>
       ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
-      <p></p><button class="btn block ghost" id="look">Change my avatar</button><p></p><button class="link" id="out">Sign out</button>`, (c) => {
+      <p></p><button class="btn block ghost" id="look">Change my name or avatar</button><p></p><button class="link" id="out">Sign out</button>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
       const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
       c.querySelector("#out").onclick = () => { S.token = null; S.me = null; LS.del("outside.token"); closeModal(); renderChrome(); renderMap(); };

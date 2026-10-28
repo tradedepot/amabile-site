@@ -378,6 +378,20 @@ async function rio(path, body) {
   if (!r.ok) console.warn("respond.io", path, r.status, t.slice(0, 300));
   return { ok: r.ok, status: r.status };
 }
+// The name on their WhatsApp, if they have ever messaged Amabile (respond.io holds their profile name).
+// Meta gives no way to look up the name of a number that has never messaged us.
+export async function contactFirstName(e164) {
+  const key = process.env.RESPONDIO_API_KEY;
+  if (!key || !e164) return "";
+  try {
+    const r = await fetch("https://api.respond.io/v2/contact/phone:" + e164, { headers: { Authorization: "Bearer " + key } });
+    if (!r.ok) return "";
+    const c = await r.json().catch(() => ({}));
+    const first = String((c && (c.firstName || (c.data && c.data.firstName))) || "").trim().split(/\s+/)[0] || "";
+    const name = first.replace(/[^\p{L}'-]/gu, "");
+    return name.length >= 2 && name.length <= 24 && !/^\+?\d+$/.test(first) ? name.charAt(0).toUpperCase() + name.slice(1) : "";
+  } catch { return ""; }
+}
 async function ensureContact(e164, firstName) {
   return rio("/contact/create_or_update/phone:" + e164, { phone: e164, firstName: firstName || undefined });
 }
