@@ -318,3 +318,5 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .hero .a.right { right: 0; transform: rotate(6deg); }
 .prizepic { display: inline-flex; align-items: center; justify-content: center; aspect-ratio: 3 / 5; background: #F4E6CF; border-radius: 14px; }
 .welcome { text-align: center; }
+/* The real bottle stands in the panel and rises above it. Multiply drops the photo's white backdrop into the panel and the card. */
+.hero .popbottle { position: absolute; left: 50%; bottom: 14px; height: 250px; transform: translateX(-50%); mix-blend-mode: multiply; filter: brightness(1.07) contrast(1.05); pointer-events: none; }

@@ -896,10 +896,10 @@
     setInterval(() => { if (document.visibilityState === "visible") loadConfig(); }, 60000);
   }
   function welcome() {
-    modal(`<div class="hero"><div class="panel"><img src="/outside/img/bottle-rosso.jpg" alt="Amabile Rosso"></div>
+    modal(`<div class="hero"><div class="panel pop"></div><img class="popbottle" src="/outside/img/bottle-rosso.jpg" alt="Amabile Rosso">
       <span class="a left">${A.avatar({ skin: "s3", hair: "straight", face: "glam", outfit: "nightout" }, 96)}</span>
       <span class="a right">${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 96)}</span></div>
-      <div class="welcome"><h2>Lagos is outside.</h2><p>Send an Amabile to a friend's table.<br>Find free bottles and cool stuff from Amabile at real spots around the city.</p></div>
+      <div class="welcome"><h2>Lagos is outside.</h2><p>Send an Amabile to a friend's table.<br>Find free bottle drops and cool stuff from Amabile at real spots around the city.</p></div>
       <button class="btn block" id="go">Step outside</button>
       <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly.</p>`, (c) => {
       c.querySelector("#go").onclick = closeModal;
