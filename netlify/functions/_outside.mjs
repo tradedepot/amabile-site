@@ -394,8 +394,9 @@ async function wa(to, msg) {
 }
 // Template parameters may not contain new lines, tabs or runs of spaces.
 const waParam = (t) => String(t).replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, "   ").slice(0, 300);
-function waTemplate(name, bodyParams, buttonParam) {
+function waTemplate(name, bodyParams, buttonParam, headerImage) {
   const components = [{ type: "body", parameters: bodyParams.map((t) => ({ type: "text", text: waParam(t) })) }];
+  if (headerImage) components.unshift({ type: "header", parameters: [{ type: "image", image: { link: headerImage } }] });
   if (buttonParam) components.push({ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: String(buttonParam) }] });
   return { type: "template", template: { name, language: { code: process.env.OUTSIDE_TPL_LANG || "en" }, components } };
 }
@@ -412,14 +413,14 @@ export async function contactFirstName(e164) {
   } catch { return ""; }
 }
 
-// "Ada's sending an Amabile to your table. For next time you're outside." + note + [Claim it]
+// Image header (img/wa-header.jpg) + "*Ada*'s sending an Amabile to your table. For next time you're outside." + _note_ + [Claim it]
 export async function sendBottleNotice(bottle) {
   const tpl = process.env.OUTSIDE_TPL_BOTTLE;
   const link = claimLinkToken(bottle.to, bottle.id);
   const from = bottle.anon ? "Someone" : (bottle.fromName || "A friend");
   const note = bottle.note ? "“" + bottle.note + "”" : "No note.";
   if (!tpl) return { ok: false, skip: "no-template", link: SITE + "/c/" + link };
-  const r = await wa(bottle.to, waTemplate(tpl, [from, note], link));
+  const r = await wa(bottle.to, waTemplate(tpl, [from, note], link, SITE + "/img/wa-header.jpg"));
   return { ...r, link: SITE + "/c/" + link };
 }
 // Free text only reaches someone who messaged the number in the last 24 hours; otherwise WhatsApp drops it.
