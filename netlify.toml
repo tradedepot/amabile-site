@@ -298,3 +298,76 @@
   to = "/outside/:splat"
   status = 200
   force = true
+
+# Andiamo! now also answers on andiamo.ng. www.andiamo.ng and andiamolagos.ng forward there, keeping the path.
+# weoutside.ng keeps serving until andiamo.ng has its certificate, then it forwards too.
+[[redirects]]
+  from = "https://www.andiamo.ng/*"
+  to = "https://andiamo.ng/:splat"
+  status = 301
+  force = true
+[[redirects]]
+  from = "https://andiamolagos.ng/*"
+  to = "https://andiamo.ng/:splat"
+  status = 301
+  force = true
+[[redirects]]
+  from = "https://www.andiamolagos.ng/*"
+  to = "https://andiamo.ng/:splat"
+  status = 301
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/api/*"
+  to = "/api/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/.netlify/*"
+  to = "/.netlify/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/outside/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/favicon-32.png"
+  to = "/favicon-32.png"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/g/*"
+  to = "/outside/g/:splat"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/c/*"
+  to = "/outside/index.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/board"
+  to = "/outside/board.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/admin"
+  to = "/outside/admin.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/venue"
+  to = "/outside/venue.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/*"
+  to = "/outside/:splat"
+  status = 200
+  force = true

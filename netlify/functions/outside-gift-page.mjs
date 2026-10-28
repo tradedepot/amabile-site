@@ -29,7 +29,7 @@ export default async (req) => {
 <meta name="description" content="${esc(desc)}">
 <meta name="robots" content="noindex">
 <meta property="og:type" content="website">
-<meta property="og:site_name" content="Outside by Amabile di Rosa">
+<meta property="og:site_name" content="Andiamo! by Amabile di Rosa">
 <meta property="og:title" content="${esc(title)}">
 <meta property="og:description" content="${esc(desc)}">
 <meta property="og:url" content="${esc(page)}">
@@ -38,9 +38,9 @@ export default async (req) => {
 <meta name="twitter:card" content="summary_large_image">
 <meta name="twitter:title" content="${esc(title)}"><meta name="twitter:description" content="${esc(desc)}"><meta name="twitter:image" content="${esc(img)}">
 <meta property="snapchat:sticker" content="${esc(SITE + "/img/gift-sticker.png")}">
-<meta name="theme-color" content="#7d1d1d">
+<meta name="theme-color" content="#E74529">
 <meta http-equiv="refresh" content="0;url=${esc(game)}">
-<style>body{margin:0;background:#7d1d1d;color:#fff6e6;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh}a{color:#f2c66b}</style>
+<style>body{margin:0;background:#E74529;color:#fff;font-family:system-ui,sans-serif;display:grid;place-items:center;min-height:100vh}a{color:#fff}</style>
 </head><body><p><a href="${esc(game)}">Open it</a></p><script>location.replace(${JSON.stringify(game)})</script></body></html>`;
   return new Response(html, { headers: { "content-type": "text/html; charset=utf-8", "cache-control": "public, max-age=60" } });
 };

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Outside admin</title>
+<title>Andiamo! admin</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
@@ -56,11 +56,11 @@
     return d;
   }
   function login(msg) {
-    root.innerHTML = `<div class="card login"><h2>Outside admin</h2><label>Admin password</label><input id="k" type="password"><p><button class="b" id="go">Sign in</button></p><p class="muted">${esc(msg || "")}</p></div>`;
+    root.innerHTML = `<div class="card login"><h2>Andiamo! admin</h2><label>Admin password</label><input id="k" type="password"><p><button class="b" id="go">Sign in</button></p><p class="muted">${esc(msg || "")}</p></div>`;
     document.getElementById("go").onclick = async () => { ak = document.getElementById("k").value; const r = await call({ action: "venues" }); if (r.ok) { LS.set("outside.ak", ak); data.venues = r; show("requests"); } };
   }
   function shell(inner) {
-    root.innerHTML = `<header><h1>Outside admin</h1><nav class="row">${["requests", "venues", "bands", "drops", "payouts", "bottles", "unmet"].map((t) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</nav></header><main>${inner}</main>`;
+    root.innerHTML = `<header><h1>Andiamo! admin</h1><nav class="row">${["requests", "venues", "bands", "drops", "payouts", "bottles", "unmet"].map((t) => `<button data-t="${t}" class="${t === tab ? "on" : ""}">${t[0].toUpperCase() + t.slice(1)}</button>`).join("")}</nav></header><main>${inner}</main>`;
     root.querySelectorAll("[data-t]").forEach((b) => (b.onclick = () => show(b.dataset.t)));
   }
   async function show(t) {

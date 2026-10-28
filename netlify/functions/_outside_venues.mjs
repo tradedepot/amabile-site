@@ -170,7 +170,7 @@ export async function goLive(s, venueId, by) {
   }
   // Tell the manager, best effort. Codes are also handed over in person on the visit.
   const ph = phoneE164(v.contact && v.contact.phone);
-  if (ph) sendText(ph, `${v.name} is live on Outside. Runner board: ${SITE}/board?v=${v.id}` + (keys ? ` Runner code: ${keys.runner}. Manager code: ${keys.manager}.` : "")).catch(() => {});
+  if (ph) sendText(ph, `${v.name} is live on Andiamo. Runner board: ${SITE}/board?v=${v.id}` + (keys ? ` Runner code: ${keys.runner}. Manager code: ${keys.manager}.` : "")).catch(() => {});
   const { runnerKeyHash, managerKeyHash, ...view } = v;
   return { ok: true, venue: view, keys, warnings, board: SITE + "/board?v=" + v.id };
 }
@@ -186,9 +186,9 @@ async function notifyOps(r) {
     ["Possible existing account", (r.suggested || []).map((o) => o.name + " #" + o.number).join(", ")]
   ].filter(([, v]) => v);
   const esc = (x) => String(x).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
-  const html = `<p>A venue has asked to join Outside.</p><table>${rows.map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#6b5646">${esc(k)}</td><td style="padding:3px 0"><b>${esc(v)}</b></td></tr>`).join("")}</table>
-    <p><a href="${SITE}/admin">Open Outside admin</a></p>`;
-  for (const addr of to) await sendEmail(process.env.BREVO_API_KEY, addr, "Outside venue request: " + r.name, html);
+  const html = `<p>A venue has asked to join Andiamo.</p><table>${rows.map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#6b5646">${esc(k)}</td><td style="padding:3px 0"><b>${esc(v)}</b></td></tr>`).join("")}</table>
+    <p><a href="${SITE}/admin">Open Andiamo admin</a></p>`;
+  for (const addr of to) await sendEmail(process.env.BREVO_API_KEY, addr, "Andiamo venue request: " + r.name, html);
 }
 
 

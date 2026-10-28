@@ -1,4 +1,4 @@
-// Outside: the game. A web app over an illustrated map of real Lagos.
+// Andiamo! (formerly Outside): the game. A web app over an illustrated map of real Lagos.
 (() => {
   const A = window.OutsideArt;
   const BASE = location.pathname.startsWith("/outside") ? "/outside" : "";
@@ -40,8 +40,7 @@
     if (r.status === 401 && path !== "auth/verify") { S.token = null; LS.del("outside.token"); }
     return d;
   }
-  const lagosHour = () => (new Date().getUTCHours() + 1) % 24;
-  const isNight = () => { const h = lagosHour(); return h >= 18 || h < 6; };
+  const isNight = () => false; // one map, day colours, all day
   const bandRank = (b) => (S.cfg ? S.cfg.bandOrder.indexOf(b) : 0);
   const bandName = (b) => (S.cfg && S.cfg.bandNames[b]) || b;
   // The real bottle, as a product tile. Illustrations stay for the map.
@@ -61,7 +60,7 @@
   const ERR = {
     offline: "No connection. Try again in a moment.", phone: "That doesn't look like a Nigerian number.", slow_down: "Too many codes. Try again in a few minutes.",
     send_failed: "We couldn't send the code. Try again.", wrong_code: "That code isn't right.", expired: "That code has expired. Ask for a new one.",
-    age: "Outside is for people 18 and over.", not_now: "This number can't sign in right now.", no_venue: "You're not at a partner venue yet. Your bottle keeps waiting.",
+    age: "Andiamo is for people 18 and over.", not_now: "This number can't sign in right now.", no_venue: "You're not at a partner venue yet. Your bottle keeps waiting.",
     not_stocked: "That venue doesn't stock this wine.", limit: "You've hit the limit for now.", not_out: "They're not outside any more.",
     gone: "All gone. Next time.", one_a_night: "One drop a night. Enjoy the rest of it.", not_here: "You need to be at the venue to claim this drop.",
     two_plus: "Drops are for tables of two or more.", not_yet: "Not live yet.", over: "This drop has ended.", band_price: "That level isn't open for this wine yet.",
@@ -380,7 +379,7 @@
     modal(`<div class="reveal">${photo(b.wine, 260)}<div class="wn">${esc(wineOf(b.wine).label)}<small>${esc(wineOf(b.wine).kind || "")}</small></div></div>
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
-      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Outside and tap Bring it here.</p>
+      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Andiamo and tap Bring it here.</p>
       <button class="btn block" data-x2>See the spots</button>`, (c) => {
       c.querySelector("[data-x2]").onclick = () => { closeModal(); focusSpots(spots); };
     });
@@ -536,14 +535,14 @@
     const el = $("#gift");
     const close = () => { el.classList.remove("show"); el.innerHTML = ""; };
     if (!g.ok || ["gone", "taken", "not_ready"].includes(g.state)) {
-      el.innerHTML = `<div class="gtop">OUTSIDE</div><div class="gstage"><div class="genv opened empty">${A.envelope.back("e-back")}${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}</div></div>
+      el.innerHTML = `<div class="gtop">ANDIAMO!</div><div class="gstage"><div class="genv opened empty">${A.envelope.back("e-back")}${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}</div></div>
         <div class="gcard"><h2>${g.state === "taken" ? "Already opened" : g.state === "not_ready" ? "Nearly there" : "This link doesn't work"}</h2>
         <p>${g.state === "taken" ? "Someone has already opened this one and kept it." : g.state === "not_ready" ? "It's still on its way. Try the link again in a minute." : "Ask whoever sent it for a new link."}</p>
-        <button class="btn block" id="gx">See Outside</button></div>`;
+        <button class="btn block" id="gx">See Andiamo</button></div>`;
       el.classList.add("show"); el.querySelector("#gx").onclick = close; return;
     }
     const from = esc(g.from.split(/\s+/)[0]);
-    el.innerHTML = `<div class="gtop">OUTSIDE</div>
+    el.innerHTML = `<div class="gtop">ANDIAMO!</div>
       <div class="gmsg"><h2>${from}'s sending you something.</h2><p>Tap the seal.</p></div>
       <div class="gstage"><div class="genv">${A.envelope.back("e-back")}<div class="gpocket"><img class="gbottle" src="/outside/img/bottle-${esc(g.wine)}.jpg" alt=""></div>${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}
         <button class="gseal" aria-label="Break the seal">${A.envelope.seal("l", "e-seal l")}${A.envelope.seal("r", "e-seal r")}</button></div></div>
@@ -770,7 +769,7 @@
       ${x.out ? `<button class="btn small" data-sendto="${x.key}">Send</button>` : ""}
       ${x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : ""}</div>`;
     const nOut = people.filter((x) => x.out).length;
-    return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Outside and have your number too. No one can see where you are. They just know when you're outside.</p>
+    return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Andiamo and have your number too. No one can see where you are. They just know when you're outside.</p>
       <div class="row" style="flex-wrap:wrap;gap:8px;margin:10px 0">${hasPicker() ? `<button class="btn small" id="pickMany">Pick from contacts</button>` : ""}
       <button class="btn small ghost" id="addNum">Add a number</button><button class="btn small ghost" id="share">Share my link</button></div>
       ${people.length ? `<h3>${nOut ? nOut + " outside now" : "Nobody outside right now"}</h3><div class="list">${people.map(row).join("")}</div>` : `<p class="muted">Nobody yet. Pick friends from your contacts or share your link.</p>`}
@@ -784,7 +783,7 @@
         const nums = [...new Set(cts.flatMap((x) => x.tel || []).map(e164).filter(Boolean))];
         const hashes = await Promise.all(nums.map(numberHash));
         const r = await api("contacts", { hashes });
-        toast(r.ok ? (r.matched ? r.matched + " already on Outside." : "Added. They'll appear when they join.") : errMsg(r.error));
+        toast(r.ok ? (r.matched ? r.matched + " already on Andiamo." : "Added. They'll appear when they join.") : errMsg(r.error));
         loadMe();
       } catch {}
     };
@@ -797,8 +796,8 @@
     });
     body.querySelector("#share").onclick = async () => {
       const url = location.origin + BASE + "/?f=" + S.me.player.invite;
-      const text = "Add me on Outside. When I'm outside, you can send an Amabile to my table.";
-      try { if (navigator.share) await navigator.share({ title: "Outside", text, url }); else { await navigator.clipboard.writeText(url); toast("Link copied."); } } catch {}
+      const text = "Add me on Andiamo. When I'm outside, you can send an Amabile to my table.";
+      try { if (navigator.share) await navigator.share({ title: "Andiamo!", text, url }); else { await navigator.clipboard.writeText(url); toast("Link copied."); } } catch {}
     };
     body.querySelectorAll("[data-hide]").forEach((b) => (b.onclick = async () => { await api("circle", { key: b.dataset.hide, level: b.dataset.level }); loadMe(); }));
     body.querySelectorAll("[data-sendto]").forEach((b) => (b.onclick = () => sendFlow({ friend: S.me.circle.find((x) => x.key === b.dataset.sendto) })));
@@ -931,7 +930,7 @@
     modal(`<div class="hero"><div class="panel pop"></div><img class="popbottle" src="/outside/img/bottle-rosso-hero.png" alt="Amabile Rosso">
       <span class="a left">${A.avatar({ skin: "s3", hair: "straight", face: "glam", outfit: "nightout" }, 96)}</span>
       <span class="a right">${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 96)}</span></div>
-      <div class="welcome"><h2>Lagos is outside.</h2><p>Send an Amabile to a friend's table.<br>Find free bottle drops and cool stuff from Amabile at real spots around the city.</p></div>
+      <div class="welcome"><h2>Lagos, Andiamo!</h2><p>Send an Amabile to a friend's table.<br>Find free bottle drops and cool stuff from Amabile at real spots around the city.</p></div>
       <button class="btn block" id="go">Step outside</button>
       <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly.</p>`, (c) => {
       c.querySelector("#go").onclick = closeModal;

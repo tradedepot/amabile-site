@@ -1,12 +1,12 @@
 :root {
-  --wine: #7d1d1d; --wine-2: #5b1414; --gold: #c9a15a; --gold-2: #f2c66b; --cream: #efe4cf; --card: #fffdf7;
+  --wine: #E74529; --wine-2: #C8371D; --gold: #c9a15a; --gold-2: #f2c66b; --cream: #F4EBDD; --card: #FBFAEB;
   --ink: #3a2a20; --ink-2: #6b5646; --rule: #e6d6b8; --ok: #2e8b57; --warn: #c2410c;
   --shadow: 0 6px 0 rgba(58, 42, 32, .18), 0 12px 28px rgba(58, 42, 32, .16);
   --radius: 22px; --serif: "DM Serif Display", Georgia, serif; --sans: "Nunito", system-ui, -apple-system, Segoe UI, sans-serif;
   --safe-b: env(safe-area-inset-bottom, 0px); --safe-t: env(safe-area-inset-top, 0px);
 }
 * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
-html, body { margin: 0; height: 100%; overflow: hidden; background: #2e1119; color: var(--ink); font-family: var(--sans); }
+html, body { margin: 0; height: 100%; overflow: hidden; background: #F4E9D6; color: var(--ink); font-family: var(--sans); }
 body.day { background: #F4E9D6; }
 button { font: inherit; color: inherit; border: 0; background: none; cursor: pointer; }
 input, select, textarea { font: inherit; color: var(--ink); }
@@ -47,7 +47,7 @@ body.night .mk.landmark .lbl { color: #E9CF9B; text-shadow: 0 0 4px #2e1119, 0 0
 #top > * { pointer-events: auto; }
 .brand { flex: none; background: var(--wine); color: #fff; border: 3px solid var(--ink); border-radius: 16px; padding: 5px 12px 6px; box-shadow: var(--shadow); line-height: 1; }
 .brand .logo { font-family: var(--serif); font-size: 22px; letter-spacing: .4px; display: block; }
-.brand .by { font-size: 8px; letter-spacing: 1.4px; text-transform: uppercase; opacity: .85; }
+.brand .by { display: block; margin-top: 3px; font-size: 9.5px; font-weight: 800; letter-spacing: 1.2px; text-transform: uppercase; }
 .me-btn { flex: none; width: 48px; height: 48px; border-radius: 50%; border: 3px solid var(--ink); background: var(--card); box-shadow: var(--shadow); overflow: hidden; padding: 0; }
 .me-btn svg { width: 100%; height: 100%; display: block; }
 
@@ -173,7 +173,7 @@ p { margin: 6px 0; line-height: 1.45; }
 #world.far .mk.landmark { opacity: .8; }
 
 .mk.district { pointer-events: none; transform: translate(-50%, -50%) scale(var(--inv, 1)); }
-.mk.district .lbl { background: none; border: 0; box-shadow: none; font-family: var(--serif); font-weight: 400; letter-spacing: 3px; font-size: 15px; color: rgba(125, 29, 29, .75); text-shadow: 0 0 3px var(--cream), 0 0 6px var(--cream); }
+.mk.district .lbl { background: none; border: 0; box-shadow: none; font-family: var(--serif); font-weight: 400; letter-spacing: 3px; font-size: 15px; color: rgba(200, 55, 29, .75); text-shadow: 0 0 3px var(--cream), 0 0 6px var(--cream); }
 body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 3px #2e1119, 0 0 6px #2e1119; }
 
 /* ---------- your bottles ---------- */
@@ -269,7 +269,7 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 
 /* ---------- opening a bottle link ---------- */
 .gift { position: absolute; inset: 0; z-index: 38; display: none; flex-direction: column; align-items: center; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain;
-  background: radial-gradient(120% 80% at 50% 38%, #a3302c 0%, #7d1d1d 50%, #4e1013 100%); color: #FFF6E6; padding: calc(18px + var(--safe-t)) 16px calc(16px + var(--safe-b)); }
+  background: radial-gradient(120% 80% at 50% 38%, #F0624A 0%, #E74529 50%, #C8371D 100%); color: #FFF6E6; padding: calc(18px + var(--safe-t)) 16px calc(16px + var(--safe-b)); }
 .gift.show { display: flex; }
 .gift .gtop { font-family: var(--sans); font-weight: 900; letter-spacing: 6px; font-size: 13px; color: #E9CF9B; }
 .gift .gmsg { text-align: center; margin-top: 7vh; transition: opacity .4s, transform .4s; }

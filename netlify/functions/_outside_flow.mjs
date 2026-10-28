@@ -59,7 +59,7 @@ export async function markBottlePaid(s, b, tx, via) {
     await saveBottle(s, b);
     await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
     const from = b.anon ? "Someone" : (b.fromName || "A friend");
-    sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Outside and tap Glow when you see the runner.").catch(() => {});
+    sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Andiamo and tap Glow when you see the runner.").catch(() => {});
     return b;
   }
 

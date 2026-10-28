@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Runner board · Outside</title>
+<title>Runner board · Andiamo!</title>
 <meta name="robots" content="noindex">
 <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;800;900&display=swap" rel="stylesheet">
@@ -223,7 +223,7 @@
       topup: `This bottle is for cheaper spots. They can top up ${naira(r.topup)} on their phone, then it appears here.`,
       not_stocked: `This venue doesn't have ${esc(WINE[r.wine] || "this wine")} on the board. They keep the bottle for another night.`,
       qr_expired: "That QR has expired. Ask them to show a fresh one.", qr_used: "That bottle has already been claimed.",
-      qr_unknown: "That isn't an Outside bottle code.", paused: "Claims are paused here. A manager can resume them."
+      qr_unknown: "That isn't an Andiamo bottle code.", paused: "Claims are paused here. A manager can resume them."
     }[r.error] || "Couldn't claim it. Try again.";
     modal(`<h2 style="color:var(--wine);margin:0 0 8px">Not this time</h2><p style="font-size:18px">${msg}</p><p style="display:flex;gap:8px"><button class="go" id="ag" style="flex:1">Scan another</button><button id="cl">Close</button></p>`, (c) => {
       c.querySelector("#ag").onclick = scanner; c.querySelector("#cl").onclick = close;

@@ -49,7 +49,7 @@ export function describe(m) {
 const BOTTLE_STATUS = { waiting: "not claimed yet", on_way: "on its way to their table", served: "served", declined: "not claimed", link: "card not opened yet", review: "payment being checked" };
 async function context(s, phone) {
   const p = await getJSON(s, K.player(phone));
-  if (!p) return { name: "", level: "", line: "Not on Outside yet" };
+  if (!p) return { name: "", level: "", line: "Not on Andiamo yet" };
   const keys = await listKeys(s, K.inboxPrefix(phone));
   const items = (await fetchAll(s, keys)).sort((a, b) => b.at - a.at);
   let line = "No bottles yet";
@@ -95,7 +95,7 @@ async function emailOps(name, phone, text, why) {
   const esc = (x) => String(x).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const html = `<p><b>${esc(name || "Someone")}</b> · ${esc(prettyPhone(phone))}</p>
     <blockquote style="margin:0;padding:8px 12px;border-left:3px solid #c9a27a">${esc(text).replace(/\n/g, "<br>")}</blockquote>
-    <p style="color:#6b5646">${esc(why)} It's saved in Outside.</p><p><a href="${SITE}/admin">Open Outside admin</a></p>`;
+    <p style="color:#6b5646">${esc(why)} It's saved in Andiamo.</p><p><a href="${SITE}/admin">Open Andiamo admin</a></p>`;
   const { sendEmail } = await import("./_lib.mjs");
   for (const addr of to) await sendEmail(process.env.BREVO_API_KEY, addr, "WhatsApp from " + (name || prettyPhone(phone)), html);
   return true;

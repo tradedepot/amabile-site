@@ -1,7 +1,7 @@
 // Outside: the illustration kit. Avatars, venue buildings, landmarks and the bottle.
-// Flat, warm, chunky outlines. Brand palette: wine #7d1d1d, gold #c9a15a, cream #efe4cf, ink #3a2a20.
+// Flat, warm, chunky outlines. Brand palette: Sweet Red #E74529, gold #c9a15a, cream #efe4cf, ink #3a2a20.
 (function (g) {
-  const INK = "#3a2a20", WINE = "#7d1d1d", GOLD = "#c9a15a", CREAM = "#fffdf7";
+  const INK = "#3a2a20", WINE = "#E74529", GOLD = "#c9a15a", CREAM = "#fffdf7";
 
   // ---------- avatars ----------
   const SKINS = { s1: "#F3CBA5", s2: "#DDA57A", s3: "#BD7D50", s4: "#8F5B3A", s5: "#5C3A25" };
