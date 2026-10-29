@@ -1048,7 +1048,7 @@
       <div class="pa"><button class="btn small" data-ping="on">Turn on</button>${where === "me" ? "" : `<button class="link" data-ping="later">Not now</button>`}</div></div>`;
     if (st === "home") return `<div class="ping"><span class="pb">${BELL}</span><div class="grow"><b>Get a ping when someone sends you a bottle.</b><small>On iPhone, tap Share, then Add to Home Screen, and open Andiamo from there.</small></div>
       ${where === "me" ? "" : `<div class="pa"><button class="link" data-ping="later">Got it</button></div>`}</div>`;
-    if (where === "me" && st === "on") return `<div class="ping on"><span class="pb">${BELL}</span><div class="grow"><b>Pings are on for this phone.</b><small>You also get the WhatsApp message.</small></div><div class="pa"><button class="link" data-ping="off">Turn off</button></div></div>`;
+    if (where === "me" && st === "on") return `<div class="ping on"><span class="pb">${BELL}</span><div class="grow"><b>You'll get notifications when someone sends you a bottle.</b></div><div class="pa"><button class="link" data-ping="off">Turn off</button></div></div>`;
     if (where === "me" && st === "blocked") return `<div class="ping"><span class="pb">${BELL}</span><div class="grow"><b>Notifications are blocked for Andiamo.</b><small>Allow them in your browser settings to get a ping when someone sends you a bottle.</small></div></div>`;
     return "";
   }
