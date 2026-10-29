@@ -62,6 +62,12 @@
   const ago = (t) => { const m = Math.round((Date.now() - t) / 60000); return m < 1 ? "just now" : m < 60 ? m + "m ago" : m < 1440 ? Math.round(m / 60) + "h ago" : Math.round(m / 1440) + "d ago"; };
   const plural = (n, a, b) => n + " " + (n === 1 ? a : b || a + "s");
   const wineOf = (id) => (D.venues && D.venues.wines || []).find((w) => w.id === id) || { id, name: id, label: id };
+  // A venue's level for a wine: the lowest level whose gift price covers its menu price, else the top level.
+  const levelOf = (wineId, price) => {
+    const b = (D.venues && D.venues.bands && D.venues.bands[wineOf(wineId).family || "frizzante"]) || {};
+    for (const k of (D.venues && D.venues.bandOrder) || []) if (b[k] > 0 && b[k] >= price) return k;
+    return "top";
+  };
   const wineNames = (ids) => { const n = (ids || []).map((w) => wineOf(w).name); return n.length <= 1 ? n.join("") : n.slice(0, -1).join(", ") + " and " + n[n.length - 1]; };
   const photo = (w, cls = "") => `<img class="${cls}" src="/outside/img/bottle-${esc(w)}.jpg" alt="">`;
   const vArt = (v, lit) => `<span class="vart">${A ? A.venueArt((v && v.art) || "lounge", !!lit, 42) : ""}</span>`;
@@ -453,18 +459,17 @@
   function venueForm(v, flash) {
     page = "venues"; root.querySelectorAll("[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === "venues"));
     const W = (D.venues && D.venues.wines) || [], ch = v.checks || { missing: [], warnings: [] };
-    const NEED = ["location", "price level", "menu prices"];
+    const NEED = ["location", "menu prices"];
     window.scrollTo(0, 0);
     P().innerHTML = `<button class="lnk dim" id="back" style="margin-bottom:12px">← ${v.requestId ? "Requests" : "Venues"}</button>` + head(v.id ? esc(v.name) : "Add a venue", v.id ? `${esc(v.area || "")}${v.area ? " · " : ""}${BAND_NAMES[v.band] || ""}` : "Fill in what you have. The rest can wait for the visit.",
       v.id ? (v.active ? '<span class="pill ok"><span class="dot"></span>Live</span>' : `<span class="pill gold">${esc(STAGE[v.stage] || "Not live")}</span>`) : "") + (flash || "") +
       `<div class="form2"><div><div class="card"><div class="ch"><h2>Basics</h2></div>
         <div class="grid"><div><label class="lb">Name</label><input id="name" value="${esc(v.name || "")}"></div><div><label class="lb">Area</label><input id="area" value="${esc(v.area || "")}" placeholder="Victoria Island"></div>
-        <div><label class="lb">Price level</label><select id="band">${Object.entries(BAND_NAMES).map(([k, n]) => `<option value="${k}"${v.band === k ? " selected" : ""}>${n}</option>`).join("")}</select></div>
         <div><label class="lb">Tables</label><input id="tables" inputmode="numeric" value="${v.tables || 20}"></div></div>
         <label class="lb">Building on the map</label><div class="chips">${ARTS.map((a) => `<button class="chip${(v.art || "lounge") === a ? " on" : ""}" data-art="${a}" style="display:inline-flex;align-items:center;gap:6px;padding:5px 12px 5px 6px">${A ? A.venueArt(a, false, 26) : ""}${esc(VKIND[a].split(" ")[0])}</button>`).join("")}</div><input type="hidden" id="art" value="${esc(v.art || "lounge")}">
         <label class="lb">Tonight (players see this)</label><input id="tonight" value="${esc(v.tonight || "")}" placeholder="DJ from 9pm"></div>
-      <div class="card"><div class="ch"><h2>Menu prices</h2><span class="muted">Per bottle. Blank if they don't stock it.</span></div>
-        <div class="grid">${W.map((w) => `<div><label class="lb">${esc(w.name)}</label><div class="money-in"><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div></div>`).join("")}</div>
+      <div class="card"><div class="ch"><h2>Menu prices</h2><span class="muted">Per bottle. Blank if they don't stock it. The level follows from the price.</span></div>
+        <div class="grid">${W.map((w) => `<div><label class="lb">${esc(w.name)}</label><div class="money-in"><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div><div class="faint lvlof" data-lv="${w.id}"></div></div>`).join("")}</div>
         <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-weight:700"><input type="checkbox" id="tax"${v.taxIncluded ? " checked" : ""}> Menu prices include VAT, consumption tax and service</label>
         <div class="grid"><div><label class="lb">Runner fee per drop handover</label><div class="money-in"><input id="fee" inputmode="numeric" value="${v.runnerFee || 1000}"></div></div></div></div>
       <div class="card"><div class="ch"><h2>Location</h2>${v.locationFrom === "outlet" ? '<span class="pill">From the linked account</span>' : ""}</div>
@@ -493,6 +498,12 @@
           <label class="lb">Or they buy from another supplier</label><input id="osup" list="sups" placeholder="Distributor or wholesaler"><datalist id="sups">${[...new Set(venuesAll().map((x) => x.supply && x.supply.supplier).filter(Boolean))].map((n) => `<option>${esc(n)}</option>`).join("")}</datalist>
           <input id="onote" placeholder="Note, e.g. Rosso only, reorders monthly" style="margin-top:8px"><button class="btn sm sec" id="orecord" style="margin-top:10px">Save supplier</button></div>` : `<div class="card"><h2 style="margin-bottom:8px">Next</h2><p class="muted" style="margin:0">Save, then link the outlet account, note how they get Amabile and take it live.</p></div>`}</div></div>`;
     $("back").onclick = () => (v.requestId ? nav("requests") : nav("venues"));
+    // Each wine's level, worked out from its menu price as it's typed (the same rule the game uses).
+    const showLevels = () => document.querySelectorAll("[data-p]").forEach((i) => {
+      const el = P().querySelector(`[data-lv="${i.dataset.p}"]`), p = Number(i.value.replace(/[^\d.]/g, ""));
+      if (el) el.textContent = p > 0 ? BAND_NAMES[levelOf(i.dataset.p, p)] : "";
+    });
+    document.querySelectorAll("[data-p]").forEach((i) => i.addEventListener("input", showLevels)); showLevels();
     P().querySelectorAll("[data-art]").forEach((b) => (b.onclick = () => { $("art").value = b.dataset.art; P().querySelectorAll("[data-art]").forEach((x) => x.classList.toggle("on", x === b)); }));
     $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); toast("Location set, about " + Math.round(p.coords.accuracy) + "m. Save to keep it."); }, () => toast("Location not available."), { enableHighAccuracy: true, timeout: 15000 });
     $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; toast("Location read from the link. Save to keep it."); } };
@@ -500,7 +511,7 @@
       if (!$("name").value.trim()) return flag($("name"), "Add the venue's name.");
       const bad = [...document.querySelectorAll("[data-p]")].find((i) => i.value.trim() && !/^[\d,.\s₦]+$/.test(i.value)); if (bad) return flag(bad, "Numbers only, e.g. 50000.");
       const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
-      const venue = { id: v.id, name: $("name").value, area: $("area").value, band: $("band").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
+      const venue = { id: v.id, name: $("name").value, area: $("area").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
         lat: $("lat").value === "" ? null : Number($("lat").value), lng: $("lng").value === "" ? null : Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
         contact: { name: $("cn").value, phone: $("cp").value }, active: !!v.active };
       const r = await call({ action: "venue-save", venue });

@@ -272,9 +272,11 @@ export async function allVenues(s) {
 }
 
 // What players and the map may see of a venue. Never prices, keys or payout details.
-export function publicVenue(v) {
+// With the price levels (bands), each wine's level is worked out from the menu prices.
+export function publicVenue(v, bands) {
   return {
-    id: v.id, name: v.name, area: v.area || "", lat: v.lat, lng: v.lng, band: v.band,
+    id: v.id, name: v.name, area: v.area || "", lat: v.lat, lng: v.lng, band: bands ? venueBand(bands, v) : v.band,
+    ...(bands ? { levels: venueLevels(bands, v) } : {}),
     wines: Object.keys(v.prices || {}).filter((w) => v.prices[w] > 0),
     tonight: v.tonight || "", art: v.art || "lounge", active: !!v.active
   };
@@ -291,10 +293,31 @@ export function bandPrice(bands, band, wineId) {
 }
 
 // Can a bottle bought in `bottleBand` be claimed at venue v? Returns { ok, topup }.
+// A venue's level for a wine comes from its menu price, never set by hand: the lowest level whose gift price
+// covers that menu price. Above every fixed price it's the top level (Mamma Mia!), priced at the venue.
+export function wineLevel(bands, v, wineId) {
+  const p = venuePrice(v, wineId); if (!p) return null;
+  for (const b of BAND_ORDER) { const bp = bandPrice(bands, b, wineId); if (bp && bp >= p) return b; }
+  return "top";
+}
+export function venueLevels(bands, v) {
+  const out = {};
+  for (const w of WINES) { const l = wineLevel(bands, v, w.id); if (l) out[w.id] = l; }
+  return out;
+}
+// The level shown for the venue as a whole (map, cards): its highest Frizzante level, or Spumante if that's all it pours.
+export function venueBand(bands, v) {
+  const lv = venueLevels(bands, v);
+  const fr = WINES.filter((w) => w.family === "frizzante" && lv[w.id]).map((w) => lv[w.id]);
+  const all = fr.length ? fr : Object.values(lv);
+  return all.length ? all.reduce((a, b) => (bandRank(b) > bandRank(a) ? b : a)) : null;
+}
+
 export function claimCheck(bands, bottle, v) {
   if (!venuePrice(v, bottle.wine) || (v.outOf && v.outOf[bottle.wine])) return { ok: false, reason: "not_stocked" };
-  if (bandRank(v.band) <= bandRank(bottle.band)) return { ok: true, topup: 0 };
-  const target = bandPrice(bands, v.band, bottle.wine) || venuePrice(v, bottle.wine);
+  const lvl = wineLevel(bands, v, bottle.wine);
+  if (bandRank(lvl) <= bandRank(bottle.band)) return { ok: true, topup: 0 };
+  const target = bandPrice(bands, lvl, bottle.wine) || venuePrice(v, bottle.wine);
   return { ok: false, reason: "band", topup: Math.max(0, target - bottle.price) };
 }
 

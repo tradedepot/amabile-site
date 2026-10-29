@@ -54,7 +54,9 @@
   const wineOf = (id) => (S.cfg && S.cfg.wines.find((w) => w.id === id)) || { name: id, label: id };
   const venueOf = (id) => (S.cfg && S.cfg.venues.find((v) => v.id === id)) || null;
   const beaconOf = (id) => (S.cfg && (S.cfg.beacons || []).find((b) => b.id === id)) || { hex: "#F2B705", name: "Gold" };
-  const claimableAt = (b, v) => v && v.wines.includes(b.wine) && bandRank(v.band) <= bandRank(b.band);
+  // A venue's level is per wine, worked out from its menu price on the server (levels); band is its headline level.
+  const levelAt = (v, wineId) => (v.levels ? v.levels[wineId] : v.wines.includes(wineId) ? v.band : null);
+  const claimableAt = (b, v) => v && v.wines.includes(b.wine) && bandRank(levelAt(v, b.wine)) <= bandRank(b.band);
   const timeShort = (t) => new Date(t).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" }).replace(" ", "").toLowerCase();
   const until = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m"; };
   const ERR = {
@@ -822,8 +824,8 @@
   const bandPrice = (b, wineId) => { const w = wineOf(wineId); const p = S.cfg.bands[w.family] && S.cfg.bands[w.family][b]; return p > 0 ? p : null; };
   const anyBand = (wineId) => S.cfg.bandOrder.some((b) => bandPrice(b, wineId));
   // Three names from the level itself, busiest first (the server sends venues in that order). Lines break only between names.
-  const examples = (b, wineId) => S.cfg.venues.filter((v) => v.band === b && v.wines.includes(wineId)).slice(0, 3).map((v) => v.name.replace(/ /g, "\u00a0")).join(", ");
-  const spotsFor = (b, wineId) => S.cfg.venues.filter((v) => v.wines.includes(wineId) && bandRank(v.band) <= bandRank(b)).length;
+  const examples = (b, wineId) => S.cfg.venues.filter((v) => v.wines.includes(wineId) && levelAt(v, wineId) === b).slice(0, 3).map((v) => v.name.replace(/ /g, "\u00a0")).join(", ");
+  const spotsFor = (b, wineId) => S.cfg.venues.filter((v) => v.wines.includes(wineId) && bandRank(levelAt(v, wineId)) <= bandRank(b)).length;
   function priceFor(st) {
     if (!st.wine) return 0;
     if (st.mode === "number" || st.mode === "link") return bandPrice(st.band, st.wine) || 0;

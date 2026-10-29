@@ -143,7 +143,6 @@ export async function recordSupply(s, venueId, d, by) {
 export function liveChecks(v) {
   const missing = [];
   if (typeof v.lat !== "number" || typeof v.lng !== "number" || !isFinite(v.lat)) missing.push("location");
-  if (!BAND_ORDER.includes(v.band)) missing.push("price level");
   if (!Object.values(v.prices || {}).some((p) => p > 0)) missing.push("menu prices");
   const warnings = [];
   if (!v.supply && !v.purchase) warnings.push("how they get Amabile");

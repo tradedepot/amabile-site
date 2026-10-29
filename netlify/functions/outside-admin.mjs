@@ -18,7 +18,7 @@
 //   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
-  wine, tentToken, SITE, computeGlow, maskPhone
+  wine, tentToken, SITE, computeGlow, maskPhone, venueBand
 } from "../lib/_outside.mjs";
 
 import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "../lib/_outside_venues.mjs";
@@ -54,7 +54,6 @@ export default async (req) => {
       area: clean(x.area, 40),
       lat: Number(x.lat), lng: Number(x.lng),
       radius: Math.max(20, Math.min(200, Number(x.radius) || 60)),
-      band: BAND_ORDER.includes(x.band) ? x.band : prev.band || "lounge",
       prices, taxIncluded: !!x.taxIncluded,
       runnerFee: num(x.runnerFee) || prev.runnerFee || 1000,
       tables: Math.max(1, Math.min(200, Number(x.tables) || prev.tables || 20)),
@@ -65,6 +64,7 @@ export default async (req) => {
       active: !!x.active, updatedAt: Date.now()
     };
     if (!Number.isFinite(v.lat) || !Number.isFinite(v.lng) || (v.lat === 0 && v.lng === 0)) { v.lat = null; v.lng = null; }
+    v.band = venueBand(await getBands(s), v); // from the menu prices, never set by hand
     // A venue only goes live with a location, a price level and menu prices.
     const checks = liveChecks(v);
     if (v.active && checks.missing.length) { v.active = false; v.blockedLive = checks.missing; } else delete v.blockedLive;
@@ -96,6 +96,11 @@ export default async (req) => {
       cur[fam][b] = val === null || val === "" || val === undefined ? null : (num(val) || null);
     }
     await s.setJSON(K.bands, cur);
+    // New gift prices can move venues between levels.
+    for (const v of await fetchAll(s, await listKeys(s, K.venuePrefix))) {
+      const nb = venueBand(cur, v);
+      if (nb !== v.band) { v.band = nb; await s.setJSON(K.venue(v.id), v); }
+    }
     return json({ ok: true, bands: cur });
   }
 

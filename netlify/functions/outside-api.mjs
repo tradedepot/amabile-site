@@ -19,7 +19,7 @@
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
-  publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, venuesByPopularity, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
+  publicVenue, venuePrice, claimCheck, wineLevel, numberHash, pickBeacon, BEACONS, computeGlow, venuesByPopularity, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
   payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "../lib/_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "../lib/_outside_flow.mjs";
@@ -108,7 +108,7 @@ export default async (req) => {
     if (route === "config") {
       const [bands, venues, glow] = await Promise.all([getBands(s), allVenues(s), computeGlow(s)]);
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
-        venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map(publicVenue), glow: glow.glow, drops: await liveDrops(s),
+        venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map((v) => publicVenue(v, bands)), glow: glow.glow, drops: await liveDrops(s),
         beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", vapid: vapidPublic(), rules: { lightHours: RULES.lightHours } });
     }
 
@@ -271,8 +271,9 @@ export default async (req) => {
           toPhone = "+" + key;
           const v = await getJSON(s, K.venue(l.venueId));
           if (!venuePrice(v, w.id)) return bad("not_stocked_there");
-          b.kind = "light"; b.venueId = v.id; b.table = l.table; b.band = v.band;
-          b.price = bandPrice(bands, v.band, w.id) || venuePrice(v, w.id);
+          const lvl = wineLevel(bands, v, w.id);
+          b.kind = "light"; b.venueId = v.id; b.table = l.table; b.band = lvl;
+          b.price = bandPrice(bands, lvl, w.id) || venuePrice(v, w.id);
           const them = await getJSON(s, K.player(toPhone)); b.toFirst = them && them.name || "";
         } else {
           if (!toPhone) return bad("to");
