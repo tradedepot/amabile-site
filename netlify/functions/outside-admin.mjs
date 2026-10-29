@@ -15,6 +15,7 @@
 //   bottles           recent bottles (last 200)
 //   unmet             failed claims (for the sales team)
 //   glow              {force?}         venues with people outside now (cached unless force)
+//   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone
@@ -23,6 +24,7 @@ import {
 import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "./_outside_venues.mjs";
 import { searchOutlets, getOutlet } from "./_outside_bq.mjs";
 import { listBanks, resolveAccount, setPayoutAccount, sendPayout, autoPayoutsOn, paystackBalance } from "./_outside_payout.mjs";
+import { waStatus, waRegister, waSubscribe, waTest, waTestStatus } from "./_outside_wa_check.mjs";
 
 export const config = { path: "/api/outside-admin" };
 
@@ -241,6 +243,12 @@ export default async (req) => {
   if (a === "balance") return json({ ok: true, balance: await paystackBalance(), auto: autoPayoutsOn() });
 
   if (a === "glow") return json({ ok: true, glow: await computeGlow(s, !!d.force) });
+
+  if (a === "wa-status") return json({ ok: true, wa: await waStatus(s) });
+  if (a === "wa-register") return json(await waRegister(d.pin));
+  if (a === "wa-subscribe") return json(await waSubscribe());
+  if (a === "wa-test") return json(await waTest(s, d.kind === "code" ? "code" : "bottle", d.phone));
+  if (a === "wa-test-status") return json({ ok: true, test: await waTestStatus(s, d.id) });
 
   return json({ ok: false, error: "action" }, 400);
 };

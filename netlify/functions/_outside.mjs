@@ -387,7 +387,7 @@ export function addBadge(p, b) {
 // ---------- WhatsApp, straight from Meta (WhatsApp Cloud API) ----------
 // Only two things go out on WhatsApp: the sign-in code and "x is sending you a bottle". No selling, no prices.
 // Env: WA_TOKEN (system user token), WA_PHONE_ID (the number's ID in WhatsApp Manager), WA_API_VERSION (default v23.0).
-async function wa(to, msg) {
+export async function wa(to, msg) {
   const token = process.env.WA_TOKEN, phoneId = process.env.WA_PHONE_ID, v = process.env.WA_API_VERSION || "v23.0";
   if (!token || !phoneId) return { ok: false, skip: "no-whatsapp" };
   const r = await fetch(`https://graph.facebook.com/${v}/${phoneId}/messages`, {
@@ -404,7 +404,7 @@ async function wa(to, msg) {
 }
 // Template parameters may not contain new lines, tabs or runs of spaces.
 const waParam = (t) => String(t).replace(/[\n\r\t]+/g, " ").replace(/ {4,}/g, "   ").slice(0, 300);
-function waTemplate(name, bodyParams, buttonParam, headerImage) {
+export function waTemplate(name, bodyParams, buttonParam, headerImage) {
   const components = [{ type: "body", parameters: bodyParams.map((t) => ({ type: "text", text: waParam(t) })) }];
   if (headerImage) components.unshift({ type: "header", parameters: [{ type: "image", image: { link: headerImage } }] });
   if (buttonParam) components.push({ type: "button", sub_type: "url", index: "0", parameters: [{ type: "text", text: String(buttonParam) }] });

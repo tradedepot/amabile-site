@@ -4,6 +4,7 @@
 // Their WhatsApp profile name is kept so the game can fill in their first name without asking.
 import crypto from "node:crypto";
 import { handleInbound, handleStatuses } from "./_outside_inbox.mjs";
+import { noteHook } from "./_outside_wa_check.mjs";
 
 export const config = { path: "/api/outside-wa" };
 
@@ -25,6 +26,7 @@ export default async (req) => {
   let d; try { d = JSON.parse(raw); } catch { return new Response("ok"); }
   for (const e of d.entry || []) for (const c of e.changes || []) {
     const v = c.value || {};
+    await noteHook(v);
     try {
       await handleInbound(v);
       await handleStatuses(v);

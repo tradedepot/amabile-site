@@ -187,6 +187,10 @@
   from = "/outside/venue"
   to = "/outside/venue.html"
   status = 200
+[[redirects]]
+  from = "/outside/privacy"
+  to = "/outside/privacy.html"
+  status = 200
 # Andiamo! (formerly Outside) lives on andiamo.ng. www, andiamolagos.ng and the old weoutside.ng all forward there,
 # keeping the path, so card links already sent (/c/..., /g/...) still open.
 [[redirects]]
@@ -263,6 +267,11 @@
 [[redirects]]
   from = "https://andiamo.ng/venue"
   to = "/outside/venue.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/privacy"
+  to = "/outside/privacy.html"
   status = 200
   force = true
 [[redirects]]

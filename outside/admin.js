@@ -30,7 +30,9 @@
     hidden: '<circle cx="11" cy="11" r="6"/><path d="M20 20l-4.5-4.5"/><path d="M11 8v3l2 2"/>',
     passiton: '<path d="M4 12h13"/><path d="M13 6l6 6-6 6"/>',
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
-    alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>', send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>'
+    alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>', send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>',
+    chat: '<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>'
   };
   const ic = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n] || ""}</svg>`;
   const DKIND = {
@@ -82,7 +84,7 @@
   }
   const LOAD = {
     venues: () => call({ action: "venues" }), drops: () => call({ action: "drops" }), bottles: () => call({ action: "bottles" }),
-    ledger: () => call({ action: "ledger" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" })
+    ledger: () => call({ action: "ledger" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), wa: () => call({ action: "wa-status" })
   };
   async function load(...keys) {
     const rs = await Promise.all(keys.map((k) => LOAD[k]()));
@@ -90,6 +92,7 @@
       const r = rs[i];
       if (k === "venues") D.venues = r.ok ? r : D.venues || { venues: [], wines: [], bands: {}, bandOrder: [] };
       else if (k === "glow") D.glow = r.ok ? r.glow : { glow: {} };
+      else if (k === "wa") D.wa = r.ok ? r.wa : null;
       else if (k === "balance") D.balance = r.ok ? r.balance : null;
       else if (k === "ledger") { D.ledger = r.ok ? r.ledger || [] : D.ledger || []; D.ledgerAuto = !!(r.ok && r.auto); }
       else D[k] = r.ok ? r[k === "ledger" ? "ledger" : k] || [] : D[k] || [];
@@ -143,7 +146,7 @@
     $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("k").focus();
     if (msg) flag($("k"), msg);
   }
-  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["gaps", "Gaps", "gaps"]];
+  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"]];
   function frame() {
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
       <nav class="nav">${PAGES.map(([k, n, i]) => `<button data-nav="${k}">${ic(i)}<span>${n}</span><span class="ct" id="ct-${k}" hidden></span></button>`).join("")}</nav>
@@ -173,6 +176,7 @@
       if (p === "payouts") { await load("ledger", "balance"); payouts(); }
       if (p === "prices") { await load("venues"); prices(); }
       if (p === "gaps") { await load("unmet", "venues"); gaps(); }
+      if (p === "whatsapp") { await load("wa"); whatsapp(); }
     } catch {}
   }
   const head = (title, sub, acts = "") => `<div class="ph"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ""}</div><div class="acts">${acts}</div></div>`;
@@ -707,6 +711,169 @@
       `<div class="card">${cells.length ? `<div class="ch"><h2>${plural(total, "attempt")}</h2><span class="muted">Top of the list is where to sign a venue next.</span></div>` + cells.slice(0, 40).map((c, i) => `<div class="gap"><span class="rk">${i + 1}</span><div><b>${plural(c.n, "attempt")}</b><div class="faint">${near(c.k)}</div></div>
         <div class="bar"><i style="width:${Math.max(6, 100 * c.n / max)}%"></i></div><a class="btn sm sec" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${c.k}">Open map</a></div>`).join("")
         : `<div class="empty"><b>No gaps yet.</b><br>When someone tries to claim far from every venue, the spot shows up here.</div>`}</div>`;
+  }
+
+  // ---------- whatsapp ----------
+  // Everything Meta needs, checked live, in the order it gets done. Ticks for done, a clock for "with Meta", a number for "to do".
+  const META_HINT = {
+    190: "The token has expired or was revoked. Make a new one for the system user and put it in WA_TOKEN.",
+    10: "The token is missing a permission. Give the system user whatsapp_business_messaging and whatsapp_business_management, then make a new token.",
+    200: "The token is missing a permission. Give the system user whatsapp_business_messaging and whatsapp_business_management, then make a new token.",
+    131030: "That number isn't on the app's test list. Add it in Meta, or switch the app to Live.",
+    131026: "Couldn't deliver. Check the number is on WhatsApp.",
+    132001: "Meta can't find that template in that language. Check the name and OUTSIDE_TPL_LANG.",
+    132000: "The template's blanks don't match what we send. Check it was set up as in the handoff.",
+    132012: "The template's blanks don't match what we send. Check it was set up as in the handoff.",
+    132015: "Meta has paused this template.", 132016: "Meta has turned this template off.",
+    133005: "Wrong PIN. The number already has a two-step PIN. Use that one, or turn it off in WhatsApp Manager first.",
+    133006: "Meta wants the number verified again. Do it in WhatsApp Manager.",
+    133010: "The number isn't registered yet.",
+    131031: "Meta has locked this account. Check WhatsApp Manager.", 368: "Meta has restricted this account. Check WhatsApp Manager."
+  };
+  const metaSays = (e) => (e ? META_HINT[e.code] || e.message || "Meta said no." : "");
+  const metaRaw = (e) => (e && META_HINT[e.code] && e.message ? `Meta: ${e.message} (${e.code})` : "");
+  const kc = (t) => `<code class="k">${esc(t)}</code>`;
+  const QUALITY = { GREEN: "High", YELLOW: "Medium", RED: "Low" };
+  const TIER = { TIER_50: "50", TIER_250: "250", TIER_1K: "1,000", TIER_10K: "10,000", TIER_100K: "100,000" };
+  const TPL_HOW = { code: "category Authentication, with a copy code button", bottle: "category Utility, with the image header and the Claim it button" };
+
+  function waSteps(w) {
+    const env = Object.fromEntries((w.env || []).map((e) => [e.key, e]));
+    const n = w.number && !w.number.error ? w.number : null, tok = w.token || {};
+    const tpls = Array.isArray(w.templates) ? w.templates : null, lang = (w.want && w.want.lang) || "en";
+    const apps = Array.isArray(w.apps) ? w.apps : null;
+    const upstream = (x) => (x && x.error ? esc(metaSays(x.error)) : "Fix the token first.");
+    const S = [];
+    S.push({ k: "token", t: "Token", st: tok.ok ? "ok" : "todo",
+      d: tok.ok ? `Works${tok.name ? ", for " + esc(tok.name) : ""}.` : env.WA_TOKEN.set ? esc(metaSays(tok.error)) : `Put the system user's permanent token in ${kc("WA_TOKEN")} in Netlify, then redeploy.`,
+      m: tok.ok ? "" : esc(metaRaw(tok.error)) });
+    S.push({ k: "number", t: "The number", st: n ? "ok" : "todo",
+      d: n ? `${esc(n.display_phone_number || "")}${n.verified_name ? " · " + esc(n.verified_name) : ""}` : !env.WA_PHONE_ID.set ? `Put the Phone number ID, from WhatsApp, API Setup, in ${kc("WA_PHONE_ID")}.` : !tok.ok ? "Fix the token first." : esc(metaSays(w.number && w.number.error)),
+      m: n || !w.number ? "" : esc(metaRaw(w.number.error)) });
+    const ns = n && n.name_status, nameOk = ["APPROVED", "AVAILABLE_WITHOUT_REVIEW"].includes(ns);
+    S.push({ k: "name", t: "Display name", st: !n ? "todo" : nameOk ? "ok" : ["DECLINED", "EXPIRED"].includes(ns) ? "todo" : "wait",
+      d: !n ? "Shows once the number is connected." : nameOk ? `People see <b>${esc(n.verified_name)}</b>.` : ns === "DECLINED" ? "Meta declined the name. Change it in WhatsApp Manager and send it again." : ns === "EXPIRED" ? "The name approval expired. Send it again in WhatsApp Manager." : `Meta is reviewing “${esc(n.verified_name || "")}”. Usually a day or two.` });
+    const reg = n && n.platform_type === "CLOUD_API";
+    S.push({ k: "register", t: "Registered for sending", st: reg ? "ok" : "todo",
+      d: reg ? `Done${n.status ? ", " + esc(String(n.status).toLowerCase()) : ""}.` : !n ? "Needs the number first." : "Register the number once, with a 6-digit PIN you choose.",
+      act: !reg && n ? `<button class="btn sm" data-wa="register">Register</button>` : "" });
+    for (const [key, envKey, label] of [["code", "OUTSIDE_TPL_CODE", "Sign-in code template"], ["bottle", "OUTSIDE_TPL_BOTTLE", "Bottle notice template"]]) {
+      const name = env[envKey].value, all = (tpls || []).filter((x) => x.name === name), t = all.find((x) => x.language === lang);
+      let st = "todo", d;
+      if (!name) d = `Set ${kc(envKey)} to ${kc("andiamo_" + key)} in Netlify.`;
+      else if (!tpls) d = upstream(w.templates || w.waba);
+      else if (!t && all.length) d = `${kc(name)} is in ${esc(all.map((x) => x.language).join(", "))}, but ${kc("OUTSIDE_TPL_LANG")} is ${esc(lang)}. Make them match.`;
+      else if (!t) d = `No template called ${kc(name)} yet. Create it in WhatsApp Manager, ${TPL_HOW[key]}.`;
+      else if (t.status === "APPROVED") { st = "ok"; d = `${kc(name)} is approved.`; }
+      else if (["PENDING", "IN_APPEAL"].includes(t.status)) { st = "wait"; d = `${kc(name)} is with Meta for review.`; }
+      else d = `${kc(name)} is ${esc(String(t.status).toLowerCase())}${t.reason ? ": " + esc(t.reason.toLowerCase().replace(/_/g, " ")) : ""}. Fix it in WhatsApp Manager.`;
+      S.push({ k: key, t: label, st, d });
+    }
+    const hookSt = !env.WA_VERIFY_TOKEN.set || !apps || !apps.length ? "todo" : w.lastHook ? "ok" : "wait";
+    S.push({ k: "hook", t: "Webhook", st: hookSt,
+      d: !env.WA_VERIFY_TOKEN.set ? `Set ${kc("WA_VERIFY_TOKEN")} in Netlify. Then add the webhook in the Meta app with the URL on the right and the same word, and subscribe to messages.`
+        : !apps ? upstream(w.apps && w.apps.error ? w.apps : w.waba)
+        : !apps.length ? "The app isn't subscribed to the WhatsApp account, so Meta won't send us messages or delivery updates."
+        : w.lastHook ? `Working. Last heard from Meta ${ago(w.lastHook.at)}.` : "Nothing from Meta yet. Send a test below: if it shows Delivered, the webhook works.",
+      act: apps && !apps.length ? `<button class="btn sm" data-wa="subscribe">Subscribe the app</button>` : "" });
+    S.push({ k: "secret", t: "Signature check", st: env.WA_APP_SECRET.set ? "ok" : "todo",
+      d: env.WA_APP_SECRET.set ? "We only accept messages signed by Meta." : `Put the app secret, from App settings, Basic, in ${kc("WA_APP_SECRET")}.` });
+    const sandbox = n && n.account_mode === "SANDBOX";
+    S.push({ k: "live", t: "Live", st: !w.dev && !sandbox ? "ok" : "todo",
+      d: w.dev ? `${kc("OUTSIDE_DEV")} is on, so sign-in codes show on screen. Delete it in Netlify, then redeploy.` : sandbox ? "The Meta app is in Development, so only test numbers get messages. Switch it to Live." : "Codes only go to WhatsApp." });
+    return S;
+  }
+
+  D.waTests = D.waTests || [];
+  let waTimer = null;
+  function whatsapp() {
+    const w = D.wa;
+    const acts = `<button class="btn sm sec" id="wrefresh">${ic("refresh")}Check again</button>`;
+    if (!w) { P().innerHTML = head("WhatsApp", "", acts) + `<div class="card"><div class="empty"><b>Couldn't run the check.</b><br>Try again in a moment.</div></div>`; $("wrefresh").onclick = () => nav("whatsapp"); return; }
+    const steps = waSteps(w), todo = steps.filter((x) => x.st === "todo").length, wait = steps.filter((x) => x.st === "wait").length;
+    const ready = !todo && !wait, n = w.number && !w.number.error ? w.number : null;
+    const title = ready ? "Ready" : todo ? plural(todo, "thing") + " to do" : "Waiting on Meta";
+    const line = ready ? "Sign-in codes and bottle notices are going out." : todo ? `Nobody can sign in until these are done.${wait ? " " + plural(wait, "more is", "more are") + " with Meta." : ""}` : "Nothing for you to do. Meta is reviewing.";
+    let no = 0;
+    const tpls = Array.isArray(w.templates) ? w.templates : [];
+    const tplPill = (st) => `<span class="pill ${st === "APPROVED" ? "ok" : ["PENDING", "IN_APPEAL"].includes(st) ? "gold" : "warn"}">${esc(String(st || "").toLowerCase().replace(/_/g, " "))}</span>`;
+    P().innerHTML = head("WhatsApp", "Sign-in codes and bottle notices. Checked live with Meta.", acts) +
+      `<div class="card"><div class="ready"><div class="big ${ready ? "ok" : todo ? "" : "wait"}">${ic(ready ? "tick" : todo ? "chat" : "clock")}</div><div><h2>${title}</h2><p class="muted">${line}</p></div></div>
+        <div class="chk">${steps.map((x) => { if (x.st === "todo") no++; return `<div class="ci${x.st === "ok" ? " done" : ""}" data-k="${x.k}"><span class="st ${x.st}">${x.st === "ok" ? ic("tick") : x.st === "wait" ? ic("clock") : no}</span>
+          <div><b>${x.t}</b><div class="d">${x.d}</div>${x.m ? `<div class="m">${x.m}</div>` : ""}<div class="fixbox"></div></div><div class="act">${x.act || ""}</div></div>`; }).join("")}</div></div>
+      <div class="two" style="margin-top:16px">
+        <div class="card"><div class="ch"><h2>Send a test</h2></div><p class="muted" style="margin:-6px 0 0">The real message, to any WhatsApp number. Use your own.</p>
+          <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button></div>
+          <label class="lb">WhatsApp number</label><input id="wphone" inputmode="tel" placeholder="0803 000 0000, or +44 7700 900123" value="${esc(SS.get("outside.wtest") || "")}">
+          <button class="btn" id="wsend" style="margin-top:14px">${ic("send")}Send test</button>
+          <div class="tests" id="wtests"></div></div>
+        <div class="card" style="margin-top:0"><div class="ch"><h2>Details</h2></div><dl class="kv">
+          <dt>Number</dt><dd>${n ? esc(n.display_phone_number || "") : '<span class="faint">Not connected</span>'}</dd>
+          <dt>Name</dt><dd>${n && n.verified_name ? esc(n.verified_name) : '<span class="faint">·</span>'}</dd>
+          <dt>Quality</dt><dd>${n ? QUALITY[n.quality_rating] || "Not rated yet" : '<span class="faint">·</span>'}</dd>
+          <dt>Daily limit</dt><dd>${n && n.messaging_limit_tier ? (n.messaging_limit_tier === "TIER_UNLIMITED" ? "No limit" : (TIER[n.messaging_limit_tier] || esc(n.messaging_limit_tier)) + " people a day") : '<span class="faint">·</span>'}</dd>
+          <dt>WhatsApp account</dt><dd>${w.waba && w.waba.id ? esc(w.waba.name || w.waba.id) : '<span class="faint">Not found</span>'}</dd>
+          <dt>Webhook URL</dt><dd><div class="copyrow"><code class="k" id="whook">${esc(w.hookUrl)}</code><button class="btn sm sec" id="wcopy">${ic("copy")}Copy</button></div></dd>
+          <dt>Verify token</dt><dd>${w.env.find((e) => e.key === "WA_VERIFY_TOKEN").set ? "Set in Netlify" : '<span class="faint">Not set</span>'}</dd></dl>
+          <h3 style="font-size:19px;margin:22px 0 8px">Templates</h3>
+          ${tpls.length ? `<div class="tw"><table class="t"><tr><th>Name</th><th>Language</th><th class="hm">Type</th><th></th></tr>${tpls.map((t) => `<tr><td><b>${esc(t.name)}</b></td><td class="muted">${esc(t.language)}</td><td class="muted hm">${esc(String(t.category || "").toLowerCase())}</td><td style="text-align:right">${tplPill(t.status)}</td></tr>`).join("")}</table></div>`
+            : `<p class="muted" style="margin:0">${Array.isArray(w.templates) ? "None yet." : "Shows once the token works."}</p>`}</div>
+      </div>`;
+    $("wrefresh").onclick = () => nav("whatsapp");
+    $("wcopy").onclick = () => { try { navigator.clipboard.writeText(w.hookUrl).then(() => toast("Copied."), () => toast("Couldn't copy.")); } catch { toast("Couldn't copy."); } };
+    let kind = "code";
+    $("wkind").querySelectorAll("button").forEach((b) => (b.onclick = () => { kind = b.dataset.k; $("wkind").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); }));
+    $("wsend").onclick = async () => {
+      const ph = $("wphone").value.trim();
+      if (!ph) return flag($("wphone"), "Add the number to send it to.");
+      $("wsend").disabled = true;
+      const r = await call({ action: "wa-test", kind, phone: ph });
+      $("wsend").disabled = false;
+      if (!r.ok) return flag($("wphone"), r.error === "phone" ? "Check the number. Use + and the country code for numbers outside Nigeria." : r.error === "no_template" ? "Set the template name in Netlify first." : r.error === "no_whatsapp" ? "Add the token and the Phone number ID first." : metaSays(r.meta));
+      SS.set("outside.wtest", ph);
+      D.waTests.unshift({ id: r.id, kind, to: r.to, at: Date.now(), status: "accepted" });
+      renderTests(); pollTests();
+    };
+    P().querySelectorAll("[data-wa=register]").forEach((b) => (b.onclick = () => {
+      const box = P().querySelector('.ci[data-k="register"] .fixbox'); b.hidden = true;
+      box.innerHTML = `<div class="fix"><input id="wpin" inputmode="numeric" maxlength="6" placeholder="6 digits" autocomplete="off"><button class="btn sm" id="wreg">Register</button></div>
+        <p class="faint" style="margin:8px 0 0">The PIN becomes the number's two-step PIN, so keep it somewhere safe. If the number already has one, use that.</p>`;
+      $("wpin").focus();
+      $("wreg").onclick = async () => {
+        const pin = $("wpin").value.replace(/\D/g, "");
+        if (pin.length !== 6) return flag($("wpin"), "Use 6 digits.");
+        $("wreg").disabled = true;
+        const r = await call({ action: "wa-register", pin });
+        if (!r.ok) { $("wreg").disabled = false; return flag($("wpin"), r.error === "pin" ? "Use 6 digits." : metaSays(r.meta)); }
+        toast("Registered. Keep that PIN."); nav("whatsapp");
+      };
+    }));
+    P().querySelectorAll("[data-wa=subscribe]").forEach((b) => (b.onclick = async () => {
+      b.disabled = true; const r = await call({ action: "wa-subscribe" });
+      if (!r.ok) { b.disabled = false; return toast(metaSays(r.meta)); }
+      toast("Subscribed."); nav("whatsapp");
+    }));
+    renderTests(); pollTests();
+  }
+  const TSTEPS = [["accepted", "Accepted"], ["sent", "Sent"], ["delivered", "Delivered"], ["read", "Read"]];
+  function renderTests() {
+    const el = $("wtests"); if (!el) return;
+    el.innerHTML = D.waTests.slice(0, 5).map((t) => {
+      const failed = t.status === "failed", rank = TSTEPS.findIndex(([k]) => k === t.status);
+      const stale = t.status === "accepted" && Date.now() - t.at > 60000;
+      return `<div class="tr"><div class="row"><b>${t.kind === "code" ? "Sign-in code" : "Bottle notice"} to ${esc(t.to)}</b><span class="faint">${tm(t.at)}</span></div>
+        ${failed ? `<p class="ferr">${esc(t.error || "It didn't reach them.")}</p>` : `<div class="trail">${TSTEPS.map(([, nm], i) => `<span class="${i <= rank ? "on" : ""}">${nm}</span>`).join("")}</div>`}
+        ${stale ? `<p class="faint" style="margin:8px 0 0">No word back from Meta. If it arrived on the phone, the webhook isn't reaching us yet.</p>` : ""}</div>`;
+    }).join("");
+  }
+  function pollTests() {
+    if (waTimer) return;
+    waTimer = setInterval(async () => {
+      const open = D.waTests.filter((t) => !["read", "failed"].includes(t.status) && Date.now() - t.at < 180000);
+      if (!open.length || page !== "whatsapp") { clearInterval(waTimer); waTimer = null; renderTests(); return; }
+      for (const t of open) { const r = await call({ action: "wa-test-status", id: t.id }); if (r.ok && r.test) Object.assign(t, { status: r.test.status, error: r.test.error }); }
+      renderTests();
+    }, 2500);
   }
 
   // ---------- start ----------
