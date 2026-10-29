@@ -98,16 +98,26 @@ export function next2am(t = Date.now()) {
 }
 
 // ---------- phone numbers ----------
-// Nigerian numbers only. Returns +234XXXXXXXXXX or null.
+// Phone numbers to E.164. Nigerian numbers can be typed the local way (0803..., 803..., 234803...).
+// Anything else needs its country code: +44 7700 900123 or 0044 7700 900123.
 export function phoneE164(raw) {
-  const d = String(raw || "").replace(/\D/g, "");
-  if (d.length === 11 && d.startsWith("0")) return "+234" + d.slice(1);
-  if (d.length === 13 && d.startsWith("234")) return "+" + d;
-  if (d.length === 10 && /^[789]/.test(d)) return "+234" + d;
-  return null;
+  const s = String(raw || "").trim();
+  let d = s.replace(/\D/g, "");
+  const intl = s.startsWith("+") || s.startsWith("00");
+  if (s.startsWith("00")) d = d.slice(2);
+  if (!intl) {
+    if (d.length === 11 && d.startsWith("0")) return "+234" + d.slice(1);
+    if (d.length === 13 && d.startsWith("234")) return "+" + d;
+    if (d.length === 10 && /^[789]/.test(d)) return "+234" + d;
+    return null;
+  }
+  if (d.startsWith("2340")) d = "234" + d.slice(4); // +234 0803... typed with the leading 0
+  if (d.startsWith("234")) return d.length === 13 && /^234[789]/.test(d) ? "+" + d : null;
+  if (d.length < 8 || d.length > 15 || d[0] === "0") return null;
+  return "+" + d;
 }
 export const phoneKey = (e164) => String(e164 || "").replace(/\D/g, "");
-export const maskPhone = (e164) => { const d = phoneKey(e164); return d ? "0" + d.slice(3, 6) + " *** " + d.slice(-4) : ""; };
+export const maskPhone = (e164) => { const d = phoneKey(e164); return !d ? "" : d.startsWith("234") ? "0" + d.slice(3, 6) + " *** " + d.slice(-4) : "+" + d.slice(0, Math.max(2, d.length - 7)) + " *** " + d.slice(-4); };
 
 // ---------- tokens ----------
 const b64u = (buf) => Buffer.from(buf).toString("base64").replace(/=+$/, "").replace(/\+/g, "-").replace(/\//g, "_");
@@ -454,7 +464,7 @@ export async function paystackInit({ email, amount, reference, callbackUrl, meta
   const r = await fetch(PS + "/transaction/initialize", {
     method: "POST", headers: psHeaders(),
     body: JSON.stringify({ email, amount: amount * 100, currency: CURRENCY, reference, callback_url: callbackUrl,
-      channels: ["card", "bank_transfer", "ussd", "bank"], metadata: { app: "outside", ...metadata } })
+      channels: ["card", "bank_transfer", "ussd", "bank", ...(process.env.OUTSIDE_APPLE_PAY === "1" ? ["apple_pay"] : [])], metadata: { app: "outside", ...metadata } })
   });
   const d = await r.json().catch(() => ({}));
   if (!r.ok || !d.status) { console.warn("paystackInit", r.status, JSON.stringify(d).slice(0, 300)); return null; }

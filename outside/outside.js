@@ -79,11 +79,50 @@
     });
   }
   function e164(raw) {
-    const d = String(raw || "").replace(/\D/g, "");
-    if (d.length === 11 && d.startsWith("0")) return "+234" + d.slice(1);
-    if (d.length === 13 && d.startsWith("234")) return "+" + d;
-    if (d.length === 10 && /^[789]/.test(d)) return "+234" + d;
-    return null;
+    const s = String(raw || "").trim();
+    let d = s.replace(/\D/g, "");
+    const intl = s.startsWith("+") || s.startsWith("00");
+    if (s.startsWith("00")) d = d.slice(2);
+    if (!intl) {
+      if (d.length === 11 && d.startsWith("0")) return "+234" + d.slice(1);
+      if (d.length === 13 && d.startsWith("234")) return "+" + d;
+      if (d.length === 10 && /^[789]/.test(d)) return "+234" + d;
+      return null;
+    }
+    if (d.startsWith("2340")) d = "234" + d.slice(4);
+    if (d.startsWith("234")) return d.length === 13 && /^234[789]/.test(d) ? "+" + d : null;
+    if (d.length < 8 || d.length > 15 || d[0] === "0") return null;
+    return "+" + d;
+  }
+  // Country code picker for phone numbers: a flag and code in the field, a native list behind it. Nigeria by default; the last one used is remembered.
+  const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
+    ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
+    ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
+  const flag = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  const ccNow = () => { try { const c = localStorage.getItem("outside.cc"); return CCS.some(([k]) => k === c) ? c : "234"; } catch { return "234"; } };
+  const ccLabel = (cc) => { const x = CCS.find(([k]) => k === cc) || CCS[0]; return `${flag(x[1])} +${x[0]}`; };
+  const NG_HINT = "803 000 0000";
+  const phoneField = (id, value = "") => {
+    const cc = ccNow();
+    return `<div class="phonef"><span class="ccbox"><span class="ccv" id="${id}_ccv">${ccLabel(cc)}</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <select id="${id}_cc" aria-label="Country">${CCS.map(([k, iso, n]) => `<option value="${k}"${k === cc ? " selected" : ""}>${flag(iso)} ${esc(n)} +${k}</option>`).join("")}</select></span>
+      <input id="${id}" type="tel" inputmode="tel" autocomplete="tel" placeholder="${cc === "234" ? NG_HINT : ""}" value="${esc(value)}"></div>`;
+  };
+  // What was typed, with its country code. A number typed with + or 00 keeps its own code.
+  function phoneOf(root, id) {
+    const raw = String((root.querySelector("#" + id) || {}).value || "").trim(), sel = root.querySelector("#" + id + "_cc");
+    const cc = sel ? sel.value : "234";
+    try { localStorage.setItem("outside.cc", cc); } catch {}
+    const d = raw.replace(/\D/g, "");
+    if (!d || raw.startsWith("+") || raw.startsWith("00") || cc === "234") return raw;
+    return "+" + cc + d.replace(/^0+/, "");
+  }
+  function wirePhone(root, id) {
+    const sel = root.querySelector("#" + id + "_cc"), inp = root.querySelector("#" + id), v = root.querySelector("#" + id + "_ccv"); if (!sel || !inp) return;
+    sel.onchange = () => { v.textContent = ccLabel(sel.value); inp.placeholder = sel.value === "234" ? NG_HINT : ""; try { localStorage.setItem("outside.cc", sel.value); } catch {} inp.focus(); };
+    // The code is already in the box, so a leading 0 is dropped as they type (0803 becomes 803).
+    const trim = () => { const v0 = inp.value; if (/^\s*0/.test(v0)) inp.value = v0.replace(/^\s*0+/, ""); };
+    inp.addEventListener("input", trim); trim();
   }
   async function numberHash(e) {
     const buf = await crypto.subtle.digest("SHA-256", new TextEncoder().encode("outside:" + e));
@@ -291,10 +330,11 @@
   function needSignIn(next, why) { if (S.me) return next(); signIn(next, why); }
   function signIn(next, why) {
     modal(`<h2>Your WhatsApp number</h2><p class="muted">${why ? esc(why) + " " : ""}We'll send you a code.</p>
-      <label class="field"><span>Number</span><input id="ph" type="tel" inputmode="tel" placeholder="0803 000 0000" autocomplete="tel"></label>
+      <label class="field"><span>Number</span>${phoneField("ph")}</label>
       <button class="btn block" id="go">Send code</button><p class="muted" id="msg"></p>`, (c) => {
+      wirePhone(c, "ph");
       c.querySelector("#go").onclick = async () => {
-        const phone = c.querySelector("#ph").value;
+        const phone = phoneOf(c, "ph");
         if (!e164(phone)) return (c.querySelector("#msg").textContent = errMsg("phone"));
         c.querySelector("#go").disabled = true;
         const r = await api("auth/start", { phone });
@@ -424,9 +464,10 @@
   function bottleMore(id) {
     modal(`<h2>This bottle</h2><button class="btn block ghost" id="pass">Pass it on to someone</button><p></p><button class="btn block ghost" id="no">Not for me</button>`, (c) => {
       c.querySelector("#no").onclick = async () => { const r = await api("decline", { bottleId: id }); closeModal(); if (!r.ok) toast(errMsg(r.error)); else toast("Done. They won't be told."); loadMe(); };
-      c.querySelector("#pass").onclick = () => modal(`<h2>Pass it on</h2><label class="field"><span>Their number</span><input id="to" type="tel" placeholder="0803 000 0000"></label><button class="btn block" id="go">Pass it on</button><p class="muted" id="msg"></p>`, (c2) => {
+      c.querySelector("#pass").onclick = () => modal(`<h2>Pass it on</h2><label class="field"><span>Their number</span>${phoneField("to")}</label><button class="btn block" id="go">Pass it on</button><p class="muted" id="msg"></p>`, (c2) => {
+        wirePhone(c2, "to");
         c2.querySelector("#go").onclick = async () => {
-          const r = await api("pass", { bottleId: id, to: c2.querySelector("#to").value });
+          const r = await api("pass", { bottleId: id, to: phoneOf(c2, "to") });
           if (!r.ok) return (c2.querySelector("#msg").textContent = errMsg(r.error));
           closeModal(); toast("Passed on."); loadMe();
         };
@@ -570,10 +611,11 @@
     // Keeping it asks only for what's needed, inline: the number to send it to, the code, and (first time) name and date of birth.
     const step = (html, mount) => { el.classList.add("compact"); const b = card.querySelector(".gkeep"); b.innerHTML = html; msg(""); mount(b); const i = b.querySelector("input"); if (i) i.focus(); };
     const msg = (t) => (card.querySelector("#gm").textContent = t);
-    const askNumber = () => step(`<label class="field"><span>Your WhatsApp number</span><input id="gph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000"></label>
+    const askNumber = () => step(`<label class="field"><span>Your WhatsApp number</span>${phoneField("gph")}</label>
       <button class="btn block" id="gn">Send me the code</button>`, (b) => {
+      wirePhone(b, "gph");
       b.querySelector("#gn").onclick = async () => {
-        const phone = b.querySelector("#gph").value;
+        const phone = phoneOf(b, "gph");
         if (!e164(phone)) return msg(errMsg("phone"));
         const r = await api("auth/start", { phone });
         if (!r.ok) return msg(errMsg(r.error));
@@ -683,10 +725,10 @@
       const who = st.mode === "light"
         ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
         : st.mode === "table" ? `<div class="to-card"><div class="grow"><b>Table ${esc(st.table)}</b><small>In this room, from you.</small></div></div>`
-        : `<div class="seg"><button class="${st.mode === "number" ? "on" : ""}" data-m="number">Phone number</button><button class="${st.mode === "link" ? "on" : ""}" data-m="link">Instagram or Snap</button></div>
+        : `<div class="seg"><button class="${st.mode === "number" ? "on" : ""}" data-m="number">Their number</button><button class="${st.mode === "link" ? "on" : ""}" data-m="link">Instagram or Snap</button></div>
            ${st.mode === "link" ? `<div class="tofield"><input id="forl" maxlength="40" autocomplete="off" placeholder="Their name, e.g. Tolu" value="${esc(st.forLabel)}"></div>
              <p class="hint">You'll get a sealed card to send to them on Instagram or Snapchat.</p>`
-           : `<div class="tofield"><input id="to" type="tel" inputmode="tel" placeholder="Their number, 0803 000 0000" value="${esc(st.to)}">${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
+           : `<div class="tofield">${phoneField("to", st.to)}${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
            ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`}`;
       const bands = st.mode === "number" || st.mode === "link" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
       return `<h2>Send an Amabile</h2>
@@ -700,21 +742,22 @@
         <p class="fine">${st.mode === "link" ? "It can only be claimed once." : "They claim it from their server when next they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
-      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) st.to = t.value; const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
+      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) { st.to = t.value; st.toFull = phoneOf(c, "to"); } const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
       const redraw = () => { keep(); modal(draw(), mount); };
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { st.wine = b.dataset.w; redraw(); }));
       c.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { st.band = b.dataset.b; redraw(); }));
       c.querySelectorAll("[data-m]").forEach((b) => (b.onclick = () => { keep(); st.mode = b.dataset.m; if (st.mode === "link") st.anon = false; redraw(); }));
       c.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { st.mode = "light"; st.friend = out.find((x) => x.key === b.dataset.f); redraw(); }));
       const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
+      wirePhone(c, "to");
       const pick = c.querySelector("#pick");
-      if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { st.to = ct.tel[0]; redraw(); } } catch {} };
+      if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { c.querySelector("#to").value = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
         keep();
-        if (st.mode === "number" && !e164(st.to)) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        if (st.mode === "number" && !e164(st.toFull || st.to)) return (c.querySelector("#msg").textContent = errMsg("phone"));
         if (!S.me) return signIn(() => sendFlow({}, { ...st, autopay: true }), WHY.pay);
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
-        if (st.mode === "number") { if (!e164(st.to)) return (c.querySelector("#msg").textContent = errMsg("phone")); body.to = st.to; body.band = st.band; }
+        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return (c.querySelector("#msg").textContent = errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; }
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
@@ -787,9 +830,10 @@
         loadMe();
       } catch {}
     };
-    body.querySelector("#addNum").onclick = () => modal(`<h2>Add a number</h2><label class="field"><span>Their number</span><input id="n" type="tel" placeholder="0803 000 0000"></label><button class="btn block" id="go">Add</button><p class="muted" id="msg"></p>`, (c) => {
+    body.querySelector("#addNum").onclick = () => modal(`<h2>Add a number</h2><label class="field"><span>Their number</span>${phoneField("n")}</label><button class="btn block" id="go">Add</button><p class="muted" id="msg"></p>`, (c) => {
+      wirePhone(c, "n");
       c.querySelector("#go").onclick = async () => {
-        const n = e164(c.querySelector("#n").value); if (!n) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        const n = e164(phoneOf(c, "n")); if (!n) return (c.querySelector("#msg").textContent = errMsg("phone"));
         const r = await api("contacts", { hashes: [await numberHash(n)] });
         closeModal(); toast(r.ok ? (r.matched ? "Added." : "Added. They'll appear when they join and add you.") : errMsg(r.error)); loadMe();
       };

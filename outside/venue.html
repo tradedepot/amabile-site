@@ -51,6 +51,12 @@ input, select, textarea { width:100%; font:inherit; font-size:16px; color:var(--
 input:focus, select:focus, textarea:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
 textarea { min-height:84px; resize:vertical; }
 .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.phonef { display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
+.phonef:focus-within { border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
+.ccbox { position:relative; flex:none; display:flex; align-items:center; gap:6px; padding:0 10px 0 13px; border-right:1.5px solid var(--line); font-weight:800; font-size:16px; white-space:nowrap; }
+.ccbox svg { width:10px; height:8px; color:var(--ink-3); }
+.ccbox select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+.phonef input { flex:1; min-width:0; border:0; border-radius:0; box-shadow:none !important; letter-spacing:.3px; }
 .kinds { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
 .kinds label { margin:0; cursor:pointer; position:relative; }
 .kinds input { position:absolute; opacity:0; pointer-events:none; }
@@ -127,10 +133,9 @@ a { color:var(--red-2); font-weight:800; }
           <label for="maps">Google Maps link <small>optional</small></label>
           <input id="maps" maxlength="300" inputmode="url" placeholder="https://maps.app.goo.gl/...">
           <label>Do you stock Amabile now?</label>
-          <div class="seg">
+          <div class="seg" id="stocks">
             <label><input type="radio" name="stocks" value="yes"><span>Yes</span></label>
             <label><input type="radio" name="stocks" value="no"><span>Not yet</span></label>
-            <label><input type="radio" name="stocks" value="not_sure" checked><span>Not sure</span></label>
           </div>
         </div>
         <div class="sec"><h3>You</h3>
@@ -149,7 +154,7 @@ a { color:var(--red-2); font-weight:800; }
         <div class="sec"><h3>Your WhatsApp number</h3>
           <p class="muted" style="margin:6px 0 0">We'll send a code to confirm it. Our team will call you on it.</p>
           <label for="phone">Number</label>
-          <input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000" required>
+          <div class="phonef"><span class="ccbox"><span id="ccv"></span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><select id="cc" aria-label="Country"></select></span><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="803 000 0000" required></div>
           <div id="codeBox" class="hidden">
             <label for="code">Code from WhatsApp</label>
             <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits">
@@ -183,7 +188,7 @@ a { color:var(--red-2); font-weight:800; }
   const ERR = {
     phone: "That number doesn't look right.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    venue_name: "Add your venue's name.", contact_name: "Add your name.", area: "Add the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
+    venue_name: "Add your venue's name.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Add the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   let token = null, codeSent = false, busy = false;
@@ -195,6 +200,17 @@ a { color:var(--red-2); font-weight:800; }
     catch { return { ok: false, error: "offline" }; }
   }
   const val = (id) => $(id).value.trim();
+  const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
+    ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
+    ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
+  const flag = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  $("cc").innerHTML = CCS.map(([k, iso, n]) => `<option value="${k}">${flag(iso)} ${n} +${k}</option>`).join("");
+  const ccShow = () => { const x = CCS.find(([k]) => k === $("cc").value) || CCS[0]; $("ccv").textContent = flag(x[1]) + " +" + x[0]; $("phone").placeholder = x[0] === "234" ? "803 000 0000" : ""; };
+  ccShow();
+  $("cc").onchange = () => { ccShow(); $("phone").dispatchEvent(new Event("input")); $("phone").focus(); };
+  $("phone").addEventListener("input", () => { const v0 = $("phone").value; if (/^\s*0/.test(v0)) $("phone").value = v0.replace(/^\s*0+/, ""); });
+  // The number with its country code. Typed with + or 00, it keeps its own; Nigerian numbers can be typed the local way.
+  const phone = () => { const raw = val("phone"), cc = $("cc").value, d = raw.replace(/\D/g, ""); return !d || raw.startsWith("+") || raw.startsWith("00") || cc === "234" ? raw : "+" + cc + d.replace(/^0+/, ""); };
   const radio = (n) => (document.querySelector(`input[name="${n}"]:checked`) || {}).value;
   const fail = (e, focus) => { $("err").textContent = ERR[e] || ERR.server; if (focus) $(focus).focus(); };
 
@@ -206,8 +222,9 @@ a { color:var(--red-2); font-weight:800; }
   function check(d) {
     if (d.name.length < 2) return fail("venue_name", "name"), false;
     if (!d.area) return fail("area", "area"), false;
+    if (!d.stocksAmabile) return fail("stocks"), $("stocks").scrollIntoView({ block: "center" }), false;
     if (!d.contactName) return fail("contact_name", "contact"), false;
-    if (val("phone").replace(/\D/g, "").length < 10) return fail("phone", "phone"), false;
+    if (phone().replace(/\D/g, "").length < 8) return fail("phone", "phone"), false;
     return true;
   }
 
@@ -222,7 +239,7 @@ a { color:var(--red-2); font-weight:800; }
     busy = true; $("go").disabled = true;
     try {
       if (!codeSent) {
-        const r = await api("auth/start", { phone: val("phone") });
+        const r = await api("auth/start", { phone: phone() });
         if (!r.ok) return fail(r.error, "phone");
         codeSent = true;
         $("codeBox").classList.remove("hidden");
@@ -232,7 +249,7 @@ a { color:var(--red-2); font-weight:800; }
         return;
       }
       if (!token) {
-        const r = await api("auth/verify", { phone: val("phone"), code: val("code") });
+        const r = await api("auth/verify", { phone: phone(), code: val("code") });
         if (!r.ok) return fail(r.error, "code");
         token = r.token;
       }

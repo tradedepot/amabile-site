@@ -329,3 +329,15 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
   .sheet { left: 50%; right: auto; width: 500px; transform: translate(-50%, 105%); }
   .sheet.open { transform: translate(-50%, 0); }
 }
+
+/* phone number with its country code: one field, flag and code on the left */
+.phonef { flex: 1; min-width: 0; display: flex; align-items: stretch; border: 3px solid var(--ink); border-radius: 14px; background: #fff; overflow: hidden; }
+.phonef:focus-within { box-shadow: 0 0 0 4px rgba(231,69,41,.18); }
+.ccbox { position: relative; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 13px; border-right: 2px solid var(--rule); font-weight: 800; font-size: 16px; color: var(--ink); white-space: nowrap; }
+.ccbox svg { width: 10px; height: 8px; color: var(--ink-2); }
+.ccbox select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; font-size: 16px; border: 0; }
+.phonef input, .field .phonef input, .tofield .phonef input { flex: 1; min-width: 0; width: auto; border: 0; border-radius: 0; padding: 13px 14px; font-size: 17px; background: transparent; box-shadow: none; outline: none; letter-spacing: .3px; }
+.field .phonef span { margin: 0; }
+.field .ccbox { display: flex; font-size: 16px; }
+.field .ccbox .ccv { display: inline; font-size: 16px; font-weight: 800; }
+.field .ccbox select { position: absolute; inset: 0; width: 100%; height: 100%; padding: 0; border: 0; border-radius: 0; opacity: 0; }
