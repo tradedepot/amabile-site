@@ -119,7 +119,7 @@ export async function ticketServed(s, t, by) {
   t.status = "served"; t.servedAt = Date.now(); t.servedBy = by;
   await saveTicket(s, t);
   const v = await getJSON(s, K.venue(t.venueId));
-  const amount = t.kind === "drop" ? (v && v.runnerFee) || 2000 : (t.payout || 0);
+  const amount = t.kind === "drop" ? (v && v.runnerFee) || 1000 : (t.payout || 0);
   const lk = K.ledger(t.venueId, t.id);
   await s.setJSON(lk, { venueId: t.venueId, ticketId: t.id, kind: t.kind, bottleId: t.bottleId || null,
     dropId: t.dropId || null, wine: t.wine, amount, settle: t.kind === "drop" ? "fee" : "menu", at: Date.now(), paid: false });

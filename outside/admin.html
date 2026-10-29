@@ -299,6 +299,13 @@ table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #F
   .gap { grid-template-columns: 28px 1fr; } .gap > :nth-child(n+3) { grid-column: 2; }
   .todo .it { flex-wrap: wrap; } .todo .it .btn { margin-left: 56px; } .day { min-height: 0; } .day.empty-day .addslot { min-height: 70px; }
 }
+.bad { border-color: var(--red-2) !important; box-shadow: 0 0 0 4px rgba(200,55,29,.14) !important; }
+.tiles.bad, .whenrow.bad { border-radius: 16px; box-shadow: 0 0 0 2px var(--red-2) !important; padding: 6px; }
+.ferr { display: flex; align-items: flex-start; gap: 7px; color: var(--red-2); font-weight: 800; font-size: 13.5px; line-height: 1.35; margin: 8px 2px 0; }
+.ferr::before { content: "!"; flex: none; width: 17px; height: 17px; border-radius: 50%; background: var(--red-2); color: #fff; font-size: 11px; font-weight: 900; display: flex; align-items: center; justify-content: center; margin-top: 1px; }
+.nudge { animation: nudge .32s ease-in-out; }
+@keyframes nudge { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 </style>
 </head>
 <body>

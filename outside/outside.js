@@ -58,8 +58,8 @@
   const timeShort = (t) => new Date(t).toLocaleTimeString("en-NG", { hour: "numeric", minute: "2-digit", timeZone: "Africa/Lagos" }).replace(" ", "").toLowerCase();
   const until = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m"; };
   const ERR = {
-    offline: "No connection. Try again in a moment.", phone: "That doesn't look like a Nigerian number.", slow_down: "Too many codes. Try again in a few minutes.",
-    send_failed: "We couldn't send the code. Try again.", wrong_code: "That code isn't right.", expired: "That code has expired. Ask for a new one.",
+    offline: "No connection. Try again in a moment.", phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.",
+    send_failed: "We couldn't send the code. Check the number is on WhatsApp.", too_many: "Too many tries. Ask for a new code.", wrong_code: "That code isn't right.", expired: "That code has expired. Ask for a new one.",
     age: "Andiamo is for people 18 and over.", not_now: "This number can't sign in right now.", no_venue: "You're not at a partner venue yet. Your bottle keeps waiting.",
     not_stocked: "That venue doesn't stock this wine.", limit: "You've hit the limit for now.", not_out: "They're not outside any more.",
     gone: "All gone. Next time.", one_a_night: "One drop a night. Enjoy the rest of it.", not_here: "You need to be at the venue to claim this drop.",
@@ -68,6 +68,39 @@
     self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again.",
     qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
   };
+  // ---------- showing what needs fixing ----------
+  // A field: red outline, a line under it saying what's wrong, brought into view and focused, a small nudge and a buzz. Typing in it clears it.
+  function flag(el, text) {
+    if (!el) return;
+    const isInput = el.matches("input, select, textarea");
+    const box = isInput ? (el.closest(".phonef") || el) : el;
+    const host = box.closest(".tofield") || box.closest("label.field") || box;
+    unflag(host);
+    box.classList.add("bad");
+    const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text;
+    host.insertAdjacentElement("afterend", p);
+    box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge");
+    try { navigator.vibrate && navigator.vibrate(60); } catch {}
+    box.scrollIntoView({ block: "center", behavior: "smooth" });
+    const inp = isInput ? el : el.querySelector("input:not([type=checkbox]):not([type=radio]), textarea");
+    if (inp && !/checkbox|radio/.test(inp.type)) try { inp.focus({ preventScroll: true }); } catch {}
+    const off = () => unflag(host);
+    (isInput ? [el] : [...el.querySelectorAll("input, button, select")]).forEach((x) => { x.addEventListener("input", off, { once: true }); x.addEventListener("change", off, { once: true }); if (x.tagName === "BUTTON") x.addEventListener("click", off, { once: true }); });
+  }
+  function unflag(host) {
+    const n = host.nextElementSibling; if (n && n.classList.contains("ferr")) n.remove();
+    host.classList.remove("bad"); host.querySelectorAll(".bad").forEach((x) => x.classList.remove("bad"));
+  }
+  // Not one field (connection, payment, the venue): a red line by the button.
+  function fail(where, text) {
+    const m = where && (where.querySelector("#msg") || where.querySelector("#gm")); if (!m) return toast(text);
+    m.textContent = text; m.classList.add("err"); m.classList.remove("nudge"); void m.offsetWidth; m.classList.add("nudge");
+    try { navigator.vibrate && navigator.vibrate(60); } catch {}
+  }
+  function note(where, text) { const m = where && (where.querySelector("#msg") || where.querySelector("#gm")); if (m) { m.textContent = text; m.classList.remove("err"); } }
+  // Server answers that belong to a field.
+  const PHONE_ERR = ["phone", "self", "cant_send", "not_now"], CODE_ERR = ["wrong_code", "expired", "too_many"];
+
   const errMsg = (e) => ERR[e] || "Something went wrong.";
 
   function getLocation() {
@@ -98,14 +131,14 @@
   const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
     ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
     ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
-  const flag = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  const flagOf = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
   const ccNow = () => { try { const c = localStorage.getItem("outside.cc"); return CCS.some(([k]) => k === c) ? c : "234"; } catch { return "234"; } };
-  const ccLabel = (cc) => { const x = CCS.find(([k]) => k === cc) || CCS[0]; return `${flag(x[1])} +${x[0]}`; };
+  const ccLabel = (cc) => { const x = CCS.find(([k]) => k === cc) || CCS[0]; return `${flagOf(x[1])} +${x[0]}`; };
   const NG_HINT = "803 000 0000";
   const phoneField = (id, value = "") => {
     const cc = ccNow();
     return `<div class="phonef"><span class="ccbox"><span class="ccv" id="${id}_ccv">${ccLabel(cc)}</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-      <select id="${id}_cc" aria-label="Country">${CCS.map(([k, iso, n]) => `<option value="${k}"${k === cc ? " selected" : ""}>${flag(iso)} ${esc(n)} +${k}</option>`).join("")}</select></span>
+      <select id="${id}_cc" aria-label="Country">${CCS.map(([k, iso, n]) => `<option value="${k}"${k === cc ? " selected" : ""}>${flagOf(iso)} ${esc(n)} +${k}</option>`).join("")}</select></span>
       <input id="${id}" type="tel" inputmode="tel" autocomplete="tel" placeholder="${cc === "234" ? NG_HINT : ""}" value="${esc(value)}"></div>`;
   };
   // What was typed, with its country code. A number typed with + or 00 keeps its own code.
@@ -335,11 +368,12 @@
       wirePhone(c, "ph");
       c.querySelector("#go").onclick = async () => {
         const phone = phoneOf(c, "ph");
-        if (!e164(phone)) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        if (!c.querySelector("#ph").value.trim()) return flag(c.querySelector("#ph"), "Add your WhatsApp number.");
+        if (!e164(phone)) return flag(c.querySelector("#ph"), errMsg("phone"));
         c.querySelector("#go").disabled = true;
-        const r = await api("auth/start", { phone });
+        note(c, ""); const r = await api("auth/start", { phone });
         c.querySelector("#go").disabled = false;
-        if (!r.ok) return (c.querySelector("#msg").textContent = errMsg(r.error));
+        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" ? flag(c.querySelector("#ph"), errMsg(r.error)) : fail(c, errMsg(r.error));
         codeStep(phone, r.devCode, next);
       };
     });
@@ -349,8 +383,10 @@
       <label class="field"><span>Code</span><input id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits"></label>
       <button class="btn block" id="go">Continue</button><p class="muted" id="msg"></p>`, (c) => {
       c.querySelector("#go").onclick = async () => {
-        const r = await api("auth/verify", { phone, code: c.querySelector("#cd").value });
-        if (!r.ok) return (c.querySelector("#msg").textContent = errMsg(r.error));
+        const cd = c.querySelector("#cd");
+        if (cd.value.replace(/\D/g, "").length < 6) return flag(cd, "Enter the 6-digit code from WhatsApp.");
+        const r = await api("auth/verify", { phone, code: cd.value });
+        if (!r.ok) return CODE_ERR.includes(r.error) ? flag(cd, errMsg(r.error)) : fail(c, errMsg(r.error));
         S.token = r.token; LS.set("outside.token", r.token); S.me = null;
         if (r.needsProfile) { S.suggestedName = r.suggestedName || ""; return profileStep(next); }
         await afterSignIn(); closeModal(); next && next();
@@ -377,9 +413,10 @@
         c.querySelector("#avp").innerHTML = A.avatar(av, 120);
       }));
       c.querySelector("#go").onclick = async () => {
+        if (!c.querySelector("#nm").value.trim() && !edit) return flag(c.querySelector("#nm"), "Add your first name.");
         const body = { name: c.querySelector("#nm").value || (edit ? S.me.player.name : ""), avatar: av };
         const r = await api("profile", body);
-        if (!r.ok) return (c.querySelector("#msg").textContent = r.error === "name" ? "Add your first name." : errMsg(r.error));
+        if (!r.ok) return r.error === "name" ? flag(c.querySelector("#nm"), "Add your first name.") : fail(c, errMsg(r.error));
 
         await afterSignIn(); closeModal(); next && next();
       };
@@ -467,8 +504,10 @@
       c.querySelector("#pass").onclick = () => modal(`<h2>Pass it on</h2><label class="field"><span>Their number</span>${phoneField("to")}</label><button class="btn block" id="go">Pass it on</button><p class="muted" id="msg"></p>`, (c2) => {
         wirePhone(c2, "to");
         c2.querySelector("#go").onclick = async () => {
-          const r = await api("pass", { bottleId: id, to: phoneOf(c2, "to") });
-          if (!r.ok) return (c2.querySelector("#msg").textContent = errMsg(r.error));
+          const to = phoneOf(c2, "to");
+          if (!e164(to)) return flag(c2.querySelector("#to"), c2.querySelector("#to").value.trim() ? errMsg("phone") : "Add their number.");
+          const r = await api("pass", { bottleId: id, to });
+          if (!r.ok) return PHONE_ERR.includes(r.error) ? flag(c2.querySelector("#to"), errMsg(r.error)) : fail(c2, errMsg(r.error));
           closeModal(); toast("Passed on."); loadMe();
         };
       });
@@ -489,16 +528,16 @@
       <p class="muted" style="text-align:center">Or call a runner over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
       c.querySelector("#qr").onclick = () => qrFlow(id, c.querySelector("#quiet").checked);
       c.querySelector("#go").onclick = async () => {
-        const go = c.querySelector("#go"); go.disabled = true; c.querySelector("#msg").textContent = "Finding you...";
+        const go = c.querySelector("#go"); go.disabled = true; note(c, "Finding you...");
         const loc = await getLocation();
-        if (!loc) { go.disabled = false; return (c.querySelector("#msg").textContent = "Turn on location for this site, then try again."); }
+        if (!loc) { go.disabled = false; return fail(c, "Turn on location for this site, then try again. Or show your QR instead."); }
         const body = { bottleId: id, ...loc, venueId, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, quiet: c.querySelector("#quiet").checked };
         const r = await api("claim", body);
         go.disabled = false;
         if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the runner."); if (t) setTimeout(() => glowPrompt(t), 400); return; }
         if (r.error === "choose") return chooseVenue(r.venues, (vid) => { venueId = vid; c.querySelector("#go").click(); });
         if (r.error === "band") return topupStep(b, r, body);
-        c.querySelector("#msg").textContent = r.error === "no_venue" ? errMsg("no_venue") : r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error);
+        fail(c, r.error === "no_venue" ? errMsg("no_venue") : r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error));
       };
     });
   }
@@ -603,30 +642,32 @@
     };
     const keep = async () => {
       const r = await api("gift-accept", { code });
-      if (!r.ok) return (el.querySelector("#gm").textContent = errMsg(r.error));
+      if (!r.ok) return fail(el, errMsg(r.error));
       await loadMe(); close();
       modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it from your server when next you're outside.</p>
         <button class="btn block" id="gb">See where to claim it</button>`, (c) => { c.querySelector("#gb").onclick = () => { closeModal(); openSheet("bottles"); }; });
     };
     // Keeping it asks only for what's needed, inline: the number to send it to, the code, and (first time) name and date of birth.
     const step = (html, mount) => { el.classList.add("compact"); const b = card.querySelector(".gkeep"); b.innerHTML = html; msg(""); mount(b); const i = b.querySelector("input"); if (i) i.focus(); };
-    const msg = (t) => (card.querySelector("#gm").textContent = t);
+    const msg = (t) => (t ? fail(card, t) : note(card, ""));
     const askNumber = () => step(`<label class="field"><span>Your WhatsApp number</span>${phoneField("gph")}</label>
       <button class="btn block" id="gn">Send me the code</button>`, (b) => {
       wirePhone(b, "gph");
       b.querySelector("#gn").onclick = async () => {
         const phone = phoneOf(b, "gph");
-        if (!e164(phone)) return msg(errMsg("phone"));
+        if (!e164(phone)) return flag(b.querySelector("#gph"), b.querySelector("#gph").value.trim() ? errMsg("phone") : "Add your WhatsApp number.");
         const r = await api("auth/start", { phone });
-        if (!r.ok) return msg(errMsg(r.error));
+        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" ? flag(b.querySelector("#gph"), errMsg(r.error)) : msg(errMsg(r.error));
         askCode(phone, r.devCode);
       };
     });
     const askCode = (phone, devCode) => step(`<label class="field"><span>Code from WhatsApp${devCode ? " (test: " + devCode + ")" : ""}</span><input id="gcd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits"></label>
       <button class="btn block" id="gc">Confirm</button>`, (b) => {
       b.querySelector("#gc").onclick = async () => {
-        const r = await api("auth/verify", { phone, code: b.querySelector("#gcd").value });
-        if (!r.ok) return msg(errMsg(r.error));
+        const gcd = b.querySelector("#gcd");
+        if (gcd.value.replace(/\D/g, "").length < 6) return flag(gcd, "Enter the 6-digit code from WhatsApp.");
+        const r = await api("auth/verify", { phone, code: gcd.value });
+        if (!r.ok) return CODE_ERR.includes(r.error) ? flag(gcd, errMsg(r.error)) : msg(errMsg(r.error));
         S.token = r.token; LS.set("outside.token", r.token);
         if (r.needsProfile) {
           // The name on their WhatsApp if Amabile has it, else the name the sender typed. No extra question. They can change it in Me.
@@ -641,8 +682,9 @@
     const askName = () => step(`<label class="field"><span>Your first name</span><input id="gnm" autocomplete="given-name" maxlength="24"></label>
       <button class="btn block" id="gs">Bank it</button>`, (b) => {
       b.querySelector("#gs").onclick = async () => {
+        if (!b.querySelector("#gnm").value.trim()) return flag(b.querySelector("#gnm"), "Add your first name.");
         const r = await api("profile", { name: b.querySelector("#gnm").value, avatar: { skin: "s3", hair: "low", face: "smile", outfit: "ankara" } });
-        if (!r.ok) return msg(errMsg(r.error));
+        if (!r.ok) return r.error === "name" ? flag(b.querySelector("#gnm"), "Add your first name.") : msg(errMsg(r.error));
         keep();
       };
     });
@@ -681,7 +723,7 @@
       if (!st.ok || !live()) return;
       if (st.status === "claimed") { clearInterval(qrTimer); closeModal(); await loadMe(); toast("Scanned. Your bottle is coming."); }
       else if (st.status === "topup") { clearInterval(qrTimer); qrTopup(b, r.code, st); }
-      else if (st.status === "refused") c.querySelector("#msg").textContent = st.reason === "not_stocked" ? `${st.venue ? st.venue.name : "This venue"} doesn't have ${wineOf(b.wine).name} right now. Your bottle keeps waiting.` : errMsg(st.reason);
+      else if (st.status === "refused") fail(c, st.reason === "not_stocked" ? `${st.venue ? st.venue.name : "This venue"} doesn't have ${wineOf(b.wine).name} right now. Your bottle keeps waiting.` : errMsg(st.reason));
       else if (st.status === "expired") { clearInterval(qrTimer); qrFlow(id, quiet); }
     }, 2500);
   }
@@ -754,16 +796,17 @@
       if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { c.querySelector("#to").value = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
         keep();
-        if (st.mode === "number" && !e164(st.toFull || st.to)) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        if (st.mode === "number" && !e164(st.toFull || st.to)) return flag(c.querySelector("#to"), String(st.to || "").trim() ? errMsg("phone") : "Add their number.");
+        if (st.mode === "link" && !String(st.forLabel || "").trim()) return flag(c.querySelector("#forl"), "Add their name, so the card is for them.");
         if (!S.me) return signIn(() => sendFlow({}, { ...st, autopay: true }), WHY.pay);
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
-        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return (c.querySelector("#msg").textContent = errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; }
+        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return flag(c.querySelector("#to"), errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; }
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
         c.querySelector("#pay").disabled = true;
         const r = await api("send", body);
-        if (!r.ok) { c.querySelector("#pay").disabled = false; return (c.querySelector("#msg").textContent = errMsg(r.error)); }
+        if (!r.ok) { c.querySelector("#pay").disabled = false; return PHONE_ERR.includes(r.error) && c.querySelector("#to") ? flag(c.querySelector("#to"), errMsg(r.error)) : fail(c, errMsg(r.error)); }
         LS.set("outside.lastRef", r.ref);
         location.href = r.authorization_url;
       };
@@ -833,7 +876,7 @@
     body.querySelector("#addNum").onclick = () => modal(`<h2>Add a number</h2><label class="field"><span>Their number</span>${phoneField("n")}</label><button class="btn block" id="go">Add</button><p class="muted" id="msg"></p>`, (c) => {
       wirePhone(c, "n");
       c.querySelector("#go").onclick = async () => {
-        const n = e164(phoneOf(c, "n")); if (!n) return (c.querySelector("#msg").textContent = errMsg("phone"));
+        const n = e164(phoneOf(c, "n")); if (!n) return flag(c.querySelector("#n"), c.querySelector("#n").value.trim() ? errMsg("phone") : "Add their number.");
         const r = await api("contacts", { hashes: [await numberHash(n)] });
         closeModal(); toast(r.ok ? (r.matched ? "Added." : "Added. They'll appear when they join and add you.") : errMsg(r.error)); loadMe();
       };
@@ -884,13 +927,14 @@
       let wine = (d.wines || [])[0];
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { wine = b.dataset.w; c.querySelectorAll("[data-w]").forEach((x) => x.classList.toggle("on", x === b)); }));
       c.querySelector("#go").onclick = async () => {
-        if (!c.querySelector("#two").checked) return (c.querySelector("#msg").textContent = errMsg("two_plus"));
-        c.querySelector("#msg").textContent = "Finding you...";
-        const loc = await getLocation();
-        if (!loc) return (c.querySelector("#msg").textContent = "Turn on location for this site, then try again.");
+        if (!c.querySelector("#two").checked) return flag(c.querySelector("#two").closest(".toggle"), "Tick this to claim. Drops are for tables of two or more.");
         const pt = c.querySelector("#pt");
+        if (pt && !pt.value.trim()) return flag(pt, "Say which table gets it.");
+        note(c, "Finding you...");
+        const loc = await getLocation();
+        if (!loc) return fail(c, "Turn on location for this site, then try again.");
         const r = await api("drop", { dropId: d.id, ...loc, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, twoPlus: true, wine, passTo: pt ? pt.value : "" });
-        if (!r.ok) return (c.querySelector("#msg").textContent = r.error === "locked" ? `Opens at ${r.need} people. ${r.here} here now.` : r.error === "pass_table" ? "Pick a table to pass it to." : errMsg(r.error));
+        if (!r.ok) return r.error === "pass_table" && pt ? flag(pt, "Say which table gets it.") : fail(c, r.error === "locked" ? `Opens at ${r.need} people. ${r.here} here now.` : errMsg(r.error));
         await loadConfig(); await loadMe(); closeModal();
         const t = S.me.tickets.find((x) => x.ticketId === r.ticket.id);
         if (pt && pt.value) toast("Sent to table " + pt.value + ". Nice."); else if (t) glowPrompt(t);

@@ -54,7 +54,7 @@ export default async (req) => {
       radius: Math.max(20, Math.min(200, Number(x.radius) || 60)),
       band: BAND_ORDER.includes(x.band) ? x.band : prev.band || "lounge",
       prices, taxIncluded: !!x.taxIncluded,
-      runnerFee: num(x.runnerFee) || prev.runnerFee || 2000,
+      runnerFee: num(x.runnerFee) || prev.runnerFee || 1000,
       tables: Math.max(1, Math.min(200, Number(x.tables) || prev.tables || 20)),
       art: clean(x.art, 16) || prev.art || "lounge",
       tonight: clean(x.tonight, 80),
@@ -73,6 +73,7 @@ export default async (req) => {
       v.runnerKeyHash = hashKey(keys.runner); v.managerKeyHash = hashKey(keys.manager);
     }
     await s.setJSON(K.venue(id), v);
+    if (v.active) { const { ensureManager } = await import("./_outside_staff.mjs"); Object.assign(v, await ensureManager(s, v)); }
     const { runnerKeyHash, managerKeyHash, ...view } = v;
     return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null, checks });
   }
@@ -218,6 +219,14 @@ export default async (req) => {
   if (a === "venue-off") {
     const v = await getJSON(s, K.venue(clean(d.venueId, 20))); if (!v) return json({ ok: false, error: "not_found" }, 404);
     v.active = false; v.stage = "paused"; v.updatedAt = Date.now(); await s.setJSON(K.venue(v.id), v); return json({ ok: true });
+  }
+
+  // ---------- who can open a venue's runner board ----------
+  if (a === "staff-add" || a === "staff-remove") {
+    const { addStaff, removeStaff, staffView } = await import("./_outside_staff.mjs");
+    const r = a === "staff-add" ? await addStaff(s, clean(d.venueId, 20), { phone: d.phone, name: d.name, role: d.role }, "admin")
+      : await removeStaff(s, clean(d.venueId, 20), d.phone, { keepAManager: false });
+    return json(r.ok ? { ok: true, staff: (r.venue.staff || []).map(staffView) } : r, r.ok ? 200 : 400);
   }
 
   // ---------- paying venues through Paystack ----------

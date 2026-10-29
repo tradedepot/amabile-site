@@ -74,7 +74,7 @@ export async function listFromRequest(s, id, by) {
   if (r.venueId) return { ok: true, venueId: r.venueId };
   const v = {
     id: rid(6), name: r.name, area: r.area, art: r.kind, band: "lounge", prices: {}, taxIncluded: false,
-    lat: null, lng: null, radius: 60, tables: r.tables || 20, runnerFee: 2000, tonight: "",
+    lat: null, lng: null, radius: 60, tables: r.tables || 20, runnerFee: 1000, tonight: "",
     contact: { name: r.contactName, phone: r.phone }, payout: {}, active: false, stage: "listed",
     requestId: r.id, createdAt: now(), updatedAt: now()
   };
@@ -164,13 +164,16 @@ export async function goLive(s, venueId, by) {
   }
   v.active = true; v.stage = "live"; v.liveAt = now(); v.updatedAt = now();
   await s.setJSON(K.venue(v.id), v);
+  // The venue's contact becomes its first manager on the board. They sign in with their own WhatsApp number.
+  const { ensureManager } = await import("./_outside_staff.mjs");
+  Object.assign(v, await ensureManager(s, v));
   if (v.requestId) {
     const r = await getJSON(s, K.request(v.requestId));
     if (r) { r.stage = "live"; r.history = [...(r.history || []), { at: now(), stage: "live", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }
   }
   // Tell the manager, best effort. Codes are also handed over in person on the visit.
   const ph = phoneE164(v.contact && v.contact.phone);
-  if (ph) sendText(ph, `${v.name} is live on Andiamo. Runner board: ${SITE}/board?v=${v.id}` + (keys ? ` Runner code: ${keys.runner}. Manager code: ${keys.manager}.` : "")).catch(() => {});
+  if (ph) sendText(ph, `${v.name} is live on Andiamo. Open ${SITE}/board on the bar phone and sign in once with this WhatsApp number. It stays signed in; your runners use that phone.`).catch(() => {});
   const { runnerKeyHash, managerKeyHash, ...view } = v;
   return { ok: true, venue: view, keys, warnings, board: SITE + "/board?v=" + v.id };
 }

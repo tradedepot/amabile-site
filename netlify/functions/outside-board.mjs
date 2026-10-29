@@ -1,14 +1,19 @@
 // Outside: runner board API for one venue. Owns /api/outside-board.
-//   GET  ?v=venueId&k=runnerKey[&after=cursor]   tickets (all open + today's, or changed since cursor)
+//   GET  ?v=venueId&t=boardToken[&after=cursor]  tickets (all open + today's, or changed since cursor)
+//   POST {action: "start", phone} | {action: "verify", phone, code}    staff sign in with their WhatsApp number
+//   POST {v, t, action: "team" | "team-add" {phone, name, role} | "team-remove" {phone}}   managers manage their staff
 //   POST {v, k, action, id?, runner?, code?, wine?, message?}
 //        scan {code} (a player's QR) | take | serve (code) | undo | cantfind (message to player) | swap (wine) | release (drop table not found)
 //        manager (mk = manager key): pause | resume | stock {wine: bool}
 import { store, json, clean, K, getJSON, listKeys, fetchAll, saveTicket, boardView, hashKey, wine, sendText, RULES } from "./_outside.mjs";
 import { ticketServed } from "./_outside_flow.mjs";
+import { boardStart, boardVerify, staffFromToken, addStaff, removeStaff, staffView } from "./_outside_staff.mjs";
 
 export const config = { path: "/api/outside-board" };
 
-async function venueFor(s, v, k) {
+// Staff sign in with their own WhatsApp number and get a board token (t). The old shared codes (k) still open a board.
+async function venueFor(s, v, k, t) {
+  if (t) return staffFromToken(s, t, v ? clean(v, 20) : "");
   const venue = await getJSON(s, K.venue(clean(v, 20)));
   if (!venue || !venue.active) return null;
   const h = hashKey(String(k || ""));
@@ -22,7 +27,7 @@ export default async (req) => {
   const url = new URL(req.url);
 
   if (req.method === "GET") {
-    const auth = await venueFor(s, url.searchParams.get("v"), url.searchParams.get("k"));
+    const auth = await venueFor(s, url.searchParams.get("v"), url.searchParams.get("k"), url.searchParams.get("t"));
     if (!auth) return json({ ok: false, error: "unauthorized" }, 401);
     const v = auth.venue.id;
     const after = url.searchParams.get("after") || "";
@@ -44,7 +49,7 @@ export default async (req) => {
       tickets = [...byId.values()];
     }
     const nowT = Date.now();
-    return json({ ok: true, full: !after, cursor: cursor || after, role: auth.role,
+    return json({ ok: true, full: !after, cursor: cursor || after, role: auth.role, you: auth.member ? { name: auth.member.name, role: auth.member.role } : null,
       venue: { id: v, name: auth.venue.name, paused: !!auth.venue.paused, outOf: auth.venue.outOf || {} },
       tickets: tickets.map((t) => ({ ...boardView(t), late: ["open", "taken"].includes(t.status) && nowT - t.createdAt > RULES.ticketEscalateMin * 60000 })),
       now: nowT });
@@ -52,9 +57,27 @@ export default async (req) => {
 
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
   let d; try { d = await req.json(); } catch { return json({ ok: false, error: "bad_json" }, 400); }
-  const auth = await venueFor(s, d.v, d.k);
+  if (d.action === "start") { const r = await boardStart(s, d.phone); return json(r, r.ok ? 200 : r.error === "slow_down" ? 429 : 400); }
+  if (d.action === "verify") { const r = await boardVerify(s, d.phone, d.code); return json(r, r.ok ? 200 : 400); }
+  const auth = await venueFor(s, d.v, d.k, d.t);
   if (!auth) return json({ ok: false, error: "unauthorized" }, 401);
   const venue = auth.venue;
+  if (auth.member) d.runner = auth.member.name;
+
+  if (["team", "team-add", "team-remove"].includes(d.action)) {
+    if (auth.role !== "manager") return json({ ok: false, error: "manager_only" }, 403);
+    if (d.action === "team-add") {
+      const r = await addStaff(s, venue.id, { phone: d.phone, name: d.name, role: d.role }, "manager:" + (auth.member ? auth.member.name : "code"));
+      if (!r.ok) return json(r, 400);
+    }
+    if (d.action === "team-remove") {
+      if (auth.member && auth.member.phone === d.phone) return json({ ok: false, error: "self" }, 400);
+      const r = await removeStaff(s, venue.id, d.phone);
+      if (!r.ok) return json(r, 400);
+    }
+    const v = await getJSON(s, K.venue(venue.id));
+    return json({ ok: true, team: (v.staff || []).map(staffView), you: auth.member ? auth.member.phone : null });
+  }
 
   if (["pause", "resume", "stock"].includes(d.action)) {
     if (auth.role !== "manager") return json({ ok: false, error: "manager_only" }, 403);

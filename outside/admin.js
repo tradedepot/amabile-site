@@ -97,6 +97,20 @@
     navCounts();
   }
 
+  // A field that needs fixing: red outline, a line under it, brought into view and focused, a nudge. Changing it clears it.
+  function flag(el, text) {
+    if (!el) return toast(text);
+    unflag(el);
+    el.classList.add("bad");
+    const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text;
+    el.insertAdjacentElement("afterend", p);
+    el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge");
+    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    if (el.matches("input, select, textarea")) try { el.focus({ preventScroll: true }); } catch {}
+    const off = () => unflag(el);
+    ["input", "change", "click"].forEach((ev) => el.addEventListener(ev, off, { once: true }));
+  }
+  function unflag(el) { const n = el.nextElementSibling; if (n && n.classList.contains("ferr")) n.remove(); el.classList.remove("bad"); }
   function toast(msg) { const t = document.createElement("div"); t.className = "toast"; t.textContent = msg; document.body.appendChild(t); setTimeout(() => t.remove(), 2600); }
   function dialog({ title, html = "", input, okText = "OK", cancel = "Cancel", danger }) {
     return new Promise((res) => {
@@ -119,13 +133,15 @@
       <h1>Welcome back</h1><p class="muted" style="margin:0 0 16px">Sign in to run drops, venues and payouts.</p>
       <label class="lb">Admin password</label><input id="k" type="password" autocomplete="current-password">
       <p style="margin:18px 0 0"><button class="btn lg" id="go" style="width:100%">Sign in</button></p>
-      <p class="muted" id="lmsg" style="margin:12px 0 0;color:var(--red-2)">${esc(msg || "")}</p></div></div>`;
+      </div></div>`;
     const go = async () => {
+      if (!$("k").value) return flag($("k"), "Enter the admin password.");
       ak = $("k").value; $("go").disabled = true;
-      try { const r = await call({ action: "venues" }); if (r.ok) { SS.set("outside.ak", ak); D.venues = r; frame(); nav("overview"); } else $("lmsg").textContent = "Couldn't sign in."; } catch {}
+      try { const r = await call({ action: "venues" }); if (r.ok) { SS.set("outside.ak", ak); D.venues = r; frame(); nav("overview"); } else flag($("k"), "Couldn't sign in. Try again."); } catch {}
       if ($("go")) $("go").disabled = false;
     };
     $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("k").focus();
+    if (msg) flag($("k"), msg);
   }
   const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["gaps", "Gaps", "gaps"]];
   function frame() {
@@ -236,14 +252,15 @@
   }
   function bCheck() {
     const { start, end } = bTimes();
-    if (!B.venueId) return "Pick a venue.";
-    if (B.prize === "bottle" && !B.wines.length) return "Pick at least one wine.";
-    if (B.prize === "item" && !B.item.trim()) return "Say what's dropping.";
-    if (B.kind === "hidden" && !B.clue.trim()) return "Write the clue players will see.";
-    if (end <= start) return "That end time is before the start.";
-    if (end < Date.now()) return "That time has already passed.";
-    return "";
+    if (!B.venueId) return { msg: "Pick a venue.", at: "#bvenues" };
+    if (B.prize === "bottle" && !B.wines.length) return { msg: "Pick at least one wine.", at: "#bwines" };
+    if (B.prize === "item" && !B.item.trim()) return { msg: "Say what's dropping. Players see this.", at: "#bitem" };
+    if (B.kind === "hidden" && !B.clue.trim()) return { msg: "Write the clue players will see.", at: "#bclue" };
+    if (end <= start) return { msg: "That end time is before the start.", at: "#bwhen" };
+    if (end < Date.now()) return { msg: "That time has already passed. Pick a later start.", at: "#bwhen" };
+    return null;
   }
+
 
   function ideas() {
     const vs = venuesAll().filter((v) => v.active), ds = (D.drops || []).filter((d) => d.status !== "cancelled");
@@ -327,18 +344,18 @@
   function renderBuilder() {
     const vs = venuesAll().filter((v) => v.active), W = (D.venues && D.venues.wines) || [];
     const v = venueById(B.venueId);
-    const fee = (v && v.runnerFee) || 2000;
+    const fee = (v && v.runnerFee) || 1000;
     const days = [...Array(7)].map((_, i) => i);
     const hours = [18, 19, 20, 21, 22, 23];
     const n = (k, done) => `<span class="num${done ? " done" : ""}">${k}</span>`;
     const { start, end } = bTimes();
     $("bsteps").innerHTML = !vs.length ? `<div class="empty"><b>No live venues yet.</b><br>A drop needs a venue on the map. <button class="lnk" id="golive">Go to venues</button></div>` : `
       <div class="step"><div class="sh">${n(1, B.venueId)}<h3>Where</h3><span class="muted">${vs.length} live ${vs.length === 1 ? "venue" : "venues"}</span></div>
-        <div class="tiles">${vs.map((x) => { const g = glowOf(x.id); return `<button class="tile venue${x.id === B.venueId ? " on" : ""}" data-v="${x.id}">${vArt(x, !!g)}<div style="min-width:0"><b>${esc(x.name)}</b><span style="display:block">${esc(x.area || "")}${x.area ? " · " : ""}${BAND_NAMES[x.band] || ""}</span>${g ? `<span class="glowtag"><span class="glowdot ${g}" style="width:7px;height:7px"></span>${GLOW[g]}</span>` : ""}</div></button>`; }).join("")}</div></div>
+        <div class="tiles" id="bvenues">${vs.map((x) => { const g = glowOf(x.id); return `<button class="tile venue${x.id === B.venueId ? " on" : ""}" data-v="${x.id}">${vArt(x, !!g)}<div style="min-width:0"><b>${esc(x.name)}</b><span style="display:block">${esc(x.area || "")}${x.area ? " · " : ""}${BAND_NAMES[x.band] || ""}</span>${g ? `<span class="glowtag"><span class="glowdot ${g}" style="width:7px;height:7px"></span>${GLOW[g]}</span>` : ""}</div></button>`; }).join("")}</div></div>
       <div class="step"><div class="sh">${n(2, 1)}<h3>What's dropping</h3></div>
         <div class="tiles big"><button class="tile bigt${B.prize === "bottle" ? " on" : ""}" data-prize="bottle"><span class="pic">${photo("rosso")}</span><div><b>Bottles</b><span style="display:block">One per table, shared</span></div></button>
           <button class="tile bigt${B.prize === "item" ? " on" : ""}" data-prize="item"><span class="pic">${A ? A.prize("cards", 46) : ""}</span><div><b>Something else</b><span style="display:block">Playing cards, merch, a surprise</span></div></button></div>
-        ${B.prize === "bottle" ? `<div class="extra"><label class="lb">Which wines? Players get one of these.</label><div class="tiles wines">${W.map((w) => `<button class="tile wine${B.wines.includes(w.id) ? " on" : ""}" data-w="${w.id}">${photo(w.id)}<b>${esc(w.name)}</b></button>`).join("")}</div></div>`
+        ${B.prize === "bottle" ? `<div class="extra"><label class="lb">Which wines? Players get one of these.</label><div class="tiles wines" id="bwines">${W.map((w) => `<button class="tile wine${B.wines.includes(w.id) ? " on" : ""}" data-w="${w.id}">${photo(w.id)}<b>${esc(w.name)}</b></button>`).join("")}</div></div>`
         : `<div class="extra"><label class="lb">What is it? Players see this.</label><input id="bitem" maxlength="40" value="${esc(B.item)}" placeholder="Amabile playing cards"><div class="chips" style="margin-top:10px">${ITEMS.map((x) => `<button class="chip${B.item === x ? " on" : ""}" data-itemq="${esc(x)}">${esc(x)}</button>`).join("")}</div>
           <label class="lb">Picture on the map</label><div class="chips">${[["cards", "Cards"], ["gift", "Gift box"]].map(([k, t]) => `<button class="chip${B.icon === k ? " on" : ""}" data-icon="${k}">${t}</button>`).join("")}</div></div>`}</div>
       <div class="step"><div class="sh">${n(3, 1)}<h3>How it plays</h3></div>
@@ -346,7 +363,7 @@
         ${B.kind === "gathering" ? `<div class="extra"><label class="lb">Opens when this many people are outside there</label><div class="range"><input type="range" id="blights" min="5" max="60" step="1" value="${B.lights}"><output id="blo">${B.lights}</output></div><div class="faint">Most rooms hit 10 to 20 on a busy night.</div></div>` : ""}
         ${B.kind === "hidden" ? `<div class="extra"><label class="lb">The clue</label><textarea id="bclue" maxlength="140" placeholder="Where the lagoon meets the lights, look for the red door.">${esc(B.clue)}</textarea><div class="faint">The venue's name stays secret until someone claims.</div></div>` : ""}</div>
       <div class="step"><div class="sh">${n(4, 1)}<h3>When</h3><span class="muted">Lagos time. Ends by 2am.</span></div>
-        <div class="whenrow"><span class="lbl2">Night</span><div class="chips">${days.map((i) => `<button class="chip red${B.day === i ? " on" : ""}" data-day="${i}">${dayName(i)}${[5, 6].includes(weekday(i)) ? " " + ic("flame", "").replace('class=""', 'style="width:13px;height:13px;vertical-align:-2px"') : ""}</button>`).join("")}</div>
+        <div class="whenrow" id="bwhen"><span class="lbl2">Night</span><div class="chips">${days.map((i) => `<button class="chip red${B.day === i ? " on" : ""}" data-day="${i}">${dayName(i)}${[5, 6].includes(weekday(i)) ? " " + ic("flame", "").replace('class=""', 'style="width:13px;height:13px;vertical-align:-2px"') : ""}</button>`).join("")}</div>
           <span class="lbl2">Starts</span><div class="chips">${B.day === 0 ? `<button class="chip${B.hour === "now" ? " on" : ""}" data-hour="now">Now</button>` : ""}${hours.map((h) => `<button class="chip${B.hour === h ? " on" : ""}" data-hour="${h}" ${B.day === 0 && lagosMidnight(0) + h * 3600e3 + 3600e3 < Date.now() ? "disabled style='opacity:.35'" : ""}>${h - 12}pm</button>`).join("")}</div>
           <span class="lbl2">Runs for</span><div class="chips">${[[1, "1 hour"], [2, "2 hours"], [3, "3 hours"], [4, "4 hours"], ["late", "Till 2am"]].map(([k, t]) => `<button class="chip${B.len === k ? " on" : ""}" data-len="${k}">${t}</button>`).join("")}</div>
           <div class="faint" style="font-weight:800;color:var(--ink)">${range(start, end)}</div></div></div>
@@ -378,7 +395,7 @@
     const live = () => { preview(); summary(); const f = $("bfee"); if (f) f.textContent = naira(fee * B.count); };
     const sv = $("bsave");
     if (sv) sv.onclick = async () => {
-      const err = bCheck(); if (err) return toast(err);
+      const err = bCheck(); if (err) return flag(document.querySelector(err.at), err.msg);
       const t = bTimes(); sv.disabled = true;
       const r = await call({ action: "drop-save", drop: { venueId: B.venueId, kind: B.kind, start: new Date(t.start).toISOString(), end: new Date(t.end).toISOString(), bottles: B.count, prize: B.prize, item: B.item, icon: B.icon, gatheringLights: B.lights, wines: B.wines, clue: B.clue, reward: B.reward } });
       sv.disabled = false;
@@ -389,7 +406,7 @@
   }
   function summary() {
     const el = $("bsum"); if (!el) return;
-    const v = venueById(B.venueId), { start, end } = bTimes(), err = bCheck();
+    const v = venueById(B.venueId), { start, end } = bTimes(), err = (bCheck() || {}).msg;
     const what = B.prize === "item" ? `${B.count} × <b>${esc(B.item || "something")}</b>` : `<b>${B.count} bottles</b> of ${esc(wineNames(B.wines) || "...")}`;
     el.innerHTML = `${what} at <b>${esc(v ? v.name : "...")}</b>, ${esc(range(start, end))}. ${esc(DKIND[B.kind].p)}${B.kind === "gathering" ? ` (${B.lights} people)` : ""}.${err ? `<span class="err">${esc(err)}</span>` : ""}`;
   }
@@ -415,7 +432,7 @@
       <div class="vgrid" id="vg">${vs.map((v) => `<div class="vcard" data-e="${v.id}" data-name="${esc((v.name + " " + (v.area || "")).toLowerCase())}"><div class="top">${vArt(v, !!glowOf(v.id))}<div style="min-width:0"><h3>${esc(v.name)}</h3><div class="muted">${esc(v.area || "No area yet")}</div></div></div>
         <div class="meta">${v.active ? '<span class="pill ok"><span class="dot"></span>Live</span>' : `<span class="pill${v.stage === "paused" ? "" : " gold"}">${esc(STAGE[v.stage] || "Not live")}</span>`}<span class="pill">${BAND_NAMES[v.band] || "No level"}</span>${v.paused ? '<span class="pill warn">Paused by venue</span>' : ""}${v.outlet ? '<span class="pill">Account linked</span>' : ""}</div>
         ${!v.active && v.checks && v.checks.missing.length ? `<div class="need">Needs ${esc(v.checks.missing.join(", "))}</div>` : ""}
-        <div class="foot"><button class="btn sm sec" data-open="${v.id}">Open</button>${v.active ? `<a class="btn sm sec" href="/outside/board?v=${esc(v.id)}" target="_blank" onclick="event.stopPropagation()">Runner board</a><button class="btn sm sec" data-k="${v.id}">New codes</button>` : ""}</div></div>`).join("")
+        <div class="foot"><button class="btn sm sec" data-open="${v.id}">Open</button>${v.active ? `<a class="btn sm sec" href="/outside/board?v=${esc(v.id)}" target="_blank" onclick="event.stopPropagation()">Runner board</a>` : ""}</div></div>`).join("")
         || `<div class="empty">No venues here yet.</div>`}</div>`;
     $("new").onclick = () => venueForm({});
     P().querySelectorAll("[data-vf]").forEach((b) => (b.onclick = () => { vFilter = b.dataset.vf; venues(); }));
@@ -445,7 +462,7 @@
       <div class="card"><div class="ch"><h2>Menu prices</h2><span class="muted">Per bottle. Blank if they don't stock it.</span></div>
         <div class="grid">${W.map((w) => `<div><label class="lb">${esc(w.name)}</label><div class="money-in"><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div></div>`).join("")}</div>
         <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-weight:700"><input type="checkbox" id="tax"${v.taxIncluded ? " checked" : ""}> Menu prices include VAT, consumption tax and service</label>
-        <div class="grid"><div><label class="lb">Runner fee per drop handover</label><div class="money-in"><input id="fee" inputmode="numeric" value="${v.runnerFee || 2000}"></div></div></div></div>
+        <div class="grid"><div><label class="lb">Runner fee per drop handover</label><div class="money-in"><input id="fee" inputmode="numeric" value="${v.runnerFee || 1000}"></div></div></div></div>
       <div class="card"><div class="ch"><h2>Location</h2>${v.locationFrom === "outlet" ? '<span class="pill">From the linked account</span>' : ""}</div>
         <p class="muted" style="margin:0 0 12px">Stand inside and tap Use my location, or paste a Google Maps link.</p>
         <div class="row"><button class="btn sec" id="here">${ic("gaps")} Use my location</button><input id="gm" placeholder="Paste a Google Maps link" style="flex:1;min-width:220px"></div>
@@ -457,6 +474,7 @@
           ${v.active ? `<p style="margin:0 0 12px">On the map since ${v.liveAt ? esc(dayLong(v.liveAt)) : "launch"}.</p><div class="row"><a class="btn sec sm" target="_blank" href="/outside/board?v=${esc(v.id)}">Runner board</a><button class="btn sec sm" id="off">Take offline</button></div>`
           : `<div class="check">${NEED.map((k) => `<div class="${ch.missing.includes(k) ? "n" : "y"}"><i>${ch.missing.includes(k) ? "!" : "✓"}</i>${k[0].toUpperCase() + k.slice(1)}</div>`).join("")}${ch.missing.filter((k) => !NEED.includes(k)).map((k) => `<div class="n"><i>!</i>${esc(k)}</div>`).join("")}${(ch.warnings || []).map((k) => `<div class="w"><i>·</i>${esc(k[0].toUpperCase() + k.slice(1))}, worth adding</div>`).join("")}</div>
              <button class="btn" id="live" style="width:100%"${ch.missing.length ? " disabled" : ""}>Go live</button>${ch.missing.length ? '<p class="faint" style="margin:8px 0 0">Save the missing pieces first.</p>' : ""}`}</div>
+        ${v.id ? `<div class="card"><div class="ch"><h2>Runner board</h2><span class="muted">Who can sign in</span></div><div id="team"></div></div>` : ""}
         <div class="card"><div class="ch"><h2>Payout account</h2>${v.payout && v.payout.recipient ? '<span class="pill ok">Verified</span>' : ""}</div><div id="payacct"></div></div>
         <div class="card"><div class="ch"><h2>Outlet account</h2></div>
           ${v.outlet ? `<p style="margin:0 0 10px"><b>${esc(v.outlet.name)}</b> #${esc(v.outlet.number)}<br><span class="muted">${esc(v.outlet.contactPerson || "")} ${esc(v.outlet.contactPhone || "")}</span></p><button class="btn sm sec" id="unlink">Unlink</button>` : `<p class="muted" style="margin:0 0 10px">Link the account we already hold. It fills in location and contact, and finds their orders in the sales data.</p>`}
@@ -475,6 +493,8 @@
     $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); toast("Location set, about " + Math.round(p.coords.accuracy) + "m. Save to keep it."); }, () => toast("Location not available."), { enableHighAccuracy: true, timeout: 15000 });
     $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; toast("Location read from the link. Save to keep it."); } };
     $("save").onclick = async () => {
+      if (!$("name").value.trim()) return flag($("name"), "Add the venue's name.");
+      const bad = [...document.querySelectorAll("[data-p]")].find((i) => i.value.trim() && !/^[\d,.\s₦]+$/.test(i.value)); if (bad) return flag(bad, "Numbers only, e.g. 50000.");
       const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
       const venue = { id: v.id, name: $("name").value, area: $("area").value, band: $("band").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
         lat: $("lat").value === "" ? null : Number($("lat").value), lng: $("lng").value === "" ? null : Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
@@ -494,7 +514,7 @@
         reopenVenue(v.id, x.ok ? `<div class="note">Linked. ${x.venue.locationFrom === "outlet" ? "Location taken from the account." : ""}</div>` : `<div class="note red">Couldn't link: ${esc(x.error)}</div>`);
       }));
     };
-    payAccount(v);
+    payAccount(v); teamCard(v);
     const ul = $("unlink"); if (ul) ul.onclick = async () => { await call({ action: "venue-link", venueId: v.id, outletId: "" }); reopenVenue(v.id); };
     $("fromsales").onclick = async () => {
       const x = await call({ action: "venue-supply", venueId: v.id, fromSales: true });
@@ -511,9 +531,34 @@
     const lv = $("live"); if (lv) lv.onclick = async () => {
       const x = await call({ action: "venue-live", venueId: v.id });
       if (!x.ok) return reopenVenue(v.id, `<div class="note red">Not ready: ${esc((x.missing || []).join(", ") || x.error)}</div>`);
-      reopenVenue(v.id, (x.keys ? keysNote(x, v.name) : "") + `<div class="note">${esc(v.name)} is live on the map.${x.warnings && x.warnings.length ? " Still worth adding: " + esc(x.warnings.join(", ")) + "." : ""}</div>`);
+      reopenVenue(v.id, `<div class="note">${esc(v.name)} is live on the map. ${(x.venue.staff || []).length ? esc(x.venue.staff[0].name) + " signs in once at " + esc(location.host) + "/board on the bar phone with their WhatsApp number. Runners use that phone." : "Add the manager under Team so they can open the runner board."}${x.warnings && x.warnings.length ? " Still worth adding: " + esc(x.warnings.join(", ")) + "." : ""}</div>`);
     };
     const off = $("off"); if (off) off.onclick = async () => { if (!(await dialog({ title: "Take it off the map?", html: `${esc(v.name)} disappears for players. Waiting bottles can't be claimed there.`, okText: "Take offline", danger: true }))) return; await call({ action: "venue-off", venueId: v.id }); reopenVenue(v.id); };
+  }
+
+  // People who can open the venue's runner board. They sign in at /board with their own WhatsApp number.
+  function teamCard(v) {
+    const el = $("team"); if (!el) return;
+    const staff = v.staff || [];
+    el.innerHTML = `${staff.length ? staff.map((m) => `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-2)"><div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="faint">${esc(m.phone)}</div></div><button class="lnk dim" data-srm="${esc(m.phone)}">Remove</button></div>`).join("")
+        : `<p class="muted" style="margin:0 0 6px">No one yet. ${v.contact && v.contact.phone ? "The manager's number is added when the venue goes live." : "Add the manager's number."}</p>`}
+      <label class="lb">Name</label><input id="sname" maxlength="30">
+      <label class="lb">WhatsApp number</label><input id="sphone" inputmode="tel" placeholder="0803 000 0000, or +44 7700 900123">
+      <button class="btn sm sec" id="sadd" style="margin-top:10px">Let them sign in</button>
+      <p class="faint" style="margin:10px 0 0">Usually just the manager. They sign in once at ${esc(location.host)}/board on the bar phone and it stays signed in. Runners use that phone; they don't sign in.</p>`;
+    $("sadd").onclick = async () => {
+      if (!$("sname").value.trim()) return flag($("sname"), "Add their name.");
+      if (!$("sphone").value.trim()) return flag($("sphone"), "Add their WhatsApp number.");
+      const r = await call({ action: "staff-add", venueId: v.id, name: $("sname").value, phone: $("sphone").value, role: "manager" });
+      if (!r.ok) return flag($("sphone"), r.error === "phone" ? "Check the number. Use + and the country code for numbers outside Nigeria." : "Couldn't add them: " + r.error);
+      toast($("sname").value.trim() + " added."); v.staff = r.staff; teamCard(v);
+    };
+    el.querySelectorAll("[data-srm]").forEach((b) => (b.onclick = async () => {
+      const m = staff.find((x) => x.phone === b.dataset.srm);
+      if (!(await dialog({ title: `Remove ${m.name}?`, html: "They can't open the runner board from now on.", okText: "Remove", danger: true }))) return;
+      const r = await call({ action: "staff-remove", venueId: v.id, phone: m.phone });
+      if (r.ok) { v.staff = r.staff; teamCard(v); toast(m.name + " removed."); }
+    }));
   }
 
   // The venue's bank account, checked with the bank and registered with Paystack so we can pay them the moment a bottle is served.
@@ -533,10 +578,10 @@
     const cn = $("pcancel"); if (cn) cn.onclick = () => payAccount(v);
     $("pverify").onclick = async () => {
       const bankCode = $("pbank").value, account = $("pacct").value.replace(/\D/g, "");
-      if (!bankCode) return ($("pmsg").textContent = "Choose the bank.");
-      if (account.length !== 10) return ($("pmsg").textContent = "Account numbers have 10 digits.");
+      if (!bankCode) return flag($("pbank"), "Choose the bank.");
+      if (account.length !== 10) return flag($("pacct"), "Account numbers have 10 digits.");
       $("pverify").disabled = true; $("pmsg").textContent = "Checking with the bank...";
-      const fail = (r) => { $("pverify").disabled = false; $("pmsg").textContent = r.error === "resolve" ? "The bank doesn't recognise that account. Check the number and bank." : r.error === "recipient" ? "Paystack couldn't add the account: " + (r.message || "try again") : "Couldn't check: " + r.error; };
+      const fail = (r) => { $("pverify").disabled = false; r.error === "resolve" ? ($("pmsg").textContent = "", flag($("pacct"), "The bank doesn't recognise that account. Check the number and the bank.")) : $("pmsg").textContent = r.error === "recipient" ? "Paystack couldn't add the account: " + (r.message || "try again") : "Couldn't check: " + r.error; };
       const q = await call({ action: "payout-resolve", bankCode, account });
       if (!q.ok) return fail(q);
       $("pmsg").textContent = ""; $("pverify").disabled = false;

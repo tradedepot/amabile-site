@@ -95,6 +95,13 @@ a { color:var(--red-2); font-weight:800; }
   .kinds { grid-template-columns:repeat(4, 1fr); }
 }
 @media (max-width: 380px) { .kinds { grid-template-columns:repeat(2, 1fr); } .row { grid-template-columns:1fr; } }
+.bad { border-color:var(--red-2) !important; box-shadow:0 0 0 4px rgba(200,55,29,.14) !important; }
+.seg.bad { box-shadow:0 0 0 2px var(--red-2) !important; }
+.ferr { display:flex; align-items:flex-start; gap:7px; color:var(--red-2); font-weight:800; font-size:13.5px; line-height:1.35; margin:7px 2px 0; }
+.ferr::before { content:"!"; flex:none; width:17px; height:17px; border-radius:50%; background:var(--red-2); color:#fff; font-size:11px; font-weight:900; display:flex; align-items:center; justify-content:center; margin-top:1px; }
+.nudge { animation:nudge .32s ease-in-out; }
+@keyframes nudge { 20% { transform:translateX(-6px); } 40% { transform:translateX(6px); } 60% { transform:translateX(-4px); } 80% { transform:translateX(3px); } }
+@media (prefers-reduced-motion: reduce) { .nudge { animation:none; } }
 </style>
 </head>
 <body>
@@ -186,9 +193,9 @@ a { color:var(--red-2); font-weight:800; }
   $("kinds").innerHTML = KINDS.map(([v, l], i) => `<label><input type="radio" name="kind" value="${v}"${i ? "" : " checked"}><span class="k">${ART ? ART.venueArt(v, false, 34) : ""}${l}</span></label>`).join("");
 
   const ERR = {
-    phone: "That number doesn't look right.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
+    phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    venue_name: "Add your venue's name.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Add the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
+    venue_name: "Add your venue's name.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Add the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   let token = null, codeSent = false, busy = false;
@@ -203,16 +210,32 @@ a { color:var(--red-2); font-weight:800; }
   const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
     ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
     ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
-  const flag = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
-  $("cc").innerHTML = CCS.map(([k, iso, n]) => `<option value="${k}">${flag(iso)} ${n} +${k}</option>`).join("");
-  const ccShow = () => { const x = CCS.find(([k]) => k === $("cc").value) || CCS[0]; $("ccv").textContent = flag(x[1]) + " +" + x[0]; $("phone").placeholder = x[0] === "234" ? "803 000 0000" : ""; };
+  const flagOf = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  $("cc").innerHTML = CCS.map(([k, iso, n]) => `<option value="${k}">${flagOf(iso)} ${n} +${k}</option>`).join("");
+  const ccShow = () => { const x = CCS.find(([k]) => k === $("cc").value) || CCS[0]; $("ccv").textContent = flagOf(x[1]) + " +" + x[0]; $("phone").placeholder = x[0] === "234" ? "803 000 0000" : ""; };
   ccShow();
   $("cc").onchange = () => { ccShow(); $("phone").dispatchEvent(new Event("input")); $("phone").focus(); };
   $("phone").addEventListener("input", () => { const v0 = $("phone").value; if (/^\s*0/.test(v0)) $("phone").value = v0.replace(/^\s*0+/, ""); });
   // The number with its country code. Typed with + or 00, it keeps its own; Nigerian numbers can be typed the local way.
   const phone = () => { const raw = val("phone"), cc = $("cc").value, d = raw.replace(/\D/g, ""); return !d || raw.startsWith("+") || raw.startsWith("00") || cc === "234" ? raw : "+" + cc + d.replace(/^0+/, ""); };
   const radio = (n) => (document.querySelector(`input[name="${n}"]:checked`) || {}).value;
-  const fail = (e, focus) => { $("err").textContent = ERR[e] || ERR.server; if (focus) $(focus).focus(); };
+  // A field that needs fixing: red outline, a line under it, brought into view and focused, a nudge and a buzz. Typing in it clears it.
+  function flag(id, text) {
+    const el = $(id), box = el.closest(".phonef") || el, host = box;
+    unflag(host);
+    box.classList.add("bad");
+    const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text;
+    host.insertAdjacentElement("afterend", p);
+    box.classList.remove("nudge"); void box.offsetWidth; box.classList.add("nudge");
+    try { navigator.vibrate && navigator.vibrate(60); } catch {}
+    box.scrollIntoView({ block: "center", behavior: "smooth" });
+    const inp = el.matches("input, select, textarea") ? el : null; if (inp) try { inp.focus({ preventScroll: true }); } catch {}
+    const off = () => unflag(host);
+    (inp ? [inp] : [...el.querySelectorAll("input")]).forEach((x) => { x.addEventListener("input", off, { once: true }); x.addEventListener("change", off, { once: true }); });
+  }
+  function unflag(host) { const n = host.nextElementSibling; if (n && n.classList.contains("ferr")) n.remove(); host.classList.remove("bad"); }
+  const FIELD = { venue_name: "name", area: "area", stocks: "stocks", contact_name: "contact", phone: "phone", send_failed: "phone", slow_down: "phone", wrong_code: "code", expired: "code", too_many: "code", email: "email" };
+  const fail = (e) => { $("err").textContent = ""; if (FIELD[e]) return flag(FIELD[e], ERR[e] || ERR.server); $("err").textContent = ERR[e] || ERR.server; };
 
   function details() {
     return { name: val("name"), kind: radio("kind"), area: val("area"), tables: Number(val("tables")) || 0, address: val("address"),
@@ -220,11 +243,13 @@ a { color:var(--red-2); font-weight:800; }
       contactName: val("contact"), role: $("role").value, email: val("email"), visitTime: val("visit"), note: val("note") };
   }
   function check(d) {
-    if (d.name.length < 2) return fail("venue_name", "name"), false;
-    if (!d.area) return fail("area", "area"), false;
-    if (!d.stocksAmabile) return fail("stocks"), $("stocks").scrollIntoView({ block: "center" }), false;
-    if (!d.contactName) return fail("contact_name", "contact"), false;
-    if (phone().replace(/\D/g, "").length < 8) return fail("phone", "phone"), false;
+    if (d.name.length < 2) return fail("venue_name"), false;
+    if (!d.area) return fail("area"), false;
+    if (!d.stocksAmabile) return fail("stocks"), false;
+    if (!d.contactName) return fail("contact_name"), false;
+    if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return fail("email"), false;
+    if (!val("phone")) return flag("phone", "Add your WhatsApp number."), false;
+    if (phone().replace(/\D/g, "").length < 8) return fail("phone"), false;
     return true;
   }
 
@@ -240,7 +265,7 @@ a { color:var(--red-2); font-weight:800; }
     try {
       if (!codeSent) {
         const r = await api("auth/start", { phone: phone() });
-        if (!r.ok) return fail(r.error, "phone");
+        if (!r.ok) return fail(r.error);
         codeSent = true;
         $("codeBox").classList.remove("hidden");
         $("devNote").textContent = r.devCode ? "Test code: " + r.devCode : "";
@@ -249,8 +274,9 @@ a { color:var(--red-2); font-weight:800; }
         return;
       }
       if (!token) {
+        if (val("code").replace(/\D/g, "").length < 6) return flag("code", "Enter the 6-digit code from WhatsApp.");
         const r = await api("auth/verify", { phone: phone(), code: val("code") });
-        if (!r.ok) return fail(r.error, "code");
+        if (!r.ok) return fail(r.error);
         token = r.token;
       }
       const r = await api("venue-request", d);
