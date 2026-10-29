@@ -1022,7 +1022,7 @@
       <span class="a right">${A.avatar({ skin: "s4", hair: "cap", face: "shades", outfit: "jersey" }, 96)}</span></div>
       <div class="welcome"><h2>Lagos, Andiamo!</h2><p>Send an Amabile to a friend's table.<br>Find free bottle drops and cool stuff from Amabile at real spots around the city.</p></div>
       <button class="btn block" id="go">Step outside</button>
-      <p class="muted" style="font-size:12px;text-align:center">For people 18 and over. Drink responsibly. <a href="https://andiamo.ng/privacy" target="_blank" rel="noopener" style="color:inherit">Privacy</a></p>`, (c) => {
+      <p class="muted" style="font-size:12px;text-align:center">18+. Drink responsibly. <a href="https://andiamo.ng/privacy" target="_blank" rel="noopener" style="color:inherit">Privacy</a></p>`, (c) => {
       c.querySelector("#go").onclick = closeModal;
     });
   }
