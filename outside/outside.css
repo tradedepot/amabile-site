@@ -215,7 +215,8 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .wcard.on::after { content: "✓"; position: absolute; top: 6px; right: 6px; width: 24px; height: 24px; border-radius: 50%; background: var(--wine); color: #fff; font-weight: 900; font-size: 14px; line-height: 24px; border: 2px solid #fff; }
 .bandlist { display: grid; gap: 8px; }
 .bandrow { display: flex; align-items: center; gap: 12px; padding: 11px 14px; border: 3px solid var(--rule); border-radius: 16px; background: #fff; text-align: left; }
-.bandrow b { display: block; font-size: 15px; } .bandrow small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 700; }
+.bandrow b { display: block; font-size: 15px; } .bandrow small { display: block; font-size: 12px; color: var(--ink-2); font-weight: 700; line-height: 1.35; margin-top: 2px; }
+.bandrow .grow { min-width: 0; } .bandlist { grid-template-columns: minmax(0, 1fr); } .bandrow { width: 100%; min-width: 0; } .bandrow .pr { flex: none; }
 .bandrow .pr { font-weight: 900; font-size: 15px; }
 .bandrow .rd { flex: none; width: 20px; height: 20px; border-radius: 50%; border: 3px solid var(--ink-2); }
 .bandrow.on { border-color: var(--ink); background: #fff3d6; }

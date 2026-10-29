@@ -18,7 +18,7 @@
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
-  publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
+  publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, venuesByPopularity, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
   payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "./_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "./_outside_flow.mjs";
@@ -106,7 +106,7 @@ export default async (req) => {
     if (route === "config") {
       const [bands, venues, glow] = await Promise.all([getBands(s), allVenues(s), computeGlow(s)]);
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
-        venues: venues.filter((v) => v.active).map(publicVenue), glow: glow.glow, drops: await liveDrops(s),
+        venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map(publicVenue), glow: glow.glow, drops: await liveDrops(s),
         beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", rules: { lightHours: RULES.lightHours } });
     }
 

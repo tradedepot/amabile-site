@@ -45,7 +45,7 @@ export const DEFAULT_BANDS = {
   frizzante: { everyday: 40000, lounge: 60000, premium: 80000, top: null },
   spumante:  { everyday: null,  lounge: null,  premium: 200000, top: null } // Premium only for now; revisit once venue menus are in
 };
-export const BAND_NAMES = { everyday: "Chill", lounge: "Classy", premium: "Premium", top: "VIP" };
+export const BAND_NAMES = { everyday: "Bene", lounge: "Molto Bene", premium: "Benissimo", top: "Mamma Mia!" };
 export const bandRank = (b) => BAND_ORDER.indexOf(b);
 
 // ---------- rules ----------
@@ -301,6 +301,23 @@ export function claimCheck(bands, bottle, v) {
 // ---------- lights ----------
 export function lightIsOn(l, t = Date.now()) { return !!(l && l.on && l.until > t); }
 export function newLightUntil(t = Date.now()) { return Math.min(t + RULES.lightHours * 3600 * 1000, next2am(t)); }
+
+// Live venues, busiest first: bottles served in the last 30 days, recounted every 6 hours. Ties go to the venue live longest.
+// Players get the order, never the counts. The send screen names the first few at each level.
+export async function venuesByPopularity(s, venues) {
+  let pop = await getJSON(s, "cache/pop");
+  if (!pop || Date.now() - pop.at > 6 * 3600e3) {
+    const since = String(Date.now() - 30 * 864e5).padStart(14, "0"), counts = {};
+    for (const v of venues) {
+      const keys = await listKeys(s, K.ledgerPrefix(v.id));
+      counts[v.id] = keys.filter((k) => k.slice(K.ledgerPrefix(v.id).length, K.ledgerPrefix(v.id).length + 14) >= since).length;
+    }
+    pop = { at: Date.now(), counts };
+    await s.setJSON("cache/pop", pop);
+  }
+  const n = (v) => pop.counts[v.id] || 0, since = (v) => v.liveAt || v.createdAt || 0;
+  return [...venues].sort((a, b) => n(b) - n(a) || since(a) - since(b));
+}
 
 export async function computeGlow(s, force = false) {
   const cached = await getJSON(s, K.glow);

@@ -7,7 +7,7 @@
   const D = {};
 
   // ---------- names ----------
-  const BAND_NAMES = { everyday: "Chill", lounge: "Classy", premium: "Premium", top: "VIP" };
+  const BAND_NAMES = { everyday: "Bene", lounge: "Molto Bene", premium: "Benissimo", top: "Mamma Mia!" };
   const STAGE = { requested: "Requested", visit_booked: "Visit booked", listed: "Listed", stocked: "Stock noted", live: "Live", declined: "Declined", paused: "Offline" };
   const VKIND = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
   const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
@@ -691,7 +691,7 @@
     P().innerHTML = head("Prices", "What a sender pays for a waiting bottle at each level. It can be claimed at that level or below.") +
       Object.keys(b).map((fam) => `<div class="card"><div class="ch"><h2>${fam === "spumante" ? "Spumante" : "Frizzante"}</h2><span class="muted">${fam === "spumante" ? "Spumante Rosé and Spumante Bianco" : "Rosso, Bianco and Rosato"}</span></div>
         <div class="grid">${order.map((k) => `<div><label class="lb">${BAND_NAMES[k]}</label><div class="money-in"><input data-f="${fam}" data-b="${k}" inputmode="numeric" value="${b[fam][k] || ""}" placeholder="${k === "top" ? "Venue's own price" : "Not offered"}"></div></div>`).join("")}</div></div>`).join("") +
-      `<div class="row" style="margin-top:16px"><button class="btn lg" id="save">Save prices</button><span class="muted">Blank means not offered at that level. VIP sends are priced at the venue.</span></div>`;
+      `<div class="row" style="margin-top:16px"><button class="btn lg" id="save">Save prices</button><span class="muted">Blank means not offered at that level. Mamma Mia! sends are priced at the venue.</span></div>`;
     $("save").onclick = async () => {
       const out = {}; document.querySelectorAll("[data-f]").forEach((i) => { out[i.dataset.f] = out[i.dataset.f] || {}; out[i.dataset.f][i.dataset.b] = i.value; });
       const r = await call({ action: "bands-save", bands: out }); toast(r.ok ? "Prices saved." : "Couldn't save.");
