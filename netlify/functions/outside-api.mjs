@@ -15,6 +15,7 @@
 //   POST circle {phone, level|remove} | block {phone}
 //   GET  room                        players visible in the same venue
 //   POST drop {dropId, lat, lng, acc, tent?, table, passTo?}
+//   POST push {sub} | push {off, endpoint}   browser notifications on this phone (alongside WhatsApp)
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
@@ -22,6 +23,7 @@ import {
   payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "../lib/_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "../lib/_outside_flow.mjs";
+import { vapidPublic, saveSub, dropSub } from "../lib/_outside_push.mjs";
 
 export const config = { path: "/api/outside/*" };
 
@@ -107,7 +109,7 @@ export default async (req) => {
       const [bands, venues, glow] = await Promise.all([getBands(s), allVenues(s), computeGlow(s)]);
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
         venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map(publicVenue), glow: glow.glow, drops: await liveDrops(s),
-        beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", rules: { lightHours: RULES.lightHours } });
+        beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", vapid: vapidPublic(), rules: { lightHours: RULES.lightHours } });
     }
 
     if (route === "auth/start") {
@@ -200,6 +202,12 @@ export default async (req) => {
       const { reissueGift } = await import("../lib/_outside_gift.mjs");
       const r = await reissueGift(s, me, d.bottleId);
       return r.ok ? json(r) : bad(r.error, 409);
+    }
+
+    if (route === "push") {
+      if (d.off) { await dropSub(s, me, clean(d.endpoint, 1000)); return json({ ok: true }); }
+      const r = await saveSub(s, me, d.sub, req.headers.get("user-agent"));
+      return r.ok ? json(r) : bad(r.error);
     }
 
     if (route === "me") {
@@ -433,7 +441,7 @@ export default async (req) => {
       await saveBottle(s, b);
       await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
       const { sendBottleNotice } = await import("../lib/_outside.mjs");
-      sendBottleNotice(b).catch(() => {});
+      await sendBottleNotice(b).catch(() => {});
       return json({ ok: true });
     }
 

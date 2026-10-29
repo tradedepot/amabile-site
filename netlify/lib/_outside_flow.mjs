@@ -60,7 +60,12 @@ export async function markBottlePaid(s, b, tx, via) {
     await saveBottle(s, b);
     await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
     const from = b.anon ? "Someone" : (b.fromName || "A friend");
-    sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Andiamo and tap Glow when you see the runner.").catch(() => {});
+    // WhatsApp and a browser push, side by side.
+    const { bottleOnWayPush } = await import("./_outside_push.mjs");
+    await Promise.all([
+      sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Andiamo and tap Glow when you see the runner.").catch(() => {}),
+      bottleOnWayPush(b).catch(() => {})
+    ]);
     return b;
   }
 

@@ -352,3 +352,14 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .nudge { animation: nudge .32s ease-in-out; }
 @keyframes nudge { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
+/* notifications: a ping alongside WhatsApp */
+.ping { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 4px 0 14px; border: 3px solid var(--rule); border-radius: 18px; background: #fff; text-align: left; }
+.ping .pb { flex: none; width: 40px; height: 40px; border-radius: 12px; background: var(--wine); color: #fff; display: flex; align-items: center; justify-content: center; }
+.ping .pb svg { width: 21px; height: 21px; }
+.ping.on .pb { background: var(--ok); }
+.ping .grow { min-width: 0; }
+.ping b { display: block; font-size: 14.5px; line-height: 1.25; color: var(--ink); }
+.ping small { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 2px; line-height: 1.3; }
+.ping .pa { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.ping .pa .link { font-size: 12.5px; }
+.modal .ping { margin: 14px 0 0; }

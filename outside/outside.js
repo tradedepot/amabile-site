@@ -445,6 +445,7 @@
     renderChrome(); renderMap();
     // Redraw an open sheet, unless someone is typing in it.
     if (S.sheetTab && !(poll && $("#sheet").contains(document.activeElement))) openSheet(S.sheetTab);
+    if (S.me) pushSync();
   }
 
   // ---------- bottles ----------
@@ -457,8 +458,9 @@
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
       <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Andiamo and tap Bring it here.</p>
-      <button class="btn block" data-x2>See the spots</button>`, (c) => {
+      <button class="btn block" data-x2>See the spots</button>${pingCard("intro")}`, (c) => {
       c.querySelector("[data-x2]").onclick = () => { closeModal(); focusSpots(spots); };
+      bindPing(c, () => { const p = c.querySelector(".ping"); if (p) p.remove(); });
     });
   }
   function focusSpots(spots) {
@@ -482,7 +484,7 @@
       return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : ""}</div></div>` +
         (isLink ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
-    return `<h2>My bottles</h2><h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
+    return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
   function bindSheet(tab) {
@@ -495,6 +497,7 @@
     }));
     body.querySelectorAll("[data-more]").forEach((b) => (b.onclick = () => bottleMore(b.dataset.more)));
     body.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { const r = await api("cancel", { bottleId: b.dataset.cancel }); if (!r.ok) toast(errMsg(r.error)); await loadMe(); }));
+    bindPing(body, () => openSheet(S.sheetTab));
     if (tab === "friends") bindFriends(body);
     if (tab === "drops") body.querySelectorAll("[data-dropgo]").forEach((b) => (b.onclick = () => dropCard(b.dataset.dropgo)));
   }
@@ -974,15 +977,90 @@
       <div class="status"><div class="n">${p.received || 0}</div><div class="grow"><b>bottle${p.received === 1 ? "" : "s"} sent to your table</b>
         <div class="bar"><i style="width:${pct}%"></i></div><small>${p.next ? `${p.toNext} more to <b>${esc(p.next)}</b>` : "As high as it goes."}</small></div></div>
       ${S.me.light ? `<div class="outnote"><b>No one can see where you are.</b> Your people just know you're outside tonight. <button class="link" id="lightOff">Turn off</button></div>` : ""}
+      ${pingCard("me")}
       <p></p><button class="btn block ghost" id="look">Change my name or avatar</button>
       <p class="notyou">Not ${esc(p.name)}? <button class="link" id="out">Use another number</button></p>`, (c) => {
       c.querySelector("#look").onclick = () => profileStep(null, true);
+      bindPing(c, () => meCard());
       const lf = c.querySelector("#lightOff"); if (lf) lf.onclick = async () => { await api("light", { on: false }); closeModal(); await loadMe(); toast("Done."); };
       // Someone else on this phone: ask for their number. This phone stays with the current person until the new code is confirmed.
       c.querySelector("#out").onclick = () => signIn(() => { renderMap(); meCard(); }, WHY.switch);
     });
   }
 
+
+  // ---------- notifications ----------
+  // A ping on this phone when someone sends you a bottle. Always alongside the WhatsApp message, never instead of it.
+  // Android: one tap. iPhone: only once Andiamo is on the Home Screen (Apple's rule), so we say how.
+  const PUSH = {
+    supported: () => "serviceWorker" in navigator && "PushManager" in window && "Notification" in window,
+    ios: /iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1),
+    standalone: () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true
+  };
+  const BELL = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 8a6 6 0 1 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.9 1.9 0 0 0 3.4 0"/></svg>';
+  // "on", "ask" (one tap away), "home" (iPhone, add to Home Screen first), "blocked", or "none" (can't on this browser).
+  function pushState() {
+    if (!S.cfg || !S.cfg.vapid || !S.me) return "none";
+    if (PUSH.supported()) {
+      if (Notification.permission === "denied") return "blocked";
+      return Notification.permission === "granted" && !pushOff() ? "on" : "ask";
+    }
+    return PUSH.ios && !PUSH.standalone() ? "home" : "none";
+  }
+  const pushOff = () => LS.get("outside.pushOff") === "1"; // turned off here, though the browser still allows it
+  const pingLater = () => { const t = Number(LS.get("outside.pingLater") || 0); return t && Date.now() - t < 14 * 864e5; };
+  const b64u = (x) => { const r = atob((x + "=".repeat((4 - (x.length % 4)) % 4)).replace(/-/g, "+").replace(/_/g, "/")); return Uint8Array.from(r, (c) => c.charCodeAt(0)); };
+  const swReg = () => navigator.serviceWorker.register(BASE + "/sw.js", { scope: BASE + "/" });
+  async function pushSubscribe() {
+    const reg = await swReg(); await navigator.serviceWorker.ready;
+    const sub = (await reg.pushManager.getSubscription()) || (await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: b64u(S.cfg.vapid) }));
+    const r = await api("push", { sub: sub.toJSON() });
+    if (!r.ok) throw new Error(r.error || "push");
+    LS.del("outside.pushOff");
+  }
+  async function pushTurnOn() {
+    try {
+      const perm = await Notification.requestPermission();
+      if (perm !== "granted") { toast(perm === "denied" ? "Notifications are blocked for Andiamo in your browser settings." : "Notifications not turned on."); return false; }
+      await pushSubscribe();
+      toast("Done. You'll get a ping when someone sends you a bottle.", 3200);
+      return true;
+    } catch { LS.set("outside.pushOff", "1"); toast("Couldn't turn on notifications on this phone."); return false; }
+  }
+  async function pushTurnOff() {
+    try {
+      const reg = await navigator.serviceWorker.getRegistration(BASE + "/");
+      const sub = reg && (await reg.pushManager.getSubscription());
+      if (sub) { await api("push", { off: true, endpoint: sub.endpoint }); await sub.unsubscribe(); }
+    } catch {}
+    LS.set("outside.pushOff", "1"); toast("Notifications off on this phone.");
+  }
+  // Allowed before on this phone: make sure this number gets the pings (a new sign-in, or the browser renewed it).
+  async function pushSync() {
+    if (S.pushSynced === S.token || pushOff() || !S.me || !S.cfg || !S.cfg.vapid || !PUSH.supported() || Notification.permission !== "granted") return;
+    S.pushSynced = S.token;
+    try { await pushSubscribe(); } catch {}
+  }
+  function pingCard(where) {
+    const st = pushState();
+    if (where !== "me" && (pingLater() || (st !== "ask" && st !== "home"))) return "";
+    if (st === "ask") return `<div class="ping"><span class="pb">${BELL}</span><div class="grow"><b>Get a ping when someone sends you a bottle.</b><small>As well as the WhatsApp message.</small></div>
+      <div class="pa"><button class="btn small" data-ping="on">Turn on</button>${where === "me" ? "" : `<button class="link" data-ping="later">Not now</button>`}</div></div>`;
+    if (st === "home") return `<div class="ping"><span class="pb">${BELL}</span><div class="grow"><b>Get a ping when someone sends you a bottle.</b><small>On iPhone, tap Share, then Add to Home Screen, and open Andiamo from there.</small></div>
+      ${where === "me" ? "" : `<div class="pa"><button class="link" data-ping="later">Got it</button></div>`}</div>`;
+    if (where === "me" && st === "on") return `<div class="ping on"><span class="pb">${BELL}</span><div class="grow"><b>Pings are on for this phone.</b><small>You also get the WhatsApp message.</small></div><div class="pa"><button class="link" data-ping="off">Turn off</button></div></div>`;
+    if (where === "me" && st === "blocked") return `<div class="ping"><span class="pb">${BELL}</span><div class="grow"><b>Notifications are blocked for Andiamo.</b><small>Allow them in your browser settings to get a ping when someone sends you a bottle.</small></div></div>`;
+    return "";
+  }
+  function bindPing(root, redraw) {
+    root.querySelectorAll("[data-ping]").forEach((b) => (b.onclick = async () => {
+      const a = b.dataset.ping;
+      if (a === "later") LS.set("outside.pingLater", String(Date.now()));
+      if (a === "on") { b.disabled = true; await pushTurnOn(); }
+      if (a === "off") await pushTurnOff();
+      redraw();
+    }));
+  }
 
   // ---------- boot ----------
   async function boot() {

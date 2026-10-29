@@ -441,14 +441,16 @@ export async function contactFirstName(e164) {
 }
 
 // Image header (img/wa-header.jpg) + "*Ada*'s sending an Amabile to your table. For next time you're outside." + _note_ + [Claim it]
+// A browser push goes out at the same time, to players who turned notifications on (see _outside_push.mjs).
 export async function sendBottleNotice(bottle) {
+  const push = import("./_outside_push.mjs").then((m) => m.bottleWaitingPush(bottle)).catch(() => null);
   const tpl = process.env.OUTSIDE_TPL_BOTTLE;
   const link = claimLinkToken(bottle.to, bottle.id);
   const from = bottle.anon ? "Someone" : (bottle.fromName || "A friend");
   const note = bottle.note ? "“" + bottle.note + "”" : "No note.";
-  if (!tpl) return { ok: false, skip: "no-template", link: SITE + "/c/" + link };
-  const r = await wa(bottle.to, waTemplate(tpl, [from, note], link, SITE + "/img/wa-header.jpg"));
-  return { ...r, link: SITE + "/c/" + link };
+  const r = tpl ? await wa(bottle.to, waTemplate(tpl, [from, note], link, SITE + "/img/wa-header.jpg")) : { ok: false, skip: "no-template" };
+  const p = await push;
+  return { ...r, push: !!(p && p.ok), link: SITE + "/c/" + link };
 }
 // Free text only reaches someone who messaged the number in the last 24 hours; otherwise WhatsApp drops it.
 export async function sendText(e164, text) {
