@@ -1,12 +1,12 @@
 // Public read for the Amabile Table guest page. Token-gated: without a valid per-guest
 // token it returns invited:false and NO guest data (a forwarded link that dropped the
 // token, or a wrong token, cannot see the list or RSVP). Rate limited.
-import { json, isEmail } from "./_lib.mjs";
+import { json, isEmail } from "../lib/_lib.mjs";
 import {
   tstore, edId, tokenClean, clientIp, rateOk,
   loadEdition, loadGuests, guestByToken, loadRsvps, standings, statusOf,
   fmtDate, deadlinePassed
-} from "./_table.mjs";
+} from "../lib/_table.mjs";
 
 export default async (req, context) => {
   const url = new URL(req.url);

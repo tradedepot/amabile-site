@@ -1,6 +1,6 @@
 // Serve /venue with a venue-coded title so the link preview reads
 // "Guest list — <venue>" instead of "Guest list — Amabile". Page body is the static venue.html.
-import { clean } from "./_lib.mjs";
+import { clean } from "../lib/_lib.mjs";
 
 export const config = { path: "/venue" };
 

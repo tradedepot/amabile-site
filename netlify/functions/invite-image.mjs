@@ -2,7 +2,7 @@
 // POST {code, dataUrl}  → save the JPEG/PNG for that invite
 // GET  ?c=<code>        → stream the saved image (falls back to a neutral image)
 import { getStore } from "@netlify/blobs";
-import { json, clean } from "./_lib.mjs";
+import { json, clean } from "../lib/_lib.mjs";
 
 const FALLBACK = "https://www.amabiledirosa.com/assets/images/occasions/just_because.jpg";
 

@@ -1,7 +1,7 @@
 // Bamboa × Amabile "Predict & Win" (World Cup final: Spain vs Argentina).
 // Stores each entry (for winner selection) and adds/updates a Brevo contact tagged for the event.
 import { getStore } from "@netlify/blobs";
-import { json, clean, isEmail } from "./_lib.mjs";
+import { json, clean, isEmail } from "../lib/_lib.mjs";
 
 const CAMPAIGN = "bamboa-spain-argentina";
 const VENUE = "Bamboa";

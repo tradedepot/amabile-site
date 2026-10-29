@@ -1,6 +1,6 @@
 // Mint a short wya.to/r/<code> link for a venue's pre-filled round-up invite.
 import { getStore } from "@netlify/blobs";
-import { json, clean } from "./_lib.mjs";
+import { json, clean } from "../lib/_lib.mjs";
 
 function rid(n) { let s = "", a = "abcdefghjkmnpqrstuvwxyz23456789"; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
 

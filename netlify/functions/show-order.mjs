@@ -6,7 +6,7 @@
 import {
   EVENT, WINES, K, store, json, clean, isEmail, getSettings, isOpen, tableLabel, newCode,
   price, publicView, saveOrder, paystackInit, paystackVerify, markPaid
-} from "./_show.mjs";
+} from "../lib/_show.mjs";
 
 
 export default async (req) => {

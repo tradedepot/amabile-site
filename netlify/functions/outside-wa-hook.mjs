@@ -3,8 +3,8 @@
 // Messages people send to the Outside number go to Slack #outside-inbox (see _outside_inbox.mjs).
 // Their WhatsApp profile name is kept so the game can fill in their first name without asking.
 import crypto from "node:crypto";
-import { handleInbound, handleStatuses } from "./_outside_inbox.mjs";
-import { noteHook } from "./_outside_wa_check.mjs";
+import { handleInbound, handleStatuses } from "../lib/_outside_inbox.mjs";
+import { noteHook } from "../lib/_outside_wa_check.mjs";
 
 export const config = { path: "/api/outside-wa" };
 

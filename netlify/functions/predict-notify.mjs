@@ -1,7 +1,7 @@
 // Private: email the selected Predict & Win winners (from the admin page).
 // Sends a branded "you won" email via Brevo, from media@amabiledirosa.com.
 // Gated by SAMPLING_KEY (same key as the admin page).
-import { json, clean, isEmail } from "./_lib.mjs";
+import { json, clean, isEmail } from "../lib/_lib.mjs";
 
 const FROM = { email: "vibes@amabiledirosa.com", name: "Amabile di Rosa" };
 const SUBJECT = "🏆 You won! — Amabile x Bamboa Predict & Win";

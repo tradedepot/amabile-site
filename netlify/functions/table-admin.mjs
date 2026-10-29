@@ -2,12 +2,12 @@
 // the POST body (never in the query string) and checked on every action. Handles editions
 // as DATA (create/update without a deploy) and bulk guest-list import from a spreadsheet
 // paste, minting a collision-checked per-guest token for each row.
-import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "./_lib.mjs";
+import { json, clean, isEmail, INVITE_SITE, sendEmail, shell, button } from "../lib/_lib.mjs";
 import {
   tstore, edId, kEdition, kGuests, kRsvp, kRsvpPrefix, loadEdition, loadGuests, loadRsvps,
   standings, mintToken, mintGid, fmtDate, deadlinePassed, kMetaPrefix, TABLE_FROM,
   whenCellOf, THANKS_DEFAULTS, editionPathId
-} from "./_table.mjs";
+} from "../lib/_table.mjs";
 
 function authed(d) {
   const key = process.env.TABLE_ADMIN_KEY || "";

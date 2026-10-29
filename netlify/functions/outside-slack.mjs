@@ -1,8 +1,8 @@
 // Outside: Slack Events API endpoint. Replies typed in a person's thread in #outside-inbox go to their WhatsApp.
 // Slack app setup: Event Subscriptions -> Request URL = this path, bot event "message.groups".
-import { store, K } from "./_outside.mjs";
-import { verifySlack } from "./_outside_slack.mjs";
-import { handleSlackEvent } from "./_outside_inbox.mjs";
+import { store, K } from "../lib/_outside.mjs";
+import { verifySlack } from "../lib/_outside_slack.mjs";
+import { handleSlackEvent } from "../lib/_outside_inbox.mjs";
 
 export const config = { path: "/api/outside-slack" };
 

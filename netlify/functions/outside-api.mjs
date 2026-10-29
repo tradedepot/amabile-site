@@ -20,8 +20,8 @@ import {
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
   publicVenue, venuePrice, claimCheck, numberHash, pickBeacon, BEACONS, computeGlow, venuesByPopularity, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
   payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
-} from "./_outside.mjs";
-import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "./_outside_flow.mjs";
+} from "../lib/_outside.mjs";
+import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "../lib/_outside_flow.mjs";
 
 export const config = { path: "/api/outside/*" };
 
@@ -146,7 +146,7 @@ export default async (req) => {
 
     // A bottle sent as a link: anyone holding the link can see the opening.
     if (route === "gift") {
-      const { giftView } = await import("./_outside_gift.mjs");
+      const { giftView } = await import("../lib/_outside_gift.mjs");
       const r = await giftView(s, url.searchParams.get("code") || d.code, me);
       return r.ok ? json(r) : bad(r.error, 404);
     }
@@ -183,7 +183,7 @@ export default async (req) => {
 
     // A venue owner or manager asks to put their venue on Outside. Needs a verified number, not a player profile.
     if (route === "venue-request") {
-      const { createVenueRequest } = await import("./_outside_venues.mjs");
+      const { createVenueRequest } = await import("../lib/_outside_venues.mjs");
       const r = await createVenueRequest(s, me, d);
       return r.ok ? json(r) : bad(r.error);
     }
@@ -192,12 +192,12 @@ export default async (req) => {
     if (!player || !player.name) return bad("profile", 409);
 
     if (route === "gift-accept") {
-      const { acceptGift } = await import("./_outside_gift.mjs");
+      const { acceptGift } = await import("../lib/_outside_gift.mjs");
       const r = await acceptGift(s, me, player, d.code);
       return r.ok ? json(r) : bad(r.error, r.error === "gift_unknown" ? 404 : 409);
     }
     if (route === "gift-reissue") {
-      const { reissueGift } = await import("./_outside_gift.mjs");
+      const { reissueGift } = await import("../lib/_outside_gift.mjs");
       const r = await reissueGift(s, me, d.bottleId);
       return r.ok ? json(r) : bad(r.error, 409);
     }
@@ -249,7 +249,7 @@ export default async (req) => {
         const open = (await fetchAll(s, outKeys.slice(-60).map((k) => K.bottle(k.split("/").pop())))).filter((x) => x.via === "link" && x.status === "link");
         if (open.length >= RULES.maxOpenLinks) return bad("limit");
         b.band = band; b.price = price;
-        const { attachGift } = await import("./_outside_gift.mjs");
+        const { attachGift } = await import("../lib/_outside_gift.mjs");
         await attachGift(s, b, d.forLabel);
       } else if (mode === "number" || mode === "light") {
         const to = mode === "light" ? null : phoneE164(d.to);
@@ -358,12 +358,12 @@ export default async (req) => {
 
     // Claim by QR: show it to a runner, they scan it on the board.
     if (route === "qr") {
-      const { createQr } = await import("./_outside_qr.mjs");
+      const { createQr } = await import("../lib/_outside_qr.mjs");
       const r = await createQr(s, me, d);
       return r.ok ? json(r) : bad(r.error, r.error === "not_found" ? 404 : 409);
     }
     if (route === "qr-status") {
-      const { qrStatus } = await import("./_outside_qr.mjs");
+      const { qrStatus } = await import("../lib/_outside_qr.mjs");
       const r = await qrStatus(s, me, url.searchParams.get("code") || d.code);
       return r.ok ? json(r) : bad(r.error, 404);
     }
@@ -374,7 +374,7 @@ export default async (req) => {
       let where, qr = null;
       if (d.qr) {
         // After a runner scanned the QR: the scan fixed the venue.
-        const { qrVenueFor, normCode } = await import("./_outside_qr.mjs");
+        const { qrVenueFor, normCode } = await import("../lib/_outside_qr.mjs");
         const v = await qrVenueFor(s, me, d.qr, b.id);
         if (!v) return bad("qr_expired");
         where = { venue: v, table: "" }; qr = normCode(d.qr);
@@ -432,7 +432,7 @@ export default async (req) => {
       b.anon = false; b.status = "waiting"; b.passedAt = Date.now();
       await saveBottle(s, b);
       await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
-      const { sendBottleNotice } = await import("./_outside.mjs");
+      const { sendBottleNotice } = await import("../lib/_outside.mjs");
       sendBottleNotice(b).catch(() => {});
       return json({ ok: true });
     }
@@ -559,7 +559,7 @@ export default async (req) => {
         label: passTo ? ("Pass it on, from " + (table ? "table " + table : player.name)) : isItem ? "Drop: one for the table" : "Drop: one bottle for the table",
         last: rank === dr.bottles - 1 && dr.reward ? dr.reward : "", playerPhone: passTo ? null : me });
       await saveTicket(s, tk);
-      if (passTo) { const { addBadge } = await import("./_outside.mjs"); addBadge(player, "pass-it-on"); await s.setJSON(K.player(me), player); }
+      if (passTo) { const { addBadge } = await import("../lib/_outside.mjs"); addBadge(player, "pass-it-on"); await s.setJSON(K.player(me), player); }
       await lightOn(s, me, dr.venueId, table, { manual: false, visible: !!d.visible, spot, beacon: tk.beacon });
       if (!passTo) { const l2 = await getJSON(s, K.light(me)); l2.dropTicket = { venueId: dr.venueId, id: tk.id }; await s.setJSON(K.light(me), l2); }
       return json({ ok: true, ticket: { id: tk.id, code: tk.code, table: tk.table, spot: tk.spot, beacon: tk.beacon }, last: !!tk.last, venue: publicVenue(where.venue) });

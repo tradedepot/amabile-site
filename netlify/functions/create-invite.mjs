@@ -1,8 +1,8 @@
 // Store a new invite (keyed by its short code) and, if the host gave an email,
 // send them their private "Pour List" link so RSVPs find their way back.
 import { getStore } from "@netlify/blobs";
-import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button } from "./_lib.mjs";
-import { bqInsert } from "./_bq.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button } from "../lib/_lib.mjs";
+import { bqInsert } from "../lib/_bq.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);

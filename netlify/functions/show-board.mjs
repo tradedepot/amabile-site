@@ -3,7 +3,7 @@
 //   GET  ?k=…&after=…    → only orders changed since cursor (cheap to poll every few seconds)
 //   POST {k, action, id?, runner?, settings?}
 //        action: claim | deliver | undo | approve | settings
-import { K, store, json, clean, getSettings, saveOrder, boardAuthorised, adminAuthorised, DEFAULT_SETTINGS, WINES } from "./_show.mjs";
+import { K, store, json, clean, getSettings, saveOrder, boardAuthorised, adminAuthorised, DEFAULT_SETTINGS, WINES } from "../lib/_show.mjs";
 
 async function fetchAll(s, keys) {
   const out = [];

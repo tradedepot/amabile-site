@@ -1,8 +1,8 @@
 // Record an RSVP against an invite code, email the host about it, and (optionally)
 // add the responder to the Brevo newsletter list if they opted in.
 import { getStore } from "@netlify/blobs";
-import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button, countRsvps, playlistUrl, readRsvps } from "./_lib.mjs";
-import { bqInsert } from "./_bq.mjs";
+import { INVITE_SITE, json, isEmail, clean, sendEmail, shell, button, countRsvps, playlistUrl, readRsvps } from "../lib/_lib.mjs";
+import { bqInsert } from "../lib/_bq.mjs";
 
 const RESPONSES = ["in", "out", "maybe"];
 

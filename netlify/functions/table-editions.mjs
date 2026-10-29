@@ -1,8 +1,8 @@
 // Public read: the Tables that have happened, for the Spumante page. Returns only what is
 // already public on each photo page (number, date, venue, three headline pictures, the
 // photo page path). No guest data, no names. Editions whose date is still ahead are left out.
-import { json } from "./_lib.mjs";
-import { tstore, kMetaPrefix, fmtDate, editionPathId, headlinePhotos, clientIp, rateOk } from "./_table.mjs";
+import { json } from "../lib/_lib.mjs";
+import { tstore, kMetaPrefix, fmtDate, editionPathId, headlinePhotos, clientIp, rateOk } from "../lib/_table.mjs";
 
 export default async (req, context) => {
   const st = tstore();

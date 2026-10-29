@@ -1,6 +1,6 @@
 // Resolve a sampling short link adr.wine/s/<code> → the join form, carrying store UTMs.
 import { getStore } from "@netlify/blobs";
-import { clean } from "./_lib.mjs";
+import { clean } from "../lib/_lib.mjs";
 
 export const config = { path: "/s/:code" };
 

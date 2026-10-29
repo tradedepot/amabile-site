@@ -2,7 +2,7 @@
 // Protected by CIRCLES_KEY env var. Reads everything from Blobs and rolls it up,
 // including channel source, device, and the referral chain (parent_code → viral tree).
 import { getStore } from "@netlify/blobs";
-import { json, countRsvps, readRsvps } from "./_lib.mjs";
+import { json, countRsvps, readRsvps } from "../lib/_lib.mjs";
 
 export default async (req) => {
   const url = new URL(req.url);

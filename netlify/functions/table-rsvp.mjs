@@ -3,13 +3,13 @@
 // their own blob and seating is derived by listing (see _table.mjs). A guest can change
 // their answer any time before the deadline with no email to anyone. Dropping out frees a
 // seat and the top of the waitlist is promoted automatically (and emailed).
-import { json, isEmail, clean, sendEmail, shell, button, FROM, INVITE_SITE } from "./_lib.mjs";
-import { bqInsert } from "./_bq.mjs";
+import { json, isEmail, clean, sendEmail, shell, button, FROM, INVITE_SITE } from "../lib/_lib.mjs";
+import { bqInsert } from "../lib/_bq.mjs";
 import {
   tstore, edId, tokenClean, clientIp, rateOk,
   kRsvp, loadEdition, loadGuests, guestByToken, loadRsvps, standings, statusOf,
   deadlinePassed, whenCellOf, TABLE_FROM, tableShell, tableRow, tableBtn
-} from "./_table.mjs";
+} from "../lib/_table.mjs";
 
 function seatedGids(stand) { return new Set(stand.seated.map((r) => r.gid)); }
 

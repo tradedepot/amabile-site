@@ -2,7 +2,7 @@
 //   https://www.amabiledirosa.com/.netlify/functions/show-paystack-hook
 // Backstop for guests who close the page before their status poll confirms payment.
 import crypto from "node:crypto";
-import { EVENT, K, store, json, idFromRef, paystackVerify, markPaid } from "./_show.mjs";
+import { EVENT, K, store, json, idFromRef, paystackVerify, markPaid } from "../lib/_show.mjs";
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false }, 405);
@@ -19,7 +19,7 @@ export default async (req) => {
   try { evt = JSON.parse(raw); } catch { return json({ ok: true }); }
   // Andiamo payouts to venues (Paystack Transfers): transfer.success / transfer.failed / transfer.reversed.
   if (/^transfer\./.test(evt.event || "")) {
-    const { isOurTransfer, handleTransferEvent } = await import("./_outside_payout.mjs");
+    const { isOurTransfer, handleTransferEvent } = await import("../lib/_outside_payout.mjs");
     if (isOurTransfer(evt)) await handleTransferEvent(evt).catch((e) => console.error("outside transfer", e));
     return json({ ok: true });
   }
@@ -29,7 +29,7 @@ export default async (req) => {
   const md = tx.metadata || {};
   // Outside (the bottle game) payments: bottles and top-ups.
   if (md.app === "outside") {
-    const { handleOutsidePayment } = await import("./_outside_pay.mjs");
+    const { handleOutsidePayment } = await import("../lib/_outside_pay.mjs");
     await handleOutsidePayment(tx).catch((e) => console.error("outside payment", e));
     return json({ ok: true });
   }

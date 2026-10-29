@@ -5,9 +5,9 @@
 //   POST {v, k, action, id?, runner?, code?, wine?, message?}
 //        scan {code} (a player's QR) | take | serve (code) | undo | cantfind (message to player) | swap (wine) | release (drop table not found)
 //        manager (mk = manager key): pause | resume | stock {wine: bool}
-import { store, json, clean, K, getJSON, listKeys, fetchAll, saveTicket, boardView, hashKey, wine, sendText, RULES } from "./_outside.mjs";
-import { ticketServed } from "./_outside_flow.mjs";
-import { boardStart, boardVerify, staffFromToken, addStaff, removeStaff, staffView } from "./_outside_staff.mjs";
+import { store, json, clean, K, getJSON, listKeys, fetchAll, saveTicket, boardView, hashKey, wine, sendText, RULES } from "../lib/_outside.mjs";
+import { ticketServed } from "../lib/_outside_flow.mjs";
+import { boardStart, boardVerify, staffFromToken, addStaff, removeStaff, staffView } from "../lib/_outside_staff.mjs";
 
 export const config = { path: "/api/outside-board" };
 
@@ -89,7 +89,7 @@ export default async (req) => {
   }
 
   if (d.action === "scan") {
-    const { scanQr } = await import("./_outside_qr.mjs");
+    const { scanQr } = await import("../lib/_outside_qr.mjs");
     const r = await scanQr(s, venue, d.code, d.runner);
     return json(r, r.ok ? 200 : 409);
   }

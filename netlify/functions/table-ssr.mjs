@@ -4,7 +4,7 @@
 // meta tags in table.html must match these regexes character-for-character or the replace
 // silently no-ops. This one DOES rewrite the twitter tags (the bug invite-ssr had).
 import { getStore } from "@netlify/blobs";
-import { edId, fmtDate } from "./_table.mjs";
+import { edId, fmtDate } from "../lib/_table.mjs";
 
 function esc(s) {
   return String(s == null ? "" : s)

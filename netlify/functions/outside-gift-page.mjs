@@ -1,8 +1,8 @@
 // Outside: the page behind a bottle link (/outside/g/<code>). It exists for the link preview in Instagram,
 // Snapchat and WhatsApp: a sealed card with the sender's first name in the title, never the wine, the note
 // or who it is for. People are sent straight on to the game, which stages the opening.
-import { store, K, getJSON, SITE } from "./_outside.mjs";
-import { giftCode } from "./_outside_gift.mjs";
+import { store, K, getJSON, SITE } from "../lib/_outside.mjs";
+import { giftCode } from "../lib/_outside_gift.mjs";
 
 // /g/* serves the same page on the game's own domain (weoutside.ng/g/<code>).
 export const config = { path: ["/outside/g/*", "/g/*"] };

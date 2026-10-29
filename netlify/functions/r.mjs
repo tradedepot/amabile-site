@@ -2,7 +2,7 @@
 //  - crawlers (WhatsApp link preview) get venue-coded "booking confirmed" tags
 //  - real users are redirected on to the pre-filled invite generator
 import { getStore } from "@netlify/blobs";
-import { clean } from "./_lib.mjs";
+import { clean } from "../lib/_lib.mjs";
 
 export const config = { path: "/r/:code" };
 

@@ -2,7 +2,7 @@
 // shows the host's actual event (name, vibe, when, where) + the generated card image.
 // The page body is the static invite.html; only the <head> preview tags are rewritten.
 import { getStore } from "@netlify/blobs";
-import { clean } from "./_lib.mjs";
+import { clean } from "../lib/_lib.mjs";
 
 function esc(s) {
   return String(s == null ? "" : s)

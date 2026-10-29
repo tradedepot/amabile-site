@@ -19,12 +19,12 @@
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone
-} from "./_outside.mjs";
+} from "../lib/_outside.mjs";
 
-import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "./_outside_venues.mjs";
-import { searchOutlets, getOutlet } from "./_outside_bq.mjs";
-import { listBanks, resolveAccount, setPayoutAccount, sendPayout, autoPayoutsOn, paystackBalance } from "./_outside_payout.mjs";
-import { waStatus, waRegister, waSubscribe, waTest, waTestStatus } from "./_outside_wa_check.mjs";
+import { listRequests, updateRequest, listFromRequest, linkOutlet, recordSupply, liveChecks, goLive } from "../lib/_outside_venues.mjs";
+import { searchOutlets, getOutlet } from "../lib/_outside_bq.mjs";
+import { listBanks, resolveAccount, setPayoutAccount, sendPayout, autoPayoutsOn, paystackBalance } from "../lib/_outside_payout.mjs";
+import { waStatus, waRegister, waSubscribe, waTest, waTestStatus } from "../lib/_outside_wa_check.mjs";
 
 export const config = { path: "/api/outside-admin" };
 
@@ -75,7 +75,7 @@ export default async (req) => {
       v.runnerKeyHash = hashKey(keys.runner); v.managerKeyHash = hashKey(keys.manager);
     }
     await s.setJSON(K.venue(id), v);
-    if (v.active) { const { ensureManager } = await import("./_outside_staff.mjs"); Object.assign(v, await ensureManager(s, v)); }
+    if (v.active) { const { ensureManager } = await import("../lib/_outside_staff.mjs"); Object.assign(v, await ensureManager(s, v)); }
     const { runnerKeyHash, managerKeyHash, ...view } = v;
     return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null, checks });
   }
@@ -225,7 +225,7 @@ export default async (req) => {
 
   // ---------- who can open a venue's runner board ----------
   if (a === "staff-add" || a === "staff-remove") {
-    const { addStaff, removeStaff, staffView } = await import("./_outside_staff.mjs");
+    const { addStaff, removeStaff, staffView } = await import("../lib/_outside_staff.mjs");
     const r = a === "staff-add" ? await addStaff(s, clean(d.venueId, 20), { phone: d.phone, name: d.name, role: d.role }, "admin")
       : await removeStaff(s, clean(d.venueId, 20), d.phone, { keepAManager: false });
     return json(r.ok ? { ok: true, staff: (r.venue.staff || []).map(staffView) } : r, r.ok ? 200 : 400);

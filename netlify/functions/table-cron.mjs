@@ -4,8 +4,8 @@
 //   2. The day of: a short "see you at 3" note to seated guests, sent on the first tick at
 //      or after DAYOF_FROM_HOUR Lagos time, stamped dayOfSentAt.
 // Seated means RSVP yes and within the cap. A failure never blocks anything.
-import { sendEmail, isEmail, clean, INVITE_SITE } from "./_lib.mjs";
-import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, whenCellOf, TABLE_FROM, tableShell, tableRow, tableBtn } from "./_table.mjs";
+import { sendEmail, isEmail, clean, INVITE_SITE } from "../lib/_lib.mjs";
+import { tstore, kEdition, kMetaPrefix, loadGuests, loadRsvps, standings, fmtDate, whenCellOf, TABLE_FROM, tableShell, tableRow, tableBtn } from "../lib/_table.mjs";
 const esc = (s) => String(s == null ? "" : s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
 
 export const config = { schedule: "*/10 * * * *" };

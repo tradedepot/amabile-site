@@ -2,7 +2,7 @@
 // Protected by SAMPLING_KEY. Links land on the join form carrying store + campaign UTMs.
 // Supports a single link, a password-check (verify), and a batch (items[]) for bulk upload.
 import { getStore } from "@netlify/blobs";
-import { json, clean } from "./_lib.mjs";
+import { json, clean } from "../lib/_lib.mjs";
 
 function rid(n) { let s = "", a = "abcdefghjkmnpqrstuvwxyz23456789"; for (let i = 0; i < n; i++) s += a[Math.floor(Math.random() * a.length)]; return s; }
 

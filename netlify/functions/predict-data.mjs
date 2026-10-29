@@ -1,6 +1,6 @@
 // Private: list all Predict & Win entries (for the admin / winner-selection page).
 import { getStore } from "@netlify/blobs";
-import { json } from "./_lib.mjs";
+import { json } from "../lib/_lib.mjs";
 
 const KEY = "predict:bamboa-spain-argentina";
 
