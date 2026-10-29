@@ -5,11 +5,16 @@
 // To capture in-store sampling tags, create these TEXT attributes in Brevo
 // (Contacts → Settings → Contact attributes): SOURCE, VENUE, CAMPAIGN. (CITY already exists.)
 // If they don't exist, signup still succeeds — the tags are just skipped.
-export async function handler(event) {
-  if (event.httpMethod !== "POST") return { statusCode: 405, body: "Method not allowed" };
+// Functions v2 (not Lambda compatibility mode, which caps environment variables at 4KB). Still served at /.netlify/functions/subscribe.
+const reply = ({ statusCode, body }) => new Response(body, { status: statusCode });
+
+export default async (req) => reply(await handle(req));
+
+async function handle(req) {
+  if (req.method !== "POST") return { statusCode: 405, body: "Method not allowed" };
 
   let data = {};
-  try { data = JSON.parse(event.body || "{}"); } catch { return { statusCode: 400, body: "Bad request" }; }
+  try { data = JSON.parse((await req.text()) || "{}"); } catch { return { statusCode: 400, body: "Bad request" }; }
 
   const email = String(data.email || "").trim();
   if (!email || !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return { statusCode: 400, body: "Valid email required" };
