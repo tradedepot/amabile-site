@@ -14,20 +14,42 @@ import { outletsByPhone, getOutlet } from "./_outside_bq.mjs";
 
 const KIND_LABEL = { lounge: "Lounge or bar", restaurant: "Restaurant", hotel: "Hotel", rooftop: "Rooftop", beach: "Beach", brewery: "Brewery", club: "Club", garden: "Garden or terrace" };
 
+// A venue from our records (d.store, picked as they typed their name) comes with its name, place, type and
+// location already known, so it only adds its menu prices. The same store twice becomes one request.
 export async function createVenueRequest(s, phone, d) {
-  const name = clean(d.name, 60);
+  let o = null;
+  if (d.store) {
+    const X = await import("./_outside_outlets.mjs");
+    o = await X.storeFromRef(s, d.store);
+    if (!o) return { ok: false, error: "store" };
+    const st = X.statusOf(o, await X.andiamoIndex(s));
+    if (st && st.stage === "live") return { ok: false, error: "already_live", name: o.name };
+    // Already being added by an onboarder, or already asked for: one request per store.
+    if (st && (st.stage === "waiting" || st.stage === "asked" || st.stage === "listed") && st.requestId) {
+      const q = await getJSON(s, K.request(st.requestId));
+      if (q && q.source !== "onboard") {
+        if (q.phone === phone) { mergeInto(q, d, o); }
+        else if (!(q.others || []).some((x) => x.phone === phone)) q.others = [...(q.others || []), { phone, contactName: clean(d.contactName, 40), at: now() }].slice(-5);
+        q.updatedAt = now(); await s.setJSON(K.request(q.id), q);
+      }
+      return { ok: true, id: st.requestId, already: true, name: o.name };
+    }
+    if (st && st.stage === "listed") return { ok: true, already: true, name: o.name };
+  }
+  const name = o ? o.name : clean(d.name, 60);
   if (name.length < 2) return { ok: false, error: "venue_name" };
   const contactName = clean(d.contactName, 40);
   if (!contactName) return { ok: false, error: "contact_name" };
-  const kind = VENUE_KINDS.includes(d.kind) ? d.kind : "lounge";
-  const area = clean(d.area, 40);
+  const X = o ? await import("./_outside_outlets.mjs") : null;
+  const kind = VENUE_KINDS.includes(d.kind) ? d.kind : (o && X.kindFor(o.type)) || "lounge";
+  const area = o ? X.areaFor(o) : clean(d.area, 40);
   if (!area) return { ok: false, error: "area" };
 
   // One open request per number at a time.
   const mine = (await listRequests(s)).filter((r) => r.phone === phone && !["live", "declined"].includes(r.stage));
   // The same venue sent twice from the same number: keep the first.
   const same = mine.find((r) => r.name.toLowerCase() === name.toLowerCase());
-  if (same) return { ok: true, id: same.id, already: true };
+  if (same) { if (o) { mergeInto(same, d, o); await s.setJSON(K.request(same.id), same); } return { ok: true, id: same.id, already: true, name }; }
   if (mine.length >= 3) return { ok: false, error: "too_many_requests" };
 
   const r = {
@@ -39,12 +61,27 @@ export async function createVenueRequest(s, phone, d) {
     visitTime: clean(d.visitTime, 60), note: clean(d.note, 300),
     history: [{ at: now(), stage: "requested", by: "venue" }]
   };
-  // Suggest an existing outlet account with the same contact number.
-  const match = await outletsByPhone(phone).catch(() => ({ rows: [] }));
-  r.suggested = (match.rows || []).map((o) => ({ id: o.id, name: o.name, number: o.number, lga: o.lga, lat: o.lat, lng: o.lng }));
+  if (o) mergeInto(r, d, o);
+  else {
+    // Suggest an existing outlet account with the same contact number.
+    const match = await outletsByPhone(phone).catch(() => ({ rows: [] }));
+    r.suggested = (match.rows || []).map((x) => ({ id: x.id, name: x.name, number: x.number, lga: x.lga, lat: x.lat, lng: x.lng }));
+  }
   await s.setJSON(K.request(r.id), r);
   notifyOps(r).catch(() => {});
-  return { ok: true, id: r.id };
+  return { ok: true, id: r.id, matched: !!o, name };
+}
+// What a store from our records brings to its request, and the menu prices the venue gave.
+function mergeInto(r, d, o) {
+  r.outletId = o.id; r.outletIds = o.ids; r.stocksAmabile = "yes";
+  r.lat = o.lat; r.lng = o.lng; r.address = r.address || [o.street, o.lga].filter(Boolean).join(", ");
+  r.records = { name: o.name, type: o.type, lastBought: o.lastBought, cases: o.cases, accounts: o.ids.length };
+  // They signed in with a number we already hold for this store.
+  r.contactVerified = o.contacts.some((c) => c.phone === r.phone);
+  const prices = {};
+  for (const w of WINES) { const p = Math.round(Number(String((d.prices || {})[w.id] || "").replace(/[^\d.]/g, ""))); if (p > 0 && p < 10000000) prices[w.id] = p; }
+  if (Object.keys(prices).length) r.prices = prices;
+  if (d.contactName) r.contactName = clean(d.contactName, 40);
 }
 
 export async function listRequests(s) {
@@ -188,7 +225,9 @@ async function notifyOps(r) {
     ["Venue", r.name], ["Type", KIND_LABEL[r.kind] || r.kind], ["Area", r.area], ["Address", r.address], ["Instagram", r.instagram ? "@" + r.instagram : ""],
     ["Contact", r.contactName + " (" + r.role + ")"], ["Phone", r.phone], ["Email", r.email], ["Tables", r.tables || ""], ["Open", r.nights],
     ["Stocks Amabile", { yes: "Yes", no: "No", not_sure: "Not sure" }[r.stocksAmabile]], ["Best time to visit", r.visitTime], ["Note", r.note],
-    ["Possible existing account", (r.suggested || []).map((o) => o.name + " #" + o.number).join(", ")]
+    ["Possible existing account", (r.suggested || []).map((o) => o.name + " #" + o.number).join(", ")],
+    ["In our records", r.records ? r.records.name + (r.records.cases ? ", " + r.records.cases + " cases this year" : "") : ""],
+    ["Menu prices", r.prices ? Object.entries(r.prices).map(([k, v]) => ((WINES.find((w) => w.id === k) || {}).name || k) + " ₦" + Number(v).toLocaleString("en-NG")).join(", ") : ""]
   ].filter(([, v]) => v);
   const esc = (x) => String(x).replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]));
   const html = `<p>A venue has asked to join Andiamo.</p><table>${rows.map(([k, v]) => `<tr><td style="padding:3px 12px 3px 0;color:#6b5646">${esc(k)}</td><td style="padding:3px 0"><b>${esc(v)}</b></td></tr>`).join("")}</table>

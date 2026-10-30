@@ -28,12 +28,13 @@ body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-hei
 .pitch { margin:auto 0; max-width:500px; padding:28px 0; }
 .kicker { font-size:12px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.8); margin:0 0 14px; }
 h1 { font-family:var(--serif); font-weight:400; font-size:clamp(40px, 3.9vw, 54px); line-height:1.02; margin:0 0 20px; letter-spacing:-.3px; }
-.ladder { display:grid; grid-template-columns:minmax(0,1fr) 20px minmax(0,1.3fr); align-items:stretch; gap:4px; margin:0 0 20px; max-width:460px; }
-.ladder > div { border:2.5px solid var(--ink); border-radius:14px; padding:10px 12px; font-weight:900; font-size:15px; line-height:1.2; background:rgba(255,255,255,.14); color:#fff; }
-.ladder > div small { display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; font-weight:900; opacity:.85; margin-bottom:3px; }
-.ladder > div.on { background:#fff; color:var(--red); box-shadow:0 4px 0 var(--ink); }
-.ladder > div.on small { color:var(--ink-2); opacity:1; }
-.ladder > span { display:grid; place-items:center; font-weight:900; font-size:20px; color:#fff; }
+.ladder { display:grid; grid-template-columns:minmax(0,1fr) 40px minmax(0,1.25fr); align-items:center; margin:0 0 24px; max-width:470px; }
+.ladder > div { align-self:stretch; display:flex; flex-direction:column; align-items:flex-start; gap:9px; border:2.5px solid var(--ink); border-radius:16px; padding:12px 14px 14px; font-weight:900; font-size:16px; line-height:1.2; background:var(--red-2); color:#fff; box-shadow:0 4px 0 var(--ink); }
+.ladder > div i { font-style:normal; width:28px; height:28px; border-radius:50%; display:grid; place-items:center; font-size:14px; font-weight:900; background:#fff; color:var(--red-2); border:2px solid var(--ink); }
+.ladder > div.on { background:#fff; color:var(--red); }
+.ladder > div.on i { background:var(--red); color:#fff; }
+.ladder > span { justify-self:center; width:30px; height:30px; border-radius:50%; background:var(--gold); color:var(--ink); border:2px solid var(--ink); display:grid; place-items:center; }
+.ladder > span svg { width:15px; height:15px; }
 .lede { font-size:clamp(17px, 1.45vw, 20px); line-height:1.5; margin:0; color:rgba(255,255,255,.95); max-width:460px; }
 .lede b { color:#fff; font-weight:800; }
 .shot { margin-top:auto; border-radius:20px; overflow:hidden; border:3px solid var(--ink); box-shadow:0 6px 0 rgba(43,30,23,.28); max-width:520px; }
@@ -94,6 +95,57 @@ a { color:var(--red-2); font-weight:800; }
   .panel { padding:4px 18px 20px; }
   }
 @media (max-width: 380px) { .row { grid-template-columns:1fr; } }
+/* finding the venue in our records */
+.combo { position:relative; }
+.sugg { position:absolute; left:0; right:0; top:calc(100% + 6px); z-index:20; background:#fff; border:2px solid var(--ink); border-radius:16px; box-shadow:0 5px 0 var(--ink), 0 18px 40px rgba(43,30,23,.16); padding:6px; max-height:360px; overflow:auto; }
+.sugg[hidden] { display:none; }
+.opt { display:grid; grid-template-columns:minmax(0,1fr) auto; align-items:center; column-gap:10px; width:100%; text-align:left; background:none; border:0; border-radius:11px; padding:10px 12px; font:inherit; cursor:pointer; color:var(--ink); }
+.opt .on { font-weight:800; font-size:15.5px; line-height:1.25; }
+.opt .on b { font-weight:900; color:var(--red-2); }
+.opt .sub { grid-column:1; font-size:13px; color:var(--ink-2); font-weight:700; line-height:1.3; margin-top:2px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.opt .chip { grid-column:2; grid-row:1 / span 2; font-size:11.5px; font-weight:900; padding:4px 9px; border-radius:999px; background:var(--line-2); color:var(--ink-2); white-space:nowrap; }
+.opt.act, .opt:hover { background:#FDF1EC; }
+.opt.live .on { color:var(--ink-2); }
+.opt.live .chip { background:#E6F4EA; color:#1E7A45; }
+.opt.none { display:block; margin-top:4px; border-top:1.5px dashed var(--line); border-radius:0 0 11px 11px; padding:11px 12px 9px; font-weight:800; font-size:13.5px; color:var(--ink-2); }
+.store { display:grid; grid-template-columns:46px minmax(0,1fr) auto; gap:13px; align-items:center; border:2px solid var(--ink); border-radius:16px; padding:13px 14px; background:var(--cream); box-shadow:0 4px 0 var(--ink); }
+.store .sic { align-self:start; width:46px; height:46px; border-radius:13px; background:var(--red); color:#fff; border:2px solid var(--ink); display:grid; place-items:center; }
+.store .sic svg { width:22px; height:22px; }
+.store b { display:block; font-size:17px; font-weight:900; line-height:1.2; }
+.store .sub { display:block; font-size:13px; color:var(--ink-2); font-weight:700; margin-top:2px; }
+.store .ok { white-space:nowrap; display:inline-flex; align-items:center; gap:5px; margin-top:7px; font-size:12px; font-weight:900; color:#1E7A45; background:#E6F4EA; border-radius:999px; padding:3px 9px 3px 7px; }
+.store .ok svg { width:12px; height:12px; }
+.store .chg { background:none; border:0; font:inherit; font-weight:900; font-size:14px; color:var(--red-2); cursor:pointer; padding:6px 2px; align-self:start; }
+.note { margin:10px 0 0; padding:12px 14px; border-radius:12px; background:#FFF4DA; font-size:14px; font-weight:700; color:var(--ink); line-height:1.4; }
+.sec h3.minih { margin:22px 0 2px; font-family:var(--serif); font-weight:400; font-size:21px; line-height:1.15; letter-spacing:0; text-transform:none; color:var(--ink); }
+.hint { margin:0 0 10px; font-size:13.5px; color:var(--ink-2); font-weight:700; }
+.mlist { border:2px solid var(--ink); border-radius:16px; overflow:hidden; background:#fff; box-shadow:0 4px 0 var(--ink); }
+.mlist.bad { border-color:var(--red-2); box-shadow:0 0 0 3px rgba(200,55,29,.25) !important; }
+.mgrp { padding:8px 14px 7px; background:var(--bg); font-size:10.5px; font-weight:900; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-2); border-top:2px solid var(--ink); }
+.mgrp:first-child { border-top:0; }
+.mrow { display:grid; grid-template-columns:34px minmax(0,1fr) 124px; gap:12px; align-items:center; margin:0; padding:9px 14px; border-top:1.5px solid var(--line-2); cursor:text; font-size:inherit; }
+.mgrp + .mrow { border-top:0; }
+.mrow img { width:34px; height:52px; object-fit:cover; object-position:50% 45%; border-radius:8px; background:#F4F2EF; }
+.mw b { display:block; font-weight:900; font-size:15.5px; line-height:1.2; }
+.mw small { display:block; font-size:12px; font-weight:700; color:var(--ink-3); }
+.mp { display:flex; align-items:baseline; gap:3px; padding:4px 2px 3px; border-bottom:2px dashed var(--line); min-width:0; }
+.mp i { font-style:normal; font-family:var(--serif); font-size:17px; color:var(--ink-3); }
+.mp input { flex:1; border:0; border-radius:0; padding:0; width:0; min-width:0; text-align:right; font-family:var(--serif); font-size:21px; letter-spacing:.3px; background:transparent; box-shadow:none !important; }
+.mp input::placeholder { font-family:var(--sans); font-size:13px; font-weight:800; color:var(--ink-3); }
+.mrow:focus-within .mp { border-bottom:2px solid var(--red); }
+.mrow.set .mp { border-bottom:2px solid var(--ink); } .mrow.set .mp i { color:var(--ink); }
+.who { display:grid; gap:8px; }
+.who.bad { border-radius:16px; box-shadow:0 0 0 3px rgba(200,55,29,.25) !important; }
+.wc { display:grid; grid-template-columns:42px minmax(0,1fr) 26px; gap:12px; align-items:center; width:100%; text-align:left; font:inherit; color:var(--ink); background:#fff; border:2px solid var(--line); border-radius:16px; padding:11px 13px; cursor:pointer; transition:border-color .15s, box-shadow .15s, background .15s; }
+.wc .av { width:42px; height:42px; border-radius:50%; background:#FFF4DA; color:#8A5A00; border:2px solid var(--ink); display:grid; place-items:center; font-family:var(--serif); font-size:20px; }
+.wc.else .av { background:var(--bg); color:var(--ink-2); font-family:var(--sans); font-weight:900; font-size:22px; }
+.wc .t b { display:block; font-weight:900; font-size:15.5px; }
+.wc .t small { display:flex; align-items:center; gap:5px; font-size:13px; font-weight:700; color:var(--ink-2); }
+.wc .t small svg { width:13px; height:13px; color:#25A35A; }
+.wc .ck { width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; color:transparent; }
+.wc .ck svg { width:14px; height:14px; }
+.wc.on { border-color:var(--ink); box-shadow:0 4px 0 var(--ink); background:#FFFDF8; }
+.wc.on .ck { background:var(--red); border-color:var(--ink); color:#fff; }
 .bad { border-color:var(--red-2) !important; box-shadow:0 0 0 4px rgba(200,55,29,.14) !important; }
 .seg.bad { box-shadow:0 0 0 2px var(--red-2) !important; }
 .ferr { display:flex; align-items:flex-start; gap:7px; color:var(--red-2); font-weight:800; font-size:13.5px; line-height:1.35; margin:7px 2px 0; }
@@ -110,7 +162,7 @@ a { color:var(--red-2); font-weight:800; }
     <div class="pitch" id="intro">
       <p class="kicker">Amabile Depletion Program</p>
       <h1>You list Amabile. Now join the Depletion Program.</h1>
-      <div class="ladder"><div><small>Step 1</small>List Amabile</div><span aria-hidden="true">›</span><div class="on"><small>Step 2</small>Join the Depletion Program</div></div>
+      <div class="ladder"><div><i>1</i>List Amabile</div><span aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span><div class="on"><i>2</i>Join Andiamo!</div></div>
       <p class="lede">Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately. We're depleting your stock.</p>
     </div>
     <div class="shot"><img src="/outside/img/venue-hero.jpg" alt="Amabile Rosso, Bianco and Rosato"></div>
@@ -118,20 +170,29 @@ a { color:var(--red-2); font-weight:800; }
 
   <main class="main"><div class="formwrap">
     <form id="f" novalidate>
-      <div class="fh"><h2>Sign up to the Depletion Program</h2><p>One minute. We'll call you on WhatsApp to set you up.</p></div>
+      <div class="fh"><h2>Sign up to Andiamo!</h2><p>Takes a minute to fill in. Then we'll call you on WhatsApp to set you up.</p></div>
       <div class="panel">
         <div class="sec">
           <label for="name">Venue name</label>
-          <input id="name" maxlength="60" autocomplete="organization" required>
+          <div class="combo" id="combo"><input id="name" maxlength="60" autocomplete="off" role="combobox" aria-autocomplete="list" aria-expanded="false" aria-controls="sugg" placeholder="Start typing, we may already have you" required><div class="sugg" id="sugg" role="listbox" hidden></div></div>
+          <p class="note hidden" id="liveNote" role="status"></p>
+          <div class="store hidden" id="picked"></div>
+          <div id="knownOnly" class="hidden">
+            <h3 class="minih">Your menu prices</h3><p class="hint">What a bottle costs on your menu. Leave out what you don't sell.</p>
+            <div class="mlist" id="prices"></div>
+            <div id="whoWrap"><h3 class="minih" id="whoLabel">Is this you?</h3><p class="hint">The WhatsApp numbers we have for this venue.</p><div class="who" id="who"></div></div>
+          </div>
+          <div id="newOnly">
           <label for="area">Area</label><select id="area" required><option value="" selected disabled>Choose the area</option><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option><option value="Other">Somewhere else</option></select>
           <label>Do you stock Amabile now?</label>
           <div class="seg" id="stocks">
             <label><input type="radio" name="stocks" value="yes"><span>Yes</span></label>
             <label><input type="radio" name="stocks" value="no"><span>Not yet</span></label>
           </div>
+          </div>
           <label for="contact">Your name</label><input id="contact" maxlength="40" autocomplete="name" required>
-          <label for="phone">Your WhatsApp number</label>
-          <div class="phonef"><span class="ccbox"><span id="ccv"></span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><select id="cc" aria-label="Country"></select></span><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="803 000 0000" required></div>
+          <div id="phoneWrap"><label for="phone">Your WhatsApp number</label>
+          <div class="phonef"><span class="ccbox"><span id="ccv"></span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><select id="cc" aria-label="Country"></select></span><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="803 000 0000" required></div></div>
           <div id="codeBox" class="hidden">
             <label for="code">Code from WhatsApp</label>
             <input id="code" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits">
@@ -162,7 +223,7 @@ a { color:var(--red-2); font-weight:800; }
   const ERR = {
     phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    venue_name: "Add your venue's name.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
+    venue_name: "Add your venue's name.", prices: "Add the menu price of at least one wine.", contact: "Choose who you are again.", store: "Choose your venue again.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   let token = null, codeSent = false, busy = false;
@@ -204,10 +265,107 @@ a { color:var(--red-2); font-weight:800; }
   const FIELD = { venue_name: "name", area: "area", stocks: "stocks", contact_name: "contact", phone: "phone", send_failed: "phone", not_on_whatsapp: "phone", slow_down: "phone", wrong_code: "code", expired: "code", too_many: "code", email: "email" };
   const fail = (e) => { $("err").textContent = ""; if (FIELD[e]) return flag(FIELD[e], ERR[e] || ERR.server); $("err").textContent = ERR[e] || ERR.server; };
 
+  // ---------- finding the venue in our records as they type ----------
+  // Stores we already supply come up as they type. Picking one fills in what we know; they add their menu
+  // prices, and if one of the numbers we hold is theirs, the code goes there.
+  const esc = (x) => String(x == null ? "" : x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+  const SHOP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10h16V10"/><path d="M3 10l2-6h14l2 6"/><path d="M3 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M10 20v-5h4v5"/></svg>';
+  let WINES = [{ id: "rosso", name: "Rosso" }, { id: "bianco", name: "Bianco" }, { id: "rosato", name: "Rosato" }];
+  let found = [], act = -1, lookT = 0, lookN = 0, picked = null, who = null, autoName = "";
+  const sugg = $("sugg"), nm = $("name");
+  const hl = (name, q) => { const i = name.toLowerCase().indexOf(q.toLowerCase()); return i < 0 || !q ? esc(name) : esc(name.slice(0, i)) + "<b>" + esc(name.slice(i, i + q.length)) + "</b>" + esc(name.slice(i + q.length)); };
+  const sub = (o) => [o.type, o.place].filter(Boolean).join(" · ");
+  function closeList() { sugg.hidden = true; nm.setAttribute("aria-expanded", "false"); act = -1; }
+  function showList(q) {
+    if (!found.length) return closeList();
+    sugg.innerHTML = found.map((o, i) => `<button type="button" role="option" class="opt${o.live ? " live" : ""}" id="opt${i}" data-i="${i}"><span class="on">${hl(o.name, q)}</span><span class="sub">${esc(sub(o))}</span>${o.live ? '<span class="chip">On Andiamo!</span>' : ""}</button>`).join("")
+      + `<button type="button" class="opt none" data-none="1">None of these. Carry on with “${esc(q)}”</button>`;
+    sugg.hidden = false; nm.setAttribute("aria-expanded", "true");
+    sugg.querySelectorAll(".opt").forEach((b) => b.addEventListener("mousedown", (e) => e.preventDefault()));
+    sugg.querySelectorAll("[data-i]").forEach((b) => (b.onclick = () => choose(found[+b.dataset.i])));
+    sugg.querySelector("[data-none]").onclick = () => { closeList(); $("area").focus(); };
+  }
+  function mark() { sugg.querySelectorAll(".opt").forEach((b, i) => b.classList.toggle("act", i === act)); const a = sugg.querySelectorAll(".opt")[act]; if (a) { a.scrollIntoView({ block: "nearest" }); nm.setAttribute("aria-activedescendant", a.id || ""); } }
+  nm.addEventListener("input", () => {
+    $("liveNote").classList.add("hidden");
+    const q = val("name"); clearTimeout(lookT);
+    if (q.length < 2) { found = []; return closeList(); }
+    lookT = setTimeout(async () => {
+      const n = ++lookN, r = await api("venue-lookup", { q });
+      if (n !== lookN || !r.ok) return;
+      if (r.wines && r.wines.length) WINES = r.wines;
+      found = r.stores || []; showList(q);
+    }, 160);
+  });
+  nm.addEventListener("keydown", (e) => {
+    if (sugg.hidden) return;
+    const n = sugg.querySelectorAll(".opt").length;
+    if (e.key === "ArrowDown") { e.preventDefault(); act = (act + 1) % n; mark(); }
+    else if (e.key === "ArrowUp") { e.preventDefault(); act = (act - 1 + n) % n; mark(); }
+    else if (e.key === "Enter" && act >= 0) { e.preventDefault(); sugg.querySelectorAll(".opt")[act].click(); }
+    else if (e.key === "Escape") closeList();
+  });
+  nm.addEventListener("blur", () => setTimeout(closeList, 120));
+  nm.addEventListener("focus", () => { if (found.length && val("name").length >= 2) showList(val("name")); });
+
+  function choose(o) {
+    closeList();
+    if (o.live) {
+      $("liveNote").innerHTML = `<b>${esc(o.name)}</b> is already on Andiamo! If you run it, sign in on your bar phone at <a href="/board">andiamo.ng/board</a>.`;
+      $("liveNote").classList.remove("hidden"); return;
+    }
+    picked = o; who = null; resetCode();
+    $("combo").classList.add("hidden"); $("newOnly").classList.add("hidden");
+    $("picked").innerHTML = `<span class="sic">${SHOP}</span><span><b>${esc(o.name)}</b><span class="sub">${esc(sub(o))}</span><span class="ok">${TICK}Already sells Amabile</span></span><button type="button" class="chg" id="chg">Change</button>`;
+    $("picked").classList.remove("hidden"); $("knownOnly").classList.remove("hidden");
+    const mrow = (w) => `<label class="mrow" for="p-${esc(w.id)}"><img src="/outside/img/bottle-${esc(w.id)}.jpg" alt="" loading="lazy"><span class="mw"><b>${esc(w.name)}</b><small>${esc(w.kind || (w.family === "spumante" ? "Sparkling" : ""))}</small></span><span class="mp"><i>₦</i><input id="p-${esc(w.id)}" inputmode="numeric" autocomplete="off" placeholder="Not sold"></span></label>`;
+    const fz = WINES.filter((w) => (w.family || "frizzante") === "frizzante"), sp = WINES.filter((w) => w.family === "spumante");
+    $("prices").innerHTML = `<div class="mgrp">Frizzante</div>${fz.map(mrow).join("")}${sp.length ? `<div class="mgrp">Spumante</div>${sp.map(mrow).join("")}` : ""}`;
+    $("prices").querySelectorAll("input").forEach((x) => x.addEventListener("input", () => { const d = x.value.replace(/\D/g, "").slice(0, 7); x.value = d.replace(/\B(?=(\d{3})+(?!\d))/g, ","); x.closest(".mrow").classList.toggle("set", !!d); unflag($("prices")); }));
+    const cs = o.contacts || [];
+    $("whoWrap").classList.toggle("hidden", !cs.length);
+    $("whoLabel").textContent = cs.length > 1 ? "Which of these is you?" : "Is this you?";
+    const WAI = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg>';
+    $("who").innerHTML = cs.map((c, i) => `<button type="button" class="wc" data-w="${i}"><span class="av">${esc((c.name || "?").charAt(0).toUpperCase())}</span><span class="t"><b>${esc(c.name || "The number we have")}</b><small>${WAI}··· ${esc(c.tail)}</small></span><span class="ck">${TICK}</span></button>`).join("")
+      + `<button type="button" class="wc else" data-w="other"><span class="av">+</span><span class="t"><b>Someone else</b><small>I'll add my own number</small></span><span class="ck">${TICK}</span></button>`;
+    $("who").querySelectorAll("[data-w]").forEach((x) => (x.onclick = () => setWho(x.dataset.w)));
+    setWho(cs.length ? null : "other");
+    $("chg").onclick = unpick;
+    setTimeout(() => { const f = $("prices").querySelector("input"); if (f) f.focus(); }, 50);
+  }
+  function setWho(v) {
+    who = v; resetCode(); unflag($("who"));
+    $("who").querySelectorAll("[data-w]").forEach((x) => x.classList.toggle("on", x.dataset.w === String(v)));
+    const c = picked && v != null && v !== "other" ? picked.contacts[+v] : null;
+    if (c && c.name && (!val("contact") || val("contact") === autoName)) { $("contact").value = c.name; autoName = c.name; }
+    if (v === "other" && val("contact") === autoName) { $("contact").value = ""; autoName = ""; }
+    $("phoneWrap").classList.toggle("hidden", !!c);
+    $("go").textContent = c ? `Send the code to ••• ${c.tail}` : "Send me a code";
+  }
+  function unpick() {
+    picked = null; who = null; resetCode();
+    ["picked", "knownOnly"].forEach((id) => $(id).classList.add("hidden")); ["combo", "newOnly", "phoneWrap"].forEach((id) => $(id).classList.remove("hidden"));
+    $("go").textContent = "Send me a code"; nm.focus(); nm.select();
+  }
+  function resetCode() { codeSent = false; token = null; $("codeBox").classList.add("hidden"); $("code").value = ""; }
+  const contactRef = () => (picked && who != null && who !== "other" ? picked.contacts[+who].ref : null);
+  const prices = () => { const p = {}; if (picked) WINES.forEach((w) => { const v = ($("p-" + w.id) || {}).value || ""; if (v.replace(/\D/g, "")) p[w.id] = v.replace(/\D/g, ""); }); return p; };
+
   function details() {
+    if (picked) return { store: picked.ref, name: picked.name, prices: prices(), contactName: val("contact") };
     return { name: val("name"), area: val("area"), stocksAmabile: radio("stocks"), contactName: val("contact") };
   }
   function check(d) {
+    if (picked) {
+      if (!Object.keys(d.prices).length) return flag("prices", ERR.prices), false;
+      if (picked.contacts.length && who == null) return flag("who", "Choose one."), false;
+      if (!d.contactName) return fail("contact_name"), false;
+      if (contactRef()) return true;
+      if (!val("phone")) return flag("phone", "Add your WhatsApp number."), false;
+      if (phone().replace(/\D/g, "").length < 8) return fail("phone"), false;
+      return true;
+    }
     if (d.name.length < 2) return fail("venue_name"), false;
     if (!d.area) return fail("area"), false;
     if (!d.stocksAmabile) return fail("stocks"), false;
@@ -217,7 +375,7 @@ a { color:var(--red-2); font-weight:800; }
     return true;
   }
 
-  $("phone").addEventListener("input", () => { if (codeSent) { codeSent = false; token = null; $("codeBox").classList.add("hidden"); $("go").textContent = "Send me a code"; } });
+  $("phone").addEventListener("input", () => { if (codeSent) { resetCode(); $("go").textContent = "Send me a code"; } });
 
   $("f").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -228,25 +386,28 @@ a { color:var(--red-2); font-weight:800; }
     busy = true; $("go").disabled = true;
     try {
       if (!codeSent) {
-        const r = await api("auth/start", { phone: phone() });
+        const r = await api("auth/start", contactRef() ? { contact: contactRef() } : { phone: phone() });
         if (!r.ok) return fail(r.error);
         codeSent = true;
         $("codeBox").classList.remove("hidden");
         $("devNote").textContent = r.devCode ? "Test code: " + r.devCode : "";
-        $("go").textContent = "Send my request";
+        $("go").textContent = picked ? "Join Andiamo!" : "Send my request";
         $("code").focus();
         return;
       }
       if (!token) {
         if (val("code").replace(/\D/g, "").length < 6) return flag("code", "Enter the 6-digit code from WhatsApp.");
-        const r = await api("auth/verify", { phone: phone(), code: val("code") });
+        const r = await api("auth/verify", { ...(contactRef() ? { contact: contactRef() } : { phone: phone() }), code: val("code") });
         if (!r.ok) return fail(r.error);
         token = r.token;
       }
       const r = await api("venue-request", d);
+      if (!r.ok && r.error === "already_live") { $("err").textContent = `${r.name || d.name} is already on Andiamo!`; return; }
       if (!r.ok) return fail(r.error);
       $("f").classList.add("hidden");
-      $("doneText").textContent = `We've got ${d.name}. We'll call you on WhatsApp to set you up.`;
+      $("doneText").textContent = r.already ? `We already have ${r.name || d.name}. We'll call you on WhatsApp to finish setting you up.`
+        : r.matched ? `We have ${r.name} and your prices. We'll call you on WhatsApp to add your bank account, then you're live.`
+        : `We've got ${d.name}. We'll call you on WhatsApp to set you up.`;
       $("done").classList.remove("hidden");
       window.scrollTo(0, 0);
     } finally { busy = false; $("go").disabled = false; }

@@ -31,6 +31,8 @@ export async function approveSubmission(s, id, { by, confirmMismatch = false }) 
   };
   // A distributor or wholesaler onboarding a store they serve: that's where the store gets its Amabile.
   if (r.company && r.company.toLowerCase() !== "amabile") v.supply = { source: "other", supplier: r.company, note: "Onboarded by " + r.onboarderName, at: now, by };
+  // Picked from our records: the venue stays tied to the account we supply.
+  if (x.outletId) v.outlet = { id: x.outletId, ids: x.outletIds || [x.outletId], name: x.recordName || x.name, linkedAt: now, linkedBy: by };
   v.band = venueBand(await getBands(s), v);
   await s.setJSON(K.venue(v.id), v);
   r.venueId = v.id;

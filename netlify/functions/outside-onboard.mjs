@@ -8,11 +8,14 @@
 //   POST {at, action:"me"}                  who am I, my stores, the wines and areas
 //   POST {at, action:"banks"}
 //   POST {at, action:"resolve", bankCode, account}   the name on the account, from the bank
+//   POST {at, action:"nearby", lat, lng}    stores from our records around where they're standing
+//   POST {at, action:"find", q}             stores from our records by name
 //   POST {at, action:"submit", store}       add a store, or send a returned one back
 import { store, json, clean, getJSON, phoneE164, sign, verify, hashKey, sendCode, codeSendError, WINES, K, rid, listKeys, fetchAll } from "../lib/_outside.mjs";
 import { getOnboarder } from "../lib/_outside_team.mjs";
 import { listBanks, resolveAccount } from "../lib/_outside_payout.mjs";
 import { nameMatches, approveSubmission, AREAS, KINDS } from "../lib/_outside_onboard.mjs";
+import { storeRef } from "../lib/_outside_outlets.mjs";
 
 export const config = { path: "/api/outside-onboard" };
 const bad = (error, status = 400, extra = {}) => json({ ok: false, error, ...extra }, status);
@@ -60,12 +63,24 @@ export default async (req) => {
   if (a === "me") {
     const all = (await fetchAll(s, await listKeys(s, K.requestPrefix))).filter(Boolean);
     const asked = internal ? all.filter((r) => r.source !== "onboard" && ["requested", "visit_booked"].includes(r.stage) && !r.submissionId)
-      .sort((x, y) => y.createdAt - x.createdAt).map((r) => ({ id: r.id, name: r.name, area: r.area, contactName: r.contactName, phone: r.phone, stocksAmabile: r.stocksAmabile, createdAt: r.createdAt })) : [];
+      .sort((x, y) => y.createdAt - x.createdAt).map((r) => ({ id: r.id, name: r.name, area: r.area, kind: r.kind, contactName: r.contactName, phone: r.phone, stocksAmabile: r.stocksAmabile, createdAt: r.createdAt,
+        prices: r.prices || null, lat: r.lat ?? null, lng: r.lng ?? null, address: r.address || "", matched: !!r.outletId, records: r.records || null, outlet: r.outletId ? storeRef({ id: r.outletId }) : "" })) : [];
     const mine = all.filter((r) => r.source === "onboard" && r.submittedBy === me.phone)
       .sort((x, y) => y.createdAt - x.createdAt).map((r) => ({ id: r.id, name: r.name, area: r.area, stage: r.stage, returnNote: r.returnNote || "", createdAt: r.createdAt, store: r.store }));
-    return json({ ok: true, me: { name: me.name, company: me.company, auto: !!me.auto }, stores: mine, asked, wines: WINES.map((w) => ({ id: w.id, name: w.name, label: w.label })), areas: AREAS, kinds: KINDS });
+    return json({ ok: true, me: { name: me.name, company: me.company, auto: !!me.auto }, stores: mine, asked, wines: WINES.map((w) => ({ id: w.id, name: w.name, label: w.label, family: w.family, kind: w.kind })), areas: AREAS, kinds: KINDS });
   }
   if (a === "banks") return json({ ok: true, banks: await listBanks(s) });
+  // Which store is this? Around them first; by name if it isn't there.
+  if (a === "nearby" || a === "find") {
+    const X = await import("../lib/_outside_outlets.mjs");
+    const found = a === "nearby" ? await X.nearbyStores(s, { lat: Number(d.lat), lng: Number(d.lng) }, 400, 8) : await X.searchStores(s, d.q, 8);
+    const idx = await X.andiamoIndex(s);
+    return json({ ok: true, stores: found.map((o) => { const st = X.statusOf(o, idx); const out = X.onboardStore(o, st, internal);
+      // Their own store that came back with a fix: they open it from home, not as a new one.
+      if (st && st.requestId) { const q = idx.reqs.find((r) => r.id === st.requestId); if (q && q.source === "onboard" && q.submittedBy === me.phone) out.mine = true;
+        if (q && q.source !== "onboard" && internal) out.asked = { id: q.id, contactName: q.contactName, phone: q.phone, prices: q.prices || null }; }
+      return out; }) });
+  }
   if (a === "resolve") { const r = await resolveAccount(s, { bankCode: d.bankCode, account: d.account }); return json(r.ok ? { ...r, matches: nameMatches(d.storeName, r.name) } : r, r.ok ? 200 : 400); }
 
   if (a === "submit") {
@@ -91,6 +106,26 @@ export default async (req) => {
     }
     const menuPhoto = typeof x.menuPhoto === "string" && /^data:image\/jpeg;base64,/.test(x.menuPhoto) && x.menuPhoto.length < 900000 ? x.menuPhoto : null;
     const storeData = { name, area, kind, lat, lng, acc: Math.round(Number(x.acc) || 0), prices, taxIncluded: !!x.taxIncluded, managerName, managerPhone, barPhones, payout, hasPhoto: !!menuPhoto };
+
+    // The store from our records, if they picked one, and never the same store twice.
+    const X = await import("../lib/_outside_outlets.mjs");
+    const rec = x.outlet ? await X.storeFromRef(s, x.outlet) : null;
+    if (x.outlet && !rec) return bad("outlet");
+    const idx = await X.andiamoIndex(s);
+    const probe = rec || { ids: [], name, lat, lng };
+    const st = X.statusOf(probe, idx);
+    const self = x.id && st && st.requestId === clean(x.id, 20);
+    if (st && st.stage === "live") return bad("already_live", 409, { name: rec ? rec.name : name });
+    if (st && st.stage === "waiting" && !self) { const q = idx.reqs.find((r) => r.id === st.requestId);
+      return q && q.submittedBy === me.phone ? bad("duplicate", 409) : bad("request_taken", 409, { name: rec ? rec.name : name, by: st.by }); }
+    // A new name, close to a store we already know: ask before adding a second one.
+    if (!rec && !x.id && !x.confirmDifferent) {
+      const near = (await X.nearbyStores(s, { lat, lng }, 120, 3)).find((o) => X.sameName(o.name, name));
+      if (near) return bad("maybe_duplicate", 409, { store: X.onboardStore(near, X.statusOf(near, idx), internal) });
+    }
+    if (rec) { storeData.outletId = rec.id; storeData.outletIds = rec.ids; storeData.recordName = rec.name; }
+    // The venue asked to join on its own: tie it to that request even if they didn't open it from the list.
+    if (internal && !x.fromRequest && st && st.stage === "asked" && st.requestId) x.fromRequest = st.requestId;
 
     // Adding a venue that asked to join: the new store is tied to its request, which leaves the Asked to join list.
     const from = internal && x.fromRequest ? await getJSON(s, K.request(clean(x.fromRequest, 20))) : null;

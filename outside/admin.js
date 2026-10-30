@@ -540,7 +540,6 @@
         <label class="lb">Tonight (players see this)</label><input id="tonight" value="${esc(v.tonight || "")}" placeholder="DJ from 9pm"></div>
       <div class="card"><div class="ch"><h2>Menu prices</h2><span class="muted">Per bottle. Blank if they don't stock it. The level follows from the price.</span></div>
         <div class="grid">${W.map((w) => `<div><label class="lb">${esc(w.name)}</label><div class="money-in"><input data-p="${w.id}" inputmode="numeric" value="${(v.prices && v.prices[w.id]) || ""}"></div><div class="faint lvlof" data-lv="${w.id}"></div></div>`).join("")}</div>
-        <label style="display:flex;gap:8px;align-items:center;margin-top:14px;font-weight:700"><input type="checkbox" id="tax"${v.taxIncluded ? " checked" : ""}> Menu prices include VAT, consumption tax and service</label>
         <div class="grid"><div><label class="lb">Runner fee per drop handover</label><div class="money-in"><input id="fee" inputmode="numeric" value="${v.runnerFee || 1000}"></div></div></div></div>
       <div class="card"><div class="ch"><h2>Location</h2>${v.locationFrom === "outlet" ? '<span class="pill">From the linked account</span>' : ""}</div>
         <p class="muted" style="margin:0 0 12px">Stand inside and tap Use my location, or paste a Google Maps link.</p>
@@ -581,7 +580,7 @@
       if (!$("name").value.trim()) return flag($("name"), "Add the venue's name.");
       const bad = [...document.querySelectorAll("[data-p]")].find((i) => i.value.trim() && !/^[\d,.\s₦]+$/.test(i.value)); if (bad) return flag(bad, "Numbers only, e.g. 50000.");
       const prices = {}; document.querySelectorAll("[data-p]").forEach((i) => (prices[i.dataset.p] = i.value));
-      const venue = { id: v.id, name: $("name").value, area: $("area").value, art: $("art").value, prices, taxIncluded: $("tax").checked,
+      const venue = { id: v.id, name: $("name").value, area: $("area").value, art: $("art").value, prices,
         lat: $("lat").value === "" ? null : Number($("lat").value), lng: $("lng").value === "" ? null : Number($("lng").value), radius: Number($("radius").value), tables: Number($("tables").value), runnerFee: $("fee").value, tonight: $("tonight").value,
         contact: { name: $("cn").value, phone: $("cp").value }, active: !!v.active };
       const r = await call({ action: "venue-save", venue });
@@ -704,7 +703,11 @@
       `<div class="form2"><div class="card"><dl class="kv">${row("Address", esc(r.address))}${row("Map", r.mapsLink ? `<a target="_blank" href="${esc(r.mapsLink)}">Open</a>` : "")}${row("Instagram", r.instagram ? `<a target="_blank" href="https://instagram.com/${esc(r.instagram)}">@${esc(r.instagram)}</a>` : "")}
         ${row("Contact", esc(r.contactName) + " · " + esc(ROLE[r.role] || ""))}${row("Phone", `<a href="https://wa.me/${esc(String(r.phone || "").replace(/\D/g, ""))}" target="_blank">${esc(r.phone)}</a>`)}${row("Email", esc(r.email))}
         ${row("Tables", r.tables || "")}${row("Open", esc(r.nights))}${row("Stocks Amabile", { yes: "Yes", no: "No", not_sure: "Not sure" }[r.stocksAmabile])}${row("Best time to visit", esc(r.visitTime))}${row("Their note", esc(r.note))}
-        ${row("Maybe our account", (r.suggested || []).map((o) => `${esc(o.name)} #${esc(o.number)} · ${esc(o.lga)}`).join("<br>"))}</dl></div>
+        ${row("Maybe our account", (r.suggested || []).map((o) => `${esc(o.name)} #${esc(o.number)} · ${esc(o.lga)}`).join("<br>"))}
+        ${row("Our records", r.records ? [esc(r.records.name), esc(r.records.type), r.records.cases ? r.records.cases + " cases this year" : "", r.records.accounts > 1 ? r.records.accounts + " accounts" : ""].filter(Boolean).join(" · ") : "")}
+        ${row("Menu prices", r.prices ? Object.entries(r.prices).map(([k, v]) => `${esc(wineOf(k).name)} ${naira(v)}`).join(" · ") : "")}
+        ${row("Their number", r.contactVerified ? "The one we hold for this store" : "")}
+        ${row("Also asked", (r.others || []).map((o) => `${esc(o.contactName)} · <a href="https://wa.me/${esc(String(o.phone).replace(/\D/g, ""))}" target="_blank">${esc(o.phone)}</a>`).join("<br>"))}</dl></div>
       <div><div class="card"><div class="ch"><h2>1. Book the visit</h2></div><label class="lb" style="margin-top:0">Who visits</label><div class="chips" id="who">${["Anita", "Aylor"].map((n) => `<button class="chip${(r.visit || {}).by === n ? " on" : ""}" data-by="${n}">${n}</button>`).join("")}</div><input id="vb" value="${esc((r.visit || {}).by || "")}" style="margin-top:8px" placeholder="Or someone else">
           <label class="lb">When</label><input id="vd" value="${esc((r.visit || {}).date || "")}" placeholder="Tue 4 Nov, 3pm"><label class="lb">Note</label><input id="vn" value="${esc((r.visit || {}).note || "")}"><p style="margin:14px 0 0"><button class="btn" id="book">Save visit</button></p></div>
         <div class="card"><div class="ch"><h2>2. List the venue</h2></div>${venue ? `<p style="margin:0 0 10px">Listed as <b>${esc(venue.name)}</b>.</p><button class="btn" id="openv">Open the venue</button>` : `<p class="muted" style="margin:0 0 12px">Creates the venue, not live yet. Location, prices and the account are finished on the venue page, usually during the visit.</p><button class="btn" id="list">List this venue</button>`}</div>

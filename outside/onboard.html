@@ -53,17 +53,99 @@ h1 { font-family:var(--serif); font-weight:400; font-size:30px; line-height:1.08
 .sec .hint { font-size:13px; color:var(--ink-2); font-weight:700; margin:2px 0 0; }
 label { display:block; font-weight:800; font-size:13.5px; margin:12px 0 6px; }
 label small { font-weight:600; color:var(--ink-3); }
-input, select { width:100%; font:inherit; font-size:16px; color:var(--ink); padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; background:#fff; }
-input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
+input, select { width:100%; font:inherit; font-size:16px; font-weight:700; color:var(--ink); padding:13px 14px; border:2px solid var(--line); border-radius:14px; background:#fff; transition:border-color .15s, box-shadow .15s; }
+input::placeholder { color:var(--ink-3); font-weight:600; }
+input:focus, select:focus { outline:none; border-color:var(--ink); box-shadow:0 3px 0 var(--ink); }
 .row { display:grid; grid-template-columns:1fr 1fr; gap:10px; }
 .row > * { min-width:0; }
-.kinds { display:flex; flex-wrap:wrap; gap:6px; }
-.kinds button { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 13px; font:inherit; font-size:14px; font-weight:800; color:var(--ink-2); cursor:pointer; }
-.kinds button.on { border-color:var(--red); background:#FDECE7; color:var(--ink); }
-.phonef { display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
-.phonef:focus-within { border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
+.kinds { display:grid; grid-template-columns:repeat(4, minmax(0,1fr)); gap:8px; }
+.kinds button { display:flex; flex-direction:column; align-items:center; gap:6px; border:2px solid var(--line); background:#fff; border-radius:14px; padding:12px 2px 10px; font:inherit; font-size:12px; font-weight:900; color:var(--ink-2); cursor:pointer; transition:border-color .15s, background .15s, color .15s; }
+.kinds button svg { width:24px; height:24px; }
+.kinds button.on { border-color:var(--ink); background:var(--red); color:#fff; box-shadow:0 3px 0 var(--ink); }
+.kinds.bad { border-radius:14px; box-shadow:0 0 0 3px rgba(200,55,29,.25) !important; }
+/* the add-a-store form: one card per step */
+.blk { background:var(--card); border:2px solid var(--ink); border-radius:20px; box-shadow:0 4px 0 var(--ink); padding:16px 16px 18px; margin-top:14px; }
+.blk header { display:flex; gap:12px; align-items:flex-start; margin-bottom:4px; }
+.blk header .n { flex:none; width:28px; height:28px; border-radius:50%; background:var(--ink); color:#fff; display:grid; place-items:center; font-weight:900; font-size:13.5px; margin-top:1px; }
+.blk header h2 { font-family:var(--serif); font-weight:400; font-size:23px; line-height:1.1; margin:0; }
+.blk header p { margin:3px 0 0; font-size:13.5px; font-weight:700; color:var(--ink-2); }
+.blk > label:first-of-type, #sfields > label:first-child { margin-top:14px; }
+.lnk { background:none; border:0; padding:8px 0 0; font:inherit; font-weight:900; font-size:14px; color:var(--red-2); cursor:pointer; }
+.fgroup { margin-top:14px; border:2px solid var(--line); border-radius:16px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
+.fgroup:focus-within { border-color:var(--ink); box-shadow:0 3px 0 var(--ink); }
+.fld { display:block; position:relative; margin:0; padding:11px 15px 11px; cursor:text; transition:background .15s; }
+.fld + .fld { border-top:2px solid var(--line-2); }
+.fld > span { display:block; margin-bottom:3px; font-size:11px; font-weight:900; letter-spacing:1.1px; text-transform:uppercase; color:var(--ink-3); }
+.fld > span small { text-transform:none; letter-spacing:0; font-weight:700; font-size:12px; }
+.fld input, .fld select { border:0 !important; border-radius:0; padding:0; font-size:17px; font-weight:800; background:transparent; box-shadow:none !important; }
+.fld input::placeholder { font-weight:700; color:#B9AC9F; }
+.fld select.empty { color:#B9AC9F; font-weight:700; }
+.fld select { text-align:left; text-align-last:left; padding-right:34px; text-indent:0; }
+.fld:focus-within { background:#FFFAF4; }
+.fld:focus-within > span { color:var(--red-2); }
+.fld.bad { background:#FDF1EC; box-shadow:none !important; border-color:var(--line-2) !important; }
+.fld.bad > span { color:var(--red-2); }
+.fld .phonef { border:0; border-radius:0; box-shadow:none !important; background:transparent; }
+.fld .phonef .ccbox { padding:0 10px 0 0; border-right:2px solid var(--line-2); font-size:17px; }
+.fld .phonef input { padding-left:12px; }
+.fld.sel::after { top:auto; bottom:18px; transform:rotate(45deg); }
+.fgroup .ferr { margin:0; padding:0 15px 11px; background:#FDF1EC; }
+.lab { margin:16px 0 8px; font-size:11px; font-weight:900; letter-spacing:1.1px; text-transform:uppercase; color:var(--ink-3); }
+.lab small { text-transform:none; letter-spacing:0; font-weight:700; font-size:12px; }
+.sel { position:relative; }
+.sel select { appearance:none; -webkit-appearance:none; padding-right:42px; cursor:pointer; }
+.sel::after { content:""; position:absolute; right:16px; top:50%; width:9px; height:9px; border-right:2.5px solid var(--ink); border-bottom:2.5px solid var(--ink); transform:translateY(-70%) rotate(45deg); pointer-events:none; }
+.sel.bad select { border-color:var(--red-2); }
+.loc2, .shot { display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; margin-top:12px; padding:12px; border:2px dashed var(--ink-3); border-radius:16px; cursor:pointer; background:#fff; }
+.loc2 .pin, .shot .cam { width:44px; height:44px; border-radius:12px; background:var(--bg); display:grid; place-items:center; color:var(--ink-2); }
+.loc2 .pin svg, .shot .cam svg { width:24px; height:24px; }
+.loc2 .lt b, .shot .lt b { display:block; font-weight:900; font-size:15px; }
+.loc2 .lt small, .shot .lt small { display:block; font-size:12.5px; font-weight:700; color:var(--ink-2); }
+.loc2 .go { font-weight:900; font-size:13.5px; color:#fff; background:var(--ink); border-radius:999px; padding:7px 12px; }
+.loc2.ok, .shot.ok { border-style:solid; border-color:var(--ink); }
+.loc2.ok .pin, .shot.ok .cam { background:var(--ok-soft); color:var(--ok); }
+.loc2.ok .go { background:#fff; color:var(--ink); border:2px solid var(--ink); padding:5px 11px; }
+.shot input { position:absolute; opacity:0; width:1px; height:1px; }
+.shot img { width:44px; height:44px; object-fit:cover; border-radius:10px; border:2px solid var(--ink); }
+.mlist { margin-top:12px; border:2px solid var(--ink); border-radius:16px; overflow:hidden; background:#fff; }
+.mlist.bad { box-shadow:0 0 0 3px rgba(200,55,29,.25) !important; border-color:var(--red-2); }
+.mgrp { padding:8px 14px 7px; background:var(--bg); font-size:10.5px; font-weight:900; letter-spacing:1.4px; text-transform:uppercase; color:var(--ink-2); border-top:2px solid var(--ink); }
+.mgrp:first-child { border-top:0; }
+.mrow { display:grid; grid-template-columns:34px minmax(0,1fr) 124px; gap:12px; align-items:center; margin:0; padding:9px 14px; border-top:1.5px solid var(--line-2); cursor:text; }
+.mgrp + .mrow { border-top:0; }
+.mrow img { width:34px; height:52px; object-fit:cover; object-position:50% 45%; border-radius:8px; background:#F4F2EF; }
+.mw b { display:block; font-weight:900; font-size:15.5px; line-height:1.2; }
+.mw small { display:block; font-size:12px; font-weight:700; color:var(--ink-3); }
+.mp { display:flex; align-items:baseline; gap:3px; padding:4px 2px 3px; border-bottom:2px dashed var(--line); min-width:0; }
+.mp i { font-style:normal; font-family:var(--serif); font-size:17px; color:var(--ink-3); }
+.mp input { flex:1; border:0; border-radius:0; padding:0; width:0; min-width:0; text-align:right; font-family:var(--serif); font-weight:400; font-size:21px; letter-spacing:.3px; background:transparent; box-shadow:none !important; }
+.mp input::placeholder { font-family:var(--sans); font-size:13px; font-weight:800; color:var(--ink-3); }
+.mrow:focus-within .mp { border-bottom:2px solid var(--red); }
+.mrow.set .mp { border-bottom:2px solid var(--ink); } .mrow.set .mp i { color:var(--ink); }
+.tog { display:flex; align-items:center; gap:12px; margin:14px 0 0; font-weight:800; font-size:14.5px; cursor:pointer; }
+.tog input { position:absolute; opacity:0; width:1px; height:1px; }
+.tog .sw { flex:none; width:44px; height:26px; border-radius:999px; background:var(--line); border:2px solid var(--ink-3); position:relative; transition:background .15s, border-color .15s; }
+.tog .sw::after { content:""; position:absolute; left:2px; top:2px; width:18px; height:18px; border-radius:50%; background:#fff; box-shadow:0 1px 2px rgba(0,0,0,.25); transition:transform .15s; }
+.tog input:checked + .sw { background:var(--red); border-color:var(--ink); }
+.tog input:checked + .sw::after { transform:translateX(18px); }
+.picku { display:grid; gap:8px; margin-top:12px; }
+.wc { display:grid; grid-template-columns:40px minmax(0,1fr) 26px; gap:12px; align-items:center; width:100%; text-align:left; font:inherit; color:var(--ink); background:#fff; border:2px solid var(--line); border-radius:14px; padding:10px 12px; cursor:pointer; transition:border-color .15s, box-shadow .15s; }
+.wc .av { width:40px; height:40px; border-radius:50%; background:var(--gold-soft); color:var(--gold); border:2px solid var(--ink); display:grid; place-items:center; font-family:var(--serif); font-size:19px; }
+.wc .t b { display:block; font-weight:900; font-size:15px; }
+.wc .t small { display:block; font-size:12.5px; font-weight:700; color:var(--ink-2); }
+.wc .ck { width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; color:transparent; }
+.wc .ck svg { width:14px; height:14px; }
+.wc.on { border-color:var(--ink); box-shadow:0 3px 0 var(--ink); }
+.wc.on .ck { background:var(--red); border-color:var(--ink); color:#fff; }
+.or { margin:8px 2px 0; font-size:12.5px; font-weight:700; color:var(--ink-3); }
+.send { display:flex; align-items:center; justify-content:center; gap:10px; width:100%; margin-top:18px; padding:16px; background:var(--red); color:#fff; border:2.5px solid var(--ink); border-radius:18px; box-shadow:0 4px 0 var(--ink); font:inherit; font-weight:900; font-size:17px; cursor:pointer; }
+.send svg { width:20px; height:20px; }
+.send:active { transform:translateY(3px); box-shadow:0 1px 0 var(--ink); }
+.send:disabled { opacity:.6; }
+.phonef { display:flex; align-items:stretch; border:2px solid var(--line); border-radius:14px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
+.phonef:focus-within { border-color:var(--ink); box-shadow:0 3px 0 var(--ink); }
 .phonef.bad { border-color:var(--red-2); box-shadow:0 0 0 4px rgba(200,55,29,.14); }
-.ccbox { position:relative; flex:none; display:flex; align-items:center; gap:6px; padding:0 10px 0 13px; border-right:1.5px solid var(--line); font-weight:800; font-size:16px; white-space:nowrap; }
+.ccbox { position:relative; flex:none; display:flex; align-items:center; gap:6px; padding:0 10px 0 13px; border-right:2px solid var(--line); font-weight:800; font-size:16px; white-space:nowrap; }
 .ccbox svg { width:10px; height:8px; color:var(--ink-3); }
 .ccbox select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 .phonef input { flex:1; min-width:0; border:0; border-radius:0; box-shadow:none !important; letter-spacing:.3px; }
@@ -87,6 +169,39 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
 .chk { display:flex; gap:10px; align-items:center; font-weight:800; font-size:14px; margin-top:12px; }
 .chk input { width:20px; height:20px; accent-color:var(--red); }
 .hi { margin:0 0 2px; font-weight:800; color:var(--ink-2); }
+/* which store is it */
+.search { position:relative; margin:4px 0 12px; }
+.search input { padding-left:42px; border:2px solid var(--ink); border-radius:14px; }
+.search svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; color:var(--ink-2); }
+.locating { display:flex; align-items:center; gap:10px; margin:6px 2px 12px; font-size:13.5px; font-weight:800; color:var(--ink-2); }
+.locating i { width:10px; height:10px; border-radius:50%; background:var(--red); box-shadow:0 0 0 0 rgba(231,69,41,.5); animation:ping 1.4s infinite; }
+@keyframes ping { 70% { box-shadow:0 0 0 10px rgba(231,69,41,0); } 100% { box-shadow:0 0 0 0 rgba(231,69,41,0); } }
+.picks { display:flex; flex-direction:column; gap:10px; }
+.pick { display:grid; grid-template-columns:44px minmax(0,1fr) auto; gap:12px; align-items:center; width:100%; text-align:left; font:inherit; color:var(--ink); background:var(--card); border:2px solid var(--ink); border-radius:16px; padding:12px; box-shadow:0 3px 0 var(--ink); cursor:pointer; }
+.pick:active { transform:translateY(2px); box-shadow:0 1px 0 var(--ink); }
+.pick .ic { width:44px; height:44px; border-radius:12px; background:var(--red-soft, #FDECE7); color:var(--red-2); border:2px solid var(--ink); display:grid; place-items:center; font-family:var(--serif); font-size:22px; }
+.pick .dist { font-size:12.5px; font-weight:900; color:var(--ink-2); white-space:nowrap; align-self:start; padding-top:2px; }
+.pick .tags { display:flex; flex-wrap:wrap; gap:5px; margin-top:6px; }
+.tag { display:inline-block; font-size:11.5px; font-weight:900; border-radius:999px; padding:2px 9px; background:var(--line-2); color:var(--ink-2); }
+.tag.ok { background:var(--ok-soft); color:var(--ok); } .tag.gold { background:var(--gold-soft); color:var(--gold); } .tag.red { background:#FDECE7; color:var(--red-2); }
+.pick.off { opacity:.7; box-shadow:none; border-style:dashed; cursor:default; }
+.pick.off .ic { background:var(--line-2); color:var(--ink-3); }
+.pick.asked .ic { background:var(--gold-soft); color:var(--gold); }
+.newst { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; margin-top:14px; padding:13px; border:2px dashed var(--ink-3); border-radius:16px; background:transparent; font:inherit; font-weight:900; font-size:15px; color:var(--ink); cursor:pointer; }
+.pnote { margin:0 0 12px; padding:11px 13px; border-radius:12px; background:var(--gold-soft); font-weight:800; font-size:14px; color:var(--ink); }
+.rec { display:grid; grid-template-columns:minmax(0,1fr) auto; gap:10px; align-items:start; margin:0 0 14px; padding:13px 14px; background:var(--card); border:2px solid var(--ink); border-radius:16px; box-shadow:0 3px 0 var(--ink); }
+.rec small { display:block; font-size:11px; font-weight:900; letter-spacing:1px; text-transform:uppercase; color:var(--ink-3); margin-bottom:3px; }
+.rec b { display:block; font-weight:900; font-size:17px; line-height:1.2; }
+.rec span { display:block; font-size:13px; font-weight:700; color:var(--ink-2); margin-top:2px; }
+.rec .tags { margin-top:7px; display:flex; flex-wrap:wrap; gap:5px; }
+.rec button { background:none; border:0; font:inherit; font-weight:900; font-size:14px; color:var(--red-2); cursor:pointer; padding:2px; }
+.chips2 { display:flex; flex-wrap:wrap; gap:6px; margin:8px 0 0; }
+.chips2 button { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:6px 12px; font:inherit; font-size:13.5px; font-weight:800; color:var(--ink); cursor:pointer; }
+.chips2 button small { color:var(--ink-2); font-weight:700; }
+.dup { margin-top:12px; padding:14px; border:2px solid var(--ink); border-radius:14px; background:var(--gold-soft); color:var(--ink); }
+.dup p { margin:0 0 10px; font-weight:800; font-size:14.5px; }
+.dup .row2 { display:flex; gap:8px; flex-wrap:wrap; }
+.dup .btn { margin:0; width:auto; flex:1; padding:11px 14px; font-size:14.5px; }
 .tiles { display:grid; grid-template-columns:repeat(3, minmax(0,1fr)); gap:8px; margin:14px 0 4px; }
 .tile { background:var(--card); border:2px solid var(--ink); border-radius:16px; padding:10px 12px; }
 .tile b { display:block; font-family:var(--serif); font-weight:400; font-size:30px; line-height:1; }
@@ -173,9 +288,9 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
   const ERR = {
     not_onboarder: "This number isn't set up to add stores. Ask your Amabile contact.", phone: "Check the number.", slow_down: "Too many codes. Try again in a few minutes.",
     send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.", expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    name: "Add the store's name.", area: "Choose the area.", kind: "Choose what kind of place it is.", location: "Stand inside the store and tap Use my location.", prices: "Add the menu price of at least one wine.",
+    name: "Add the store's name.", area: "Choose the area.", kind: "Choose what kind of place it is.", location: "Turn on location for this site, standing in the store, so we can place it on the map.", prices: "Add the menu price of at least one wine.",
     manager_name: "Add the manager's name.", manager_phone: "Check the manager's WhatsApp number.", bar_phone: "Check the bar phone numbers.", account_number: "Account numbers have 10 digits.", bank: "Choose the bank.",
-    resolve: "The bank doesn't recognise that account. Check the number and the bank.", duplicate: "You've already sent this store. It's waiting for approval.", request_taken: "Someone has already added this venue.", not_editable: "This store can't be changed now.",
+    resolve: "The bank doesn't recognise that account. Check the number and the bank.", already_live: "This store is already live on Andiamo!", outlet: "Choose the store again.", duplicate: "You've already sent this store. It's waiting for approval.", request_taken: "Someone has already added this venue.", not_editable: "This store can't be changed now.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   async function api(body) {
@@ -186,7 +301,7 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
   }
   function flag(el, text) {
     if (!el) return;
-    const host = el.closest(".phonef") || el;
+    const host = el.closest(".fld, .phonef, .sel") || el;
     unflag(host); host.classList.add("bad");
     const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text; host.insertAdjacentElement("afterend", p);
     host.scrollIntoView({ block: "center", behavior: "smooth" });
@@ -251,69 +366,154 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
       <a class="guide" href="/onboard/guide">New to this? Read the guide</a>
       ${asked.length ? `<div class="sh"><h2>Asked to join</h2><span class="count">${asked.length}</span></div><p class="shsub">They signed up themselves. Message the manager, go, then add it from inside.</p>
         <div class="cards">${asked.map((q) => `<div class="ask"><div class="av">${esc((q.name || "?").trim().charAt(0).toUpperCase())}</div>
-          <div class="info"><b>${esc(q.name)}</b><span>${esc(q.area)} · ${esc(q.contactName)} · ${ago(q.createdAt)}</span>${q.stocksAmabile === "yes" ? '<em>Sells Amabile</em>' : ""}</div>
+          <div class="info"><b>${esc(q.name)}</b><span>${esc(q.area)} · ${esc(q.contactName)} · ${ago(q.createdAt)}</span>${q.matched && q.prices ? '<em>Ready: add the bank</em>' : q.stocksAmabile === "yes" ? '<em>Sells Amabile</em>' : ""}</div>
           <div class="acts"><a class="wa" href="https://wa.me/${esc(String(q.phone || "").replace(/\D/g, ""))}" target="_blank" rel="noopener" aria-label="WhatsApp ${esc(q.contactName)}">${WA}</a><button class="add" data-from="${esc(q.id)}">Add it</button></div></div>`).join("")}</div>` : ""}
       <div class="sh"><h2>${asked.length ? "Yours" : "Your list"}</h2>${r.stores.length ? `<span class="count">${r.stores.length}</span>` : ""}</div>
       ${stores.length ? `<div class="cards">${stores.map((x) => { const [t, c] = STAGE[x.stage] || ["Waiting", "wait"]; return `<div class="store ${c}"><div class="info"><b>${esc(x.name)}</b><span>${esc(x.area)} · ${ago(x.createdAt)}</span></div><span class="pill ${c}">${t}</span>
         ${x.stage === "sent_back" ? `<div class="fixbox"><p>${esc(x.returnNote)}</p><button class="add" data-fix="${esc(x.id)}">Fix it</button></div>` : ""}</div>`; }).join("")}</div>`
         : `<div class="empty"><b>Nothing yet</b>Your first store shows here once you send it.</div>`}`;
-    $("add").onclick = () => form({});
-    app.querySelectorAll("[data-from]").forEach((b) => (b.onclick = () => { const q = asked.find((y) => y.id === b.dataset.from); form({ fromRequest: q.id, name: q.name, area: q.area, managerName: q.contactName, managerPhone: q.phone }); }));
+    $("add").onclick = () => pick();
+    app.querySelectorAll("[data-from]").forEach((b) => (b.onclick = () => { const q = asked.find((y) => y.id === b.dataset.from);
+      form({ fromRequest: q.id, outlet: q.outlet || "", name: q.name, area: q.area, kind: q.kind, prices: q.prices || {}, managerName: q.contactName, managerPhone: q.phone,
+        ...(q.lat != null ? { lat: q.lat, lng: q.lng, locFrom: "records" } : {}), rec: q.matched ? { name: q.name, place: q.address, cases: q.records && q.records.cases, lastBought: q.records && q.records.lastBought, asked: true } : null }); }));
     app.querySelectorAll("[data-fix]").forEach((b) => (b.onclick = () => { const x = r.stores.find((y) => y.id === b.dataset.fix); form({ ...x.store, id: x.id, account: "", bankCode: (x.store.payout || {}).bankCode || "" }); }));
     top();
+  }
+
+  // ---------- which store is it ----------
+  // Standing in it, the store is usually already in our records: closest first, or by name. Picking one fills
+  // in the name, area, type and location; our own people also get the manager's details we hold.
+  const far = (a, b) => { const R = 6371000, t = Math.PI / 180, x = Math.sin((b.lat - a.lat) * t / 2) ** 2 + Math.cos(a.lat * t) * Math.cos(b.lat * t) * Math.sin((b.lng - a.lng) * t / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(x)); };
+  const dist = (m) => m == null ? "" : m < 1000 ? Math.round(m / 10) * 10 + " m" : (m / 1000).toFixed(1) + " km";
+  const MON = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+  const day = (d) => { const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(d || ""); return m ? +m[3] + " " + MON[+m[2] - 1] : ""; };
+  const SRCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+  function tagsFor(o) {
+    const t = [];
+    if (o.status === "live") t.push('<span class="tag ok">Live on Andiamo!</span>');
+    else if (o.status === "waiting") t.push(`<span class="tag gold">${o.mine ? "You sent it" : "Waiting" + (o.waitingBy ? " · " + esc(o.waitingBy) : "")}</span>`);
+    else if (o.status === "listed") t.push('<span class="tag gold">Being set up</span>');
+    else if (o.status === "asked") t.push('<span class="tag red">Asked to join</span>');
+    if (o.asked && o.asked.prices) t.push('<span class="tag ok">Prices in</span>');
+    if (o.cases) t.push(`<span class="tag">${o.cases} cases this year</span>`);
+    return t.join("");
+  }
+  async function pick(note) {
+    let here = null, list = [], q = "", qT = 0, qN = 0;
+    app.innerHTML = `<button class="btn sm ghost" id="back" style="margin-bottom:14px">← Your stores</button>
+      <h1>Which store is it?</h1><p class="sub">From our records, closest first.</p>${note ? `<p class="pnote">${note}</p>` : ""}
+      <div class="search">${SRCH}<input id="q" type="search" placeholder="Search by name" autocomplete="off" enterkeyhint="search"></div>
+      <div id="near"><p class="locating"><i></i>Finding stores around you...</p></div>
+      <button class="newst" id="new" type="button">+ It's not here. Add a new store</button>`;
+    top();
+    $("back").onclick = () => home();
+    $("new").onclick = () => form(here ? { lat: here.lat, lng: here.lng, acc: here.acc, locFrom: "gps" } : {});
+    const draw = (msg) => {
+      if (!list.length) { $("near").innerHTML = `<p class="locating" style="animation:none">${msg}</p>`; return; }
+      $("near").innerHTML = `<div class="picks">${list.map((o, i) => { const off = ["live", "waiting", "listed"].includes(o.status);
+        const m = o.metres != null ? o.metres : here && o.lat != null ? far(here, o) : null;
+        return `<button class="pick${off ? " off" : ""}${o.status === "asked" ? " asked" : ""}" data-i="${i}"><span class="ic">${esc((o.name || "?").trim().charAt(0).toUpperCase())}</span>
+          <span class="info"><b>${esc(o.name)}</b><span>${esc([o.type, o.place].filter(Boolean).join(" · "))}</span><span class="tags">${tagsFor(o)}</span></span><span class="dist">${dist(m)}</span></button>`; }).join("")}</div>`;
+      $("near").querySelectorAll("[data-i]").forEach((b) => (b.onclick = () => choose(list[+b.dataset.i])));
+    };
+    const nearby = async () => {
+      if (!here) return;
+      const r = await api({ action: "nearby", lat: here.lat, lng: here.lng });
+      if (q) return; list = r.ok ? r.stores : []; draw("Nothing in our records within 400 m. Search by name, or add it as a new store.");
+    };
+    if (navigator.geolocation) navigator.geolocation.getCurrentPosition((p) => { here = { lat: +p.coords.latitude.toFixed(6), lng: +p.coords.longitude.toFixed(6), acc: Math.round(p.coords.accuracy) }; nearby(); },
+      () => { if (!q) { list = []; draw("Turn on location for this site to see stores around you, or search by name."); } }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    else draw("Search by name.");
+    $("q").addEventListener("input", () => {
+      q = $("q").value.trim(); clearTimeout(qT);
+      if (q.length < 2) { q = ""; if (here) nearby(); else { list = []; draw("Search by name."); } return; }
+      qT = setTimeout(async () => { const n = ++qN, r = await api({ action: "find", q }); if (n !== qN || !q) return; list = r.ok ? r.stores : []; draw(`Nothing called “${esc(q)}” in our records. Add it as a new store.`); }, 200);
+    });
+    function choose(o) {
+      if (o.status === "live") return pick(`<b>${esc(o.name)}</b> is already live on Andiamo!`);
+      if (o.status === "waiting") return pick(o.mine ? `You've sent <b>${esc(o.name)}</b>. It's waiting for approval.` : `<b>${esc(o.name)}</b> is waiting for approval${o.waitingBy ? ", added by " + esc(o.waitingBy) : ""}.`);
+      if (o.status === "listed") return pick(`<b>${esc(o.name)}</b> is already being set up at the back end.`);
+      // Its location is in our records; the phone's is used only if it isn't.
+      const loc = o.lat != null ? { lat: o.lat, lng: o.lng, locFrom: "records" } : here ? { lat: here.lat, lng: here.lng, acc: here.acc, locFrom: "gps" } : {};
+      const c = (o.contacts || [])[0];
+      form({ outlet: o.ref, rec: o, name: o.name, area: o.area, kind: o.kind || "", ...loc,
+        ...(o.asked ? { fromRequest: o.asked.id, prices: o.asked.prices || {}, managerName: o.asked.contactName, managerPhone: o.asked.phone }
+          : c ? { managerName: c.name, managerPhone: c.phone } : {}) });
+    }
   }
 
   // ---------- add a store ----------
   let banks = null;
   async function form(pre) {
     if (!banks) { const b = await api({ action: "banks" }); banks = b.ok ? b.banks : []; }
-    const st = { kind: pre.kind || "", lat: pre.lat ?? null, lng: pre.lng ?? null, acc: pre.acc || 0, photo: null, acct: null };
+    const st = { kind: pre.kind || "", lat: pre.lat ?? null, lng: pre.lng ?? null, acc: pre.acc || 0, photo: null, acct: null, dupOk: false };
+    const rec = pre.rec || null;
     const W = S.wines;
+    const KIC = { lounge: '<path d="M5 4h14l-7 8z"/><path d="M12 12v7M8 20h8"/>', restaurant: '<path d="M7 3v8M5 3v4a2 2 0 0 0 4 0V3M7 11v10"/><path d="M17 3c-2.5 2-2.5 7 0 9v9"/>',
+      hotel: '<path d="M3 19V7M3 14h18v5"/><path d="M21 19v-5a3 3 0 0 0-3-3h-8v3"/><circle cx="6.5" cy="11" r="1.6"/>', rooftop: '<path d="M4 21V11l5-3v13M9 21V4l7 4v13M16 21v-8l4 2v6M2 21h20"/>',
+      beach: '<path d="M3 12a9 9 0 0 1 18 0z"/><path d="M12 12v7a2 2 0 0 0 4 0"/>', brewery: '<path d="M5 6h10v14H5z"/><path d="M15 9h2a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2h-2M8.5 10v6M11.5 10v6"/>',
+      club: '<path d="M9 18V5l11-2v13"/><circle cx="6" cy="18" r="3"/><circle cx="17" cy="16" r="3"/>', garden: '<path d="M5 20c0-9 6-15 15-15 0 9-6 15-14 15"/><path d="M5 20c3-4 6-7 10-9"/>' };
+    const svg = (d, w = 2.2) => `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${d}</svg>`;
+    const kindName = (k) => (S.kinds.find(([x]) => x === k) || [k, ""])[1];
+    const fam = (f) => W.filter((w) => (w.family || "frizzante") === f);
+    const mrow = (w) => { const v = (pre.prices || {})[w.id]; const val = v ? String(v).replace(/\D/g, "").replace(/\B(?=(\d{3})+(?!\d))/g, ",") : "";
+      return `<label class="mrow${val ? " set" : ""}" for="p-${w.id}"><img src="/outside/img/bottle-${esc(w.id)}.jpg" alt="" loading="lazy"><span class="mw"><b>${esc(w.name)}</b><small>${esc(w.kind || (w.family === "spumante" ? "Sparkling" : ""))}</small></span><span class="mp"><i>₦</i><input id="p-${w.id}" inputmode="numeric" autocomplete="off" placeholder="Not sold" value="${esc(val)}"></span></label>`; };
+    const recC = rec && rec.contacts && rec.contacts.length ? rec.contacts : [];
+    // A store from our records already has its name, area, kind and location: nothing to ask. A new one asks for them.
+    const known = !!(rec && pre.name && pre.area && st.kind);
+    let n = 0; const num = () => ++n;
     app.innerHTML = `<button class="btn sm ghost" id="back" style="margin-bottom:14px">← Your stores</button>
       <h1>${pre.id ? "Fix " + esc(pre.name) : "Add a store"}</h1><p class="sub">${S.me.auto ? "It goes live as soon as you send it." : "Amabile checks it, then it goes live."}</p>
-      <div class="panel">
-        <div class="sec"><h2>The store</h2>
-          <label for="nm">Store name</label><input id="nm" maxlength="60" value="${esc(pre.name || "")}" autocomplete="off">
-          <label for="ar">Area</label><select id="ar"><option value="">Choose the area</option>${S.areas.map((a) => `<option${pre.area === a ? " selected" : ""}>${esc(a)}</option>`).join("")}</select>
-          <label>What kind of place</label><div class="kinds" id="kd">${S.kinds.map(([k, n]) => `<button type="button" data-k="${k}" class="${st.kind === k ? "on" : ""}">${n}</button>`).join("")}</div></div>
-        <div class="sec"><h2>Where it is</h2><p class="hint">Stand inside, in the main room.</p>
-          <div class="loc"><button class="btn ghost" id="here" type="button">Use my location</button><span class="st" id="lst">${st.lat != null ? "Location saved" : "Not set yet"}</span></div></div>
-        <div class="sec"><h2>Menu prices</h2><p class="hint">What a bottle costs on their menu. Leave blank what they don't sell.</p>
-          <div class="row">${W.map((w) => `<div><label for="p-${w.id}">${esc(w.name)}</label><div class="money"><input id="p-${w.id}" inputmode="numeric" value="${esc((pre.prices || {})[w.id] || "")}"></div></div>`).join("")}</div>
-          <label class="chk"><input type="checkbox" id="tx"${pre.taxIncluded ? " checked" : ""}> Prices include VAT and service</label>
-          <label>Photo of the menu <small>optional</small></label><div class="photo"><input type="file" id="ph" accept="image/*" capture="environment"><img id="pv" alt="" hidden></div></div>
-        <div class="sec"><h2>The manager</h2><p class="hint">They sign in to the bar phone with this number.</p>
-          <label for="mn">Name</label><input id="mn" maxlength="30" value="${esc(pre.managerName || "")}">
-          <label for="mp">WhatsApp number</label>${phoneField("mp", pre.managerPhone || "")}
-          <label for="bp0">Other bar phones <small>optional</small></label><div class="bps" id="bps">${(pre.barPhones && pre.barPhones.length ? pre.barPhones : [""]).map((x, i) => phoneField("bp" + i, x)).join("")}</div>
-          <button class="addbp" id="addbp" type="button">+ Add another</button></div>
-        <div class="sec"><h2>Where we pay them</h2><p class="hint">The store's own bank account. We pay its menu price for every bottle served.</p>
-          <label for="bk">Bank <small>optional for now</small></label><select id="bk"><option value="">Choose the bank</option>${banks.map((b) => `<option value="${esc(b.code)}"${pre.bankCode === b.code ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select>
-          <label for="ac">Account number</label><input id="ac" inputmode="numeric" maxlength="10" placeholder="10 digits">
-          <div id="an"></div></div>
-        <button class="btn" id="send">${S.me.auto ? "Put it live" : "Send for approval"}</button><p class="err" id="err" role="alert"></p>
-      </div>`;
+      ${rec ? `<div class="rec"><div><small>${rec.asked || pre.fromRequest ? "Asked to join · in our records" : "From our records"}</small><b>${esc(rec.name)}</b><span>${esc([rec.type, rec.place].filter(Boolean).join(" · "))}</span>
+        <div class="tags">${rec.lastBought ? `<span class="tag">Last bought ${day(rec.lastBought)}</span>` : ""}${rec.cases ? `<span class="tag">${rec.cases} cases this year</span>` : ""}${rec.accounts > 1 ? `<span class="tag">${rec.accounts} accounts</span>` : ""}${pre.fromRequest && Object.keys(pre.prices || {}).length ? '<span class="tag ok">Prices from the venue</span>' : ""}</div></div>
+        ${pre.fromRequest && !rec.ref ? "" : '<button type="button" id="chgst">Change</button>'}</div>` : ""}
+      <section class="blk"${known ? " hidden" : ""} id="sblk"><header><span class="n">${known ? "" : num()}</span><div><h2>The store</h2><p>Not in our records yet.</p></div></header>
+        <div id="sfields">
+          <div class="fgroup"><label class="fld" for="nm"><span>Name</span><input id="nm" maxlength="60" value="${esc(pre.name || "")}" autocomplete="off" placeholder="As it appears on the sign outside"></label>
+          <label class="fld sel" for="ar"><span>Area</span><select id="ar" class="${pre.area ? "" : "empty"}"><option value="">Choose the area</option>${S.areas.map((a) => `<option${pre.area === a ? " selected" : ""}>${esc(a)}</option>`).join("")}</select></label></div>
+          <p class="lab">Kind of place</p><div class="kinds" id="kd">${S.kinds.map(([k, nn]) => `<button type="button" data-k="${k}" class="${st.kind === k ? "on" : ""}">${svg(KIC[k] || "")}<span>${nn}</span></button>`).join("")}</div></div></section>
+      <section class="blk"><header><span class="n">${num()}</span><div><h2>Menu prices</h2><p>A bottle on their menu. Leave out what they don't sell.</p></div></header>
+        <div class="mlist" id="mlist"><div class="mgrp">Frizzante</div>${fam("frizzante").map(mrow).join("")}${fam("spumante").length ? `<div class="mgrp">Spumante</div>${fam("spumante").map(mrow).join("")}` : ""}</div>
+        <label class="shot" id="shot"><input type="file" id="ph" accept="image/*" capture="environment"><span class="cam">${svg('<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>')}</span><span class="lt"><b>Photo of the menu</b><small>Optional. It helps us check the prices.</small></span><img id="pv" alt="" hidden></label></section>
+      <section class="blk"><header><span class="n">${num()}</span><div><h2>The manager</h2><p>They sign in to the bar phone with this number.</p></div></header>
+        ${recC.length ? `<div class="picku">${recC.map((c, i) => `<button type="button" class="wc" data-c="${i}"><span class="av">${esc((c.name || "?").trim().charAt(0).toUpperCase())}</span><span class="t"><b>${esc(c.name || "Contact")}</b><small>WhatsApp ··· ${esc(c.phone.slice(-4))}</small></span><span class="ck">${svg('<path d="M5 12.5l4.5 4.5L19 7.5"/>', 3.2)}</span></button>`).join("")}</div><p class="or">On our records. Tap one, or type someone else.</p>` : ""}
+        <div class="fgroup"><label class="fld" for="mn"><span>Name</span><input id="mn" maxlength="30" value="${esc(pre.managerName || "")}" placeholder="First name is fine"></label>
+        <label class="fld" for="mp"><span>WhatsApp number</span>${phoneField("mp", pre.managerPhone || "")}</label></div>
+        <p class="lab">Other bar phones <small>optional</small></p><div class="bps" id="bps">${(pre.barPhones && pre.barPhones.length ? pre.barPhones : [""]).map((x, i) => phoneField("bp" + i, x)).join("")}</div>
+        <button class="addbp" id="addbp" type="button">+ Add another</button></section>
+      <section class="blk"><header><span class="n">${num()}</span><div><h2>Where we pay them</h2><p>The store's own account. We pay its menu price for every bottle served.</p></div></header>
+        <div class="fgroup"><label class="fld sel" for="bk"><span>Bank <small>optional for now</small></span><select id="bk" class="${pre.bankCode ? "" : "empty"}"><option value="">Choose the bank</option>${banks.map((b) => `<option value="${esc(b.code)}"${pre.bankCode === b.code ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select></label>
+        <label class="fld" for="ac"><span>Account number</span><input id="ac" inputmode="numeric" maxlength="10" placeholder="10 digits"></label></div>
+        <div id="an"></div></section>
+      <button class="send" id="send">${S.me.auto ? "Put it live" : "Send for approval"}${svg('<path d="M5 12h14M13 6l6 6-6 6"/>', 2.8)}</button><p class="err" id="err" role="alert"></p>`;
     top();
     let nbp = $("bps").querySelectorAll(".phonef").length;
     wirePhone("mp"); for (let i = 0; i < nbp; i++) wirePhone("bp" + i);
     $("addbp").onclick = () => { $("bps").insertAdjacentHTML("beforeend", phoneField("bp" + nbp)); wirePhone("bp" + nbp); $("bp" + nbp).focus(); nbp++; };
     const barPhones = () => [...$("bps").querySelectorAll("input[type=tel]")].map((x) => phoneOf(x.id)).filter(Boolean);
     $("back").onclick = () => home();
+    if ($("chgst")) $("chgst").onclick = () => pick();
+    ["ar", "bk"].forEach((id) => $(id).addEventListener("change", () => $(id).classList.toggle("empty", !$(id).value)));
+    // A contact we hold: tap to use. Typing over it unpicks it.
+    const markC = () => app.querySelectorAll(".wc").forEach((b) => { const c = recC[+b.dataset.c]; b.classList.toggle("on", phoneOf("mp") === c.phone); });
+    app.querySelectorAll(".wc").forEach((b) => (b.onclick = () => { const c = recC[+b.dataset.c]; $("mn").value = c.name || ""; const [cc, rest] = splitPhone(c.phone); $("mp_cc").value = cc; $("mp_ccv").textContent = ccLabel(cc); $("mp").value = rest; unflag($("mp")); markC(); }));
+    $("mp").addEventListener("input", markC); markC();
+    // Prices read like a menu: grouped digits, the row firms up once it has one.
+    W.forEach((w) => { const x = $("p-" + w.id); x.addEventListener("input", () => { const d = x.value.replace(/\D/g, "").slice(0, 7); x.value = d.replace(/\B(?=(\d{3})+(?!\d))/g, ","); x.closest(".mrow").classList.toggle("set", !!d); unflag($("mlist")); }); });
     app.querySelectorAll("[data-k]").forEach((b) => (b.onclick = () => { st.kind = b.dataset.k; app.querySelectorAll("[data-k]").forEach((x) => x.classList.toggle("on", x === b)); unflag($("kd")); }));
-    $("here").onclick = () => {
-      if (!navigator.geolocation) return flag($("here"), "This phone can't share its location.");
-      $("lst").textContent = "Finding you..."; $("lst").className = "st";
-      navigator.geolocation.getCurrentPosition((p) => {
-        st.lat = +p.coords.latitude.toFixed(6); st.lng = +p.coords.longitude.toFixed(6); st.acc = Math.round(p.coords.accuracy);
-        $("lst").className = "st ok"; $("lst").textContent = st.acc > 60 ? `Saved, to about ${st.acc} m. Move to the middle of the room and tap again.` : `Saved, to about ${st.acc} m`;
-      }, () => { $("lst").textContent = "Turn on location for this site, then tap again."; }, { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 });
-    };
+    // Where it is: from our records for a store we know; otherwise taken quietly from the phone, standing in it.
+    const locate = () => new Promise((res) => {
+      if (!navigator.geolocation) return res(false);
+      navigator.geolocation.getCurrentPosition((p) => { st.lat = +p.coords.latitude.toFixed(6); st.lng = +p.coords.longitude.toFixed(6); st.acc = Math.round(p.coords.accuracy); res(true); },
+        () => res(false), { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
+    });
+    if (st.lat == null) locate();
     // A smaller copy of the menu photo, so it sends quickly on a weak signal.
     $("ph").onchange = () => {
       const f = $("ph").files[0]; if (!f) return;
       const img = new Image(), url = URL.createObjectURL(f);
       img.onload = () => { const k = Math.min(1, 1200 / Math.max(img.width, img.height)), c = document.createElement("canvas"); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
-        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); st.photo = c.toDataURL("image/jpeg", 0.7); $("pv").src = st.photo; $("pv").hidden = false; URL.revokeObjectURL(url); };
+        c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); st.photo = c.toDataURL("image/jpeg", 0.7); $("pv").src = st.photo; $("pv").hidden = false; $("shot").classList.add("ok"); $("shot").querySelector("small").textContent = "Added. Tap to retake."; URL.revokeObjectURL(url); };
       img.src = url;
     };
     // The bank says whose account it is. If it doesn't look like the store, it waits for Amabile to check.
@@ -333,13 +533,14 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
     $("send").onclick = async () => {
       $("err").textContent = "";
       const prices = {}; W.forEach((w) => (prices[w.id] = $("p-" + w.id).value));
-      const store = { id: pre.id || "", fromRequest: pre.fromRequest || "", name: $("nm").value.trim(), area: $("ar").value, kind: st.kind, lat: st.lat, lng: st.lng, acc: st.acc, prices, taxIncluded: $("tx").checked,
+      const store = { id: pre.id || "", fromRequest: pre.fromRequest || "", outlet: pre.outlet || "", confirmDifferent: st.dupOk, name: $("nm").value.trim(), area: $("ar").value, kind: st.kind, lat: st.lat, lng: st.lng, acc: st.acc, prices,
         managerName: $("mn").value.trim(), managerPhone: phoneOf("mp"), barPhones: barPhones().join(","), bankCode: $("bk").value, account: $("ac").value.replace(/\D/g, ""), menuPhoto: st.photo };
+      if (store.name.length < 2 || !store.area) $("sblk").hidden = false;
       if (store.name.length < 2) return flag($("nm"), ERR.name);
       if (!store.area) return flag($("ar"), ERR.area);
-      if (!store.kind) return flag($("kd"), ERR.kind);
-      if (store.lat == null) return flag($("here"), ERR.location);
-      if (!W.some((w) => String(prices[w.id]).replace(/\D/g, ""))) return flag($("p-" + W[0].id), ERR.prices);
+      if (!store.kind) { $("sblk").hidden = false; return flag($("kd"), ERR.kind); }
+      if (store.lat == null) { $("send").disabled = true; const got = await locate(); $("send").disabled = false; if (!got) { $("err").textContent = ERR.location; return; } store.lat = st.lat; store.lng = st.lng; store.acc = st.acc; }
+      if (!W.some((w) => String(prices[w.id]).replace(/\D/g, ""))) return flag($("mlist"), ERR.prices);
       if (!store.managerName) return flag($("mn"), ERR.manager_name);
       if (store.managerPhone.replace(/\D/g, "").length < 8) return flag($("mp"), ERR.manager_phone);
       if (store.account && !store.bankCode) return flag($("bk"), ERR.bank);
@@ -347,7 +548,17 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
       $("send").disabled = true;
       const r = await api({ action: "submit", store }).finally(() => { $("send").disabled = false; });
       if (!r.ok) {
-        const F = { name: "nm", area: "ar", kind: "kd", location: "here", manager_name: "mn", manager_phone: "mp", bar_phone: "bp0", account_number: "ac", bank: "bk", resolve: "ac" };
+        const F = { name: "nm", area: "ar", kind: "kd", manager_name: "mn", manager_phone: "mp", bar_phone: "bp0", account_number: "ac", bank: "bk", resolve: "ac" };
+        if (r.error === "maybe_duplicate" && r.store) {
+          const o = r.store;
+          $("err").innerHTML = `<div class="dup"><p>Is this <b>${esc(o.name)}</b>? It's in our records${o.metres != null ? ", " + dist(o.metres) + " away" : ""}${o.status === "live" ? ", already live" : ""}.</p>
+            <div class="row2"><button class="btn" id="dupyes" type="button">Yes, it's that one</button><button class="btn ghost" id="dupno" type="button">No, a different place</button></div></div>`;
+          $("dupyes").onclick = () => o.status === "live" || o.status === "waiting" ? pick(`<b>${esc(o.name)}</b> is ${o.status === "live" ? "already live on Andiamo!" : "waiting for approval."}`)
+            : form({ ...pre, outlet: o.ref, rec: o, name: o.name, area: o.area || pre.area, kind: o.kind || st.kind, lat: st.lat, lng: st.lng, acc: st.acc, locFrom: pre.locFrom });
+          $("dupno").onclick = () => { st.dupOk = true; $("err").innerHTML = ""; $("send").click(); };
+          $("err").scrollIntoView({ block: "center", behavior: "smooth" }); return;
+        }
+        if (r.error === "request_taken" && r.by) { $("err").textContent = `${r.by} has already added this store. It's waiting for approval.`; return; }
         if (r.error === "bar_phone") { const bad = [...$("bps").querySelectorAll("input[type=tel]")].find((x) => phoneOf(x.id) === r.bad); return flag(bad || $("bp0"), ERR.bar_phone); }
         return F[r.error] ? flag($(F[r.error]), ERR[r.error]) : ($("err").textContent = ERR[r.error] || ERR.server);
       }
