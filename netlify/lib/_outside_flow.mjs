@@ -13,6 +13,7 @@ export function senderView(b) {
   const shown = b.status === "declined" && Date.now() - (b.paidAt || b.createdAt) > 30 * 864e5 ? "Not claimed" : status;
   return { id: b.id, toMasked: b.toName || b.toMasked || "", wine: b.wine, note: b.note || "", status: shown, via: b.via || "",
     ...(b.via === "link" && b.status === "link" ? { giftUrl: SITE + "/g/" + b.giftCode, forLabel: b.forLabel || "" } : {}),
+    ...(b.selfSend && b.giftCode && b.status === "waiting" ? { giftUrl: SITE + "/g/" + b.giftCode, selfSend: true, waTo: String(b.to || "").replace(/\D/g, "") } : {}),
     day: b.servedAt ? new Date(b.servedAt).toISOString().slice(0, 10) : null, createdAt: b.createdAt };
 }
 
@@ -63,7 +64,7 @@ export async function markBottlePaid(s, b, tx, via) {
     // WhatsApp and a browser push, side by side.
     const { bottleOnWayPush } = await import("./_outside_push.mjs");
     await Promise.all([
-      sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Andiamo and tap Glow when you see the runner.").catch(() => {}),
+      sendText(b.to, from + " sent you an Amabile " + (wine(b.wine)?.name || "") + ". It's on its way to your table. Open Andiamo and tap Glow when you see the waiter.").catch(() => {}),
       bottleOnWayPush(b).catch(() => {})
     ]);
     return b;
@@ -79,7 +80,10 @@ export async function markBottlePaid(s, b, tx, via) {
   b.status = "waiting";
   await saveBottle(s, b);
   await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
-  const r = await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
+  // The sender shares it on WhatsApp themselves: no message from Andiamo, only the push if they have Andiamo already.
+  const r = b.selfSend
+    ? await import("./_outside_push.mjs").then((m) => m.bottleWaitingPush(b)).then((p) => ({ ok: false, skip: "self", push: !!(p && p.ok) })).catch(() => ({ ok: false, skip: "self" }))
+    : await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
   b.notice = { ok: !!(r && r.ok), at: Date.now(), skip: r && r.skip };
   await saveBottle(s, b);
   return b;

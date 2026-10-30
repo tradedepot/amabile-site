@@ -17,7 +17,7 @@ export default async (req) => {
     const s = store();
     const id = await s.get(K.gift(code));
     const b = id ? await getJSON(s, K.bottle(String(id))) : null;
-    if (b && b.via === "link") from = (b.fromName || "").split(/\s+/)[0];
+    if (b && (b.via === "link" || b.selfSend)) from = (b.fromName || "").split(/\s+/)[0];
   } catch {}
   const title = from ? `${from}'s sending you an Amabile` : "Someone's sending you an Amabile";
   const desc = "Something's coming to your table. Open it to see what.";

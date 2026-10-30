@@ -86,7 +86,7 @@ export function bottleWaitingPush(b) {
 export function bottleOnWayPush(b) {
   return pushTo(b.to, {
     title: fromOf(b) + " sent you an Amabile" + (wine(b.wine) ? " " + wine(b.wine).name : ""),
-    body: "It's on its way to your table. Tap Glow when you see the runner.",
+    body: "It's on its way to your table. Tap Glow when you see the waiter.",
     url: SITE + "/",
     tag: "b-" + b.id
   });

@@ -289,6 +289,7 @@ export default async (req) => {
             .filter((x) => x.to === toPhone && x.status === "waiting" && Date.now() - x.createdAt < 30 * 864e5);
           if (mineToThem.length >= RULES.maxPendingToNumber) return bad("limit");
           const them = await getJSON(s, K.player(toPhone)); b.toFirst = them && them.name || "";
+          if (d.self === true) { const { attachInvite } = await import("../lib/_outside_gift.mjs"); await attachInvite(s, b); }
         }
         b.to = toPhone; b.toMasked = b.toFirst || maskPhone(toPhone);
       } else {

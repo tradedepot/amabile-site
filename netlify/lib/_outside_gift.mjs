@@ -20,6 +20,14 @@ export async function attachGift(s, b, forLabel) {
   await s.set(K.gift(b.giftCode), b.id);
 }
 
+// A bottle to a number that the sender shares themselves on WhatsApp. The link carries no number: it opens
+// the bottle, and only someone who signs in with the number it was sent to can keep it.
+export async function attachInvite(s, b) {
+  b.selfSend = true; b.anon = false;
+  b.giftCode = newCode();
+  await s.set(K.gift(b.giftCode), b.id);
+}
+
 async function bottleFor(s, code) {
   const id = await s.get(K.gift(giftCode(code))).catch(() => null);
   return id ? getJSON(s, K.bottle(String(id))) : null;
@@ -28,9 +36,17 @@ async function bottleFor(s, code) {
 // Anyone with the link: what the opening shows.
 export async function giftView(s, code, me) {
   const b = await bottleFor(s, code);
-  if (!b || b.via !== "link" || b.giftCode !== giftCode(code)) return { ok: false, error: "gift_unknown" };
+  if (!b || (b.via !== "link" && !b.selfSend) || b.giftCode !== giftCode(code)) return { ok: false, error: "gift_unknown" };
   const w = wine(b.wine);
   const base = { ok: true, from: b.fromName || "A friend", wine: b.wine, wineLabel: w ? w.label : "Amabile", note: b.note || "", band: b.band };
+  if (b.selfSend) {
+    if (b.status === "pending" || b.status === "review") return { ...base, state: "not_ready" };
+    if (["cancelled", "refunded", "expired"].includes(b.status)) return { ...base, state: "gone" };
+    if (!me) return { ...base, state: "numbered" };
+    if (b.to === me) return { ...base, state: "mine", bottleId: b.id };
+    if (b.from === me) return { ...base, state: "sender" };
+    return { ...base, state: "not_yours" };
+  }
   if (b.status === "pending" || b.status === "review") return { ...base, state: "not_ready" };
   if (b.status === "link") return { ...base, state: "open", forLabel: b.forLabel || "" };
   if (me && b.to === me) return { ...base, state: "mine", bottleId: b.id, forLabel: b.forLabel || "" };
@@ -41,6 +57,10 @@ export async function giftView(s, code, me) {
 // Signed in with a verified number and a profile: keep it.
 export async function acceptGift(s, me, player, code) {
   const b = await bottleFor(s, code);
+  if (b && b.selfSend && b.giftCode === giftCode(code)) {
+    // Already in their bottles: signing in with the number it was sent to is all it takes.
+    return b.to === me ? { ok: true, bottleId: b.id, already: true } : { ok: false, error: "not_yours" };
+  }
   if (!b || b.via !== "link" || b.giftCode !== giftCode(code)) return { ok: false, error: "gift_unknown" };
   if (b.to === me) return { ok: true, bottleId: b.id, already: true };
   if (b.status !== "link") return { ok: false, error: "gift_taken" };

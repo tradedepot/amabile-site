@@ -68,7 +68,7 @@
     two_plus: "Drops are for tables of two or more.", not_yet: "Not live yet.", over: "This drop has ended.", band_price: "That level isn't open for this wine yet.",
     payment_init: "Payment didn't start. Try again.", not_stocked_there: "That wine isn't available where they are.", cant_send: "You can't send to this number.",
     self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again.",
-    qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
+    qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", not_yours: "This bottle was sent to a different number.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
   };
   // ---------- showing what needs fixing ----------
   // A field: red outline, a line under it saying what's wrong, brought into view and focused, a small nudge and a buzz. Typing in it clears it.
@@ -325,8 +325,8 @@
     const tickets = me ? me.tickets : [];
     $("#ticketBar").innerHTML = tickets.map((t) => {
       const bc = beaconOf(t.beacon);
-      if (t.via === "qr") return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">The runner who scanned you is bringing it.</div></div></div>`;
-      return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">Code ${esc(t.code)} · tap Glow when you see the runner</div></div>` +
+      if (t.via === "qr") return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">The waiter who scanned you is bringing it.</div></div></div>`;
+      return `<div class="ticket"><div class="beacon" style="background:${bc.hex}"></div><div class="grow"><b>Your ${esc(ticketName(t))} is on its way</b><div class="muted">Code ${esc(t.code)} · tap Glow when you see the waiter</div></div>` +
         `<button class="btn small gold" data-glow="${t.ticketId}">Glow</button></div>`;
     }).join("");
     $("#ticketBar").querySelectorAll("[data-glow]").forEach((b) => (b.onclick = () => glow(tickets.find((t) => t.ticketId === b.dataset.glow))));
@@ -482,9 +482,9 @@
         : `<div class="acts one"><span class="tag gold">On its way</span></div><div class="links"><button class="link" data-cancel="${b.id}">Not here any more</button></div>`}
       </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => {
-      const isLink = x.via === "link" && x.giftUrl;
-      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : ""}</div></div>` +
-        (isLink ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
+      const isLink = x.via === "link" && x.giftUrl, isSelf = x.selfSend && x.giftUrl;
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? " · Waiting" : ""}</div></div>` +
+        (isLink || isSelf ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
     return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
@@ -493,7 +493,7 @@
     const body = $("#sheetBody");
     body.querySelectorAll("[data-claim]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.claim)));
     body.querySelectorAll("[data-qr]").forEach((b) => (b.onclick = () => qrFlow(b.dataset.qr)));
-    body.querySelectorAll("[data-gs]").forEach((b) => (b.onclick = () => { closeSheet(); giftShare(S.me.sent.find((x) => x.id === b.dataset.gs)); }));
+    body.querySelectorAll("[data-gs]").forEach((b) => (b.onclick = () => { closeSheet(); const x = S.me.sent.find((y) => y.id === b.dataset.gs); x && x.selfSend ? selfShare(x) : giftShare(x); }));
     body.querySelectorAll("[data-spots]").forEach((b) => (b.onclick = () => {
       const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); focusSpots(S.cfg.venues.filter((v) => claimableAt(x, v)));
     }));
@@ -530,12 +530,12 @@
     modal(`<h2>Bring it here</h2><p class="muted">We check which venue you're at, once. No one can see where you are.</p>${whereFields()}
       <label class="toggle"><input type="checkbox" id="quiet"> Quiet claim: don't tell my people I'm outside</label>
       <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>
-      <p class="muted" style="text-align:center">Or call a runner over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
+      <p class="muted" style="text-align:center">Or call a waiter over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
       c.querySelector("#qr").onclick = () => qrFlow(id, c.querySelector("#quiet").checked);
       // Sends the claim; when we ask which spot they're at, the answer re-sends the same details with that spot.
       const send = async (body) => {
         const r = await api("claim", body);
-        if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the runner."); if (t) setTimeout(() => glowPrompt(t), 400); return r; }
+        if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the waiter."); if (t) setTimeout(() => glowPrompt(t), 400); return r; }
         if (r.error === "choose") { chooseVenue(r.venues, (vid) => send({ ...body, venueId: vid }), () => notHereYet(b)); return r; }
         if (r.error === "confirm") { confirmVenue(r.venue, () => send({ ...body, venueId: r.venue.id }), () => notHereYet(b)); return r; }
         if (r.error === "band") { topupStep(b, r, body); return r; }
@@ -606,6 +606,19 @@
     sc.onerror = () => [...document.querySelectorAll(".snapwrap")].forEach((w) => w.remove());
     document.head.appendChild(sc);
   }
+  // The sender sends it themselves on WhatsApp. The link opens it; only the number it was sent to can keep it.
+  function selfShare(b) {
+    if (!b || !b.giftUrl) return;
+    const url = b.giftUrl, text = "I'm sending an Amabile to your table. For next time you're outside. " + url;
+    const wa = "https://wa.me/" + (b.waTo || "") + "?text=" + encodeURIComponent(text);
+    modal(`<div class="sealcard">${A.envelope.closed()}</div>
+      <h2>Send it to ${esc(b.toMasked || "them")}</h2>
+      <p class="muted">Send them this link on WhatsApp. Only their number can open it.</p>
+      <div class="sharegrid"><a class="btn block" id="wa" href="${esc(wa)}" target="_blank" rel="noopener">Send on WhatsApp</a>
+        <button class="btn block ghost" id="cp">Copy link</button></div>`, (c) => {
+      c.querySelector("#cp").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Copied."); } catch { prompt("Copy this link", url); } };
+    });
+  }
   function giftShare(b) {
     if (!b || !b.giftUrl) return;
     const url = b.giftUrl;
@@ -649,13 +662,16 @@
   async function giftOpen(code) {
     const g = await api("gift?code=" + encodeURIComponent(code));
     const el = $("#gift");
-    const close = () => { el.classList.remove("show"); el.innerHTML = ""; };
-    if (!g.ok || ["gone", "taken", "not_ready"].includes(g.state)) {
+    const close = () => { el.classList.remove("show", "compact"); el.innerHTML = ""; };
+    if (!g.ok || ["gone", "taken", "not_ready", "not_yours", "sender"].includes(g.state)) {
+      const T = { taken: ["Already opened", "Someone has already opened this one and kept it."], not_ready: ["Nearly there", "It's still on its way. Try the link again in a minute."],
+        not_yours: ["Not this number", "This bottle was sent to a different number."], sender: ["You sent this one", "Send them the link on WhatsApp. Only their number can open it."] }[g.state] || ["This link doesn't work", "Ask whoever sent it for a new link."];
       el.innerHTML = `<div class="gtop">ANDIAMO!</div><div class="gstage"><div class="genv opened empty">${A.envelope.back("e-back")}${A.envelope.front("e-front")}${A.envelope.flap("e-flap")}</div></div>
-        <div class="gcard"><h2>${g.state === "taken" ? "Already opened" : g.state === "not_ready" ? "Nearly there" : "This link doesn't work"}</h2>
-        <p>${g.state === "taken" ? "Someone has already opened this one and kept it." : g.state === "not_ready" ? "It's still on its way. Try the link again in a minute." : "Ask whoever sent it for a new link."}</p>
-        <button class="btn block" id="gx">See Andiamo</button></div>`;
-      el.classList.add("show"); el.querySelector("#gx").onclick = close; return;
+        <div class="gcard"><h2>${T[0]}</h2><p>${T[1]}</p>
+        ${g.state === "not_yours" ? `<button class="btn block" id="go2">Use another number</button><p></p><button class="btn block ghost" id="gx">See Andiamo</button>` : `<button class="btn block" id="gx">See Andiamo</button>`}</div>`;
+      el.classList.add("show"); el.querySelector("#gx").onclick = close;
+      const go2 = el.querySelector("#go2"); if (go2) go2.onclick = () => { close(); signIn(() => giftOpen(code), WHY.switch); };
+      return;
     }
     const from = esc(g.from.split(/\s+/)[0]);
     el.innerHTML = `<div class="gtop">ANDIAMO!</div>
@@ -678,9 +694,10 @@
     };
     const keep = async () => {
       const r = await api("gift-accept", { code });
+      if (!r.ok && r.error === "not_yours") { await loadMe(); close(); return giftOpen(code); }
       if (!r.ok) return fail(el, errMsg(r.error));
       await loadMe(); close();
-      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it from your server when next you're outside.</p>
+      modal(`<div class="reveal">${photo(g.wine, 220)}</div><h2>It's yours.</h2><p>Claim it from your waiter when next you're outside.</p>
         <button class="btn block" id="gb">See where to claim it</button>`, (c) => { c.querySelector("#gb").onclick = () => { closeModal(); openSheet("bottles"); }; });
     };
     // Keeping it asks only for what's needed, inline: the number to send it to, the code, and (first time) name and date of birth.
@@ -746,7 +763,7 @@
     closeSheet(); clearInterval(qrTimer);
     const r = await api("qr", { bottleId: id, quiet });
     if (!r.ok) return toast(errMsg(r.error));
-    const c = modal(`<h2>Show a runner</h2><p class="muted">Call a runner over and say you have a bottle to claim. They scan this and bring your ${esc(wineOf(b.wine).label)}.</p>
+    const c = modal(`<h2>Show a waiter</h2><p class="muted">Call a waiter over and say you have a bottle to claim. They scan this and bring your ${esc(wineOf(b.wine).label)}.</p>
       <div class="qrbox" data-code="${esc(r.code)}">${qrSvg(r.url)}</div><div class="qrtxt">${esc(r.code)}</div>
       <label class="toggle"><input type="checkbox" id="quiet"${quiet ? " checked" : ""}> Quiet claim: don't tell my people I'm outside</label>
       <p class="muted" id="msg">Works once, at any partner venue, for the next 20 minutes.</p>`, (c) => {
@@ -765,7 +782,7 @@
   }
   function qrTopup(b, code, st) {
     modal(`<h2>Top up to claim here</h2><p>This bottle fits ${esc(bandName(b.band))} spots. ${esc(st.venue.name)} is ${esc(spotName(st.venue.band))}.</p>
-      <p><b>Top up ${naira(st.topup)}</b> and the runner brings it, or keep it for another night.</p>
+      <p><b>Top up ${naira(st.topup)}</b> and the waiter brings it, or keep it for another night.</p>
       <button class="btn block" id="go">Top up ${naira(st.topup)}</button><p></p><button class="btn block ghost" data-x3>Keep it for another night</button>`, (c) => {
       c.querySelector("[data-x3]").onclick = closeModal;
       c.querySelector("#go").onclick = async () => {
@@ -778,8 +795,8 @@
 
   function glowPrompt(t) {
     modal(`<div class="empty"><div class="art"><div style="width:90px;height:90px;border-radius:50%;border:3px solid var(--ink);background:${beaconOf(t.beacon).hex}"></div></div></div>
-      <h2>Your bottle is coming</h2><p>When you see the runner come out, tap Glow and hold your phone up. Your colour is <b>${esc(beaconOf(t.beacon).name)}</b>.</p>
-      <div class="code">${esc(t.code)}</div><p class="muted" style="text-align:center">Read this code to the runner.</p>
+      <h2>Your bottle is coming</h2><p>When you see the waiter come out, tap Glow and hold your phone up. Your colour is <b>${esc(beaconOf(t.beacon).name)}</b>.</p>
+      <div class="code">${esc(t.code)}</div><p class="muted" style="text-align:center">Read this code to the waiter.</p>
       <button class="btn block gold" id="go">Glow</button>`, (c) => { c.querySelector("#go").onclick = () => { closeModal(); glow(t); }; });
   }
 
@@ -815,12 +832,13 @@
         ${bands.length ? `<div class="sec"><div class="lab">Where they can claim it</div><div class="bandlist">${bands.map((b) => { const n = spotsFor(b, st.wine);
           return `<button class="bandrow${st.band === b ? " on" : ""}" data-b="${b}"><span class="rd"></span><span class="grow"><b>${esc(bandName(b))}</b><small>${n} spot${n === 1 ? "" : "s"}${examples(b, st.wine) ? " · " + esc(examples(b, st.wine)) : ""}</small></span><span class="pr">${naira(bandPrice(b, st.wine))}</span></button>`; }).join("")}</div></div>` : ""}
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
-          ${st.mode === "link" ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
+          ${st.mode === "number" ? `<label class="toggle"><input type="checkbox" id="self"${st.self ? " checked" : ""}> I'll send it to them myself on WhatsApp</label>` : ""}
+          ${st.mode === "link" || st.self ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
         <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
-        <p class="fine">${st.mode === "link" ? "It can only be claimed once." : "They claim it from their server when next they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
+        <p class="fine">${st.mode === "link" ? "It can only be claimed once." : st.mode === "number" && st.self ? "You'll get a link to send them on WhatsApp. Only their number can open it." : "They claim it from their waiter when next they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
-      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) { st.to = t.value; st.toFull = phoneOf(c, "to"); } const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; };
+      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) { st.to = t.value; st.toFull = phoneOf(c, "to"); } const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; const sf = c.querySelector("#self"); if (sf) st.self = sf.checked; };
       const redraw = () => { keep(); modal(draw(), mount); };
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { st.wine = b.dataset.w; redraw(); }));
       c.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { st.band = b.dataset.b; redraw(); }));
@@ -828,6 +846,7 @@
       c.querySelectorAll("[data-f]").forEach((b) => (b.onclick = () => { st.mode = "light"; st.friend = out.find((x) => x.key === b.dataset.f); redraw(); }));
       const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
       wirePhone(c, "to");
+      const sf = c.querySelector("#self"); if (sf) sf.onchange = () => { st.self = sf.checked; if (st.self) st.anon = false; redraw(); };
       const pick = c.querySelector("#pick");
       if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { c.querySelector("#to").value = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
@@ -836,7 +855,7 @@
         if (st.mode === "link" && !String(st.forLabel || "").trim()) return flag(c.querySelector("#forl"), "Add their name, so the card is for them.");
         if (!S.me) return signIn(() => sendFlow({}, { ...st, autopay: true }), WHY.pay);
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
-        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return flag(c.querySelector("#to"), errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; }
+        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return flag(c.querySelector("#to"), errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; if (st.self) { body.self = true; body.anon = false; } }
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
@@ -872,6 +891,7 @@
         await loadMe();
         if (topup) { closeModal(); const t = S.me.tickets.find((x) => x.bottleId === r.bottleId); toast("Topped up. It's coming."); if (t) glowPrompt(t); return; }
         if (r.bottle.via === "link" && r.bottle.giftUrl) return giftShare(r.bottle);
+        if (r.bottle.selfSend && r.bottle.giftUrl) return selfShare(r.bottle);
         return modal(`<div class="reveal">${photo(r.bottle.wine, 220)}</div><h2>Sent.</h2>
           <p>${esc(r.bottle.toMasked)} gets it ${r.bottle.status === "Waiting" ? "the next time they're outside" : "at their table now"}. You'll see Delivered when it lands.</p>
           <button class="btn block" data-x4>Cheers</button>`, (c) => (c.querySelector("[data-x4]").onclick = closeModal));
