@@ -134,18 +134,6 @@ a { color:var(--red-2); font-weight:800; }
 .mp input::placeholder { font-family:var(--sans); font-size:13px; font-weight:800; color:var(--ink-3); }
 .mrow:focus-within .mp { border-bottom:2px solid var(--red); }
 .mrow.set .mp { border-bottom:2px solid var(--ink); } .mrow.set .mp i { color:var(--ink); }
-.who { display:grid; gap:8px; }
-.who.bad { border-radius:16px; box-shadow:0 0 0 3px rgba(200,55,29,.25) !important; }
-.wc { display:grid; grid-template-columns:42px minmax(0,1fr) 26px; gap:12px; align-items:center; width:100%; text-align:left; font:inherit; color:var(--ink); background:#fff; border:2px solid var(--line); border-radius:16px; padding:11px 13px; cursor:pointer; transition:border-color .15s, box-shadow .15s, background .15s; }
-.wc .av { width:42px; height:42px; border-radius:50%; background:#FFF4DA; color:#8A5A00; border:2px solid var(--ink); display:grid; place-items:center; font-family:var(--serif); font-size:20px; }
-.wc.else .av { background:var(--bg); color:var(--ink-2); font-family:var(--sans); font-weight:900; font-size:22px; }
-.wc .t b { display:block; font-weight:900; font-size:15.5px; }
-.wc .t small { display:flex; align-items:center; gap:5px; font-size:13px; font-weight:700; color:var(--ink-2); }
-.wc .t small svg { width:13px; height:13px; color:#25A35A; }
-.wc .ck { width:26px; height:26px; border-radius:50%; border:2px solid var(--line); display:grid; place-items:center; color:transparent; }
-.wc .ck svg { width:14px; height:14px; }
-.wc.on { border-color:var(--ink); box-shadow:0 4px 0 var(--ink); background:#FFFDF8; }
-.wc.on .ck { background:var(--red); border-color:var(--ink); color:#fff; }
 .bad { border-color:var(--red-2) !important; box-shadow:0 0 0 4px rgba(200,55,29,.14) !important; }
 .seg.bad { box-shadow:0 0 0 2px var(--red-2) !important; }
 .ferr { display:flex; align-items:flex-start; gap:7px; color:var(--red-2); font-weight:800; font-size:13.5px; line-height:1.35; margin:7px 2px 0; }
@@ -180,7 +168,6 @@ a { color:var(--red-2); font-weight:800; }
           <div id="knownOnly" class="hidden">
             <h3 class="minih">Your menu prices</h3><p class="hint">What a bottle costs on your menu. Leave out what you don't sell.</p>
             <div class="mlist" id="prices"></div>
-            <div id="whoWrap"><h3 class="minih" id="whoLabel">Is this you?</h3><p class="hint">The WhatsApp numbers we have for this venue.</p><div class="who" id="who"></div></div>
           </div>
           <div id="newOnly">
           <label for="area">Area</label><select id="area" required><option value="" selected disabled>Choose the area</option><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option><option value="Other">Somewhere else</option></select>
@@ -223,7 +210,7 @@ a { color:var(--red-2); font-weight:800; }
   const ERR = {
     phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    venue_name: "Add your venue's name.", prices: "Add the menu price of at least one wine.", contact: "Choose who you are again.", store: "Choose your venue again.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
+    venue_name: "Add your venue's name.", prices: "Add the menu price of at least one wine.", store: "Choose your venue again.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   let token = null, codeSent = false, busy = false;
@@ -267,12 +254,12 @@ a { color:var(--red-2); font-weight:800; }
 
   // ---------- finding the venue in our records as they type ----------
   // Stores we already supply come up as they type. Picking one fills in what we know; they add their menu
-  // prices, and if one of the numbers we hold is theirs, the code goes there.
+  // prices, their name and WhatsApp.
   const esc = (x) => String(x == null ? "" : x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const TICK = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
   const SHOP = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 10v10h16V10"/><path d="M3 10l2-6h14l2 6"/><path d="M3 10c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3c0 1.7 1.3 3 3 3s3-1.3 3-3"/><path d="M10 20v-5h4v5"/></svg>';
   let WINES = [{ id: "rosso", name: "Rosso" }, { id: "bianco", name: "Bianco" }, { id: "rosato", name: "Rosato" }];
-  let found = [], act = -1, lookT = 0, lookN = 0, picked = null, who = null, autoName = "";
+  let found = [], act = -1, lookT = 0, lookN = 0, picked = null;
   const sugg = $("sugg"), nm = $("name");
   const hl = (name, q) => { const i = name.toLowerCase().indexOf(q.toLowerCase()); return i < 0 || !q ? esc(name) : esc(name.slice(0, i)) + "<b>" + esc(name.slice(i, i + q.length)) + "</b>" + esc(name.slice(i + q.length)); };
   const sub = (o) => [o.type, o.place].filter(Boolean).join(" · ");
@@ -315,7 +302,7 @@ a { color:var(--red-2); font-weight:800; }
       $("liveNote").innerHTML = `<b>${esc(o.name)}</b> is already on Andiamo! If you run it, sign in on your bar phone at <a href="/board">andiamo.ng/board</a>.`;
       $("liveNote").classList.remove("hidden"); return;
     }
-    picked = o; who = null; resetCode();
+    picked = o; resetCode();
     $("combo").classList.add("hidden"); $("newOnly").classList.add("hidden");
     $("picked").innerHTML = `<span class="sic">${SHOP}</span><span><b>${esc(o.name)}</b><span class="sub">${esc(sub(o))}</span><span class="ok">${TICK}Already sells Amabile</span></span><button type="button" class="chg" id="chg">Change</button>`;
     $("picked").classList.remove("hidden"); $("knownOnly").classList.remove("hidden");
@@ -323,33 +310,16 @@ a { color:var(--red-2); font-weight:800; }
     const fz = WINES.filter((w) => (w.family || "frizzante") === "frizzante"), sp = WINES.filter((w) => w.family === "spumante");
     $("prices").innerHTML = `<div class="mgrp">Frizzante</div>${fz.map(mrow).join("")}${sp.length ? `<div class="mgrp">Spumante</div>${sp.map(mrow).join("")}` : ""}`;
     $("prices").querySelectorAll("input").forEach((x) => x.addEventListener("input", () => { const d = x.value.replace(/\D/g, "").slice(0, 7); x.value = d.replace(/\B(?=(\d{3})+(?!\d))/g, ","); x.closest(".mrow").classList.toggle("set", !!d); unflag($("prices")); }));
-    const cs = o.contacts || [];
-    $("whoWrap").classList.toggle("hidden", !cs.length);
-    $("whoLabel").textContent = cs.length > 1 ? "Which of these is you?" : "Is this you?";
-    const WAI = '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2a10 10 0 0 0-8.6 15.1L2 22l5-1.3A10 10 0 1 0 12 2z"/></svg>';
-    $("who").innerHTML = cs.map((c, i) => `<button type="button" class="wc" data-w="${i}"><span class="av">${esc((c.name || "?").charAt(0).toUpperCase())}</span><span class="t"><b>${esc(c.name || "The number we have")}</b><small>${WAI}··· ${esc(c.tail)}</small></span><span class="ck">${TICK}</span></button>`).join("")
-      + `<button type="button" class="wc else" data-w="other"><span class="av">+</span><span class="t"><b>Someone else</b><small>I'll add my own number</small></span><span class="ck">${TICK}</span></button>`;
-    $("who").querySelectorAll("[data-w]").forEach((x) => (x.onclick = () => setWho(x.dataset.w)));
-    setWho(cs.length ? null : "other");
+    $("phoneWrap").classList.remove("hidden"); $("go").textContent = "Send me a code";
     $("chg").onclick = unpick;
     setTimeout(() => { const f = $("prices").querySelector("input"); if (f) f.focus(); }, 50);
   }
-  function setWho(v) {
-    who = v; resetCode(); unflag($("who"));
-    $("who").querySelectorAll("[data-w]").forEach((x) => x.classList.toggle("on", x.dataset.w === String(v)));
-    const c = picked && v != null && v !== "other" ? picked.contacts[+v] : null;
-    if (c && c.name && (!val("contact") || val("contact") === autoName)) { $("contact").value = c.name; autoName = c.name; }
-    if (v === "other" && val("contact") === autoName) { $("contact").value = ""; autoName = ""; }
-    $("phoneWrap").classList.toggle("hidden", !!c);
-    $("go").textContent = c ? `Send the code to ••• ${c.tail}` : "Send me a code";
-  }
   function unpick() {
-    picked = null; who = null; resetCode();
+    picked = null; resetCode();
     ["picked", "knownOnly"].forEach((id) => $(id).classList.add("hidden")); ["combo", "newOnly", "phoneWrap"].forEach((id) => $(id).classList.remove("hidden"));
     $("go").textContent = "Send me a code"; nm.focus(); nm.select();
   }
   function resetCode() { codeSent = false; token = null; $("codeBox").classList.add("hidden"); $("code").value = ""; }
-  const contactRef = () => (picked && who != null && who !== "other" ? picked.contacts[+who].ref : null);
   const prices = () => { const p = {}; if (picked) WINES.forEach((w) => { const v = ($("p-" + w.id) || {}).value || ""; if (v.replace(/\D/g, "")) p[w.id] = v.replace(/\D/g, ""); }); return p; };
 
   function details() {
@@ -359,9 +329,7 @@ a { color:var(--red-2); font-weight:800; }
   function check(d) {
     if (picked) {
       if (!Object.keys(d.prices).length) return flag("prices", ERR.prices), false;
-      if (picked.contacts.length && who == null) return flag("who", "Choose one."), false;
       if (!d.contactName) return fail("contact_name"), false;
-      if (contactRef()) return true;
       if (!val("phone")) return flag("phone", "Add your WhatsApp number."), false;
       if (phone().replace(/\D/g, "").length < 8) return fail("phone"), false;
       return true;
@@ -386,7 +354,7 @@ a { color:var(--red-2); font-weight:800; }
     busy = true; $("go").disabled = true;
     try {
       if (!codeSent) {
-        const r = await api("auth/start", contactRef() ? { contact: contactRef() } : { phone: phone() });
+        const r = await api("auth/start", { phone: phone() });
         if (!r.ok) return fail(r.error);
         codeSent = true;
         $("codeBox").classList.remove("hidden");
@@ -397,7 +365,7 @@ a { color:var(--red-2); font-weight:800; }
       }
       if (!token) {
         if (val("code").replace(/\D/g, "").length < 6) return flag("code", "Enter the 6-digit code from WhatsApp.");
-        const r = await api("auth/verify", { ...(contactRef() ? { contact: contactRef() } : { phone: phone() }), code: val("code") });
+        const r = await api("auth/verify", { phone: phone(), code: val("code") });
         if (!r.ok) return fail(r.error);
         token = r.token;
       }

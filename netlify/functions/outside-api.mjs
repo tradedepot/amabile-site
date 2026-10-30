@@ -115,7 +115,7 @@ export default async (req) => {
     }
 
     // A venue looking itself up in our records as it types its name (andiamo.ng/venue). Public: only what the
-    // where-to-buy map already shows, plus a first name and the last four digits of the numbers we hold.
+    // where-to-buy map already shows. Never a contact.
     if (route === "venue-lookup") {
       const { searchStores, andiamoIndex, statusOf, publicStore } = await import("../lib/_outside_outlets.mjs");
       const found = await searchStores(s, d.q);
@@ -124,10 +124,7 @@ export default async (req) => {
     }
 
     if (route === "auth/start") {
-      // "That's me" on a store from our records: the code goes to the number we hold for it.
-      let ph = phoneE164(d.phone);
-      if (d.contact) { const { phoneFromContactRef } = await import("../lib/_outside_outlets.mjs"); ph = await phoneFromContactRef(s, d.contact); if (!ph) return bad("contact"); }
-      if (!ph) return bad("phone");
+      const ph = phoneE164(d.phone); if (!ph) return bad("phone");
       const prev = await getJSON(s, K.otp(ph));
       const recent = (prev && prev.sends || []).filter((t) => Date.now() - t < 10 * 60 * 1000);
       if (recent.length >= 3) return bad("slow_down", 429);
@@ -141,9 +138,7 @@ export default async (req) => {
     }
 
     if (route === "auth/verify") {
-      let ph = phoneE164(d.phone);
-      if (d.contact) { const { phoneFromContactRef } = await import("../lib/_outside_outlets.mjs"); ph = await phoneFromContactRef(s, d.contact); if (!ph) return bad("contact"); }
-      if (!ph) return bad("phone");
+      const ph = phoneE164(d.phone); if (!ph) return bad("phone");
       const o = await getJSON(s, K.otp(ph));
       if (!o || Date.now() > o.exp) return bad("expired");
       if (o.tries >= 5) return bad("too_many", 429);

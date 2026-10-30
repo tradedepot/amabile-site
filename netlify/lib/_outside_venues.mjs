@@ -76,8 +76,6 @@ function mergeInto(r, d, o) {
   r.outletId = o.id; r.outletIds = o.ids; r.stocksAmabile = "yes";
   r.lat = o.lat; r.lng = o.lng; r.address = r.address || [o.street, o.lga].filter(Boolean).join(", ");
   r.records = { name: o.name, type: o.type, lastBought: o.lastBought, cases: o.cases, accounts: o.ids.length };
-  // They signed in with a number we already hold for this store.
-  r.contactVerified = o.contacts.some((c) => c.phone === r.phone);
   const prices = {};
   for (const w of WINES) { const p = Math.round(Number(String((d.prices || {})[w.id] || "").replace(/[^\d.]/g, ""))); if (p > 0 && p < 10000000) prices[w.id] = p; }
   if (Object.keys(prices).length) r.prices = prices;

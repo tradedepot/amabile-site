@@ -138,15 +138,6 @@ export async function storeFromRef(s, ref) {
   if (!t || t.k !== "st" || !t.id || Date.now() > t.e) return null;
   return (await stores(s)).find((o) => o.ids.includes(t.id)) || null;
 }
-// "That's me": the code goes to the number we hold, which the browser never sees.
-export const contactRef = (o, i) => sign({ k: "sc", id: o.id, i, e: Date.now() + 864e5 });
-export async function phoneFromContactRef(s, ref) {
-  const t = verify(ref);
-  if (!t || t.k !== "sc" || Date.now() > t.e) return null;
-  const o = (await stores(s)).find((x) => x.ids.includes(t.id));
-  return (o && o.contacts[t.i] && o.contacts[t.i].phone) || null;
-}
-const tail = (ph) => String(ph || "").replace(/\D/g, "").slice(-4);
 
 // ---------- where a store already is on Andiamo! ----------
 // Live venues, stores waiting for approval, and venues that asked to join, matched to our records by account
@@ -169,11 +160,9 @@ export function statusOf(o, idx) {
   return null;
 }
 
-// What the public sign-up page may show: what the where-to-buy map already shows, plus a first name and the
-// last four digits of each number we hold, so the owner can recognise themselves.
+// What the public sign-up page may show: only what the where-to-buy map already shows. No contacts.
 export function publicStore(o, st) {
-  return { ref: storeRef(o), name: o.name, type: o.type, place: [o.street, o.lga].filter(Boolean).join(", "), state: o.state,
-    live: !!(st && st.stage === "live"), contacts: o.contacts.slice(0, 3).map((c, i) => ({ ref: contactRef(o, i), name: c.name, tail: tail(c.phone) })) };
+  return { ref: storeRef(o), name: o.name, type: o.type, place: [o.street, o.lga].filter(Boolean).join(", "), state: o.state, live: !!(st && st.stage === "live") };
 }
 // What an onboarder sees. Our own people get the contacts and the buying record; distributors don't.
 export function onboardStore(o, st, internal) {

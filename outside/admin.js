@@ -706,7 +706,6 @@
         ${row("Maybe our account", (r.suggested || []).map((o) => `${esc(o.name)} #${esc(o.number)} · ${esc(o.lga)}`).join("<br>"))}
         ${row("Our records", r.records ? [esc(r.records.name), esc(r.records.type), r.records.cases ? r.records.cases + " cases this year" : "", r.records.accounts > 1 ? r.records.accounts + " accounts" : ""].filter(Boolean).join(" · ") : "")}
         ${row("Menu prices", r.prices ? Object.entries(r.prices).map(([k, v]) => `${esc(wineOf(k).name)} ${naira(v)}`).join(" · ") : "")}
-        ${row("Their number", r.contactVerified ? "The one we hold for this store" : "")}
         ${row("Also asked", (r.others || []).map((o) => `${esc(o.contactName)} · <a href="https://wa.me/${esc(String(o.phone).replace(/\D/g, ""))}" target="_blank">${esc(o.phone)}</a>`).join("<br>"))}</dl></div>
       <div><div class="card"><div class="ch"><h2>1. Book the visit</h2></div><label class="lb" style="margin-top:0">Who visits</label><div class="chips" id="who">${["Anita", "Aylor"].map((n) => `<button class="chip${(r.visit || {}).by === n ? " on" : ""}" data-by="${n}">${n}</button>`).join("")}</div><input id="vb" value="${esc((r.visit || {}).by || "")}" style="margin-top:8px" placeholder="Or someone else">
           <label class="lb">When</label><input id="vd" value="${esc((r.visit || {}).date || "")}" placeholder="Tue 4 Nov, 3pm"><label class="lb">Note</label><input id="vn" value="${esc((r.visit || {}).note || "")}"><p style="margin:14px 0 0"><button class="btn" id="book">Save visit</button></p></div>
