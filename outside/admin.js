@@ -1,9 +1,13 @@
-// Andiamo! admin console. Talks to /api/outside-admin with the admin password (TABLE_ADMIN_KEY).
+// Andiamo! admin console. The team signs in with Google (tradedepot.co, on the team list); each role sees only its own part.
+// The owner can also use the break-glass password (ANDIAMO_ADMIN_KEY). Talks to /api/outside-admin.
 (() => {
   const API = "/api/outside-admin";
   const A = window.OutsideArt;
   const SS = { get(k) { try { return sessionStorage.getItem(k); } catch { return null; } }, set(k, v) { try { sessionStorage.setItem(k, v); } catch {} }, del(k) { try { sessionStorage.removeItem(k); } catch {} } };
-  let ak = SS.get("outside.ak") || "", page = "overview";
+  const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} }, del(k) { try { localStorage.removeItem(k); } catch {} } };
+  let ak = SS.get("outside.ak") || "", at = LS.get("andiamo.at") || "", ME = null, page = "overview";
+  // What this person may do, as the server told us. The server checks every call again.
+  const can = (a) => !!ME && (ME.can === "*" || (ME.can || []).includes(a));
   const D = {};
 
   // ---------- names ----------
@@ -22,6 +26,7 @@
     bottles: '<path d="M10 2h4v4l1.5 3V21a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V9L10 6z"/><path d="M8.5 13h7"/>',
     payouts: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/>',
     prices: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+    team: '<circle cx="9" cy="8" r="3.2"/><path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6"/><circle cx="17" cy="9" r="2.4"/><path d="M16 14.2c3 .2 5 2.5 5 5.8"/>',
     codes: '<path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/><path d="M10 9l4 6M10 9.5h.01M14 14.5h.01"/>',
     gaps: '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
     plus: '<path d="M12 5v14M5 12h14"/>', bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
@@ -83,17 +88,20 @@
 
   async function call(body) {
     try {
-      const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ak, ...body }) });
+      const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...(at ? { at } : {}), ...(ak ? { ak } : {}), ...body }) });
       const d = await r.json().catch(() => ({ ok: false, error: "server" }));
-      if (r.status === 401) { ak = ""; SS.del("outside.ak"); login("That password didn't work."); throw new Error("auth"); }
+      if (r.status === 401) { signOut(); login(ak ? "That password didn't work." : "Sign in again."); throw new Error("auth"); }
+      if (r.status === 403 && d.error === "forbidden") toast("That's not part of your role.");
       return d;
     } catch (e) { if (e.message === "auth") throw e; return { ok: false, error: "network" }; }
   }
   const LOAD = {
     venues: () => call({ action: "venues" }), drops: () => call({ action: "drops" }), bottles: () => call({ action: "bottles" }),
-    ledger: () => call({ action: "ledger" }), codes: () => call({ action: "codes" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), wa: () => call({ action: "wa-status" })
+    ledger: () => call({ action: "ledger" }), codes: () => call({ action: "codes" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), team: () => call({ action: "team" }), activity: () => call({ action: "activity" }), wa: () => call({ action: "wa-status" })
   };
-  async function load(...keys) {
+  const ACT = { wa: "wa-status" };
+  async function load(...all) {
+    const keys = all.filter((k) => can(ACT[k] || k));
     const rs = await Promise.all(keys.map((k) => LOAD[k]()));
     keys.forEach((k, i) => {
       const r = rs[i];
@@ -101,6 +109,7 @@
       else if (k === "glow") D.glow = r.ok ? r.glow : { glow: {} };
       else if (k === "wa") D.wa = r.ok ? r.wa : null;
       else if (k === "balance") D.balance = r.ok ? r.balance : null;
+      else if (k === "team") D.team = r.ok ? r : null;
       else if (k === "ledger") { D.ledger = r.ok ? r.ledger || [] : D.ledger || []; D.ledgerAuto = !!(r.ok && r.auto); }
       else D[k] = r.ok ? r[k === "ledger" ? "ledger" : k] || [] : D[k] || [];
     });
@@ -138,29 +147,60 @@
 
   // ---------- login and frame ----------
   const root = document.getElementById("root");
+  function signOut() { at = ""; ak = ""; ME = null; LS.del("andiamo.at"); SS.del("outside.ak"); try { window.google && google.accounts.id.disableAutoSelect(); } catch {} }
+  async function start() {
+    const r = await call({ action: "me" });
+    if (!r.ok) return login();
+    ME = r.me; frame(); nav("overview");
+  }
+  // Sign in with Google. Only tradedepot.co accounts on the team list get in. The owner's password is a fallback.
   function login(msg) {
     root.innerHTML = `<div class="login"><div class="card"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
-      <h1>Welcome back</h1><p class="muted" style="margin:0 0 16px">Sign in to run drops, venues and payouts.</p>
-      <label class="lb">Admin password</label><input id="k" type="password" autocomplete="current-password">
-      <p style="margin:18px 0 0"><button class="btn lg" id="go" style="width:100%">Sign in</button></p>
+      <h1>Welcome back</h1><p class="muted" style="margin:0 0 18px">Sign in with your TradeDepot Google account.</p>
+      <div id="gbtn" class="gbtn"></div><p class="ferr" id="gerr" hidden></p>
+      <p style="margin:22px 0 0;text-align:center"><button class="lnk dim" id="pw">Use the owner password</button></p>
+      <div id="pwbox" hidden><label class="lb">Owner password</label><input id="k" type="password" autocomplete="current-password">
+      <p style="margin:14px 0 0"><button class="btn lg" id="go" style="width:100%">Sign in</button></p></div>
       </div></div>`;
+    const err = (t) => { const e = $("gerr"); e.textContent = t; e.hidden = !t; };
+    const E = { not_on_team: "You're not on the Andiamo team yet. Ask Kachi to add you.", not_tradedepot: "Use your TradeDepot account (@tradedepot.co).", google: "Google sign-in didn't work. Try again.", network: "You're offline. Try again." };
+    const onCred = async (resp) => {
+      err("");
+      const r = await call({ action: "google", credential: resp.credential }).catch(() => ({ ok: false, error: "network" }));
+      if (!r.ok) return err(E[r.error] || E.google);
+      at = r.token; LS.set("andiamo.at", at); ME = r.me; frame(); nav("overview");
+    };
+    const mount = async () => {
+      const h = await call({ action: "hello" }).catch(() => null);
+      if (!h || !h.ok || !window.google || !google.accounts) return err("Google sign-in didn't load. Check your connection.");
+      google.accounts.id.initialize({ client_id: h.clientId, callback: onCred, hd: "tradedepot.co", ux_mode: "popup", auto_select: false });
+      google.accounts.id.renderButton($("gbtn"), { theme: "outline", size: "large", shape: "pill", text: "signin_with", width: 320 });
+    };
+    if (window.google && google.accounts) mount();
+    else if (!document.getElementById("gsi")) { const sc = document.createElement("script"); sc.id = "gsi"; sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.onload = mount; sc.onerror = () => err("Google sign-in didn't load. Check your connection."); document.head.appendChild(sc); }
+    else document.getElementById("gsi").addEventListener("load", mount);
+    $("pw").onclick = () => { $("pwbox").hidden = false; $("pw").hidden = true; $("k").focus(); };
     const go = async () => {
-      if (!$("k").value) return flag($("k"), "Enter the admin password.");
-      ak = $("k").value; $("go").disabled = true;
-      try { const r = await call({ action: "venues" }); if (r.ok) { SS.set("outside.ak", ak); D.venues = r; frame(); nav("overview"); } else flag($("k"), "Couldn't sign in. Try again."); } catch {}
+      if (!$("k").value) return flag($("k"), "Enter the owner password.");
+      ak = $("k").value; at = ""; $("go").disabled = true;
+      try { const r = await call({ action: "me" }); if (r.ok) { SS.set("outside.ak", ak); ME = r.me; frame(); nav("overview"); } else flag($("k"), "Couldn't sign in. Try again."); } catch {}
       if ($("go")) $("go").disabled = false;
     };
-    $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("k").focus();
-    if (msg) flag($("k"), msg);
+    $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); };
+    if (msg) err(msg);
   }
-  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["codes", "Codes", "codes"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"]];
+  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["codes", "Codes", "codes"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"], ["team", "Team", "team"]];
+  // A page shows when the person can do its main thing.
+  const PAGE_NEEDS = { overview: "venues", drops: "drop-save", venues: "venues", requests: "requests", bottles: "bottles", payouts: "ledger", prices: "bands-save", codes: "codes", gaps: "unmet", whatsapp: "wa-status", team: "team" };
+  const myPages = () => PAGES.filter(([k]) => can(PAGE_NEEDS[k]));
   function frame() {
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
-      <nav class="nav">${PAGES.map(([k, n, i]) => `<button data-nav="${k}">${ic(i)}<span>${n}</span><span class="ct" id="ct-${k}" hidden></span></button>`).join("")}</nav>
-      <div class="side-foot"><div>Lagos <b id="clock"></b></div><button id="signout">Sign out</button></div></aside>
+      <nav class="nav">${myPages().map(([k, n, i]) => `<button data-nav="${k}">${ic(i)}<span>${n}</span><span class="ct" id="ct-${k}" hidden></span></button>`).join("")}</nav>
+      <button class="navout" id="signout2">Sign out</button>
+      <div class="side-foot"><div class="who"><b>${esc(ME.name)}</b><span>${esc(ME.roleName)}${ME.breakGlass ? "" : " · " + esc(ME.email)}</span></div><div>Lagos <b id="clock"></b></div><button id="signout">Sign out</button></div></aside>
       <main class="main"><div class="page" id="page"></div></main></div>`;
     root.querySelectorAll("[data-nav]").forEach((b) => (b.onclick = () => nav(b.dataset.nav)));
-    $("signout").onclick = () => { SS.del("outside.ak"); ak = ""; login(); };
+    $("signout").onclick = $("signout2").onclick = () => { signOut(); login(); };
     const clock = () => { const c = $("clock"); if (c) c.textContent = fmt(Date.now(), { weekday: "short", hour: "numeric", minute: "2-digit", hour12: true }); };
     clock(); setInterval(clock, 30000);
   }
@@ -171,7 +211,8 @@
   }
   const P = () => $("page");
   async function nav(p, opts) {
-    page = p; window.scrollTo(0, 0);
+    if (!myPages().some(([k]) => k === p)) p = "overview";
+    page = p; P().classList.remove("ro"); window.scrollTo(0, 0);
     root.querySelectorAll("[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === p));
     P().innerHTML = `<div class="spin">Loading...</div>`;
     try {
@@ -185,6 +226,7 @@
       if (p === "codes") { await load("codes"); codes(opts); }
       if (p === "gaps") { await load("unmet", "venues"); gaps(); }
       if (p === "whatsapp") { await load("wa"); whatsapp(); }
+      if (p === "team") { await load("team", "activity"); team(); }
     } catch {}
   }
   const head = (title, sub, acts = "") => `<div class="ph"><div><h1>${title}</h1>${sub ? `<div class="sub">${sub}</div>` : ""}</div><div class="acts">${acts}</div></div>`;
@@ -202,13 +244,13 @@
     const h = lagosHour(), hello = h >= 5 && h < 12 ? "Good morning" : h >= 12 && h < 17 ? "Good afternoon" : "Good evening";
     const todo = suggestions();
     P().innerHTML = head(hello, liveDrops.length ? `${plural(liveDrops.length, "drop")} live right now${glowing.length ? `, ${plural(glowing.length, "venue")} busy` : ""}.` : glowing.length ? `${plural(glowing.length, "venue")} busy right now.` : "Here's what needs you today.",
-      `<button class="btn" data-go="drops">${ic("plus")} New drop</button>`) +
+      can("drop-save") ? `<button class="btn" data-go="drops">${ic("plus")} New drop</button>` : "") +
       `<div class="kpis">
         <div class="kpi${liveDrops.length ? " hot" : ""}"><div class="k">Live drops</div><div class="v">${liveDrops.length}</div><div class="s">${weekDrops.length} planned this week</div></div>
-        <div class="kpi"><div class="k">Bottles sent</div><div class="v">${sent.length}</div><div class="s">Last 7 days</div></div>
-        <div class="kpi"><div class="k">Delivered</div><div class="v">${delivered.length}</div><div class="s">${sent.length ? Math.round(100 * delivered.length / sent.length) + "% of sends" : "Last 7 days"}</div></div>
+        ${can("bottles") ? `<div class="kpi"><div class="k">Bottles sent</div><div class="v">${sent.length}</div><div class="s">Last 7 days</div></div>
+        <div class="kpi"><div class="k">Delivered</div><div class="v">${delivered.length}</div><div class="s">${sent.length ? Math.round(100 * delivered.length / sent.length) + "% of sends" : "Last 7 days"}</div></div>` : ""}
         <div class="kpi"><div class="k">Venues live</div><div class="v">${live.length}</div><div class="s">${vs.length - live.length} in the pipeline</div></div>
-        <div class="kpi"><div class="k">Owed to venues</div><div class="v money">${naira(owed)}</div><div class="s">${plural(led.filter((r) => r.owed).length, "venue")}</div></div>
+        ${can("ledger") ? `<div class="kpi"><div class="k">Owed to venues</div><div class="v money">${naira(owed)}</div><div class="s">${plural(led.filter((r) => r.owed).length, "venue")}</div></div>` : ""}
       </div>
       <div class="two"><div class="card"><div class="ch"><h2>Do this next</h2><span class="muted">${todo.length ? plural(todo.length, "thing") : ""}</span></div>
         <div class="todo">${todo.map((t, i) => `<div class="it"><div class="ic ${t.tone || ""}">${ic(t.icon)}</div><div class="tx"><b>${t.title}</b><span>${t.text}</span></div><button class="btn sm${i ? " sec" : ""}" data-todo="${i}">${esc(t.cta)}</button></div>`).join("")
@@ -218,9 +260,9 @@
           <div class="bar" style="margin:8px 0 4px"><i style="width:${Math.min(100, 100 * d.taken / d.bottles)}%"></i></div><div class="faint">${d.taken} of ${d.bottles} claimed · ${esc(DKIND[d.kind].t)}</div></div>`).join("")}
         ${glowing.length ? `<div class="faint" style="margin:6px 0 2px;font-weight:800">BUSY RIGHT NOW</div>${glowing.map((x) => `<div class="buzz"><span class="glowdot ${x.g}"></span><b style="flex:1">${esc(x.v.name)}</b><span class="faint">${GLOW[x.g]}</span></div>`).join("")}` : ""}
         ${!liveDrops.length && !glowing.length ? `<div class="empty" style="padding:18px 0">Quiet so far. Busy venues show here as people tap Glow.</div>` : ""}</div>
-      <div class="card"><div class="ch"><h2>Latest bottles</h2><button class="lnk" data-go="bottles">See all</button></div><div class="feed">
+      ${can("bottles") ? `<div class="card"><div class="ch"><h2>Latest bottles</h2><button class="lnk" data-go="bottles">See all</button></div><div class="feed">
         ${bs.slice(0, 6).map((b) => `<div class="fi">${photo(b.wine, "thumb")}<div style="flex:1;min-width:0"><b>${esc(b.from || "Someone")}</b> <span class="muted">to ${esc(b.to || "a card link")}</span><div class="faint">${esc(wineOf(b.wine).name)} · ${ago(b.createdAt)}</div></div>${bpill(b.status)}</div>`).join("")
-          || `<div class="empty" style="padding:18px 0">No bottles sent yet.</div>`}</div></div></div></div>`;
+          || `<div class="empty" style="padding:18px 0">No bottles sent yet.</div>`}</div></div>` : ""}</div></div>`;
     P().querySelectorAll("[data-go]").forEach((b) => (b.onclick = () => nav(b.dataset.go)));
     P().querySelectorAll("[data-todo]").forEach((b) => (b.onclick = () => todo[+b.dataset.todo].go()));
   }
@@ -446,7 +488,7 @@
         ${!v.active && v.checks && v.checks.missing.length ? `<div class="need">Needs ${esc(v.checks.missing.join(", "))}</div>` : ""}
         <div class="foot"><button class="btn sm sec" data-open="${v.id}">Open</button>${v.active ? `<a class="btn sm sec" href="/outside/board?v=${esc(v.id)}" target="_blank" onclick="event.stopPropagation()">Runner board</a>` : ""}</div></div>`).join("")
         || `<div class="empty">No venues here yet.</div>`}</div>`;
-    $("new").onclick = () => venueForm({});
+    if (can("venue-save")) $("new").onclick = () => venueForm({}); else $("new").hidden = true;
     P().querySelectorAll("[data-vf]").forEach((b) => (b.onclick = () => { vFilter = b.dataset.vf; venues(); }));
     $("vq").oninput = () => { const q = $("vq").value.toLowerCase(); P().querySelectorAll(".vcard").forEach((c) => (c.style.display = c.dataset.name.includes(q) ? "" : "none")); };
     P().querySelectorAll("[data-e]").forEach((c) => (c.onclick = () => venueForm(venueById(c.dataset.e))));
@@ -463,6 +505,8 @@
     const W = (D.venues && D.venues.wines) || [], ch = v.checks || { missing: [], warnings: [] };
     const NEED = ["location", "menu prices"];
     window.scrollTo(0, 0);
+    // View only for roles that can't change venues: the page shows, its controls don't.
+    P().classList.toggle("ro", !can("venue-save"));
     P().innerHTML = `<button class="lnk dim" id="back" style="margin-bottom:12px">← ${v.requestId ? "Requests" : "Venues"}</button>` + head(v.id ? esc(v.name) : "Add a venue", v.id ? `${esc(v.area || "")}${v.area ? " · " : ""}${BAND_NAMES[v.band] || ""}` : "Fill in what you have. The rest can wait for the visit.",
       v.id ? (v.active ? '<span class="pill ok"><span class="dot"></span>Live</span>' : `<span class="pill gold">${esc(STAGE[v.stage] || "Not live")}</span>`) : "") + (flash || "") +
       `<div class="form2"><div><div class="card"><div class="ch"><h2>Basics</h2></div>
@@ -639,6 +683,7 @@
         <div class="card"><div class="ch"><h2>2. List the venue</h2></div>${venue ? `<p style="margin:0 0 10px">Listed as <b>${esc(venue.name)}</b>.</p><button class="btn" id="openv">Open the venue</button>` : `<p class="muted" style="margin:0 0 12px">Creates the venue, not live yet. Location, prices and the account are finished on the venue page, usually during the visit.</p><button class="btn" id="list">List this venue</button>`}</div>
         <div class="card"><div class="ch"><h2>Notes</h2></div><textarea id="on" placeholder="Only the team sees this">${esc(r.opsNote || "")}</textarea>
           <div class="row" style="margin-top:12px"><button class="btn sec sm" id="savenote">Save notes</button>${r.stage === "declined" ? `<button class="btn sec sm" id="reopen">Reopen</button>` : `<button class="btn sec sm" id="decline">Decline</button>`}</div></div></div></div>`;
+    if (!can("request-list")) ["list", "decline", "reopen"].forEach((id) => { const b = $(id); if (b) b.hidden = true; });
     const reload = async (id) => { await load("requests", "venues"); requestCard(D.requests.find((x) => x.id === id)); };
     $("back").onclick = () => nav("requests");
     P().querySelectorAll("[data-by]").forEach((b) => (b.onclick = () => { $("vb").value = b.dataset.by; P().querySelectorAll("[data-by]").forEach((x) => x.classList.toggle("on", x === b)); }));
@@ -758,6 +803,60 @@
       }
       toast("Saved."); await load("codes"); codes();
     };
+  }
+
+  // ---------- team ----------
+  // Owner only. Who signs in to admin and in what role, who can add stores in the onboard app, and who changed what.
+  const ROLE_HELP = { owner: "Everything", ops: "Everything except Team and WhatsApp setup", field: "Requests, venues to view, bottles, gaps", growth: "Drops, venues to view, gaps", finance: "Payouts, bottles, venues to view" };
+  const ACT_NAMES = { "sign-in": "Signed in", "venue-save": "Saved venue", "venue-live": "Took live", "venue-off": "Took offline", "payout-account": "Set payout account", "payout-send": "Sent payout", "ledger-paid": "Marked paid",
+    "code-save": "Saved code", "code-active": "Turned code on or off", "bands-save": "Changed prices", "drop-save": "Saved drop", "drop-cancel": "Cancelled drop", "request-update": "Updated request", "request-list": "Listed venue",
+    "staff-add": "Added runner number", "staff-remove": "Removed runner number", "team-save": "Saved team member", "team-remove": "Removed team member", "onb-save": "Saved onboarder", "onb-remove": "Removed onboarder", "venue-keys": "New board codes", "venue-link": "Linked account", "venue-supply": "Recorded supply" };
+  let teamTab = "team";
+  function team() {
+    const T = D.team || { team: [], onboarders: [], roles: [], roleNames: {} }, acts = D.activity || [];
+    const roleSel = (id, cur) => `<select id="${id}">${T.roles.map((r) => `<option value="${r}"${r === cur ? " selected" : ""}>${esc(T.roleNames[r])}</option>`).join("")}</select>`;
+    P().innerHTML = head("Team", "Who signs in, what each person sees, and who changed what.") +
+      `<div class="seg" style="margin-bottom:16px">${[["team", "Admin team", T.team.length], ["onb", "Onboarders", T.onboarders.length], ["act", "Activity", acts.length]].map(([k, n, c]) => `<button data-tt="${k}" class="${teamTab === k ? "on" : ""}">${n} <small>${c}</small></button>`).join("")}</div>` +
+      (teamTab === "team" ? `<div class="card"><div class="ch"><h2>Admin team</h2><span class="muted">TradeDepot Google accounts only</span></div>
+        <div class="tw"><table class="t"><tr><th>Person</th><th>Role</th><th>Sees</th><th></th></tr>
+        ${T.team.map((m) => `<tr><td><b>${esc(m.name || m.email.split("@")[0])}</b><div class="faint">${esc(m.email)}</div></td>
+          <td>${m.fixed ? '<span class="pill red">Owner</span>' : roleSel("r-" + m.email, m.role)}</td><td class="faint">${esc(ROLE_HELP[m.role] || "")}</td>
+          <td style="text-align:right;white-space:nowrap">${m.fixed ? "" : `<button class="btn sm sec" data-rm="${esc(m.email)}">Remove</button>`}</td></tr>`).join("")}</table></div>
+        <div class="addline"><input id="ne" placeholder="name@tradedepot.co" autocomplete="off"><input id="nn" placeholder="First name">${roleSel("nr", "field")}<button class="btn" id="nadd">Add</button></div></div>`
+      : teamTab === "onb" ? `<div class="card"><div class="ch"><h2>Onboarders</h2><span class="muted">Sign in with WhatsApp at andiamo.ng/onboard to add stores</span></div>
+        <div class="tw"><table class="t"><tr><th>Person</th><th>Company</th><th>Stores they add</th><th></th></tr>
+        ${T.onboarders.map((o) => `<tr><td><b>${esc(o.name)}</b><div class="faint">${esc(o.phone)}</div></td><td>${esc(o.company || "")}</td>
+          <td><label class="tgl"><input type="checkbox" data-auto="${esc(o.phone)}"${o.auto ? " checked" : ""}> Go live without approval</label><div class="faint">A bank name that doesn't match the venue always waits for approval.</div></td>
+          <td style="text-align:right"><button class="btn sm sec" data-ro="${esc(o.phone)}">Remove</button></td></tr>`).join("") || `<tr><td colspan="4"><div class="empty">No onboarders yet.</div></td></tr>`}</table></div>
+        <div class="addline"><input id="op" placeholder="WhatsApp number" inputmode="tel"><input id="on2" placeholder="Name"><input id="oc" placeholder="Company"><button class="btn" id="oadd">Add</button></div></div>`
+      : `<div class="card"><div class="ch"><h2>Activity</h2><span class="muted">The last ${acts.length} changes and sign-ins</span></div>
+        <div class="tw"><table class="t"><tr><th>When</th><th>Who</th><th>What</th><th></th></tr>
+        ${acts.map((x) => `<tr><td class="faint" style="white-space:nowrap">${ago(x.at)}</td><td><b>${esc(x.name || x.by)}</b><div class="faint">${esc(x.by)}</div></td><td>${esc(ACT_NAMES[x.action] || x.action)}</td><td class="faint">${esc(x.target || "")}</td></tr>`).join("") || `<tr><td colspan="4"><div class="empty">Nothing yet.</div></td></tr>`}</table></div></div>`);
+    P().querySelectorAll("[data-tt]").forEach((b) => (b.onclick = () => { teamTab = b.dataset.tt; team(); }));
+    const again = async (msg) => { toast(msg); await load("team", "activity"); team(); };
+    if (teamTab === "team") {
+      T.team.filter((m) => !m.fixed).forEach((m) => { const el = $("r-" + m.email); if (el) el.onchange = async () => { const r = await call({ action: "team-save", member: { ...m, role: el.value } }); r.ok ? again(`${m.name || m.email} is now ${T.roleNames[el.value]}.`) : toast("Couldn't change it."); }; });
+      P().querySelectorAll("[data-rm]").forEach((b) => (b.onclick = async () => {
+        if (!(await dialog({ title: "Remove " + b.dataset.rm + "?", html: "They're signed out straight away.", okText: "Remove", danger: true }))) return;
+        const r = await call({ action: "team-remove", email: b.dataset.rm }); r.ok ? again("Removed.") : toast("Couldn't remove.");
+      }));
+      $("nadd").onclick = async () => {
+        const r = await call({ action: "team-save", member: { email: $("ne").value, name: $("nn").value, role: $("nr").value } });
+        if (!r.ok) return r.error === "email" ? flag($("ne"), "Use a @tradedepot.co address.") : toast("Couldn't add.");
+        again("Added. They can sign in now.");
+      };
+    } else if (teamTab === "onb") {
+      P().querySelectorAll("[data-auto]").forEach((c) => (c.onchange = async () => { const o = T.onboarders.find((x) => x.phone === c.dataset.auto); const r = await call({ action: "onb-save", onboarder: { ...o, auto: c.checked } }); r.ok ? again(c.checked ? `${o.name}'s stores go live without approval.` : `${o.name}'s stores wait for approval.`) : toast("Couldn't change it."); }));
+      P().querySelectorAll("[data-ro]").forEach((b) => (b.onclick = async () => {
+        if (!(await dialog({ title: "Remove this onboarder?", html: "They can't add stores any more. Stores they added stay.", okText: "Remove", danger: true }))) return;
+        const r = await call({ action: "onb-remove", phone: b.dataset.ro }); r.ok ? again("Removed.") : toast("Couldn't remove.");
+      }));
+      $("oadd").onclick = async () => {
+        const r = await call({ action: "onb-save", onboarder: { phone: $("op").value, name: $("on2").value, company: $("oc").value, auto: false } });
+        if (!r.ok) return r.error === "phone" ? flag($("op"), "Check the number.") : r.error === "name" ? flag($("on2"), "Add their name.") : toast("Couldn't add.");
+        again("Added. Their stores wait for approval until you tick it.");
+      };
+    }
   }
 
   // ---------- gaps ----------
@@ -939,5 +1038,5 @@
   }
 
   // ---------- start ----------
-  if (ak) call({ action: "venues" }).then((r) => { if (r.ok) { D.venues = r; frame(); nav("overview"); } else login(); }).catch(() => {}); else login();
+  if (at || ak) start().catch(() => {}); else login();
 })();

@@ -17,7 +17,7 @@
 //   OUTSIDE_TPL_CODE        approved authentication template for sign-in codes (name)
 //   OUTSIDE_TPL_LANG        template language code, default "en"
 //   OUTSIDE_DEV=1           returns sign-in codes in API responses (test only, never in production)
-//   TABLE_ADMIN_KEY         admin console password (shared with the Table admin)
+//   ANDIAMO_ADMIN_KEY       the owner's break-glass password for the admin console (the team signs in with Google)
 //   OUTSIDE_SITE            public origin of the game, e.g. https://outside.ng (default amabiledirosa.com/outside)
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";
@@ -522,7 +522,7 @@ export const payEmail = (e164) => "p" + phoneKey(e164) + "@outside.amabiledirosa
 
 // ---------- admin ----------
 export function adminAuthorised(k) {
-  const key = process.env.TABLE_ADMIN_KEY || "";
+  const key = process.env.ANDIAMO_ADMIN_KEY || "";
   return !!key && typeof k === "string" && k === key;
 }
 export const hashKey = (k) => crypto.createHash("sha256").update(String(k)).digest("hex");

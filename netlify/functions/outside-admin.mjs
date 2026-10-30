@@ -1,5 +1,10 @@
-// Outside: admin console API (password: TABLE_ADMIN_KEY). Owns /api/outside-admin.
-//   POST {ak, action, ...}
+// Andiamo! admin console API. Owns /api/outside-admin.
+//   POST {at, action, ...}  at = a session from Google sign-in (tradedepot.co, on the team list). Each role sees and does only its own part.
+//   POST {ak, action, ...}  ak = ANDIAMO_ADMIN_KEY, the owner's break-glass password.
+//   hello                            the Google client id (no sign-in needed)
+//   google {credential}              Google sign-in → session
+//   me                               who am I, and my role
+//   team | team-save {member} | team-remove {email} | onb-save {onboarder} | onb-remove {phone} | activity   owner only
 //   venues            list all venues (with prices, bands, keys never shown)
 //   venue-save        {venue}          create or update; returns new runner/manager keys once when asked
 //   venue-keys        {id}             issue new runner and manager keys (old ones stop working)
@@ -18,7 +23,7 @@
 //   codes | code-save {code} | code-active {code, active}   discount codes at checkout
 //   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
 import {
-  store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
+  store, json, clean, K, getJSON, listKeys, fetchAll, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone, venueBand
 } from "../lib/_outside.mjs";
 
@@ -29,18 +34,39 @@ import { waStatus, waRegister, waSubscribe, waTest, waTestStatus } from "../lib/
 
 export const config = { path: "/api/outside-admin" };
 
+// A venue's account number is never sent back in full once saved: the last four only.
+const maskAcct = (a) => (a ? "••••••" + String(a).slice(-4) : "");
+const maskPayout = (p) => (p && p.account ? { ...p, account: maskAcct(p.account) } : p || {});
 const num = (x) => { const n = Math.round(Number(String(x).replace(/[^\d.]/g, ""))); return Number.isFinite(n) && n > 0 ? n : 0; };
 
 export default async (req) => {
   if (req.method !== "POST") return json({ ok: false, error: "method" }, 405);
   let d; try { d = await req.json(); } catch { return json({ ok: false, error: "bad_json" }, 400); }
-  if (!adminAuthorised(d.ak)) return json({ ok: false, error: "unauthorized" }, 401);
   const s = store();
   const a = d.action;
+  const T = await import("../lib/_outside_team.mjs");
+  if (a === "hello") return json({ ok: true, clientId: T.googleClientId() });
+  if (a === "google") { const r = await T.googleSignIn(s, d.credential); if (r.ok) await T.logActivity(s, r.me, "sign-in", {}); return json(r, r.ok ? 200 : 403); }
+  const who = await T.whoFrom(s, d);
+  if (!who) return json({ ok: false, error: "unauthorized" }, 401);
+  if (!T.can(who.role, a)) return json({ ok: false, error: "forbidden" }, 403);
+  // Every change is recorded against the person who made it.
+  d.by = who.email;
+  const by = who.email;
+  if (T.isWrite(a)) await T.logActivity(s, who, a, d);
+  if (a === "me") return json({ ok: true, me: who });
+  if (a === "team") return json({ ok: true, ...(await T.listTeam(s)), roles: T.ROLES, roleNames: T.ROLE_NAMES });
+  if (a === "team-save") { const r = await T.saveMember(s, d.member || {}, who.email); return json(r, r.ok ? 200 : 400); }
+  if (a === "team-remove") { const r = await T.removeMember(s, d.email); return json(r, r.ok ? 200 : 400); }
+  if (a === "onb-save") { const r = await T.saveOnboarder(s, d.onboarder || {}, who.email); return json(r, r.ok ? 200 : 400); }
+  if (a === "onb-remove") { const r = await T.removeOnboarder(s, d.phone); return json(r, r.ok ? 200 : 400); }
+  if (a === "activity") return json({ ok: true, activity: await T.listActivity(s) });
+  // Field can book visits and keep notes on a request; declining and reopening are for owner and ops.
+  if (a === "request-update" && who.role === "field") { delete d.decline; delete d.reopen; }
 
   if (a === "venues") {
     const vs = await fetchAll(s, await listKeys(s, K.venuePrefix));
-    return json({ ok: true, venues: vs.map(({ runnerKeyHash, managerKeyHash, ...v }) => ({ ...v, hasKeys: !!runnerKeyHash, checks: liveChecks(v) })), bands: await getBands(s), wines: WINES, bandOrder: BAND_ORDER });
+    return json({ ok: true, venues: vs.map(({ runnerKeyHash, managerKeyHash, ...v }) => ({ ...v, payout: maskPayout(v.payout), hasKeys: !!runnerKeyHash, checks: liveChecks(v) })), bands: await getBands(s), wines: WINES, bandOrder: BAND_ORDER });
   }
 
   if (a === "venue-save") {
@@ -172,7 +198,7 @@ export default async (req) => {
       const st = (l) => (l.transfer && l.transfer.status) || "";
       const day = Date.now() - 24 * 3600e3;
       const paidToday = lines.filter((l) => l.paid && (l.paidAt || 0) > day);
-      out.push({ venueId: v.id, name: v.name, payout: { bank: (v.payout || {}).bank || "", account: (v.payout || {}).account || "", name: (v.payout || {}).name || "", verified: !!(v.payout && v.payout.recipient) },
+      out.push({ venueId: v.id, name: v.name, payout: { bank: (v.payout || {}).bank || "", account: maskAcct((v.payout || {}).account), name: (v.payout || {}).name || "", verified: !!(v.payout && v.payout.recipient) },
         owed: owed.reduce((n, l) => n + l.amount, 0),
         lines: owed.length, menu: owed.filter((l) => l.settle === "menu").length, drops: owed.filter((l) => l.settle === "fee").length,
         pending: owed.filter((l) => st(l) === "pending").length, failed: owed.filter((l) => ["failed", "reversed", "held"].includes(st(l))).map((l) => ({ key: l.key, amount: l.amount, error: l.transfer.error || "" })),
@@ -215,7 +241,6 @@ export default async (req) => {
   }
 
   // ---------- venues joining ----------
-  const by = clean(d.by, 30) || "admin";
   if (a === "requests") return json({ ok: true, requests: await listRequests(s) });
   if (a === "request-update") { const r = await updateRequest(s, clean(d.id, 20), d, by); return json(r, r.ok ? 200 : 404); }
   if (a === "request-list") { const r = await listFromRequest(s, clean(d.id, 20), by); return json(r, r.ok ? 200 : 404); }
