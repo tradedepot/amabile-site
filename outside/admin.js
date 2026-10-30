@@ -722,8 +722,8 @@
     P().innerHTML = head("Codes", "Discount codes senders type at checkout. The venue is still paid its full menu price.", E ? "" : `<button class="btn" id="new">${ic("plus")}<span>New code</span></button>`) +
       (E ? `<div class="card"><div class="ch"><h2>${E.code ? esc(E.code) : "New code"}</h2></div>
         <div class="grid">
-          <div><label class="lb">Code</label><input id="cc" maxlength="20" value="${esc(E.code || "")}" placeholder="KACHI100"${E.code ? " disabled" : ""} style="text-transform:uppercase"></div>
-          <div><label class="lb">Discount</label><div class="row" style="flex-wrap:nowrap"><input id="cv" inputmode="numeric" value="${E.value || ""}" placeholder="100" style="min-width:0">
+          <div><label class="lb">Code</label><input id="cc" maxlength="20" value="${esc(E.code || "")}" placeholder="DISC20"${E.code ? " disabled" : ""} style="text-transform:uppercase"></div>
+          <div><label class="lb">Discount</label><div class="row" style="flex-wrap:nowrap"><input id="cv" inputmode="numeric" value="${E.value || ""}" placeholder="20" style="min-width:0">
             <div class="seg"><button data-k="pct" class="${E.kind !== "naira" ? "on" : ""}">%</button><button data-k="naira" class="${E.kind === "naira" ? "on" : ""}">₦</button></div></div></div>
           <div><label class="lb">Uses in total</label><input id="cm" inputmode="numeric" value="${E.maxUses || ""}" placeholder="No limit"></div>
           <div><label class="lb">Uses per person</label><input id="cp" inputmode="numeric" value="${E.perPerson || ""}" placeholder="No limit"></div>

@@ -459,7 +459,7 @@
     modal(`<div class="reveal">${photo(b.wine, 260)}<div class="wn">${esc(wineOf(b.wine).label)}<small>${esc(wineOf(b.wine).kind || "")}</small></div></div>
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
-      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Andiamo and tap Bring it here.</p>
+      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Andiamo and tap Claim it.</p>
       <button class="btn block" data-x2>See the spots</button>${pingCard("intro")}`, (c) => {
       c.querySelector("[data-x2]").onclick = () => { closeModal(); focusSpots(spots); };
       bindPing(c, () => { const p = c.querySelector(".ping"); if (p) p.remove(); });
@@ -477,7 +477,7 @@
       <div class="meta">${esc([wineOf(b.wine).kind, b.kind === "gift" ? bandName(b.band) + " spots and below" : ""].filter(Boolean).join(" · "))}</div>
       ${b.note ? `<div class="q">"${esc(b.note)}"</div>` : ""}
       ${b.status === "waiting"
-        ? `<div class="acts"><button class="btn small" data-claim="${b.id}">Bring it here</button><button class="btn small gold" data-qr="${b.id}">Show QR</button></div>
+        ? `<div class="acts"><button class="btn small" data-claim="${b.id}">Claim it</button><button class="btn small gold" data-qr="${b.id}">Show QR</button></div>
            <div class="links"><button class="link" data-spots="${b.id}">Where to claim</button><span>·</span><button class="link" data-more="${b.id}">More</button></div>`
         : `<div class="acts one"><span class="tag gold">On its way</span></div><div class="links"><button class="link" data-cancel="${b.id}">Not here any more</button></div>`}
       </div></div>`).join("");
@@ -524,10 +524,27 @@
     return `<label class="field"><span>Table number, if there's one</span><input id="tb" maxlength="12" inputmode="text" placeholder="e.g. 7"></label>
       <label class="field"><span>Where are you sitting?</span><input id="sp" maxlength="40" placeholder="by the DJ, white shirt"></label>`;
   }
-  function claimFlow(id, venueId) {
+  // Claim it: find which spot they're at first. Once that's settled, the table details and Bring it here.
+  async function claimFlow(id, venueId) {
     const b = S.me.bag.find((x) => x.id === id); if (!b) return;
     closeSheet();
-    modal(`<h2>Bring it here</h2><p class="muted">We check which venue you're at, once. No one can see where you are.</p>${whereFields()}
+    modal(`<h2>Finding you...</h2><p class="muted">One moment.</p>`);
+    const loc = await getLocation();
+    if (!loc) return modal(`<h2>Turn on location</h2><p class="muted">Allow location for this site, then try again. Or call a waiter over and show your QR.</p>
+      <button class="btn block" id="again">Try again</button><p></p><button class="btn block ghost" id="qr">Show your QR</button>`, (c) => {
+      c.querySelector("#again").onclick = () => claimFlow(id, venueId);
+      c.querySelector("#qr").onclick = () => qrFlow(id, false);
+    });
+    const r = await api("where", { ...loc, venueId });
+    if (r.ok) return claimForm(b, r.venue.id, loc);
+    if (r.error === "choose") return chooseVenue(r.venues, (vid) => claimForm(b, vid, loc), () => notHereYet(b));
+    if (r.error === "confirm") return confirmVenue(r.venue, () => claimForm(b, r.venue.id, loc), () => notHereYet(b));
+    if (r.error === "no_venue") return notHereYet(b);
+    closeModal(); toast(errMsg(r.error));
+  }
+  function claimForm(b, venueId, loc) {
+    const id = b.id;
+    modal(`<h2>Bring it here</h2>${whereFields()}
       <label class="toggle"><input type="checkbox" id="quiet"> Quiet claim: don't tell my people I'm outside</label>
       <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>
       <p class="muted" style="text-align:center">Or call a waiter over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
@@ -545,11 +562,8 @@
         return r;
       };
       c.querySelector("#go").onclick = async () => {
-        const go = c.querySelector("#go"); go.disabled = true; note(c, "Finding you...");
-        const loc = await getLocation();
-        if (!loc) { go.disabled = false; return fail(c, "Turn on location for this site, then try again. Or show your QR instead."); }
-        const body = { bottleId: id, ...loc, venueId, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, quiet: c.querySelector("#quiet").checked };
-        await send(body);
+        const go = c.querySelector("#go"); go.disabled = true;
+        await send({ bottleId: id, ...loc, venueId, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, quiet: c.querySelector("#quiet").checked });
         go.disabled = false;
       };
     });
@@ -851,8 +865,10 @@
       const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
       wirePhone(c, "to");
       const sf = c.querySelector("#self"); if (sf) sf.onchange = () => { st.self = sf.checked; if (st.self) st.anon = false; redraw(); };
-      const hc = c.querySelector("#codeopen"); if (hc) hc.onclick = () => { st.codeOpen = true; redraw(); setTimeout(() => { const i = document.querySelector("#codein"); if (i) i.focus(); }, 50); };
-      const rc = c.querySelector("#codeoff"); if (rc) rc.onclick = () => { st.code = null; st.codeText = ""; st.codeOpen = true; redraw(); };
+      // The pay bar sticks to the bottom; bring the code into view above it.
+      const toCode = () => { const mc = $("#modalCard"); if (mc) mc.scrollTo({ top: mc.scrollHeight, behavior: "smooth" }); };
+      const hc = c.querySelector("#codeopen"); if (hc) hc.onclick = () => { st.codeOpen = true; redraw(); toCode(); setTimeout(() => { const i = document.querySelector("#codein"); if (i) i.focus(); }, 50); };
+      const rc = c.querySelector("#codeoff"); if (rc) rc.onclick = () => { st.code = null; st.codeText = ""; st.codeOpen = true; redraw(); toCode(); };
       const applyCode = async () => {
         keep();
         const cd = c.querySelector("#codein");
@@ -860,7 +876,7 @@
         if (!S.me) return signIn(() => sendFlow({}, { ...st, autocode: true }), WHY.pay);
         const r = await api("code", { code: st.codeText });
         if (!r.ok) return flag(c.querySelector("#codein"), errMsg(r.error));
-        st.code = r.code; st.codeOpen = false; redraw();
+        st.code = r.code; st.codeOpen = false; redraw(); toCode();
       };
       const ac = c.querySelector("#codego"); if (ac) ac.onclick = applyCode;
       const cdi = c.querySelector("#codein"); if (cdi) cdi.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); applyCode(); } };
@@ -1036,7 +1052,7 @@
       ${v.tonight ? `<p>${esc(v.tonight)}</p>` : ""}
       <p class="muted">Pours ${v.wines.map((w) => esc(wineOf(w).name)).join(", ")}.</p>
       ${drop ? `<button class="item" data-d="${drop.id}" style="width:100%;text-align:left"><div class="bt">${dropArt(drop, 40)}</div><div class="grow"><h4>${isItem(drop) ? esc(drop.item) + " drop" : "Drop"} ${drop.state === "live" ? "live now" : timeShort(drop.start)}</h4><div class="sub">${drop.left} of ${drop.bottles} left</div></div></button>` : ""}
-      ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt ph">${photo(b.wine, 56)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Bring it here</button></div>`).join("")}</div>` : ""}
+      ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt ph">${photo(b.wine, 56)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Claim it</button></div>`).join("")}</div>` : ""}
       <p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>`, (c) => {
       c.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.c, v.id)));
       c.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => dropCard(b.dataset.d)));

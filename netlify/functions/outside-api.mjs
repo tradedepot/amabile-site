@@ -8,6 +8,7 @@
 //   POST send {to, wine, band, note, anon, mode, table, code?}   → Paystack (or paid at once when a code covers it)
 //   POST code {code}                 is this discount code good for me
 //   GET  pay?ref=                    payment status (self-heals with Paystack)
+//   POST where {lat, lng, acc, venueId?}  which spot am I at (before the claim form)
 //   POST claim {bottleId, lat, lng, acc, venueId?, tent?, table, quiet}
 //   POST cancel {bottleId}           runner not there yet, keep the bottle for another night
 //   POST received {ticketId, venueId}
@@ -362,6 +363,15 @@ export default async (req) => {
         if (tx) b = await markBottlePaid(s, b, tx, "poll");
       }
       return json({ ok: true, bottle: senderView(b), paid: b.status !== "pending" });
+    }
+
+    // Which spot am I at? Asked first, before the claim form.
+    if (route === "where") {
+      const where = await locate(s, d);
+      if (where.choose) return json({ ok: false, error: "choose", venues: where.choose });
+      if (where.none) { await logUnmet(s, d, me, "claim"); return bad("no_venue"); }
+      if (where.via === "gps") return json({ ok: false, error: "confirm", venue: publicVenue(where.venue) });
+      return json({ ok: true, venue: publicVenue(where.venue), via: where.via });
     }
 
     if (route === "claim") {
