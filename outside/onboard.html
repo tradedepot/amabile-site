@@ -467,9 +467,9 @@ input:focus, select:focus { outline:none; border-color:var(--ink); box-shadow:0 
       ${rec ? `<div class="rec"><div><small>${rec.asked || pre.fromRequest ? "Asked to join · in our records" : "From our records"}</small><b>${esc(rec.name)}</b><span>${esc([rec.type, rec.place].filter(Boolean).join(" · "))}</span>
         <div class="tags">${rec.lastBought ? `<span class="tag">Last bought ${day(rec.lastBought)}</span>` : ""}${rec.cases ? `<span class="tag">${rec.cases} cases this year</span>` : ""}${rec.accounts > 1 ? `<span class="tag">${rec.accounts} accounts</span>` : ""}${pre.fromRequest && Object.keys(pre.prices || {}).length ? '<span class="tag ok">Prices from the venue</span>' : ""}</div></div>
         ${pre.fromRequest && !rec.ref ? "" : '<button type="button" id="chgst">Change</button>'}</div>` : ""}
-      <section class="blk"${known ? " hidden" : ""} id="sblk"><header><span class="n">${known ? "" : num()}</span><div><h2>The store</h2><p>Not in our records yet.</p></div></header>
+      <section class="blk"${known ? " hidden" : ""} id="sblk"><header><span class="n">${known ? "" : num()}</span><div><h2>The store</h2></div></header>
         <div id="sfields">
-          <div class="fgroup"><label class="fld" for="nm"><span>Name</span><input id="nm" maxlength="60" value="${esc(pre.name || "")}" autocomplete="off" placeholder="As it appears on the sign outside"></label>
+          <div class="fgroup"><label class="fld" for="nm"><span>Name</span><input id="nm" maxlength="60" value="${esc(pre.name || "")}" autocomplete="off" placeholder="As on the sign outside"></label>
           <label class="fld sel" for="ar"><span>Area</span><select id="ar" class="${pre.area ? "" : "empty"}"><option value="">Choose the area</option>${S.areas.map((a) => `<option${pre.area === a ? " selected" : ""}>${esc(a)}</option>`).join("")}</select></label></div>
           <p class="lab">Kind of place</p><div class="kinds" id="kd">${S.kinds.map(([k, nn]) => `<button type="button" data-k="${k}" class="${st.kind === k ? "on" : ""}">${svg(KIC[k] || "")}<span>${nn}</span></button>`).join("")}</div></div></section>
       <section class="blk"><header><span class="n">${num()}</span><div><h2>Menu prices</h2><p>A bottle on their menu. Leave out what they don't sell.</p></div></header>
