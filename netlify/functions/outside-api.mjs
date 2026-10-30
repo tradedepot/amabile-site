@@ -349,6 +349,8 @@ export default async (req) => {
       const where = await locate(s, d);
       if (where.choose) return json({ ok: false, error: "choose", venues: where.choose });
       if (where.none) { await logUnmet(s, d, me, "claim"); return bad("no_venue"); }
+      // One spot nearby isn't proof they're in it (the place next door may not be on Andiamo): ask first.
+      if (where.via === "gps") return json({ ok: false, error: "confirm", venue: publicVenue(where.venue) });
       const v = where.venue;
       const table = clean(where.table || d.table, 12);
       const spot = clean(d.spot, 40);

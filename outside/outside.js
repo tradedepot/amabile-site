@@ -532,18 +532,25 @@
       <button class="btn block" id="go">Bring it here</button><p class="muted" id="msg"></p>
       <p class="muted" style="text-align:center">Or call a runner over: <button class="link" id="qr">show your QR</button></p>`, (c) => {
       c.querySelector("#qr").onclick = () => qrFlow(id, c.querySelector("#quiet").checked);
+      // Sends the claim; when we ask which spot they're at, the answer re-sends the same details with that spot.
+      const send = async (body) => {
+        const r = await api("claim", body);
+        if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the runner."); if (t) setTimeout(() => glowPrompt(t), 400); return r; }
+        if (r.error === "choose") { chooseVenue(r.venues, (vid) => send({ ...body, venueId: vid }), () => notHereYet(b)); return r; }
+        if (r.error === "confirm") { confirmVenue(r.venue, () => send({ ...body, venueId: r.venue.id }), () => notHereYet(b)); return r; }
+        if (r.error === "band") { topupStep(b, r, body); return r; }
+        if (r.error === "no_venue") { notHereYet(b); return r; }
+        const msg = r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error);
+        if ($("#modalCard").contains(c.querySelector("#go"))) fail(c, msg); else toast(msg);
+        return r;
+      };
       c.querySelector("#go").onclick = async () => {
         const go = c.querySelector("#go"); go.disabled = true; note(c, "Finding you...");
         const loc = await getLocation();
         if (!loc) { go.disabled = false; return fail(c, "Turn on location for this site, then try again. Or show your QR instead."); }
         const body = { bottleId: id, ...loc, venueId, table: c.querySelector("#tb").value, spot: c.querySelector("#sp").value, quiet: c.querySelector("#quiet").checked };
-        const r = await api("claim", body);
+        await send(body);
         go.disabled = false;
-        if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the runner."); if (t) setTimeout(() => glowPrompt(t), 400); return; }
-        if (r.error === "choose") return chooseVenue(r.venues, (vid) => { venueId = vid; c.querySelector("#go").click(); });
-        if (r.error === "band") return topupStep(b, r, body);
-        if (r.error === "no_venue") return notHereYet(b);
-        fail(c, r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error));
       };
     });
   }
@@ -560,9 +567,19 @@
       c.querySelector("[data-x3]").onclick = closeModal;
     });
   }
-  function chooseVenue(list, done) {
-    modal(`<h2>Which one are you at?</h2><div class="list">${list.map((v) => `<button class="item" data-v="${v.id}"><div class="bt">${A.venueArt(v.art, isNight(), 40)}</div><div class="grow" style="text-align:left"><h4>${esc(v.name)}</h4><div class="sub">${esc(v.area)}</div></div></button>`).join("")}</div>`, (c) => {
+  function chooseVenue(list, done, none) {
+    modal(`<h2>Which one are you at?</h2><div class="list">${list.map((v) => `<button class="item" data-v="${v.id}"><div class="bt">${A.venueArt(v.art, isNight(), 40)}</div><div class="grow" style="text-align:left"><h4>${esc(v.name)}</h4><div class="sub">${esc(v.area)}</div></div></button>`).join("")}</div>
+      ${none ? `<p></p><button class="btn block ghost" id="none">I'm somewhere else</button>` : ""}`, (c) => {
       c.querySelectorAll("[data-v]").forEach((b) => (b.onclick = () => { closeModal(); done(b.dataset.v); }));
+      if (none) c.querySelector("#none").onclick = () => { closeModal(); none(); };
+    });
+  }
+  // Exactly one spot nearby: make sure they're in it, not next door.
+  function confirmVenue(v, yes, no) {
+    modal(`<h2>Are you at ${esc(v.name)}?</h2><div class="list"><div class="item"><div class="bt">${A.venueArt(v.art, isNight(), 40)}</div><div class="grow" style="text-align:left"><h4>${esc(v.name)}</h4><div class="sub">${esc(v.area)}</div></div></div></div>
+      <p></p><button class="btn block" id="yes">Yes, bring it to my table</button><p></p><button class="btn block ghost" id="no">No, I'm somewhere else</button>`, (c) => {
+      c.querySelector("#yes").onclick = () => { closeModal(); yes(); };
+      c.querySelector("#no").onclick = () => { closeModal(); no(); };
     });
   }
   function topupStep(b, r, body) {
