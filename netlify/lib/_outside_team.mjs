@@ -17,7 +17,7 @@ const ALL = ROLES;
 const RUN = ["owner", "ops"];
 const P = {
   venues: ALL, banks: ALL, glow: ALL, drops: ALL, unmet: ["owner", "ops", "field", "growth"],
-  "drop-save": ["owner", "ops", "growth"], "drop-cancel": ["owner", "ops", "growth"],
+  "drop-save": ["owner", "ops", "growth", "field"], "drop-cancel": ["owner", "ops", "growth", "field"],
   requests: ["owner", "ops", "field"], "request-update": ["owner", "ops", "field"],
   bottles: ["owner", "ops", "field", "finance"], bottle: ["owner", "ops", "field", "finance"],
   ledger: ["owner", "ops", "finance"], balance: ["owner", "ops", "finance"], "ledger-paid": ["owner", "ops", "finance"], "payout-send": ["owner", "ops", "finance"],

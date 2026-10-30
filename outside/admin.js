@@ -860,7 +860,7 @@
 
   // ---------- team ----------
   // Owner only. Who signs in to admin and in what role, who can add stores in the onboard app, and who changed what.
-  const ROLE_HELP = { owner: "Everything", ops: "Everything except Team and WhatsApp setup", field: "Requests, venues to view, bottles, gaps", growth: "Drops, venues to view, gaps", finance: "Payouts, bottles, venues to view" };
+  const ROLE_HELP = { owner: "Everything", ops: "Everything except Team and WhatsApp setup", field: "Drops, requests, venues to view, bottles, gaps", growth: "Drops, venues to view, gaps", finance: "Payouts, bottles, venues to view" };
   const ACT_NAMES = { "sign-in": "Signed in", "venue-save": "Saved venue", "venue-live": "Took live", "venue-off": "Took offline", "payout-account": "Set payout account", "payout-send": "Sent payout", "ledger-paid": "Marked paid",
     "code-save": "Saved code", "code-active": "Turned code on or off", "bands-save": "Changed prices", "drop-save": "Saved drop", "drop-cancel": "Cancelled drop", "request-update": "Updated request", "request-list": "Listed venue",
     "staff-add": "Added runner number", "staff-remove": "Removed runner number", "team-save": "Saved team member", "team-remove": "Removed team member", "onb-save": "Saved onboarder", "onb-remove": "Removed onboarder", "venue-keys": "New board codes", "venue-link": "Linked account", "venue-supply": "Recorded supply" };

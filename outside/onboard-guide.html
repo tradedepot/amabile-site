@@ -1,0 +1,220 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Andiamo! Onboard guide</title>
+<meta name="robots" content="noindex">
+<meta name="theme-color" content="#E74529">
+<link rel="icon" href="/favicon-32.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@600;700;800;900&display=swap" rel="stylesheet">
+<style>
+/* The game's own look: Sweet Red, cream, ink outlines with a hard drop shadow. One phone-width column.
+   A deliberate single look (the game has one), so colours are set explicitly rather than per theme. */
+:root {
+  --red: #E74529; --red-deep: #C8371D; --ink: #2B1E17; --ink-2: #6E5D50; --cream: #FBF6EC; --paper: #FFFDF8;
+  --gold: #F2C66B; --gold-ink: #7A4E00; --green: #2E7D4F; --green-soft: #DDF1E4; --line: #E9DCCB;
+  --serif: "DM Serif Display", Georgia, "Times New Roman", serif;
+  --sans: "Nunito", system-ui, -apple-system, "Segoe UI", sans-serif;
+  color-scheme: light;
+}
+* { box-sizing: border-box; }
+body { background: var(--cream); color: var(--ink); font-family: var(--sans); font-size: 15.5px; line-height: 1.5; -webkit-font-smoothing: antialiased; }
+.wrap { max-width: 580px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px)); padding-right: max(16px, env(safe-area-inset-right, 0px)); }
+.hero { background: var(--red); color: #fff; position: relative; overflow: hidden; }
+.hero::after { content: ""; position: absolute; right: -60px; top: -60px; width: 220px; height: 220px; border-radius: 50%; background: rgba(255,255,255,.08); }
+.hero .wrap { padding-block: 22px 30px; position: relative; z-index: 1; }
+.badge { display: inline-flex; flex-direction: column; background: #fff; color: var(--red); border: 2.5px solid var(--ink); border-radius: 13px; padding: 5px 11px 6px; box-shadow: 0 4px 0 var(--ink); line-height: 1; }
+.badge b { font-family: var(--serif); font-weight: 400; font-size: 21px; }
+.badge small { font-size: 8px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; margin-top: 3px; }
+.toprow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.kicker { display: inline-flex; align-items: center; gap: 7px; margin: 0; padding: 5px 12px 5px 10px; border: 1.5px solid rgba(255,255,255,.55); border-radius: 999px; font-size: 10.5px; font-weight: 900; letter-spacing: 1.6px; text-transform: uppercase; }
+.kicker::before { content: ""; width: 7px; height: 7px; border-radius: 50%; background: #fff; }
+.hero h1 { margin-top: 26px; }
+h1 { font-family: var(--serif); font-weight: 400; font-size: clamp(34px, 9vw, 46px); line-height: 1.02; margin: 0 0 12px; text-wrap: balance; }
+.hero p { margin: 0; font-weight: 700; font-size: 16px; max-width: 30em; }
+.track { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 6px; margin-top: 20px; }
+.track div { background: rgba(255,255,255,.14); border: 1.5px solid rgba(255,255,255,.35); border-radius: 12px; padding: 8px 10px; font-weight: 900; font-size: 13.5px; line-height: 1.2; }
+.track div span { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; opacity: .8; font-weight: 800; }
+.track div.end { background: #fff; color: var(--red); border-color: var(--ink); box-shadow: 0 3px 0 var(--ink); }
+main .wrap { padding-block: 24px 40px; display: flex; flex-direction: column; gap: 30px; }
+h2 { font-family: var(--serif); font-weight: 400; font-size: 26px; line-height: 1.1; margin: 0 0 12px; }
+section { min-width: 0; }
+.links { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.lk { display: flex; flex-direction: column; gap: 6px; background: var(--paper); border: 2.5px solid var(--ink); border-radius: 18px; padding: 12px; text-decoration: none; color: var(--ink); box-shadow: 0 4px 0 var(--ink); min-width: 0; transition: transform .08s, box-shadow .08s; }
+.lk:active { transform: translateY(3px); box-shadow: 0 1px 0 var(--ink); }
+.lk.main, .lk.wide { grid-column: 1 / -1; flex-direction: row; align-items: center; gap: 12px; }
+.lk.main { background: var(--red); color: #fff; padding: 14px; }
+.lk.main .ic { background: #fff; color: var(--red); }
+.lk.main b { font-size: 17px; color: #fff; }
+.lk.wide b { color: var(--ink); }
+.lk.main .tx span { color: rgba(255,255,255,.9); }
+.lk.main u { color: #fff; text-decoration: underline; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+.lk.main .go { margin-left: auto; flex: none; width: 34px; height: 34px; border-radius: 50%; background: #fff; color: var(--red); border: 2px solid var(--ink); display: grid; place-items: center; }
+.lk.main .go svg { width: 16px; height: 16px; }
+.lk .ic { width: 38px; height: 38px; border-radius: 11px; background: var(--red); color: #fff; display: grid; place-items: center; flex: none; border: 2px solid var(--ink); }
+.lk .ic svg { width: 21px; height: 21px; }
+.lk b { font-weight: 900; font-size: 15.5px; line-height: 1.15; }
+.lk span { font-size: 12.5px; color: var(--ink-2); font-weight: 700; line-height: 1.3; }
+.lk u { text-decoration: none; color: var(--red-deep); font-weight: 900; font-size: 13px; overflow-wrap: anywhere; }
+.lk .tx { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.lk:focus-visible, button:focus-visible, input:focus-visible + .box { outline: 3px solid var(--red); outline-offset: 3px; }
+.intro { background: var(--paper); border: 2.5px solid var(--ink); border-radius: 20px; padding: 16px; box-shadow: 0 4px 0 var(--ink); }
+.intro > p { margin: 0 0 14px; font-weight: 700; font-size: 15.5px; }
+.how { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.how li { display: grid; grid-template-columns: 30px minmax(0, 1fr); gap: 10px; align-items: start; background: var(--cream); border-radius: 14px; padding: 10px 12px; }
+.how li i { font-style: normal; width: 28px; height: 28px; border-radius: 50%; background: var(--red); color: #fff; border: 2px solid var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 13px; }
+.how li b { display: block; font-weight: 900; font-size: 15px; }
+.how li span { display: block; color: var(--ink-2); font-weight: 700; font-size: 13.5px; }
+.how li.paid { background: var(--green-soft); }
+.how li.paid i { background: var(--green); }
+.job { margin: 14px 0 0; padding-top: 12px; border-top: 1.5px dashed var(--line); font-weight: 800; font-size: 14.5px; }
+.job b { color: var(--red-deep); }
+.saycard { background: var(--paper); border: 2.5px solid var(--ink); border-radius: 20px; box-shadow: 0 4px 0 var(--ink); overflow: hidden; }
+.saycard .part { padding: 16px 18px; position: relative; }
+.saycard .part + .part { border-top: 1.5px dashed var(--line); }
+.saycard small { display: block; font-size: 11px; font-weight: 900; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-2); margin-bottom: 6px; }
+.saycard q { display: block; font-family: var(--serif); font-size: 21px; line-height: 1.25; quotes: none; }
+.saycard .lead { border-left: 6px solid var(--red); }
+.saycard .then q { color: var(--red-deep); }
+.saycard .dep { color: var(--red-deep); }
+.never { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 12px 18px 14px; background: var(--cream); border-top: 2px solid var(--ink); }
+.never .k { width: 100%; font-weight: 900; font-size: 11px; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-2); margin-bottom: 2px; }
+.never span:not(.k) { background: var(--paper); border: 1.5px solid var(--line); color: var(--ink-2); font-weight: 800; font-size: 13px; border-radius: 999px; padding: 2px 11px; text-decoration: line-through; text-decoration-color: var(--red); text-decoration-thickness: 2px; }
+.visit-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+.visit-head h2 { margin: 0; }
+.reset { border: 2px solid var(--ink); background: var(--paper); color: var(--ink); border-radius: 999px; padding: 5px 13px; font: inherit; font-weight: 900; font-size: 13px; cursor: pointer; }
+.meter { height: 10px; background: var(--line); border-radius: 999px; overflow: hidden; margin-bottom: 14px; border: 1.5px solid var(--ink); }
+.meter i { display: block; height: 100%; width: 0; background: var(--green); transition: width .3s; }
+ol.steps { list-style: none; margin: 0; padding: 0; position: relative; }
+ol.steps::before { content: ""; position: absolute; left: 19px; top: 24px; bottom: 24px; border-left: 3px dotted var(--ink-2); opacity: .45; }
+ol.steps > li { position: relative; display: grid; grid-template-columns: 40px minmax(0, 1fr); gap: 12px; margin-bottom: 12px; }
+.num { width: 40px; height: 40px; border-radius: 50%; background: var(--red); color: #fff; border: 2.5px solid var(--ink); display: grid; place-items: center; font-weight: 900; font-size: 16px; box-shadow: 0 3px 0 var(--ink); position: relative; z-index: 1; }
+.step { background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 12px 14px; min-width: 0; }
+.step h3 { margin: 0; font-weight: 900; font-size: 16.5px; line-height: 1.25; }
+.step p { margin: 4px 0 0; color: var(--ink-2); font-weight: 700; font-size: 14px; }
+.path { display: inline-block; font-weight: 900; color: var(--ink); background: var(--gold); border-radius: 7px; padding: 0 7px; border: 1.5px solid var(--ink); font-size: 13px; }
+.checks { list-style: none; margin: 10px 0 2px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.checks label { display: grid; grid-template-columns: 26px minmax(0, 1fr); gap: 10px; align-items: start; cursor: pointer; background: var(--cream); border: 1.5px solid var(--line); border-radius: 12px; padding: 9px 10px; font-size: 14px; font-weight: 700; color: var(--ink-2); position: relative; }
+.checks input { position: absolute; opacity: 0; pointer-events: none; }
+.checks .box { width: 24px; height: 24px; border-radius: 8px; border: 2px solid var(--ink); background: #fff; display: grid; place-items: center; }
+.checks .box svg { width: 15px; height: 15px; opacity: 0; color: #fff; }
+.checks input:checked + .box { background: var(--green); border-color: var(--green); }
+.checks input:checked + .box svg { opacity: 1; }
+.checks input:checked ~ .t { text-decoration: line-through; opacity: .6; }
+.checks .t b { color: var(--ink); }
+.step.live { background: var(--green-soft); border-color: var(--green); }
+.step.live h3 { color: var(--green); }
+.num.live { background: var(--green); }
+.flow { display: flex; gap: 6px; overflow-x: auto; margin: 10px -2px 2px; padding: 2px 2px 6px; scroll-snap-type: x mandatory; }
+.flow div { flex: none; scroll-snap-align: start; background: var(--cream); border: 1.5px solid var(--ink); border-radius: 12px; padding: 7px 10px; font-weight: 900; font-size: 13px; max-width: 150px; line-height: 1.25; }
+.flow div small { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); font-weight: 800; }
+.flow .done { background: var(--green); color: #fff; border-color: var(--green); }
+.flow .done small { color: rgba(255,255,255,.85); }
+.after { display: grid; grid-template-columns: 1fr; gap: 10px; }
+.card { background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 13px 14px; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; }
+.card .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--gold); border: 2px solid var(--ink); display: grid; place-items: center; }
+.card .ic svg { width: 19px; height: 19px; }
+.card h3 { margin: 0; font-weight: 900; font-size: 15.5px; }
+.card p { margin: 3px 0 0; color: var(--ink-2); font-weight: 700; font-size: 14px; }
+.foot { font-size: 12.5px; color: var(--ink-2); font-weight: 700; text-align: center; margin: 0; }
+@media (max-width: 360px) { .links { grid-template-columns: 1fr; } .track { grid-template-columns: 1fr; } }
+@media (prefers-reduced-motion: reduce) { * { transition: none !important; } }
+</style>
+<style>body { margin: 0; } a.badge { text-decoration: none; }</style>
+</head>
+<body>
+<header class="hero"><div class="wrap">
+  <div class="toprow"><a class="badge" href="/onboard"><b>Andiamo!</b><small>Onboard guide</small></a><p class="kicker">Inhouse brief</p></div>
+  <h1>Add the store while you're standing in it.</h1>
+  <p>Start with spots that already sell Amabile. Stock stays business as usual.</p>
+  <div class="track"><div><span>You</span>Pitch</div><div><span>Your phone</span>Add the store</div><div class="end"><span>Back end</span>Approved, it's live</div></div>
+</div></header>
+
+<main><div class="wrap">
+
+  <section>
+    <h2>What Andiamo is</h2>
+    <div class="intro">
+      <p>People send a bottle of Amabile to a friend's table at any of our venues, from their phone.</p>
+      <ol class="how">
+        <li><i>1</i><div><b>Someone sends a bottle</b><span>They pay on their phone, to a friend's number or a table in the room.</span></div></li>
+        <li><i>2</i><div><b>Their friend goes out</b><span>To any venue on Andiamo, and asks the waiter for it.</span></div></li>
+        <li class="paid"><i>3</i><div><b>The venue serves it</b><span>From its own stock. We pay its full menu price, immediately.</span></div></li>
+      </ol>
+      <p class="job"><b>Your part:</b> get our venues on Andiamo. Let's deplete for them.</p>
+    </div>
+  </section>
+
+  <section>
+    <h2>Your links</h2>
+    <div class="links">
+      <a class="lk main" href="/onboard"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 21V9l8-5 8 5v12"/><path d="M12 11v6M9 14h6"/></svg></span>
+        <span class="tx"><b>Add a store</b><span>Your phone, standing in the venue. Venues that asked to join are here too.</span><u>andiamo.ng/onboard</u></span><span class="go" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg></span></a>
+      <a class="lk" href="https://andiamo.ng/board" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="2.5" width="12" height="19" rx="2.5"/><path d="M10.5 18.5h3"/></svg></span><b>Runner board</b><span>On the bar phone</span><u>andiamo.ng/board</u></a>
+      <a class="lk" href="https://andiamo.ng" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 2h4v4l1.5 3V21a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V9L10 6z"/></svg></span><b>Guest app</b><span>What guests use to send bottles</span><u>andiamo.ng</u></a>
+      <a class="lk wide" href="https://andiamo.ng/admin" target="_blank" rel="noopener"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4z"/><path d="M8 9h8M8 12h5"/></svg></span>
+        <span class="tx"><b>Admin</b><span>Set up drops of free bottles and cool merch at our venues.</span><u>andiamo.ng/admin</u></span></a>
+    </div>
+  </section>
+
+  <section>
+    <h2>What to say</h2>
+    <div class="saycard">
+      <div class="part lead"><small>To the manager</small><q>Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately. <span class="dep">We're depleting your stock.</span></q></div>
+      <div class="part then"><small>If they already sell Amabile</small><q>This is money you're leaving on the table.</q></div>
+      <div class="never"><span class="k">Never say</span><span>promo</span><span>corkage</span><span>claim</span><span>other venues</span><span>guest numbers</span><span>TradeDepot</span></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="visit-head"><h2>At the venue</h2><button class="reset" id="reset" type="button">Next venue</button></div>
+    <div class="meter" aria-hidden="true"><i id="bar"></i></div>
+    <ol class="steps">
+      <li><span class="num">1</span><div class="step"><h3>Pitch the manager</h3><p>Use the lines in What to say, word for word. Lead with the money: full menu price, paid immediately.</p></div></li>
+      <li><span class="num">2</span><div class="step"><h3>Add the store on your phone</h3><p>andiamo.ng/onboard › <span class="path">Add a store</span>. About three minutes.</p>
+        <ul class="checks">
+          <li><label><input type="checkbox" data-c="name"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Name, area</b>, kind of place</span></label></li>
+          <li><label><input type="checkbox" data-c="loc"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Location</b>, from the main room</span></label></li>
+          <li><label><input type="checkbox" data-c="price"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Menu prices</b> for each Amabile, and a photo of the menu</span></label></li>
+          <li><label><input type="checkbox" data-c="mgr"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Manager's</b> name and WhatsApp, plus any bar phones</span></label></li>
+          <li><label><input type="checkbox" data-c="bank"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Bank account</b>, in the store's own name</span></label></li>
+          <li><label><input type="checkbox" data-c="sent"><span class="box"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.4" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span><span class="t"><b>Send for approval</b></span></label></li>
+        </ul></div></li>
+      <li><span class="num live">3</span><div class="step live"><h3>Approved at the back end, it's live</h3><p>You and the manager both get a WhatsApp.</p></div></li>
+      <li><span class="num">4</span><div class="step"><h3>Set up the bar phone</h3><p>andiamo.ng/board on the phone that stays at the bar. The manager signs in once, then taps Test the sound.</p></div></li>
+      <li><span class="num">5</span><div class="step"><h3>Walk the staff through one bottle</h3>
+        <div class="flow"><div><small>1</small>Board pings</div><div><small>2</small>I'm on it</div><div><small>3</small>Find the glowing phone</div><div><small>4</small>Scan their QR or type the 4 digits</div><div class="done"><small>5</small>Delivered</div></div>
+        <p>Paid the moment it's Delivered.</p></div></li>
+      <li><span class="num">6</span><div class="step"><h3>Run one real bottle</h3><p>A test bottle is sent to your number. Claim it at a table with the staff watching.</p></div></li>
+    </ol>
+  </section>
+
+  <section>
+    <h2>After the visit</h2>
+    <div class="after">
+      <div class="card"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/></svg></span><div><h3>Sent back</h3><p>Your stores shows Needs a fix and what to change. Fix it, send it again.</p></div></div>
+      <div class="card"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M4 4h16v12H8l-4 4z"/></svg></span><div><h3>Venues that ask to join</h3><p>They show in the onboard app under <span class="path">Asked to join</span>. WhatsApp the manager, go, then tap Add it from inside.</p></div></div>
+      <div class="card"><span class="ic"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M12 22c4 0 7-2.7 7-6.6 0-3.6-2.6-6-4-8.4-.5 2-1.6 3.2-3 3.6C12.5 7.6 11 4.6 8.6 2 8.7 6.2 5 8.6 5 13.4 5 18.3 8 22 12 22z"/></svg></span><div><h3>Keep it active</h3><p>A venue counts when it serves every weekend. Keep every listed wine on the shelf.</p></div></div>
+    </div>
+  </section>
+
+  <p class="foot">Amabile di Rosa · Drink responsibly. 18+.</p>
+</div></main>
+
+<script>
+(() => {
+  // Ticks for this venue, kept on this phone only. Next venue clears them.
+  const KEY = "venuerun.ticks", boxes = [...document.querySelectorAll("[data-c]")], bar = document.getElementById("bar");
+  let saved = {}; try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch {}
+  const paint = () => { bar.style.width = Math.round(100 * boxes.filter((x) => x.checked).length / boxes.length) + "%"; };
+  boxes.forEach((x) => { x.checked = !!saved[x.dataset.c]; x.addEventListener("change", () => { saved[x.dataset.c] = x.checked; try { localStorage.setItem(KEY, JSON.stringify(saved)); } catch {} paint(); }); });
+  document.getElementById("reset").addEventListener("click", () => { saved = {}; boxes.forEach((x) => (x.checked = false)); try { localStorage.removeItem(KEY); } catch {} paint(); });
+  paint();
+})();
+</script>
+
+</body>
+</html>

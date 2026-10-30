@@ -25,6 +25,9 @@ export async function createVenueRequest(s, phone, d) {
 
   // One open request per number at a time.
   const mine = (await listRequests(s)).filter((r) => r.phone === phone && !["live", "declined"].includes(r.stage));
+  // The same venue sent twice from the same number: keep the first.
+  const same = mine.find((r) => r.name.toLowerCase() === name.toLowerCase());
+  if (same) return { ok: true, id: same.id, already: true };
   if (mine.length >= 3) return { ok: false, error: "too_many_requests" };
 
   const r = {

@@ -47,6 +47,8 @@ export async function approveSubmission(s, id, { by, confirmMismatch = false }) 
   const { goLive } = await import("./_outside_venues.mjs");
   const g = await goLive(s, v.id, by);
   if (!g.ok) return { ok: false, error: g.error, missing: g.missing, venueId: v.id };
+  // The venue's own request to join, if it had one, is done too.
+  if (r.fromRequest) { const q = await getJSON(s, K.request(r.fromRequest)); if (q) { q.stage = "live"; q.venueId = v.id; q.updatedAt = Date.now(); q.history = [...(q.history || []), { at: Date.now(), stage: "live", by }].slice(-30); await s.setJSON(K.request(q.id), q); } }
   sendText(r.submittedBy, `${v.name} is live on Andiamo. Thank you.`).catch(() => {});
   return { ok: true, venueId: v.id, payoutError: r.payoutError || "" };
 }

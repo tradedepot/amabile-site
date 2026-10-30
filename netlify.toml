@@ -192,6 +192,10 @@
   to = "/outside/onboard.html"
   status = 200
 [[redirects]]
+  from = "/outside/onboard/guide"
+  to = "/outside/onboard-guide.html"
+  status = 200
+[[redirects]]
   from = "/outside/privacy"
   to = "/outside/privacy.html"
   status = 200
@@ -276,6 +280,11 @@
 [[redirects]]
   from = "https://andiamo.ng/onboard"
   to = "/outside/onboard.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/onboard/guide"
+  to = "/outside/onboard-guide.html"
   status = 200
   force = true
 [[redirects]]

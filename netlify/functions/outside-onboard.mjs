@@ -55,10 +55,15 @@ export default async (req) => {
   const me = await getOnboarder(s, t.p);
   if (!me) return bad("not_onboarder", 401);
 
+  // Our own people (company Amabile) also see venues that asked to join on andiamo.ng/venue, so they need one app, not two.
+  const internal = String(me.company || "").trim().toLowerCase() === "amabile";
   if (a === "me") {
-    const mine = (await fetchAll(s, await listKeys(s, K.requestPrefix))).filter((r) => r && r.source === "onboard" && r.submittedBy === me.phone)
+    const all = (await fetchAll(s, await listKeys(s, K.requestPrefix))).filter(Boolean);
+    const asked = internal ? all.filter((r) => r.source !== "onboard" && ["requested", "visit_booked"].includes(r.stage) && !r.submissionId)
+      .sort((x, y) => y.createdAt - x.createdAt).map((r) => ({ id: r.id, name: r.name, area: r.area, contactName: r.contactName, phone: r.phone, stocksAmabile: r.stocksAmabile, createdAt: r.createdAt })) : [];
+    const mine = all.filter((r) => r.source === "onboard" && r.submittedBy === me.phone)
       .sort((x, y) => y.createdAt - x.createdAt).map((r) => ({ id: r.id, name: r.name, area: r.area, stage: r.stage, returnNote: r.returnNote || "", createdAt: r.createdAt, store: r.store }));
-    return json({ ok: true, me: { name: me.name, company: me.company, auto: !!me.auto }, stores: mine, wines: WINES.map((w) => ({ id: w.id, name: w.name, label: w.label })), areas: AREAS, kinds: KINDS });
+    return json({ ok: true, me: { name: me.name, company: me.company, auto: !!me.auto }, stores: mine, asked, wines: WINES.map((w) => ({ id: w.id, name: w.name, label: w.label })), areas: AREAS, kinds: KINDS });
   }
   if (a === "banks") return json({ ok: true, banks: await listBanks(s) });
   if (a === "resolve") { const r = await resolveAccount(s, { bankCode: d.bankCode, account: d.account }); return json(r.ok ? { ...r, matches: nameMatches(d.storeName, r.name) } : r, r.ok ? 200 : 400); }
@@ -87,6 +92,9 @@ export default async (req) => {
     const menuPhoto = typeof x.menuPhoto === "string" && /^data:image\/jpeg;base64,/.test(x.menuPhoto) && x.menuPhoto.length < 900000 ? x.menuPhoto : null;
     const storeData = { name, area, kind, lat, lng, acc: Math.round(Number(x.acc) || 0), prices, taxIncluded: !!x.taxIncluded, managerName, managerPhone, barPhones, payout, hasPhoto: !!menuPhoto };
 
+    // Adding a venue that asked to join: the new store is tied to its request, which leaves the Asked to join list.
+    const from = internal && x.fromRequest ? await getJSON(s, K.request(clean(x.fromRequest, 20))) : null;
+    if (x.fromRequest && (!from || from.source === "onboard" || from.submissionId && !x.id)) return bad("request_taken", 409);
     let r = x.id ? await getJSON(s, K.request(clean(x.id, 20))) : null;
     if (r && (r.submittedBy !== me.phone || r.stage !== "sent_back")) return bad("not_editable", 409);
     if (!r) {
@@ -100,7 +108,9 @@ export default async (req) => {
       name, area, kind, phone: managerPhone, contactName: managerName, stocksAmabile: "yes", store: storeData, returnNote: ""
     });
     r.history = [...(r.history || []), { at: Date.now(), stage: "submitted", by: me.name + " (" + (me.company || "onboarder") + ")" }].slice(-30);
+    if (from) r.fromRequest = from.id;
     await s.setJSON(K.request(r.id), r);
+    if (from && from.submissionId !== r.id) { from.submissionId = r.id; from.history = [...(from.history || []), { at: Date.now(), stage: from.stage, by: me.name + " added the store" }].slice(-30); await s.setJSON(K.request(from.id), from); }
     if (menuPhoto) await s.set("menuimg/" + r.id, menuPhoto);
     // Straight to live only for onboarders set to skip approval, and never with a bank name that doesn't match.
     if (me.auto && (!payout || payout.matches)) {
