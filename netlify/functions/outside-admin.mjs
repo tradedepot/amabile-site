@@ -1,6 +1,6 @@
 // Andiamo! admin console API. Owns /api/outside-admin.
 //   POST {at, action, ...}  at = a session from Google sign-in (tradedepot.co, on the team list). Each role sees and does only its own part.
-//   POST {ak, action, ...}  ak = ANDIAMO_ADMIN_KEY, the owner's break-glass password.
+//   POST {ak, action, ...}  ak = ANDIAMO_ADMIN_KEY, the root password.
 //   hello                            the Google client id (no sign-in needed)
 //   google {credential}              Google sign-in → session
 //   me                               who am I, and my role

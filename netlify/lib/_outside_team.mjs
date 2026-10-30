@@ -1,6 +1,6 @@
 // Who can use the Andiamo admin, and what each person can see and do.
 // The team signs in with Google (tradedepot.co accounts only) and must be on the team list.
-// The owner can also sign in with ANDIAMO_ADMIN_KEY, a break-glass password, if Google sign-in ever fails.
+// The owner can also sign in with ANDIAMO_ADMIN_KEY, the root password, if Google sign-in ever fails.
 // Onboarders (our people and the distributors and wholesalers we supply) sign in with WhatsApp in the onboard app.
 import { getJSON, listKeys, fetchAll, sign, verify, clean, phoneE164, phoneKey, tsKey } from "./_outside.mjs";
 
@@ -116,7 +116,7 @@ const publicMe = (m, picture) => ({ email: m.email, name: m.name || m.email.spli
 // Who is asking, checked on every call, so taking someone off the list cuts them off at once.
 export async function whoFrom(s, d) {
   const key = process.env.ANDIAMO_ADMIN_KEY || "";
-  if (key && typeof d.ak === "string" && d.ak === key) return { email: "break-glass", name: "Owner (password)", role: "owner", roleName: "Owner", can: "*", breakGlass: true };
+  if (key && typeof d.ak === "string" && d.ak === key) return { email: "break-glass", name: "Root password", role: "owner", roleName: "Owner", can: "*", breakGlass: true };
   const t = verify(d.at);
   if (!t || t.k !== "adm" || !t.m) return null;
   const m = await memberFor(s, t.m);

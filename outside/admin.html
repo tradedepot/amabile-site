@@ -269,10 +269,38 @@ table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #F
 .gap .rk { font-family: var(--serif); font-size: 22px; color: var(--ink-3); }
 
 /* ---------- login, dialog, toast ---------- */
-.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 20px; background: radial-gradient(1200px 600px at 20% 0%, #FDE3DB 0%, transparent 60%), var(--bg); }
-.login .card { width: 100%; max-width: 400px; padding: 28px; }
-.login .brand { margin: 0 0 22px; }
-.login h1 { font-size: 30px; margin-bottom: 4px; }
+.login { min-height: 100vh; display: flex; align-items: center; justify-content: center; padding: 24px 16px; background: var(--bg); }
+.lgbox { width: 100%; max-width: 860px; display: grid; grid-template-columns: 1fr 1fr; background: var(--card); border-radius: 24px; overflow: hidden; box-shadow: 0 2px 6px rgba(43,30,23,.06), 0 30px 70px rgba(43,30,23,.14); }
+.lgart { position: relative; overflow: hidden; background: radial-gradient(420px 420px at 50% 62%, rgba(242,198,107,.42), transparent 70%), linear-gradient(160deg, #EE5536 0%, var(--red) 45%, var(--red-2) 100%); color: #fff; padding: 36px 34px; min-height: 460px; display: flex; flex-direction: column; }
+.lgmark { font-family: var(--serif); font-size: 44px; line-height: 1; position: relative; z-index: 1; }
+.lgsub { margin-top: 10px; font-size: 11px; font-weight: 900; letter-spacing: 2.4px; text-transform: uppercase; color: rgba(255,255,255,.78); position: relative; z-index: 1; }
+.rings { position: absolute; left: 50%; top: 62%; width: 0; height: 0; }
+.rings i { position: absolute; left: 50%; top: 50%; border: 1.5px solid rgba(251,250,235,.7); border-radius: 50%; transform: translate(-50%, -50%) scale(.2); opacity: 0; animation: ring 4.5s cubic-bezier(.2,.6,.3,1) infinite; width: 340px; height: 340px; }
+.rings i:nth-child(2) { animation-delay: 1.5s; } .rings i:nth-child(3) { animation-delay: 3s; }
+.rings b { position: absolute; left: 50%; top: 50%; width: 18px; height: 18px; margin: -9px 0 0 -9px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 6px rgba(251,250,235,.28), 0 0 40px 12px rgba(242,198,107,.6); }
+@keyframes ring { 0% { transform: translate(-50%, -50%) scale(.12); opacity: 0; } 15% { opacity: 1; } 100% { transform: translate(-50%, -50%) scale(1); opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { .rings i { animation: none; opacity: .4; } .rings i:nth-child(1) { transform: translate(-50%, -50%) scale(.35); } .rings i:nth-child(2) { transform: translate(-50%, -50%) scale(.65); } .rings i:nth-child(3) { transform: translate(-50%, -50%) scale(.95); opacity: .25; } }
+.lgform { padding: 48px 44px; display: flex; flex-direction: column; justify-content: center; }
+.lgform h1 { font-size: 34px; line-height: 1.05; }
+.lgform .lead { color: var(--ink-2); margin: 8px 0 28px; font-size: 15px; }
+.lgform .gbtn { justify-content: flex-start; width: 100%; }
+.lgor { display: flex; align-items: center; gap: 12px; margin: 30px 0 0; color: var(--ink-3); font-size: 12px; font-weight: 800; }
+.lgor::before, .lgor::after { content: ""; flex: 1; height: 1px; background: var(--line); }
+.lgalt { margin-top: 14px; width: 100%; background: var(--bg); border: 1.5px solid var(--line); border-radius: 999px; padding: 11px 16px; font-weight: 800; font-size: 14px; color: var(--ink-2); display: flex; align-items: center; justify-content: center; gap: 8px; transition: border-color .15s, color .15s; }
+.lgalt[hidden] { display: none; }
+.lgalt:hover { border-color: var(--ink-3); color: var(--ink); }
+.lgalt svg { width: 16px; height: 16px; }
+.lgpw { margin-top: 14px; display: flex; gap: 8px; } .lgpw[hidden] { display: none; }
+.lgpw input { border-radius: 999px; padding: 11px 16px; }
+.lgpw .btn { flex: none; padding: 0 20px; }
+@media (max-width: 760px) {
+  .lgbox { grid-template-columns: 1fr; max-width: 440px; }
+  .lgart { min-height: 0; padding: 26px 26px 120px; background: radial-gradient(260px 200px at 50% 85%, rgba(242,198,107,.45), transparent 75%), linear-gradient(160deg, #EE5536 0%, var(--red) 45%, var(--red-2) 100%); }
+  .lgmark { font-size: 34px; }
+  .rings { top: auto; bottom: 56px; } .rings i { width: 220px; height: 220px; }
+  .lgform { padding: 30px 26px 34px; }
+  .lgform .gbtn { justify-content: center; }
+}
 .dlg { position: fixed; inset: 0; background: rgba(27,19,15,.45); display: flex; align-items: center; justify-content: center; z-index: 50; padding: 20px; animation: fade .15s; }
 .dlg .card { width: 100%; max-width: 440px; box-shadow: var(--sh-2); }
 .dlg h2 { margin-bottom: 8px; }
@@ -283,7 +311,7 @@ table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #F
 
 /* sign-in, who's signed in, view-only pages, team */
 .gbtn { display: flex; justify-content: center; min-height: 44px; }
-.login .ferr { margin-top: 12px; } .login .ferr[hidden] { display: none; }
+.login .ferr { margin-top: 14px; } .login .ferr[hidden] { display: none; }
 .side-foot .who { display: flex; flex-direction: column; gap: 1px; } .side-foot .who span { font-size: 11.5px; overflow-wrap: anywhere; }
 .navout { display: none; }
 .page.ro .form2 button, .page.ro .form2 .btn:not(a) { display: none !important; }

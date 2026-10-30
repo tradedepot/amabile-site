@@ -17,7 +17,7 @@
 //   OUTSIDE_TPL_CODE        approved authentication template for sign-in codes (name)
 //   OUTSIDE_TPL_LANG        template language code, default "en"
 //   OUTSIDE_DEV=1           returns sign-in codes in API responses (test only, never in production)
-//   ANDIAMO_ADMIN_KEY       the owner's break-glass password for the admin console (the team signs in with Google)
+//   ANDIAMO_ADMIN_KEY       the root password for the admin console (the team signs in with Google)
 //   OUTSIDE_SITE            public origin of the game, e.g. https://outside.ng (default amabiledirosa.com/outside)
 import { getStore } from "@netlify/blobs";
 import crypto from "node:crypto";

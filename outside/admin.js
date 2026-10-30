@@ -1,5 +1,5 @@
 // Andiamo! admin console. The team signs in with Google (tradedepot.co, on the team list); each role sees only its own part.
-// The owner can also use the break-glass password (ANDIAMO_ADMIN_KEY). Talks to /api/outside-admin.
+// The root password (ANDIAMO_ADMIN_KEY) also gets in, as owner. Talks to /api/outside-admin.
 (() => {
   const API = "/api/outside-admin";
   const A = window.OutsideArt;
@@ -153,15 +153,17 @@
     if (!r.ok) return login();
     ME = r.me; frame(); nav("overview");
   }
-  // Sign in with Google. Only tradedepot.co accounts on the team list get in. The owner's password is a fallback.
+  // Sign in with Google. Only tradedepot.co accounts on the team list get in. The root password is a fallback.
   function login(msg) {
-    root.innerHTML = `<div class="login"><div class="card"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
-      <h1>Welcome back</h1><p class="muted" style="margin:0 0 18px">Sign in with your TradeDepot Google account.</p>
-      <div id="gbtn" class="gbtn"></div><p class="ferr" id="gerr" hidden></p>
-      <p style="margin:22px 0 0;text-align:center"><button class="lnk dim" id="pw">Use the owner password</button></p>
-      <div id="pwbox" hidden><label class="lb">Owner password</label><input id="k" type="password" autocomplete="current-password">
-      <p style="margin:14px 0 0"><button class="btn lg" id="go" style="width:100%">Sign in</button></p></div>
-      </div></div>`;
+    root.innerHTML = `<div class="login"><div class="lgbox">
+      <div class="lgart"><div class="lgmark">Andiamo!</div><div class="lgsub">Admin console</div><div class="rings"><i></i><i></i><i></i><b></b></div></div>
+      <div class="lgform"><h1>Welcome back</h1><p class="lead">Sign in with your TradeDepot Google account.</p>
+        <div id="gbtn" class="gbtn"></div>
+        <div class="lgor">or</div>
+        <button class="lgalt" id="pw"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/></svg>Use the root password</button>
+        <div class="lgpw" id="pwbox" hidden><input id="k" type="password" placeholder="Root password" aria-label="Root password" autocomplete="current-password"><button class="btn" id="go">Sign in</button></div>
+        <p class="ferr" id="gerr" hidden></p>
+      </div></div></div>`;
     const err = (t) => { const e = $("gerr"); e.textContent = t; e.hidden = !t; };
     const E = { not_on_team: "You're not on the Andiamo team yet. Ask Kachi to add you.", not_tradedepot: "Use your TradeDepot account (@tradedepot.co).", google: "Google sign-in didn't work. Try again.", network: "You're offline. Try again." };
     const onCred = async (resp) => {
@@ -174,16 +176,16 @@
       const h = await call({ action: "hello" }).catch(() => null);
       if (!h || !h.ok || !window.google || !google.accounts) return err("Google sign-in didn't load. Check your connection.");
       google.accounts.id.initialize({ client_id: h.clientId, callback: onCred, hd: "tradedepot.co", ux_mode: "popup", auto_select: false });
-      google.accounts.id.renderButton($("gbtn"), { theme: "outline", size: "large", shape: "pill", text: "signin_with", width: 320 });
+      google.accounts.id.renderButton($("gbtn"), { theme: "outline", size: "large", shape: "pill", text: "signin_with", width: Math.min(400, $("gbtn").clientWidth || 320) });
     };
     if (window.google && google.accounts) mount();
     else if (!document.getElementById("gsi")) { const sc = document.createElement("script"); sc.id = "gsi"; sc.src = "https://accounts.google.com/gsi/client"; sc.async = true; sc.onload = mount; sc.onerror = () => err("Google sign-in didn't load. Check your connection."); document.head.appendChild(sc); }
     else document.getElementById("gsi").addEventListener("load", mount);
     $("pw").onclick = () => { $("pwbox").hidden = false; $("pw").hidden = true; $("k").focus(); };
     const go = async () => {
-      if (!$("k").value) return flag($("k"), "Enter the owner password.");
+      if (!$("k").value) { err("Enter the root password."); return $("k").focus(); }
       ak = $("k").value; at = ""; $("go").disabled = true;
-      try { const r = await call({ action: "me" }); if (r.ok) { SS.set("outside.ak", ak); ME = r.me; frame(); nav("overview"); } else flag($("k"), "Couldn't sign in. Try again."); } catch {}
+      try { const r = await call({ action: "me" }); if (r.ok) { SS.set("outside.ak", ak); ME = r.me; frame(); nav("overview"); } else err("That password didn't work."); } catch {}
       if ($("go")) $("go").disabled = false;
     };
     $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); };
