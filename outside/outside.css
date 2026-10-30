@@ -363,3 +363,11 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .ping .pa { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
 .ping .pa .link { font-size: 12.5px; }
 .modal .ping { margin: 14px 0 0; }
+
+/* the card a guest shows the waiter when a spot isn't on Andiamo yet */
+.askcard { background: var(--red, #E74529); color: #fff; border: 3px solid var(--ink); border-radius: 20px; padding: 16px 16px 14px; margin: 4px 0 14px; box-shadow: 0 4px 0 rgba(43,30,23,.25); }
+.askcard p { color: #fff; margin: 0 0 10px; font-size: 15px; line-height: 1.4; }
+.askcard .askk { font-size: 11px; font-weight: 900; letter-spacing: 1.2px; text-transform: uppercase; opacity: .9; margin-bottom: 6px; }
+.askcard .askh { font-family: var(--serif); font-size: 24px; line-height: 1.12; }
+.askcard .qrbox { width: min(56vw, 200px); }
+.askcard .askurl { text-align: center; font-weight: 900; font-size: 17px; margin-top: 6px; letter-spacing: .3px; }

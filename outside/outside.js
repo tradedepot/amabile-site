@@ -542,8 +542,22 @@
         if (r.ok) { closeModal(); await loadMe(); const t = S.me.tickets.find((x) => x.bottleId === id); toast("It's coming. Tap Glow when you see the runner."); if (t) setTimeout(() => glowPrompt(t), 400); return; }
         if (r.error === "choose") return chooseVenue(r.venues, (vid) => { venueId = vid; c.querySelector("#go").click(); });
         if (r.error === "band") return topupStep(b, r, body);
-        fail(c, r.error === "no_venue" ? errMsg("no_venue") : r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error));
+        if (r.error === "no_venue") return notHereYet(b);
+        fail(c, r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error));
       };
+    });
+  }
+  // The spot they're at isn't on Andiamo: it pops up for the guest to show the waiter. Nothing for the guest to do.
+  // Never shows what was paid. Many of these spots already sell Amabile, so it tells them the bottle is theirs to serve.
+  function notHereYet(b) {
+    const url = "https://andiamo.ng/venue";
+    modal(`<h2>Show this to the waiter</h2><p class="muted">This place isn't on Andiamo yet. Your bottle keeps waiting.</p>
+      <div class="askcard"><div class="askk">For the manager</div>
+        <p class="askh">This table has a bottle of ${esc(wineOf(b.wine).label)}, already paid for.</p>
+        <p>Serve it and you get your full menu price. You just need to be on Andiamo. Already selling Amabile? This is money you're leaving on the table.</p>
+        <div class="qrbox">${qrSvg(url)}</div><div class="askurl">andiamo.ng/venue</div></div>
+      <button class="btn block ghost" data-x3>Keep it for another venue</button>`, (c) => {
+      c.querySelector("[data-x3]").onclick = closeModal;
     });
   }
   function chooseVenue(list, done) {
