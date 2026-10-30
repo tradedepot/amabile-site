@@ -50,6 +50,8 @@ label small { font-weight:600; color:var(--ink-3); }
 input, select, textarea { width:100%; font:inherit; font-size:16px; color:var(--ink); padding:12px 14px; border:1.5px solid var(--line); border-radius:12px; background:#fff; transition:border-color .15s, box-shadow .15s; }
 input:focus, select:focus, textarea:focus { outline:none; border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
 textarea { min-height:84px; resize:vertical; }
+#area { appearance:none; -webkit-appearance:none; padding-right:40px; background:#fff url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 12 8'%3E%3Cpath d='M1 1.5l5 5 5-5' fill='none' stroke='%239C8B7D' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") no-repeat right 15px center / 12px 8px; cursor:pointer; }
+#area:invalid { color:var(--ink-3); }
 .row { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
 .phonef { display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
 .phonef:focus-within { border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
@@ -57,14 +59,6 @@ textarea { min-height:84px; resize:vertical; }
 .ccbox svg { width:10px; height:8px; color:var(--ink-3); }
 .ccbox select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
 .phonef input { flex:1; min-width:0; border:0; border-radius:0; box-shadow:none !important; letter-spacing:.3px; }
-.kinds { display:grid; grid-template-columns:repeat(4, 1fr); gap:8px; }
-.kinds label { margin:0; cursor:pointer; position:relative; }
-.kinds input { position:absolute; opacity:0; pointer-events:none; }
-.kinds .k { display:flex; flex-direction:column; align-items:center; gap:4px; padding:10px 4px 9px; border:1.5px solid var(--line); border-radius:14px; background:#fff; font-size:12.5px; font-weight:800; text-align:center; transition:all .12s; }
-.kinds .k svg { width:34px; height:34px; }
-.kinds label:hover .k { border-color:var(--ink-3); }
-.kinds input:checked + .k { border-color:var(--red); background:#FDECE7; box-shadow:0 0 0 3px rgba(231,69,41,.12); }
-.kinds input:focus-visible + .k { outline:2px solid var(--ink); }
 .seg { display:flex; background:var(--line-2); border-radius:12px; padding:4px; gap:3px; }
 .seg label { flex:1; margin:0; position:relative; cursor:pointer; }
 .seg input { position:absolute; opacity:0; pointer-events:none; }
@@ -89,12 +83,11 @@ a { color:var(--red-2); font-weight:800; }
   .side { position:static; height:auto; padding:20px 18px 0; overflow:visible; }
   .pitch { margin:0; padding:26px 0 22px; }
   h1 { font-size:40px; margin-bottom:14px; }
-  .shot { margin:0 0 -40px; position:relative; z-index:1; }
-  .main { padding:64px 16px 32px; }
+  .shot { display:none; }
+  .main { padding:24px 16px 32px; }
   .panel { padding:4px 18px 20px; }
-  .kinds { grid-template-columns:repeat(4, 1fr); }
-}
-@media (max-width: 380px) { .kinds { grid-template-columns:repeat(2, 1fr); } .row { grid-template-columns:1fr; } }
+  }
+@media (max-width: 380px) { .row { grid-template-columns:1fr; } }
 .bad { border-color:var(--red-2) !important; box-shadow:0 0 0 4px rgba(200,55,29,.14) !important; }
 .seg.bad { box-shadow:0 0 0 2px var(--red-2) !important; }
 .ferr { display:flex; align-items:flex-start; gap:7px; color:var(--red-2); font-weight:800; font-size:13.5px; line-height:1.35; margin:7px 2px 0; }
@@ -118,49 +111,19 @@ a { color:var(--red-2); font-weight:800; }
 
   <main class="main"><div class="formwrap">
     <form id="f" novalidate>
-      <div class="fh"><h2>Tell us about your venue</h2><p>Two minutes. Our team then visits to set you up.</p>
-        <div class="steps"><span class="on">Your details</span><span>Our visit</span><span>You go live</span></div></div>
+      <div class="fh"><h2>Tell us about your venue</h2><p>One minute. We'll call you on WhatsApp to set you up.</p></div>
       <div class="panel">
-        <div class="sec"><h3>The venue</h3>
+        <div class="sec">
           <label for="name">Venue name</label>
           <input id="name" maxlength="60" autocomplete="organization" required>
-          <label>What kind of place</label>
-          <div class="kinds" id="kinds"></div>
-          <div class="row">
-            <div><label for="area">Area</label><input id="area" maxlength="40" placeholder="Lekki Phase 1" list="areas" required></div>
-            <div><label for="tables">Tables <small>roughly</small></label><input id="tables" type="number" min="0" max="500" inputmode="numeric" placeholder="20"></div>
-          </div>
-          <datalist id="areas"><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option></datalist>
-          <label for="address">Address</label>
-          <input id="address" maxlength="120" autocomplete="street-address">
-          <div class="row">
-            <div><label for="ig">Instagram <small>optional</small></label><input id="ig" maxlength="40" placeholder="@yourvenue"></div>
-            <div><label for="nights">Busiest nights</label><input id="nights" maxlength="60" placeholder="Thu to Sun"></div>
-          </div>
-          <label for="maps">Google Maps link <small>optional</small></label>
-          <input id="maps" maxlength="300" inputmode="url" placeholder="https://maps.app.goo.gl/...">
+          <label for="area">Area</label><select id="area" required><option value="" selected disabled>Choose the area</option><option>Victoria Island</option><option>Ikoyi</option><option>Lekki Phase 1</option><option>Lekki</option><option>Ajah</option><option>Ikeja GRA</option><option>Ikeja</option><option>Surulere</option><option>Yaba</option><option>Gbagada</option><option>Magodo</option><option>Festac</option><option value="Other">Somewhere else</option></select>
           <label>Do you stock Amabile now?</label>
           <div class="seg" id="stocks">
             <label><input type="radio" name="stocks" value="yes"><span>Yes</span></label>
             <label><input type="radio" name="stocks" value="no"><span>Not yet</span></label>
           </div>
-        </div>
-        <div class="sec"><h3>You</h3>
-          <div class="row">
-            <div><label for="contact">Your name</label><input id="contact" maxlength="40" autocomplete="name" required></div>
-            <div><label for="role">Your role</label>
-              <select id="role"><option value="owner">Owner</option><option value="manager" selected>Manager</option><option value="other">Other</option></select></div>
-          </div>
-          <div class="row">
-            <div><label for="email">Email <small>optional</small></label><input id="email" type="email" maxlength="80" autocomplete="email"></div>
-            <div><label for="visit">Best time to visit</label><input id="visit" maxlength="60" placeholder="Weekdays after 2pm"></div>
-          </div>
-          <label for="note">Anything else <small>optional</small></label>
-          <textarea id="note" maxlength="300"></textarea>
-        </div>
-        <div class="sec"><h3>Your WhatsApp number</h3>
-          <p class="muted" style="margin:6px 0 0">We'll send a code to confirm it. Our team will call you on it.</p>
-          <label for="phone">Number</label>
+          <label for="contact">Your name</label><input id="contact" maxlength="40" autocomplete="name" required>
+          <label for="phone">Your WhatsApp number</label>
           <div class="phonef"><span class="ccbox"><span id="ccv"></span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><select id="cc" aria-label="Country"></select></span><input id="phone" type="tel" inputmode="tel" autocomplete="tel" placeholder="803 000 0000" required></div>
           <div id="codeBox" class="hidden">
             <label for="code">Code from WhatsApp</label>
@@ -176,7 +139,7 @@ a { color:var(--red-2); font-weight:800; }
     <div id="done" class="panel done hidden">
       <div class="tick"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></div>
       <div class="big">Got it, thank you.</div>
-      <p id="doneText">Our team will be in touch on WhatsApp to arrange a visit.</p>
+      <p id="doneText">We'll call you on WhatsApp to set you up.</p>
       <a class="btn ghost" href="/outside/">See the map</a>
     </div>
 
@@ -188,14 +151,11 @@ a { color:var(--red-2); font-weight:800; }
 (() => {
   const API = "/api/outside/";
   const $ = (id) => document.getElementById(id);
-  const KINDS = [["lounge","Lounge"],["restaurant","Restaurant"],["rooftop","Rooftop"],["club","Club"],["hotel","Hotel"],["beach","Beach"],["garden","Garden"],["brewery","Brewery"]];
-  const ART = window.OutsideArt;
-  $("kinds").innerHTML = KINDS.map(([v, l], i) => `<label><input type="radio" name="kind" value="${v}"${i ? "" : " checked"}><span class="k">${ART ? ART.venueArt(v, false, 34) : ""}${l}</span></label>`).join("");
 
   const ERR = {
     phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    venue_name: "Add your venue's name.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Add the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
+    venue_name: "Add your venue's name.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
   };
   let token = null, codeSent = false, busy = false;
@@ -238,16 +198,13 @@ a { color:var(--red-2); font-weight:800; }
   const fail = (e) => { $("err").textContent = ""; if (FIELD[e]) return flag(FIELD[e], ERR[e] || ERR.server); $("err").textContent = ERR[e] || ERR.server; };
 
   function details() {
-    return { name: val("name"), kind: radio("kind"), area: val("area"), tables: Number(val("tables")) || 0, address: val("address"),
-      mapsLink: val("maps"), instagram: val("ig"), nights: val("nights"), stocksAmabile: radio("stocks"),
-      contactName: val("contact"), role: $("role").value, email: val("email"), visitTime: val("visit"), note: val("note") };
+    return { name: val("name"), area: val("area"), stocksAmabile: radio("stocks"), contactName: val("contact") };
   }
   function check(d) {
     if (d.name.length < 2) return fail("venue_name"), false;
     if (!d.area) return fail("area"), false;
     if (!d.stocksAmabile) return fail("stocks"), false;
     if (!d.contactName) return fail("contact_name"), false;
-    if (d.email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(d.email)) return fail("email"), false;
     if (!val("phone")) return flag("phone", "Add your WhatsApp number."), false;
     if (phone().replace(/\D/g, "").length < 8) return fail("phone"), false;
     return true;
@@ -282,7 +239,7 @@ a { color:var(--red-2); font-weight:800; }
       const r = await api("venue-request", d);
       if (!r.ok) return fail(r.error);
       $("f").classList.add("hidden");
-      $("doneText").textContent = `We've got ${d.name}. Our team will be in touch on WhatsApp to arrange a visit${d.visitTime ? " (" + d.visitTime + ")" : ""}.`;
+      $("doneText").textContent = `We've got ${d.name}. We'll call you on WhatsApp to set you up.`;
       $("done").classList.remove("hidden");
       window.scrollTo(0, 0);
     } finally { busy = false; $("go").disabled = false; }
