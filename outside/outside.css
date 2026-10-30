@@ -372,3 +372,10 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .askcard .askh { font-family: var(--serif); font-size: 24px; line-height: 1.12; }
 .askcard .qrbox { width: min(56vw, 200px); }
 .askcard .askurl { text-align: center; font-weight: 900; font-size: 17px; margin-top: 6px; letter-spacing: .3px; }
+
+/* discount code */
+.codesec { margin-top: -4px; }
+.codesec .link { padding: 4px 0; font-size: 14px; }
+.codeok { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; border: 3px solid var(--rule); background: var(--card); font-weight: 800; }
+.codeok b { letter-spacing: .5px; }
+.codesec .tofield input { text-transform: uppercase; }

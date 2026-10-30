@@ -33,11 +33,13 @@ export async function saveBottle(s, b) {
 export async function markBottlePaid(s, b, tx, via) {
   if (!b || !tx || tx.status !== "success") return b;
   if (b.status !== "pending") return b;
-  if (Number(tx.amount) !== b.price * 100 || String(tx.currency).toUpperCase() !== "NGN") {
+  const due = b.charged != null ? b.charged : b.price;
+  if (Number(tx.amount) !== due * 100 || String(tx.currency).toUpperCase() !== "NGN") {
     b.status = "review"; b.reviewReason = "amount_mismatch"; b.paidAmount = Number(tx.amount) / 100;
     await saveBottle(s, b); return b;
   }
   b.paidAt = Date.now(); b.paidVia = via; b.channel = tx.channel || "";
+  if (b.code) { const { useCode } = await import("./_outside_codes.mjs"); await useCode(s, b.code, b.from); }
   // Sender stats.
   const sender = await getJSON(s, K.player(b.from));
   if (sender) {

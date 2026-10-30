@@ -68,7 +68,7 @@
     two_plus: "Drops are for tables of two or more.", not_yet: "Not live yet.", over: "This drop has ended.", band_price: "That level isn't open for this wine yet.",
     payment_init: "Payment didn't start. Try again.", not_stocked_there: "That wine isn't available where they are.", cant_send: "You can't send to this number.",
     self: "That's your own number.", signin: "Sign in first.", profile: "Finish your profile first.", server: "Something went wrong. Try again.",
-    qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", not_yours: "This bottle was sent to a different number.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
+    qr_expired: "That QR has expired. Show a fresh one.", gift_taken: "Someone has already opened and kept this one.", not_yours: "This bottle was sent to a different number.", code_unknown: "That code doesn't work.", code_expired: "That code has ended.", code_used: "That code has been used up.", gift_unknown: "This link doesn't work any more. Ask whoever sent it for a new one.", paused: "This venue isn't taking claims right now.", state: "This bottle isn't waiting any more."
   };
   // ---------- showing what needs fixing ----------
   // A field: red outline, a line under it saying what's wrong, brought into view and focused, a small nudge and a buzz. Typing in it clears it.
@@ -817,6 +817,7 @@
         if (ok.length) st.band = ok.includes("lounge") ? "lounge" : ok[0];
       }
       const price = priceFor(st);
+      const due = st.code && price > 1 ? price - Math.min(price, st.code.kind === "naira" ? st.code.value : Math.round(price * st.code.value / 100)) : price;
       const who = st.mode === "light"
         ? `<div class="to-card"><div class="av">${A.avatar(st.friend.avatar, 48)}<i></i></div><div class="grow"><b>${esc(st.friend.name)}</b><small>Outside now, at ${esc(spotName(st.friend.band))}. Straight to their table.</small></div>${out.length || st.mode === "light" ? `<button class="link" id="other">Change</button>` : ""}</div>`
         : st.mode === "table" ? `<div class="to-card"><div class="grow"><b>Table ${esc(st.table)}</b><small>In this room, from you.</small></div></div>`
@@ -834,11 +835,14 @@
         <div class="sec"><div class="lab">A note <small>optional</small></div><textarea id="note" class="notebox" maxlength="140" placeholder="Happy birthday. Wish I was there.">${esc(st.note)}</textarea>
           ${st.mode === "number" ? `<label class="toggle"><input type="checkbox" id="self"${st.self ? " checked" : ""}> I'll send it to them myself</label>` : ""}
           ${st.mode === "link" || st.self ? "" : `<label class="toggle"><input type="checkbox" id="anon"${st.anon ? " checked" : ""}> Send anonymously</label>`}</div>
-        <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? "Pay " + naira(price) : "Continue to pay"}</button><p class="muted" id="msg"></p>
+        <div class="sec codesec">${st.code ? `<div class="codeok"><span><b>${esc(st.code.code)}</b> · ${st.code.kind === "naira" ? naira(st.code.value) : st.code.value + "%"} off</span><button class="link" id="codeoff">Remove</button></div>`
+          : st.codeOpen ? `<div class="tofield"><input id="codein" maxlength="20" autocomplete="off" autocapitalize="characters" placeholder="Code" value="${esc(st.codeText || "")}"><button class="btn small ghost" id="codego">Apply</button></div>`
+          : `<button class="link" id="codeopen">Have a code?</button>`}</div>
+        <div class="paybar"><button class="btn block" id="pay"${st.wine ? "" : " disabled"}>${!st.wine ? "Choose a wine" : price > 1 ? (due === 0 ? "Send it" : "Pay " + naira(due)) : "Continue to pay"}</button><p class="muted" id="msg"></p>
         <p class="fine">${st.mode === "link" ? "It can only be claimed once." : st.mode === "number" && st.self ? "You'll get a link to send them on WhatsApp. Only their number can open it." : "They claim it from their waiter when next they're outside."} ${st.mode === "link" ? "" : " You'll see Waiting, then Delivered. You never see where they are."}</p></div>`;
     };
     const mount = (c) => {
-      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) { st.to = t.value; st.toFull = phoneOf(c, "to"); } const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; const sf = c.querySelector("#self"); if (sf) st.self = sf.checked; };
+      const keep = () => { const n = c.querySelector("#note"); if (n) st.note = n.value; const t = c.querySelector("#to"); if (t) { st.to = t.value; st.toFull = phoneOf(c, "to"); } const f = c.querySelector("#forl"); if (f) st.forLabel = f.value; const a = c.querySelector("#anon"); if (a) st.anon = a.checked; const sf = c.querySelector("#self"); if (sf) st.self = sf.checked; const cd = c.querySelector("#codein"); if (cd) st.codeText = cd.value; };
       const redraw = () => { keep(); modal(draw(), mount); };
       c.querySelectorAll("[data-w]").forEach((b) => (b.onclick = () => { st.wine = b.dataset.w; redraw(); }));
       c.querySelectorAll("[data-b]").forEach((b) => (b.onclick = () => { st.band = b.dataset.b; redraw(); }));
@@ -847,6 +851,20 @@
       const oth = c.querySelector("#other"); if (oth) oth.onclick = () => { st.mode = "number"; st.friend = null; redraw(); };
       wirePhone(c, "to");
       const sf = c.querySelector("#self"); if (sf) sf.onchange = () => { st.self = sf.checked; if (st.self) st.anon = false; redraw(); };
+      const hc = c.querySelector("#codeopen"); if (hc) hc.onclick = () => { st.codeOpen = true; redraw(); setTimeout(() => { const i = document.querySelector("#codein"); if (i) i.focus(); }, 50); };
+      const rc = c.querySelector("#codeoff"); if (rc) rc.onclick = () => { st.code = null; st.codeText = ""; st.codeOpen = true; redraw(); };
+      const applyCode = async () => {
+        keep();
+        const cd = c.querySelector("#codein");
+        if (!String(st.codeText || "").trim()) return flag(cd, "Type your code.");
+        if (!S.me) return signIn(() => sendFlow({}, { ...st, autocode: true }), WHY.pay);
+        const r = await api("code", { code: st.codeText });
+        if (!r.ok) return flag(c.querySelector("#codein"), errMsg(r.error));
+        st.code = r.code; st.codeOpen = false; redraw();
+      };
+      const ac = c.querySelector("#codego"); if (ac) ac.onclick = applyCode;
+      const cdi = c.querySelector("#codein"); if (cdi) cdi.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); applyCode(); } };
+      if (st.autocode) { delete st.autocode; applyCode(); }
       const pick = c.querySelector("#pick");
       if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { c.querySelector("#to").value = ct.tel[0]; redraw(); } } catch {} };
       c.querySelector("#pay").onclick = async () => {
@@ -859,9 +877,15 @@
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
+        if (st.code) body.code = st.code.code;
         c.querySelector("#pay").disabled = true;
         const r = await api("send", body);
-        if (!r.ok) { c.querySelector("#pay").disabled = false; return PHONE_ERR.includes(r.error) && c.querySelector("#to") ? flag(c.querySelector("#to"), errMsg(r.error)) : fail(c, errMsg(r.error)); }
+        if (!r.ok) {
+          c.querySelector("#pay").disabled = false;
+          if (/^code_/.test(r.error)) { st.code = null; st.codeOpen = true; redraw(); return flag(document.querySelector("#codein"), errMsg(r.error)); }
+          return PHONE_ERR.includes(r.error) && c.querySelector("#to") ? flag(c.querySelector("#to"), errMsg(r.error)) : fail(c, errMsg(r.error));
+        }
+        if (r.paid) return paidReturn(r.ref);
         LS.set("outside.lastRef", r.ref);
         location.href = r.authorization_url;
       };

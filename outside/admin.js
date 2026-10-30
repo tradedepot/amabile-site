@@ -22,6 +22,7 @@
     bottles: '<path d="M10 2h4v4l1.5 3V21a1 1 0 0 1-1 1h-5a1 1 0 0 1-1-1V9L10 6z"/><path d="M8.5 13h7"/>',
     payouts: '<rect x="3" y="6" width="18" height="13" rx="2"/><path d="M3 10h18"/><circle cx="16" cy="14.5" r="1.4"/>',
     prices: '<path d="M3 12V4h8l10 10-8 8z"/><circle cx="7.5" cy="8.5" r="1.5"/>',
+    codes: '<path d="M4 7h16v4a2 2 0 0 0 0 4v4H4v-4a2 2 0 0 0 0-4z"/><path d="M10 9l4 6M10 9.5h.01M14 14.5h.01"/>',
     gaps: '<path d="M12 21s-7-6.2-7-12a7 7 0 0 1 14 0c0 5.8-7 12-7 12z"/><circle cx="12" cy="9" r="2.5"/>',
     plus: '<path d="M12 5v14M5 12h14"/>', bulb: '<path d="M9 18h6M10 21h4"/><path d="M12 3a6 6 0 0 0-3.5 10.9c.6.5 1 1.2 1 2.1h5c0-.9.4-1.6 1-2.1A6 6 0 0 0 12 3z"/>',
     flame: '<path d="M12 22c4 0 7-2.7 7-6.6 0-3.6-2.6-6-4-8.4-.5 2-1.6 3.2-3 3.6C12.5 7.6 11 4.6 8.6 2 8.7 6.2 5 8.6 5 13.4 5 18.3 8 22 12 22z"/>',
@@ -90,7 +91,7 @@
   }
   const LOAD = {
     venues: () => call({ action: "venues" }), drops: () => call({ action: "drops" }), bottles: () => call({ action: "bottles" }),
-    ledger: () => call({ action: "ledger" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), wa: () => call({ action: "wa-status" })
+    ledger: () => call({ action: "ledger" }), codes: () => call({ action: "codes" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), wa: () => call({ action: "wa-status" })
   };
   async function load(...keys) {
     const rs = await Promise.all(keys.map((k) => LOAD[k]()));
@@ -152,7 +153,7 @@
     $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); }; $("k").focus();
     if (msg) flag($("k"), msg);
   }
-  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"]];
+  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["codes", "Codes", "codes"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"]];
   function frame() {
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
       <nav class="nav">${PAGES.map(([k, n, i]) => `<button data-nav="${k}">${ic(i)}<span>${n}</span><span class="ct" id="ct-${k}" hidden></span></button>`).join("")}</nav>
@@ -181,6 +182,7 @@
       if (p === "bottles") { await load("bottles", "venues"); bottles(); }
       if (p === "payouts") { await load("ledger", "balance"); payouts(); }
       if (p === "prices") { await load("venues"); prices(); }
+      if (p === "codes") { await load("codes"); codes(opts); }
       if (p === "gaps") { await load("unmet", "venues"); gaps(); }
       if (p === "whatsapp") { await load("wa"); whatsapp(); }
     } catch {}
@@ -658,7 +660,7 @@
     P().innerHTML = head("Bottles", `The last ${all.length} sent.${failed ? ` ${plural(failed, "WhatsApp message")} didn't go out.` : ""}`) +
       `<div class="seg" style="margin-bottom:16px">${[["all", "All"], ["waiting", "Waiting"], ["on_way", "On the way"], ["claimed", "Delivered"], ["other", "Other"]].map(([k, n]) => `<button data-bf="${k}" class="${bFilter === k ? "on" : ""}">${n} <small>${all.filter(groups[k]).length}</small></button>`).join("")}</div>
       <div class="card"><div class="tw"><table class="t"><tr><th></th><th>From</th><th>To</th><th>Level</th><th>Paid</th><th>Status</th><th>WhatsApp</th><th>When</th></tr>
-      ${bs.map((b) => `<tr><td style="width:44px">${photo(b.wine, "thumb")}</td><td><b>${esc(b.from || "Someone")}</b><div class="faint">${esc(wineOf(b.wine).name)}</div></td><td>${esc(b.to || "Card link")}${b.venueId ? `<div class="faint">at ${esc(vName(b.venueId))}</div>` : ""}</td><td>${BAND_NAMES[b.band] || ""}</td><td class="money">${b.price ? naira(b.price) : ""}</td><td>${bpill(b.status)}</td>
+      ${bs.map((b) => `<tr><td style="width:44px">${photo(b.wine, "thumb")}</td><td><b>${esc(b.from || "Someone")}</b><div class="faint">${esc(wineOf(b.wine).name)}</div></td><td>${esc(b.to || "Card link")}${b.venueId ? `<div class="faint">at ${esc(vName(b.venueId))}</div>` : ""}</td><td>${BAND_NAMES[b.band] || ""}</td><td class="money">${b.price ? naira(b.charged != null ? b.charged : b.price) : ""}${b.code ? `<div class="faint">${esc(b.code)}</div>` : ""}</td><td>${bpill(b.status)}</td>
         <td>${b.notice ? (b.notice.ok ? '<span class="pill ok">Sent</span>' : `<span class="pill warn" title="${esc(b.notice.skip || (b.notice.error && b.notice.error.message) || "")}">Not sent</span>`) : '<span class="faint">·</span>'}</td><td class="faint" style="white-space:nowrap">${ago(b.createdAt)}</td></tr>`).join("") || `<tr><td colspan="8"><div class="empty">Nothing here.</div></td></tr>`}</table></div></div>`;
     P().querySelectorAll("[data-bf]").forEach((b) => (b.onclick = () => { bFilter = b.dataset.bf; bottles(); }));
   }
@@ -706,6 +708,55 @@
     $("save").onclick = async () => {
       const out = {}; document.querySelectorAll("[data-f]").forEach((i) => { out[i.dataset.f] = out[i.dataset.f] || {}; out[i.dataset.f][i.dataset.b] = i.value; });
       const r = await call({ action: "bands-save", bands: out }); toast(r.ok ? "Prices saved." : "Couldn't save.");
+    };
+  }
+
+  // ---------- codes ----------
+  // Discount codes at checkout. Money off what the sender pays; the venue is still paid its full menu price.
+  function codes(edit) {
+    const cs = D.codes || [];
+    const off = (c) => (c.kind === "naira" ? naira(c.value) : c.value + "%") + " off";
+    const until = (c) => (c.expires ? "until " + fmt(c.expires, { day: "numeric", month: "short" }) : "");
+    const who = (c) => (c.phones && c.phones.length ? (c.phones.length === 1 ? "Only " + esc(c.phones[0]) : "Only " + c.phones.length + " numbers") : "Anyone");
+    const E = edit || null;
+    P().innerHTML = head("Codes", "Discount codes senders type at checkout. The venue is still paid its full menu price.", E ? "" : `<button class="btn" id="new">${ic("plus")}<span>New code</span></button>`) +
+      (E ? `<div class="card"><div class="ch"><h2>${E.code ? esc(E.code) : "New code"}</h2></div>
+        <div class="grid">
+          <div><label class="lb">Code</label><input id="cc" maxlength="20" value="${esc(E.code || "")}" placeholder="KACHI100"${E.code ? " disabled" : ""} style="text-transform:uppercase"></div>
+          <div><label class="lb">Discount</label><div class="row" style="flex-wrap:nowrap"><input id="cv" inputmode="numeric" value="${E.value || ""}" placeholder="100" style="min-width:0">
+            <div class="seg"><button data-k="pct" class="${E.kind !== "naira" ? "on" : ""}">%</button><button data-k="naira" class="${E.kind === "naira" ? "on" : ""}">₦</button></div></div></div>
+          <div><label class="lb">Uses in total</label><input id="cm" inputmode="numeric" value="${E.maxUses || ""}" placeholder="No limit"></div>
+          <div><label class="lb">Uses per person</label><input id="cp" inputmode="numeric" value="${E.perPerson || ""}" placeholder="No limit"></div>
+          <div><label class="lb">Works until</label><input id="ce" type="date" value="${E.expires ? new Date(E.expires + 3600e3).toISOString().slice(0, 10) : ""}"></div>
+        </div>
+        <label class="lb">Only these WhatsApp numbers</label><input id="cn" value="${esc((E.phones || []).join(", "))}" placeholder="Anyone can use it. Add numbers to keep it to them, e.g. 0803 000 0000">
+        <label class="lb">Note</label><input id="ct" maxlength="80" value="${esc(E.note || "")}" placeholder="What it's for">
+        <div class="row" style="margin-top:16px"><button class="btn lg" id="save">Save code</button><button class="btn sec" id="back">Cancel</button></div></div>`
+      : `<div class="card"><div class="tw"><table class="t"><tr><th>Code</th><th>Discount</th><th>Who</th><th>Used</th><th>Status</th><th></th></tr>
+        ${cs.map((c) => `<tr><td><b>${esc(c.code)}</b>${c.note ? `<div class="faint">${esc(c.note)}</div>` : ""}</td><td>${off(c)}<div class="faint">${until(c)}</div></td><td>${who(c)}</td>
+          <td>${c.uses || 0}${c.maxUses ? " of " + c.maxUses : ""}</td><td>${c.active ? (c.expires && Date.now() > c.expires ? '<span class="pill">Ended</span>' : '<span class="pill ok">On</span>') : '<span class="pill">Off</span>'}</td>
+          <td style="text-align:right;white-space:nowrap"><button class="btn sm sec" data-ed="${esc(c.code)}">Edit</button> <button class="btn sm sec" data-on="${esc(c.code)}">${c.active ? "Turn off" : "Turn on"}</button></td></tr>`).join("")
+          || `<tr><td colspan="6"><div class="empty"><b>No codes yet.</b><br>Make one to give money off at checkout.</div></td></tr>`}</table></div></div>`);
+    if (!E) {
+      $("new").onclick = () => codes({ kind: "pct", isNew: true });
+      P().querySelectorAll("[data-ed]").forEach((b) => (b.onclick = () => codes(cs.find((c) => c.code === b.dataset.ed))));
+      P().querySelectorAll("[data-on]").forEach((b) => (b.onclick = async () => {
+        const c = cs.find((x) => x.code === b.dataset.on); const r = await call({ action: "code-active", code: c.code, active: !c.active });
+        if (!r.ok) return toast("Couldn't change it."); toast(r.code.active ? "Code is on." : "Code is off."); await load("codes"); codes();
+      }));
+      return;
+    }
+    let kind = E.kind || "pct";
+    P().querySelectorAll("[data-k]").forEach((b) => (b.onclick = () => { kind = b.dataset.k; P().querySelectorAll("[data-k]").forEach((x) => x.classList.toggle("on", x === b)); }));
+    $("back").onclick = () => codes();
+    $("save").onclick = async () => {
+      const code = { code: $("cc").value, kind, value: $("cv").value, maxUses: $("cm").value, perPerson: $("cp").value, expires: $("ce").value, phones: $("cn").value, note: $("ct").value, isNew: !!E.isNew, active: E.active !== false };
+      const r = await call({ action: "code-save", code });
+      if (!r.ok) {
+        const M = { code: [$("cc"), "Use at least 4 letters or numbers."], exists: [$("cc"), "That code already exists."], value: [$("cv"), kind === "pct" ? "Between 1 and 100." : "At least ₦100."], phone: [$("cn"), "Check this number: " + (r.bad || "")] }[r.error];
+        return M ? flag(M[0], M[1]) : toast("Couldn't save.");
+      }
+      toast("Saved."); await load("codes"); codes();
     };
   }
 

@@ -15,6 +15,7 @@
 //   bottles           recent bottles (last 200)
 //   unmet             failed claims (for the sales team)
 //   glow              {force?}         venues with people outside now (cached unless force)
+//   codes | code-save {code} | code-active {code, active}   discount codes at checkout
 //   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, adminAuthorised, rid, hashKey, getBands, BAND_ORDER, WINES,
@@ -204,7 +205,7 @@ export default async (req) => {
   if (a === "bottles") {
     const keys = (await listKeys(s, "b/")).slice(-400);
     const bs = (await fetchAll(s, keys)).sort((x, y) => y.createdAt - x.createdAt).slice(0, 200)
-      .map((b) => ({ id: b.id, kind: b.kind, wine: b.wine, band: b.band, price: b.price, status: b.status, from: b.fromName, to: b.to ? maskPhone(b.to) : b.toMasked, venueId: b.venueId || null, createdAt: b.createdAt, notice: b.notice || null }));
+      .map((b) => ({ id: b.id, kind: b.kind, wine: b.wine, band: b.band, price: b.price, charged: b.charged != null ? b.charged : b.price, code: b.code || "", status: b.status, from: b.fromName, to: b.to ? maskPhone(b.to) : b.toMasked, venueId: b.venueId || null, createdAt: b.createdAt, notice: b.notice || null }));
     return json({ ok: true, bottles: bs });
   }
 
@@ -237,6 +238,12 @@ export default async (req) => {
   }
 
   // ---------- paying venues through Paystack ----------
+  if (a === "codes" || a === "code-save" || a === "code-active") {
+    const { listCodes, saveCode, setCodeActive } = await import("../lib/_outside_codes.mjs");
+    if (a === "codes") return json({ ok: true, codes: await listCodes(s) });
+    const r = a === "code-save" ? await saveCode(s, d.code || {}, by) : await setCodeActive(s, d.code, d.active);
+    return json(r, r.ok ? 200 : 400);
+  }
   if (a === "banks") return json({ ok: true, banks: await listBanks(s) });
   if (a === "payout-resolve") { const r = await resolveAccount(s, { bankCode: d.bankCode, account: d.account }); return json(r, r.ok ? 200 : 400); }
   if (a === "payout-account") { const r = await setPayoutAccount(s, clean(d.venueId, 20), { bankCode: d.bankCode, account: d.account }); return json(r, r.ok ? 200 : 400); }

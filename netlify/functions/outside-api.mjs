@@ -5,7 +5,8 @@
 //   POST auth/link {token}           claim-link from WhatsApp → session token + bottle id
 //   POST profile {name, avatar}
 //   GET  me                          player, bag, sent, light, circle, open tickets
-//   POST send {to, wine, band, note, anon, mode, table}   → Paystack
+//   POST send {to, wine, band, note, anon, mode, table, code?}   → Paystack (or paid at once when a code covers it)
+//   POST code {code}                 is this discount code good for me
 //   GET  pay?ref=                    payment status (self-heals with Paystack)
 //   POST claim {bottleId, lat, lng, acc, venueId?, tent?, table, quiet}
 //   POST cancel {bottleId}           runner not there yet, keep the bottle for another night
@@ -307,10 +308,24 @@ export default async (req) => {
         await s.setJSON(K.tableSends(night, me), { n: sends.n + 1 });
       }
 
+      // A discount code takes money off what the sender pays. The bottle keeps its full value.
+      let codeUsed = null;
+      if (d.code) {
+        const { checkCode, discountOn } = await import("../lib/_outside_codes.mjs");
+        const cc = await checkCode(s, d.code, me);
+        if (!cc.ok) return bad(cc.error);
+        codeUsed = cc.code; b.code = cc.code.code; b.discount = discountOn(cc.code, b.price);
+      }
+      b.charged = b.price - (b.discount || 0);
       b.ref = "OUT-" + b.id + "-" + rid(4);
       await saveBottle(s, b);
       await s.set(K.ref(b.ref), b.id);
-      const init = await paystackInit({ email: payEmail(me), amount: b.price, reference: b.ref,
+      if (b.charged === 0) {
+        // The code covers all of it: nothing to pay.
+        const done = await markBottlePaid(s, b, { status: "success", amount: 0, currency: "NGN", channel: "code" }, "code");
+        return json({ ok: true, bottleId: b.id, ref: b.ref, price: b.price, charged: 0, paid: true, bottle: senderView(done) });
+      }
+      const init = await paystackInit({ email: payEmail(me), amount: b.charged, reference: b.ref,
         callbackUrl: SITE + "/?paid=" + encodeURIComponent(b.ref),
         metadata: { kind: "bottle", bottle_id: b.id, custom_fields: [
           { display_name: "Bottle", variable_name: "bottle", value: b.id },
@@ -318,6 +333,12 @@ export default async (req) => {
           { display_name: "Band", variable_name: "band", value: b.band || "" }] } });
       if (!init) return bad("payment_init", 502);
       return json({ ok: true, bottleId: b.id, ref: b.ref, price: b.price, authorization_url: init.authorization_url, access_code: init.access_code });
+    }
+
+    if (route === "code") {
+      const { checkCode, publicCode } = await import("../lib/_outside_codes.mjs");
+      const cc = await checkCode(s, d.code, me);
+      return cc.ok ? json({ ok: true, code: publicCode(cc.code) }) : bad(cc.error);
     }
 
     if (route === "pay") {
