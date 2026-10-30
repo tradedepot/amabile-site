@@ -54,6 +54,27 @@
   const esc = (s) => String(s == null ? "" : s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const naira = (n) => "₦" + Math.round(Number(n) || 0).toLocaleString("en-NG");
   const $ = (id) => document.getElementById(id);
+  // Phone numbers: a flag and country code in the field, a native list behind it, as in the guest app. Nigeria by default.
+  const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
+    ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
+    ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
+  const flagOf = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  const ccLabel = (cc) => { const x = CCS.find(([k]) => k === cc) || CCS[0]; return `${flagOf(x[1])} +${x[0]}`; };
+  const splitPhone = (v) => { const t = String(v || "").trim(), d = t.replace(/\D/g, ""); if (!t.startsWith("+")) return ["234", t]; const x = [...CCS].sort((a, b) => b[0].length - a[0].length).find(([k]) => d.startsWith(k)); return x ? [x[0], d.slice(x[0].length)] : ["234", t]; };
+  const phoneField = (id, value = "", ph = "803 000 0000") => {
+    const [cc, rest] = splitPhone(value);
+    return `<div class="phonef"><span class="ccbox"><span id="${id}_ccv">${ccLabel(cc)}</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <select id="${id}_cc" aria-label="Country">${CCS.map(([k, iso, n]) => `<option value="${k}"${k === cc ? " selected" : ""}>${flagOf(iso)} ${esc(n)} +${k}</option>`).join("")}</select></span>
+      <input id="${id}" type="tel" inputmode="tel" placeholder="${cc === "234" ? esc(ph) : ""}" value="${esc(rest)}"></div>`;
+  };
+  // What was typed, with its country code. Typed with + or 00, it keeps its own.
+  const phoneOf = (id) => { const inp = $(id), sel = $(id + "_cc"); const raw = String(inp && inp.value || "").trim(), d = raw.replace(/\D/g, ""); if (!d) return ""; if (raw.startsWith("+") || raw.startsWith("00")) return raw; return "+" + (sel ? sel.value : "234") + d.replace(/^0+/, ""); };
+  function wirePhone(id) {
+    const sel = $(id + "_cc"), inp = $(id), v = $(id + "_ccv"); if (!sel || !inp) return;
+    sel.onchange = () => { v.textContent = ccLabel(sel.value); inp.placeholder = sel.value === "234" ? "803 000 0000" : ""; inp.focus(); };
+    const trim = () => { if (/^\s*0/.test(inp.value)) inp.value = inp.value.replace(/^\s*0+/, ""); };
+    inp.addEventListener("input", trim); trim();
+  }
   const LAG = 3600e3, DAY = 86400e3;
   const lagosDayNo = (t) => Math.floor((t + LAG) / DAY);
   const dayOffset = (t) => lagosDayNo(t) - lagosDayNo(Date.now());
@@ -119,13 +140,14 @@
   // A field that needs fixing: red outline, a line under it, brought into view and focused, a nudge. Changing it clears it.
   function flag(el, text) {
     if (!el) return toast(text);
+    const input = el; el = el.closest(".phonef") || el;
     unflag(el);
     el.classList.add("bad");
     const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text;
     el.insertAdjacentElement("afterend", p);
     el.classList.remove("nudge"); void el.offsetWidth; el.classList.add("nudge");
     el.scrollIntoView({ block: "center", behavior: "smooth" });
-    if (el.matches("input, select, textarea")) try { el.focus({ preventScroll: true }); } catch {}
+    if (input.matches("input, select, textarea")) try { input.focus({ preventScroll: true }); } catch {}
     const off = () => unflag(el);
     ["input", "change", "click"].forEach((ev) => el.addEventListener(ev, off, { once: true }));
   }
@@ -606,14 +628,15 @@
     el.innerHTML = `${staff.length ? staff.map((m) => `<div style="display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--line-2)"><div style="flex:1;min-width:0"><b>${esc(m.name)}</b><div class="faint">${esc(m.phone)}</div></div><button class="lnk dim" data-srm="${esc(m.phone)}">Remove</button></div>`).join("")
         : `<p class="muted" style="margin:0 0 6px">No one yet. ${v.contact && v.contact.phone ? "The manager's number is added when the venue goes live." : "Add the manager's number."}</p>`}
       <label class="lb">Name</label><input id="sname" maxlength="30">
-      <label class="lb">WhatsApp number</label><input id="sphone" inputmode="tel" placeholder="0803 000 0000, or +44 7700 900123">
+      <label class="lb">WhatsApp number</label>${phoneField("sphone")}
       <button class="btn sm sec" id="sadd" style="margin-top:10px">Let them sign in</button>
       <p class="faint" style="margin:10px 0 0">Usually just the manager. They sign in once at ${esc(location.host)}/board on the bar phone and it stays signed in. Runners use that phone; they don't sign in.</p>`;
+    wirePhone("sphone");
     $("sadd").onclick = async () => {
       if (!$("sname").value.trim()) return flag($("sname"), "Add their name.");
-      if (!$("sphone").value.trim()) return flag($("sphone"), "Add their WhatsApp number.");
-      const r = await call({ action: "staff-add", venueId: v.id, name: $("sname").value, phone: $("sphone").value, role: "manager" });
-      if (!r.ok) return flag($("sphone"), r.error === "phone" ? "Check the number. Use + and the country code for numbers outside Nigeria." : "Couldn't add them: " + r.error);
+      if (!phoneOf("sphone")) return flag($("sphone"), "Add their WhatsApp number.");
+      const r = await call({ action: "staff-add", venueId: v.id, name: $("sname").value, phone: phoneOf("sphone"), role: "manager" });
+      if (!r.ok) return flag($("sphone"), r.error === "phone" ? "Check the number and the country code." : "Couldn't add them: " + r.error);
       toast($("sname").value.trim() + " added."); v.staff = r.staff; teamCard(v);
     };
     el.querySelectorAll("[data-srm]").forEach((b) => (b.onclick = async () => {
@@ -883,7 +906,7 @@
         ${T.onboarders.map((o) => `<tr><td><b>${esc(o.name)}</b><div class="faint">${esc(o.phone)}</div></td><td>${esc(o.company || "")}</td>
           <td><label class="tgl"><input type="checkbox" data-auto="${esc(o.phone)}"${o.auto ? " checked" : ""}> Go live without approval</label><div class="faint">A bank name that doesn't match the venue always waits for approval.</div></td>
           <td style="text-align:right"><button class="btn sm sec" data-ro="${esc(o.phone)}">Remove</button></td></tr>`).join("") || `<tr><td colspan="4"><div class="empty">No onboarders yet.</div></td></tr>`}</table></div>
-        <div class="addline"><input id="op" placeholder="WhatsApp number" inputmode="tel"><input id="on2" placeholder="Name"><input id="oc" placeholder="Company"><button class="btn" id="oadd">Add</button></div></div>`
+        <div class="addline"><div>${phoneField("op", "", "WhatsApp number")}</div><input id="on2" placeholder="Name"><input id="oc" placeholder="Company"><button class="btn" id="oadd">Add</button></div></div>`
       : `<div class="card"><div class="ch"><h2>Activity</h2><span class="muted">The last ${acts.length} changes and sign-ins</span></div>
         <div class="tw"><table class="t"><tr><th>When</th><th>Who</th><th>What</th><th></th></tr>
         ${acts.map((x) => `<tr><td class="faint" style="white-space:nowrap">${ago(x.at)}</td><td><b>${esc(x.name || x.by)}</b><div class="faint">${esc(x.by)}</div></td><td>${esc(ACT_NAMES[x.action] || x.action)}</td><td class="faint">${esc(x.target || "")}</td></tr>`).join("") || `<tr><td colspan="4"><div class="empty">Nothing yet.</div></td></tr>`}</table></div></div>`);
@@ -906,9 +929,11 @@
         if (!(await dialog({ title: "Remove this onboarder?", html: "They can't add stores any more. Stores they added stay.", okText: "Remove", danger: true }))) return;
         const r = await call({ action: "onb-remove", phone: b.dataset.ro }); r.ok ? again("Removed.") : toast("Couldn't remove.");
       }));
+      wirePhone("op");
       $("oadd").onclick = async () => {
-        const r = await call({ action: "onb-save", onboarder: { phone: $("op").value, name: $("on2").value, company: $("oc").value, auto: false } });
-        if (!r.ok) return r.error === "phone" ? flag($("op"), "Check the number.") : r.error === "name" ? flag($("on2"), "Add their name.") : toast("Couldn't add.");
+        if (!phoneOf("op")) return flag($("op"), "Add their WhatsApp number.");
+        const r = await call({ action: "onb-save", onboarder: { phone: phoneOf("op"), name: $("on2").value, company: $("oc").value, auto: false } });
+        if (!r.ok) return r.error === "phone" ? flag($("op"), "Check the number and the country code.") : r.error === "name" ? flag($("on2"), "Add their name.") : toast("Couldn't add.");
         again("Added. Their stores wait for approval until you tick it.");
       };
     }
@@ -1020,7 +1045,7 @@
       <div class="two" style="margin-top:16px">
         <div class="card"><div class="ch"><h2>Send a test</h2></div><p class="muted" style="margin:-6px 0 0">The real message, to any WhatsApp number. Use your own.</p>
           <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button></div>
-          <label class="lb">WhatsApp number</label><input id="wphone" inputmode="tel" placeholder="0803 000 0000, or +44 7700 900123" value="${esc(SS.get("outside.wtest") || "")}">
+          <label class="lb">WhatsApp number</label>${phoneField("wphone", SS.get("outside.wtest") || "")}
           <button class="btn" id="wsend" style="margin-top:14px">${ic("send")}Send test</button>
           <div class="tests" id="wtests"></div></div>
         <div class="card" style="margin-top:0"><div class="ch"><h2>Details</h2></div><dl class="kv">
@@ -1039,13 +1064,14 @@
     $("wcopy").onclick = () => { try { navigator.clipboard.writeText(w.hookUrl).then(() => toast("Copied."), () => toast("Couldn't copy.")); } catch { toast("Couldn't copy."); } };
     let kind = "code";
     $("wkind").querySelectorAll("button").forEach((b) => (b.onclick = () => { kind = b.dataset.k; $("wkind").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); }));
+    wirePhone("wphone");
     $("wsend").onclick = async () => {
-      const ph = $("wphone").value.trim();
+      const ph = phoneOf("wphone");
       if (!ph) return flag($("wphone"), "Add the number to send it to.");
       $("wsend").disabled = true;
       const r = await call({ action: "wa-test", kind, phone: ph });
       $("wsend").disabled = false;
-      if (!r.ok) return flag($("wphone"), r.error === "phone" ? "Check the number. Use + and the country code for numbers outside Nigeria." : r.error === "no_template" ? "Set the template name in Netlify first." : r.error === "no_whatsapp" ? "Add the token and the Phone number ID first." : metaSays(r.meta));
+      if (!r.ok) return flag($("wphone"), r.error === "phone" ? "Check the number and the country code." : r.error === "no_template" ? "Set the template name in Netlify first." : r.error === "no_whatsapp" ? "Add the token and the Phone number ID first." : metaSays(r.meta));
       SS.set("outside.wtest", ph);
       D.waTests.unshift({ id: r.id, kind, to: r.to, at: Date.now(), status: "accepted" });
       renderTests(); pollTests();

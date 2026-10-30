@@ -22,7 +22,7 @@ import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
   publicVenue, venuePrice, claimCheck, wineLevel, numberHash, pickBeacon, BEACONS, computeGlow, venuesByPopularity, lightIsOn, newTicket, saveTicket, paystackInit, paystackVerify,
-  payEmail, sendCode, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
+  payEmail, sendCode, codeSendError, contactFirstName, publicPlayer, levelFor, LEVELS, isAdult, nightKey, RULES, SITE, hashKey, metres, lagosHour
 } from "../lib/_outside.mjs";
 import { senderView, bagView, saveBottle, markBottlePaid, markTopupPaid, lightOn, openTicketsFor, ticketServed } from "../lib/_outside_flow.mjs";
 import { vapidPublic, saveSub, dropSub } from "../lib/_outside_push.mjs";
@@ -122,8 +122,9 @@ export default async (req) => {
       const code = String(Math.floor(100000 + Math.random() * 900000));
       await s.setJSON(K.otp(ph), { h: hashKey(code + ph), exp: Date.now() + 10 * 60 * 1000, tries: 0, sends: [...recent, Date.now()] });
       const r = await sendCode(ph, code).catch(() => ({ ok: false }));
-      const dev = process.env.OUTSIDE_DEV === "1";
-      if (!r.ok && !dev) return bad("send_failed", 502);
+      // The code is only ever shown on screen on a test setup with no WhatsApp. Never once WhatsApp is connected.
+      const dev = process.env.OUTSIDE_DEV === "1" && !process.env.WA_TOKEN;
+      if (!r.ok && !dev) return bad(codeSendError(r), 502);
       return json({ ok: true, sent: !!r.ok, ...(dev ? { devCode: code } : {}) });
     }
 

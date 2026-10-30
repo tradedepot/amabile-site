@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Put your venue on Andiamo! · Amabile di Rosa</title>
+<title>Amabile Depletion Program · Andiamo!</title>
 <meta name="description" content="Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.">
 <meta name="theme-color" content="#E74529">
-<meta property="og:title" content="Put your venue on Andiamo!">
+<meta property="og:title" content="Join the Amabile Depletion Program">
 <meta property="og:description" content="Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.">
 <meta property="og:image" content="/outside/og.png">
 <link rel="icon" href="/favicon-32.png">
@@ -27,7 +27,13 @@ body { background:var(--bg); color:var(--ink); font-family:var(--sans); line-hei
 .brand .by { display:block; margin-top:3px; font-size:9.5px; font-weight:800; letter-spacing:1.2px; text-transform:uppercase; }
 .pitch { margin:auto 0; max-width:500px; padding:28px 0; }
 .kicker { font-size:12px; font-weight:900; letter-spacing:1.6px; text-transform:uppercase; color:rgba(255,255,255,.8); margin:0 0 14px; }
-h1 { font-family:var(--serif); font-weight:400; font-size:clamp(40px, 4.6vw, 64px); line-height:1.02; margin:0 0 20px; letter-spacing:-.3px; }
+h1 { font-family:var(--serif); font-weight:400; font-size:clamp(40px, 3.9vw, 54px); line-height:1.02; margin:0 0 20px; letter-spacing:-.3px; }
+.ladder { display:grid; grid-template-columns:minmax(0,1fr) 20px minmax(0,1.3fr); align-items:stretch; gap:4px; margin:0 0 20px; max-width:460px; }
+.ladder > div { border:2.5px solid var(--ink); border-radius:14px; padding:10px 12px; font-weight:900; font-size:15px; line-height:1.2; background:rgba(255,255,255,.14); color:#fff; }
+.ladder > div small { display:block; font-size:10.5px; letter-spacing:1px; text-transform:uppercase; font-weight:900; opacity:.85; margin-bottom:3px; }
+.ladder > div.on { background:#fff; color:var(--red); box-shadow:0 4px 0 var(--ink); }
+.ladder > div.on small { color:var(--ink-2); opacity:1; }
+.ladder > span { display:grid; place-items:center; font-weight:900; font-size:20px; color:#fff; }
 .lede { font-size:clamp(17px, 1.45vw, 20px); line-height:1.5; margin:0; color:rgba(255,255,255,.95); max-width:460px; }
 .lede b { color:#fff; font-weight:800; }
 .shot { margin-top:auto; border-radius:20px; overflow:hidden; border:3px solid var(--ink); box-shadow:0 6px 0 rgba(43,30,23,.28); max-width:520px; }
@@ -102,16 +108,17 @@ a { color:var(--red-2); font-weight:800; }
   <aside class="side">
     <a class="brand" href="/outside/"><span class="logo">Andiamo!</span><span class="by">by Amabile di Rosa</span></a>
     <div class="pitch" id="intro">
-      <p class="kicker">For bars, lounges and restaurants</p>
-      <h1>Put your venue on the map</h1>
-      <p class="lede">Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately.</p>
+      <p class="kicker">Amabile Depletion Program</p>
+      <h1>You list Amabile. Now join the Depletion Program.</h1>
+      <div class="ladder"><div><small>Step 1</small>List Amabile</div><span aria-hidden="true">›</span><div class="on"><small>Step 2</small>Join the Depletion Program</div></div>
+      <p class="lede">Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately. We're depleting your stock.</p>
     </div>
     <div class="shot"><img src="/outside/img/venue-hero.jpg" alt="Amabile Rosso, Bianco and Rosato"></div>
   </aside>
 
   <main class="main"><div class="formwrap">
     <form id="f" novalidate>
-      <div class="fh"><h2>Tell us about your venue</h2><p>One minute. We'll call you on WhatsApp to set you up.</p></div>
+      <div class="fh"><h2>Sign up to the Depletion Program</h2><p>One minute. We'll call you on WhatsApp to set you up.</p></div>
       <div class="panel">
         <div class="sec">
           <label for="name">Venue name</label>
@@ -153,7 +160,7 @@ a { color:var(--red-2); font-weight:800; }
   const $ = (id) => document.getElementById(id);
 
   const ERR = {
-    phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code. Check the number is on WhatsApp.",
+    phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.", send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.",
     expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
     venue_name: "Add your venue's name.", email: "Check the email address, or leave it empty.", stocks: "Tell us if you stock Amabile now.", contact_name: "Add your name.", area: "Choose the area.", too_many_requests: "You already have requests with us. We'll be in touch.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
@@ -194,7 +201,7 @@ a { color:var(--red-2); font-weight:800; }
     (inp ? [inp] : [...el.querySelectorAll("input")]).forEach((x) => { x.addEventListener("input", off, { once: true }); x.addEventListener("change", off, { once: true }); });
   }
   function unflag(host) { const n = host.nextElementSibling; if (n && n.classList.contains("ferr")) n.remove(); host.classList.remove("bad"); }
-  const FIELD = { venue_name: "name", area: "area", stocks: "stocks", contact_name: "contact", phone: "phone", send_failed: "phone", slow_down: "phone", wrong_code: "code", expired: "code", too_many: "code", email: "email" };
+  const FIELD = { venue_name: "name", area: "area", stocks: "stocks", contact_name: "contact", phone: "phone", send_failed: "phone", not_on_whatsapp: "phone", slow_down: "phone", wrong_code: "code", expired: "code", too_many: "code", email: "email" };
   const fail = (e) => { $("err").textContent = ""; if (FIELD[e]) return flag(FIELD[e], ERR[e] || ERR.server); $("err").textContent = ERR[e] || ERR.server; };
 
   function details() {

@@ -9,7 +9,7 @@
 //   POST {at, action:"banks"}
 //   POST {at, action:"resolve", bankCode, account}   the name on the account, from the bank
 //   POST {at, action:"submit", store}       add a store, or send a returned one back
-import { store, json, clean, getJSON, phoneE164, sign, verify, hashKey, sendCode, WINES, K, rid, listKeys, fetchAll } from "../lib/_outside.mjs";
+import { store, json, clean, getJSON, phoneE164, sign, verify, hashKey, sendCode, codeSendError, WINES, K, rid, listKeys, fetchAll } from "../lib/_outside.mjs";
 import { getOnboarder } from "../lib/_outside_team.mjs";
 import { listBanks, resolveAccount } from "../lib/_outside_payout.mjs";
 import { nameMatches, approveSubmission, AREAS, KINDS } from "../lib/_outside_onboard.mjs";
@@ -35,7 +35,7 @@ export default async (req) => {
     const r = await sendCode(ph, code).catch(() => ({ ok: false }));
     // The code is only ever shown on screen on a test setup with no WhatsApp. Never once WhatsApp is connected.
     const testOnly = process.env.OUTSIDE_DEV === "1" && !process.env.WA_TOKEN;
-    if (!r.ok && !testOnly) return bad("send_failed", 502);
+    if (!r.ok && !testOnly) return bad(codeSendError(r), 502);
     return json({ ok: true, ...(testOnly ? { devCode: code } : {}) });
   }
   if (a === "verify") {

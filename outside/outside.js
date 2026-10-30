@@ -61,7 +61,7 @@
   const until = (t) => { const m = Math.max(0, Math.round((t - Date.now()) / 60000)); return m >= 60 ? Math.floor(m / 60) + "h " + (m % 60) + "m" : m + "m"; };
   const ERR = {
     offline: "No connection. Try again in a moment.", phone: "Check the number and the country code.", slow_down: "Too many codes. Try again in a few minutes.",
-    send_failed: "We couldn't send the code. Check the number is on WhatsApp.", too_many: "Too many tries. Ask for a new code.", wrong_code: "That code isn't right.", expired: "That code has expired. Ask for a new one.",
+    send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.", too_many: "Too many tries. Ask for a new code.", wrong_code: "That code isn't right.", expired: "That code has expired. Ask for a new one.",
     age: "Andiamo is for people 18 and over.", not_now: "This number can't sign in right now.", no_venue: "You're not at a partner venue yet. Your bottle keeps waiting.",
     not_stocked: "That venue doesn't stock this wine.", limit: "You've hit the limit for now.", not_out: "They're not outside any more.",
     gone: "All gone. Next time.", one_a_night: "One drop a night. Enjoy the rest of it.", not_here: "You need to be at the venue to claim this drop.",
@@ -375,7 +375,7 @@
         c.querySelector("#go").disabled = true;
         note(c, ""); const r = await api("auth/start", { phone });
         c.querySelector("#go").disabled = false;
-        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" ? flag(c.querySelector("#ph"), errMsg(r.error)) : fail(c, errMsg(r.error));
+        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" || r.error === "not_on_whatsapp" ? flag(c.querySelector("#ph"), errMsg(r.error)) : fail(c, errMsg(r.error));
         codeStep(phone, r.devCode, next);
       };
     });
@@ -724,7 +724,7 @@
         const phone = phoneOf(b, "gph");
         if (!e164(phone)) return flag(b.querySelector("#gph"), b.querySelector("#gph").value.trim() ? errMsg("phone") : "Add your WhatsApp number.");
         const r = await api("auth/start", { phone });
-        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" ? flag(b.querySelector("#gph"), errMsg(r.error)) : msg(errMsg(r.error));
+        if (!r.ok) return PHONE_ERR.includes(r.error) || r.error === "send_failed" || r.error === "not_on_whatsapp" ? flag(b.querySelector("#gph"), errMsg(r.error)) : msg(errMsg(r.error));
         askCode(phone, r.devCode);
       };
     });

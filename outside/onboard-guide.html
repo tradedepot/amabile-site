@@ -82,6 +82,17 @@ section { min-width: 0; }
 .how li.paid i { background: var(--green); }
 .job { margin: 14px 0 0; padding-top: 12px; border-top: 1.5px dashed var(--line); font-weight: 800; font-size: 14.5px; }
 .job b { color: var(--red-deep); }
+.prog { margin: 0 0 16px; }
+.prog > p { margin: 0 0 12px; font-weight: 800; font-size: 15.5px; }
+.ladder { display: grid; grid-template-columns: minmax(0, 1fr) 22px minmax(0, 1.25fr); align-items: stretch; gap: 4px; }
+.ladder > div { border: 2px solid var(--ink); border-radius: 14px; padding: 10px 11px; font-weight: 900; font-size: 14.5px; line-height: 1.2; background: var(--cream); }
+.ladder > div small { display: block; font-size: 10.5px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); font-weight: 900; margin-bottom: 3px; }
+.ladder > div.on { background: var(--red); color: #fff; box-shadow: 0 3px 0 var(--ink); }
+.ladder > div.on small { color: rgba(255,255,255,.85); }
+.ladder > span { display: grid; place-items: center; font-weight: 900; color: var(--ink-2); }
+.howlab { font-size: 11px; font-weight: 900; letter-spacing: 1.3px; text-transform: uppercase; color: var(--ink-2); margin: 0 0 8px; border-top: 1.5px dashed var(--line); padding-top: 14px; }
+.saycard .frame { background: var(--cream); }
+.saycard .frame p { margin: 0; font-weight: 800; font-size: 15px; }
 .saycard { background: var(--paper); border: 2.5px solid var(--ink); border-radius: 20px; box-shadow: 0 4px 0 var(--ink); overflow: hidden; }
 .saycard .part { padding: 16px 18px; position: relative; }
 .saycard .part + .part { border-top: 1.5px dashed var(--line); }
@@ -149,6 +160,9 @@ ol.steps > li { position: relative; display: grid; grid-template-columns: 40px m
   <section>
     <h2>What Andiamo is</h2>
     <div class="intro">
+      <div class="prog"><p>Andiamo is Amabile's Depletion Program. A venue lists Amabile, then signs up to the Depletion Program.</p>
+        <div class="ladder"><div><small>Step 1</small>List Amabile</div><span aria-hidden="true">›</span><div class="on"><small>Step 2</small>Join the Depletion Program</div></div></div>
+      <p class="howlab">How it works</p>
       <p>People send a bottle of Amabile to a friend's table at any of our venues, from their phone.</p>
       <ol class="how">
         <li><i>1</i><div><b>Someone sends a bottle</b><span>They pay on their phone, to a friend's number or a table in the room.</span></div></li>
@@ -174,6 +188,7 @@ ol.steps > li { position: relative; display: grid; grid-template-columns: 40px m
   <section>
     <h2>What to say</h2>
     <div class="saycard">
+      <div class="part frame"><small>How they should see it</small><p>Amabile's Depletion Program: they list Amabile, then they sign up to the Depletion Program.</p></div>
       <div class="part lead"><small>To the manager</small><q>Guests walk in for a bottle of Amabile that's already paid for. You serve it from your stock, and we pay you your full menu price, immediately. <span class="dep">We're depleting your stock.</span></q></div>
       <div class="part then"><small>If they already sell Amabile</small><q>This is money you're leaving on the table.</q></div>
       <div class="never"><span class="k">Never say</span><span>promo</span><span>corkage</span><span>claim</span><span>other venues</span><span>guest numbers</span><span>TradeDepot</span></div>

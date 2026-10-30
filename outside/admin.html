@@ -318,6 +318,13 @@ table.t tr.click { cursor: pointer; } table.t tr.click:hover td { background: #F
 .page.ro .form2 input, .page.ro .form2 select, .page.ro .form2 textarea { pointer-events: none; background: var(--line-2); }
 .page.ro .form2 .chip { pointer-events: none; }
 .addline { display: grid; grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr) auto; gap: 8px; margin-top: 14px; }
+.phonef { display: flex; align-items: stretch; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; overflow: hidden; transition: border-color .15s, box-shadow .15s; }
+.phonef:focus-within { border-color: var(--red); box-shadow: 0 0 0 4px rgba(231,69,41,.12); }
+.phonef.bad { border-color: var(--red-2); }
+.ccbox { position: relative; flex: none; display: flex; align-items: center; gap: 6px; padding: 0 10px 0 12px; border-right: 1.5px solid var(--line); font-weight: 800; white-space: nowrap; }
+.ccbox svg { width: 10px; height: 8px; color: var(--ink-3); }
+.ccbox select { position: absolute; inset: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; border: 0; padding: 0; }
+.phonef input, .phonef input:focus { flex: 1; min-width: 0; border: 0; border-radius: 0; box-shadow: none; }
 .tgl { display: flex; gap: 8px; align-items: center; font-weight: 800; }
 /* ---------- small screens ---------- */
 @media (max-width: 1180px) { .ideas { grid-template-columns: 1fr 1fr; } .week { grid-template-columns: repeat(4, minmax(0, 1fr)); } }

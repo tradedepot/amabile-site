@@ -1,7 +1,7 @@
 // Andiamo: who can open a venue's runner board. No shared codes: staff sign in with their own WhatsApp number
 // and a one-time code, like players. A venue's managers add and remove their runners; Amabile admin can too.
 // venue.staff = [{ phone, name, role: "manager" | "runner", addedAt, by }]; index "sx/<number>" = [venueIds].
-import { K, getJSON, clean, phoneE164, phoneKey, maskPhone, hashKey, sign, verify, sendCode } from "./_outside.mjs";
+import { K, getJSON, clean, phoneE164, phoneKey, maskPhone, hashKey, sign, verify, sendCode, codeSendError } from "./_outside.mjs";
 
 const idxKey = (ph) => "sx/" + phoneKey(ph);
 const ROLES = ["manager", "runner"];
@@ -74,8 +74,9 @@ export async function boardStart(s, phone) {
   const code = String(Math.floor(100000 + Math.random() * 900000));
   await s.setJSON(K.otp(ph), { h: hashKey(code + ph), exp: Date.now() + 10 * 60 * 1000, tries: 0, sends: [...recent, Date.now()] });
   const r = await sendCode(ph, code).catch(() => ({ ok: false }));
-  const dev = process.env.OUTSIDE_DEV === "1";
-  if (!r.ok && !dev) return { ok: false, error: "send_failed" };
+  // The code is only ever shown on screen on a test setup with no WhatsApp. Never once WhatsApp is connected.
+  const dev = process.env.OUTSIDE_DEV === "1" && !process.env.WA_TOKEN;
+  if (!r.ok && !dev) return { ok: false, error: codeSendError(r) };
   return { ok: true, ...(dev ? { devCode: code } : {}) };
 }
 

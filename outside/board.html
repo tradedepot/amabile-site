@@ -198,7 +198,7 @@
   }
   const phoneOf = (c, id) => { const raw = c.querySelector("#" + id).value.trim(), cc = c.querySelector("#" + id + "_cc").value, d = raw.replace(/\D/g, ""); return !d ? "" : raw.startsWith("+") ? raw : cc === "234" ? d : "+" + cc + d; };
   const ERRS = { phone: "Check the number and the country code.", not_staff: "We don't have this number for a venue. Use the one you gave Amabile, or ask whoever signs in to add you.", slow_down: "Too many codes. Try again in a few minutes.",
-    send_failed: "We couldn't send the code. Check the number is on WhatsApp.", wrong_code: "That code isn't right.", expired: "That code has expired. Send a new one.", too_many: "Too many tries. Send a new code." };
+    send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.", wrong_code: "That code isn't right.", expired: "That code has expired. Send a new one.", too_many: "Too many tries. Send a new code." };
   async function post(body) { try { const r = await fetch(API, { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) }); return await r.json(); } catch { return { ok: false, error: "offline" }; } }
   function login(msg) {
     root.innerHTML = `<div class="login"><span class="brand"><b>Andiamo!</b><small>By Amabile di Rosa</small></span><h1>Runner board</h1><p style="margin:0;color:var(--ink-2);font-weight:700">Sign in once on the bar phone with your WhatsApp number. It stays signed in, and your runners use it from there.</p>

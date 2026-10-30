@@ -16,7 +16,7 @@
 //   OUTSIDE_TPL_BOTTLE      approved template for "x is sending an Amabile to your table" (name)
 //   OUTSIDE_TPL_CODE        approved authentication template for sign-in codes (name)
 //   OUTSIDE_TPL_LANG        template language code, default "en"
-//   OUTSIDE_DEV=1           returns sign-in codes in API responses (test only, never in production)
+//   OUTSIDE_DEV=1           returns sign-in codes in API responses when WhatsApp isn't connected (test only, never in production)
 //   ANDIAMO_ADMIN_KEY       the root password for the admin console (the team signs in with Google)
 //   OUTSIDE_SITE            public origin of the game, e.g. https://outside.ng (default amabiledirosa.com/outside)
 import { getStore } from "@netlify/blobs";
@@ -498,6 +498,8 @@ export async function sendCode(e164, code) {
   // Authentication templates: the code fills the body and the copy-code button.
   return wa(e164, waTemplate(tpl, [code], code));
 }
+// Why a code didn't go: the number isn't on WhatsApp, or it's on our side (Meta, the template, a rate limit).
+export const codeSendError = (r) => (r && r.error && [131026, 131021].includes(Number(r.error.code)) ? "not_on_whatsapp" : "send_failed");
 
 // ---------- Paystack ----------
 const PS = "https://api.paystack.co";

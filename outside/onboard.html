@@ -60,6 +60,15 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
 .kinds { display:flex; flex-wrap:wrap; gap:6px; }
 .kinds button { border:1.5px solid var(--line); background:#fff; border-radius:999px; padding:7px 13px; font:inherit; font-size:14px; font-weight:800; color:var(--ink-2); cursor:pointer; }
 .kinds button.on { border-color:var(--red); background:#FDECE7; color:var(--ink); }
+.phonef { display:flex; align-items:stretch; border:1.5px solid var(--line); border-radius:12px; background:#fff; overflow:hidden; transition:border-color .15s, box-shadow .15s; }
+.phonef:focus-within { border-color:var(--red); box-shadow:0 0 0 4px rgba(231,69,41,.12); }
+.phonef.bad { border-color:var(--red-2); box-shadow:0 0 0 4px rgba(200,55,29,.14); }
+.ccbox { position:relative; flex:none; display:flex; align-items:center; gap:6px; padding:0 10px 0 13px; border-right:1.5px solid var(--line); font-weight:800; font-size:16px; white-space:nowrap; }
+.ccbox svg { width:10px; height:8px; color:var(--ink-3); }
+.ccbox select { position:absolute; inset:0; width:100%; height:100%; opacity:0; cursor:pointer; border:0; padding:0; }
+.phonef input { flex:1; min-width:0; border:0; border-radius:0; box-shadow:none !important; letter-spacing:.3px; }
+.bps .phonef + .phonef { margin-top:8px; }
+.addbp { margin-top:8px; background:none; border:0; padding:4px 0; font:inherit; font-weight:900; font-size:14px; color:var(--red-2); cursor:pointer; }
 .money { position:relative; } .money input { padding-left:28px; } .money::before { content:"₦"; position:absolute; left:12px; top:50%; transform:translateY(-50%); font-weight:800; color:var(--ink-3); }
 .btn { display:block; width:100%; margin-top:16px; padding:14px; border:0; border-radius:999px; background:var(--red); color:#fff; font:inherit; font-weight:900; font-size:16px; box-shadow:0 3px 0 var(--red-2); cursor:pointer; text-align:center; text-decoration:none; }
 .btn:disabled { opacity:.55; cursor:default; }
@@ -136,10 +145,34 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
   const API = "/api/outside-onboard", app = document.getElementById("app"), $ = (id) => document.getElementById(id);
   const LS = { get(k) { try { return localStorage.getItem(k); } catch { return null; } }, set(k, v) { try { localStorage.setItem(k, v); } catch {} }, del(k) { try { localStorage.removeItem(k); } catch {} } };
   const esc = (x) => String(x == null ? "" : x).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  // Phone numbers: a flag and country code in the field, a native list behind it, as in the guest app. Nigeria by default.
+  const CCS = [["234", "NG", "Nigeria"], ["233", "GH", "Ghana"], ["254", "KE", "Kenya"], ["27", "ZA", "South Africa"], ["225", "CI", "Côte d'Ivoire"], ["229", "BJ", "Benin"], ["228", "TG", "Togo"], ["237", "CM", "Cameroon"], ["221", "SN", "Senegal"],
+    ["44", "GB", "United Kingdom"], ["1", "US", "United States, Canada"], ["353", "IE", "Ireland"], ["33", "FR", "France"], ["49", "DE", "Germany"], ["39", "IT", "Italy"], ["31", "NL", "Netherlands"], ["34", "ES", "Spain"], ["41", "CH", "Switzerland"],
+    ["971", "AE", "United Arab Emirates"], ["974", "QA", "Qatar"], ["966", "SA", "Saudi Arabia"], ["61", "AU", "Australia"], ["86", "CN", "China"], ["91", "IN", "India"], ["55", "BR", "Brazil"]];
+  const flagOf = (iso) => iso.replace(/./g, (ch) => String.fromCodePoint(127397 + ch.charCodeAt(0)));
+  const ccLabel = (cc) => { const x = CCS.find(([k]) => k === cc) || CCS[0]; return `${flagOf(x[1])} +${x[0]}`; };
+  const NG_HINT = "803 000 0000";
+  // A saved number (+2348031234567) back into its country and the rest (803 123 4567).
+  const splitPhone = (v) => { const d = String(v || "").replace(/\D/g, ""); if (!String(v || "").trim().startsWith("+")) return ["234", String(v || "")]; const x = [...CCS].sort((a, b) => b[0].length - a[0].length).find(([k]) => d.startsWith(k)); return x ? [x[0], d.slice(x[0].length)] : ["234", "+" + d]; };
+  const phoneField = (id, value = "") => {
+    const [cc, rest] = splitPhone(value);
+    return `<div class="phonef"><span class="ccbox"><span id="${id}_ccv">${ccLabel(cc)}</span><svg viewBox="0 0 12 8" aria-hidden="true"><path d="M1 1.5l5 5 5-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <select id="${id}_cc" aria-label="Country">${CCS.map(([k, iso, n]) => `<option value="${k}"${k === cc ? " selected" : ""}>${flagOf(iso)} ${esc(n)} +${k}</option>`).join("")}</select></span>
+      <input id="${id}" type="tel" inputmode="tel" autocomplete="tel" placeholder="${cc === "234" ? NG_HINT : ""}" value="${esc(rest)}"></div>`;
+  };
+  // What was typed, with its country code. Typed with + or 00, it keeps its own.
+  const phoneOf = (id) => { const inp = $(id), sel = $(id + "_cc"); const raw = String(inp && inp.value || "").trim(), d = raw.replace(/\D/g, ""); if (!d) return ""; if (raw.startsWith("+") || raw.startsWith("00")) return raw; return "+" + (sel ? sel.value : "234") + d.replace(/^0+/, ""); };
+  function wirePhone(id) {
+    const sel = $(id + "_cc"), inp = $(id), v = $(id + "_ccv"); if (!sel || !inp) return;
+    sel.onchange = () => { v.textContent = ccLabel(sel.value); inp.placeholder = sel.value === "234" ? NG_HINT : ""; inp.focus(); };
+    // The code is already in the box, so a leading 0 is dropped as they type (0803 becomes 803).
+    const trim = () => { if (/^\s*0/.test(inp.value)) inp.value = inp.value.replace(/^\s*0+/, ""); };
+    inp.addEventListener("input", trim); trim();
+  }
   let at = LS.get("andiamo.onb") || "", S = null;
   const ERR = {
     not_onboarder: "This number isn't set up to add stores. Ask your Amabile contact.", phone: "Check the number.", slow_down: "Too many codes. Try again in a few minutes.",
-    send_failed: "We couldn't send the code. Check the number is on WhatsApp.", expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
+    send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.", expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
     name: "Add the store's name.", area: "Choose the area.", kind: "Choose what kind of place it is.", location: "Stand inside the store and tap Use my location.", prices: "Add the menu price of at least one wine.",
     manager_name: "Add the manager's name.", manager_phone: "Check the manager's WhatsApp number.", bar_phone: "Check the bar phone numbers.", account_number: "Account numbers have 10 digits.", bank: "Choose the bank.",
     resolve: "The bank doesn't recognise that account. Check the number and the bank.", duplicate: "You've already sent this store. It's waiting for approval.", request_taken: "Someone has already added this venue.", not_editable: "This store can't be changed now.",
@@ -153,12 +186,13 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
   }
   function flag(el, text) {
     if (!el) return;
-    unflag(el); el.classList.add("bad");
-    const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text; el.insertAdjacentElement("afterend", p);
-    el.scrollIntoView({ block: "center", behavior: "smooth" });
+    const host = el.closest(".phonef") || el;
+    unflag(host); host.classList.add("bad");
+    const p = document.createElement("p"); p.className = "ferr"; p.setAttribute("role", "alert"); p.textContent = text; host.insertAdjacentElement("afterend", p);
+    host.scrollIntoView({ block: "center", behavior: "smooth" });
     try { navigator.vibrate && navigator.vibrate(60); } catch {}
     if (el.matches("input, select")) try { el.focus({ preventScroll: true }); } catch {}
-    const off = () => unflag(el); ["input", "change", "click"].forEach((e) => el.addEventListener(e, off, { once: true }));
+    const off = () => unflag(host); ["input", "change", "click"].forEach((e) => el.addEventListener(e, off, { once: true }));
   }
   function unflag(el) { const n = el.nextElementSibling; if (n && n.classList.contains("ferr")) n.remove(); el.classList.remove("bad"); }
   function signOut() { at = ""; S = null; LS.del("andiamo.onb"); $("who").innerHTML = ""; }
@@ -168,15 +202,16 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
   function signIn(msg) {
     $("who").innerHTML = "";
     app.innerHTML = `<h1>Add stores to Andiamo</h1><p class="sub">Sign in with your WhatsApp number.</p>
-      <div class="panel"><div class="sec"><label for="ph">Your WhatsApp number</label><input id="ph" type="tel" inputmode="tel" autocomplete="tel" placeholder="0803 000 0000">
+      <div class="panel"><div class="sec"><label for="ph">Your WhatsApp number</label>${phoneField("ph")}
         <div id="cbox" hidden><label for="cd">Code from WhatsApp</label><input id="cd" inputmode="numeric" autocomplete="one-time-code" maxlength="6" placeholder="6 digits"><p class="dev" id="dev"></p></div>
         <button class="btn" id="go">Send me a code</button><p class="err" id="err" role="alert"></p></div></div>`;
     let sent = false, busy = false;
     if (msg) $("err").textContent = msg;
+    wirePhone("ph");
     $("ph").oninput = () => { if (sent) { sent = false; $("cbox").hidden = true; $("go").textContent = "Send me a code"; } };
     const go = async () => {
       if (busy) return; $("err").textContent = "";
-      const phone = $("ph").value.trim(); if (phone.replace(/\D/g, "").length < 8) return flag($("ph"), "Add your WhatsApp number.");
+      const phone = phoneOf("ph"); if (phone.replace(/\D/g, "").length < 8) return flag($("ph"), "Add your WhatsApp number.");
       busy = true; $("go").disabled = true;
       try {
         if (!sent) {
@@ -248,9 +283,10 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
           <label class="chk"><input type="checkbox" id="tx"${pre.taxIncluded ? " checked" : ""}> Prices include VAT and service</label>
           <label>Photo of the menu <small>optional</small></label><div class="photo"><input type="file" id="ph" accept="image/*" capture="environment"><img id="pv" alt="" hidden></div></div>
         <div class="sec"><h2>The manager</h2><p class="hint">They sign in to the bar phone with this number.</p>
-          <div class="row"><div><label for="mn">Name</label><input id="mn" maxlength="30" value="${esc(pre.managerName || "")}"></div>
-          <div><label for="mp">WhatsApp number</label><input id="mp" type="tel" inputmode="tel" value="${esc(pre.managerPhone || "")}" placeholder="0803 000 0000"></div></div>
-          <label for="bp">Other bar phone numbers <small>optional</small></label><input id="bp" type="tel" inputmode="tel" value="${esc((pre.barPhones || []).join(", "))}" placeholder="Separate with commas"></div>
+          <label for="mn">Name</label><input id="mn" maxlength="30" value="${esc(pre.managerName || "")}">
+          <label for="mp">WhatsApp number</label>${phoneField("mp", pre.managerPhone || "")}
+          <label for="bp0">Other bar phones <small>optional</small></label><div class="bps" id="bps">${(pre.barPhones && pre.barPhones.length ? pre.barPhones : [""]).map((x, i) => phoneField("bp" + i, x)).join("")}</div>
+          <button class="addbp" id="addbp" type="button">+ Add another</button></div>
         <div class="sec"><h2>Where we pay them</h2><p class="hint">The store's own bank account. We pay its menu price for every bottle served.</p>
           <label for="bk">Bank <small>optional for now</small></label><select id="bk"><option value="">Choose the bank</option>${banks.map((b) => `<option value="${esc(b.code)}"${pre.bankCode === b.code ? " selected" : ""}>${esc(b.name)}</option>`).join("")}</select>
           <label for="ac">Account number</label><input id="ac" inputmode="numeric" maxlength="10" placeholder="10 digits">
@@ -258,6 +294,10 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
         <button class="btn" id="send">${S.me.auto ? "Put it live" : "Send for approval"}</button><p class="err" id="err" role="alert"></p>
       </div>`;
     top();
+    let nbp = $("bps").querySelectorAll(".phonef").length;
+    wirePhone("mp"); for (let i = 0; i < nbp; i++) wirePhone("bp" + i);
+    $("addbp").onclick = () => { $("bps").insertAdjacentHTML("beforeend", phoneField("bp" + nbp)); wirePhone("bp" + nbp); $("bp" + nbp).focus(); nbp++; };
+    const barPhones = () => [...$("bps").querySelectorAll("input[type=tel]")].map((x) => phoneOf(x.id)).filter(Boolean);
     $("back").onclick = () => home();
     app.querySelectorAll("[data-k]").forEach((b) => (b.onclick = () => { st.kind = b.dataset.k; app.querySelectorAll("[data-k]").forEach((x) => x.classList.toggle("on", x === b)); unflag($("kd")); }));
     $("here").onclick = () => {
@@ -294,7 +334,7 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
       $("err").textContent = "";
       const prices = {}; W.forEach((w) => (prices[w.id] = $("p-" + w.id).value));
       const store = { id: pre.id || "", fromRequest: pre.fromRequest || "", name: $("nm").value.trim(), area: $("ar").value, kind: st.kind, lat: st.lat, lng: st.lng, acc: st.acc, prices, taxIncluded: $("tx").checked,
-        managerName: $("mn").value.trim(), managerPhone: $("mp").value.trim(), barPhones: $("bp").value, bankCode: $("bk").value, account: $("ac").value.replace(/\D/g, ""), menuPhoto: st.photo };
+        managerName: $("mn").value.trim(), managerPhone: phoneOf("mp"), barPhones: barPhones().join(","), bankCode: $("bk").value, account: $("ac").value.replace(/\D/g, ""), menuPhoto: st.photo };
       if (store.name.length < 2) return flag($("nm"), ERR.name);
       if (!store.area) return flag($("ar"), ERR.area);
       if (!store.kind) return flag($("kd"), ERR.kind);
@@ -307,7 +347,8 @@ input:focus, select:focus { outline:none; border-color:var(--red); box-shadow:0 
       $("send").disabled = true;
       const r = await api({ action: "submit", store }).finally(() => { $("send").disabled = false; });
       if (!r.ok) {
-        const F = { name: "nm", area: "ar", kind: "kd", location: "here", manager_name: "mn", manager_phone: "mp", bar_phone: "bp", account_number: "ac", bank: "bk", resolve: "ac" };
+        const F = { name: "nm", area: "ar", kind: "kd", location: "here", manager_name: "mn", manager_phone: "mp", bar_phone: "bp0", account_number: "ac", bank: "bk", resolve: "ac" };
+        if (r.error === "bar_phone") { const bad = [...$("bps").querySelectorAll("input[type=tel]")].find((x) => phoneOf(x.id) === r.bad); return flag(bad || $("bp0"), ERR.bar_phone); }
         return F[r.error] ? flag($(F[r.error]), ERR[r.error]) : ($("err").textContent = ERR[r.error] || ERR.server);
       }
       done(store.name, r);
