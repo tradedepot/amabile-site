@@ -24,14 +24,14 @@ const P = {
   "request-list": RUN, "venue-save": RUN, "venue-keys": RUN, "venue-link": RUN, "venue-supply": RUN, "venue-purchase": RUN, "venue-live": RUN, "venue-off": RUN,
   "staff-add": RUN, "staff-remove": RUN, "payout-account": RUN, "payout-resolve": RUN, "outlet-search": RUN, "outlet-get": RUN,
   tents: RUN, "bands-save": RUN, codes: RUN, "code-save": RUN, "code-active": RUN,
-  "submission-approve": RUN, "submission-return": RUN,
+  "submission-approve": RUN, "submission-return": RUN, "submission-photo": ["owner", "ops", "field"],
   me: ALL
 };
 export const can = (role, action) => (P[action] || ["owner"]).includes(role);
 // What the console may show this person: "*" for the owner, else the actions their role allows.
 export const allowedFor = (role) => (role === "owner" ? "*" : Object.keys(P).filter((k) => P[k].includes(role)));
 // Actions that only read. Everything else goes in the activity log.
-const READS = new Set(["venues", "banks", "glow", "drops", "unmet", "requests", "bottles", "bottle", "ledger", "balance", "codes", "outlet-search", "outlet-get", "payout-resolve", "me", "team", "activity", "wa-status", "wa-test-status"]);
+const READS = new Set(["venues", "banks", "glow", "drops", "unmet", "requests", "bottles", "bottle", "ledger", "balance", "codes", "outlet-search", "outlet-get", "payout-resolve", "me", "team", "activity", "wa-status", "wa-test-status", "submission-photo"]);
 export const isWrite = (a) => !READS.has(a);
 
 // ---------- the team list ----------

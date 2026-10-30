@@ -658,7 +658,7 @@
   let showDeclined = false;
   function requests() {
     const rs = D.requests || [];
-    const cols = [["requested", "New", ["requested"]], ["visit_booked", "Visit booked", ["visit_booked"]], ["listed", "Listed", ["listed", "stocked", "paused"]], ["live", "Live", ["live"]]];
+    const cols = [["requested", "New", ["requested", "submitted", "sent_back"]], ["visit_booked", "Visit booked", ["visit_booked"]], ["listed", "Listed", ["listed", "stocked", "paused"]], ["live", "Live", ["live"]]];
     const declined = rs.filter((r) => r.stage === "declined");
     P().innerHTML = head("Requests", "Venues asking to join, from first message to live.", `<a class="btn sec" href="/outside/venue" target="_blank">Public sign-up page</a>`) +
       `<div class="pipe">${cols.map(([k, n, st]) => { const list = rs.filter((r) => st.includes(r.stage)).sort((a, b) => b.createdAt - a.createdAt);
@@ -668,9 +668,11 @@
     const dc = $("dec"); if (dc) dc.onclick = () => { showDeclined = !showDeclined; requests(); };
   }
   const rcard = (r) => `<div class="rcard" data-o="${r.id}"><b>${esc(r.name)}</b><span class="muted">${esc(VKIND[r.kind] || r.kind)} · ${esc(r.area)}</span>
+    ${r.source === "onboard" ? `<span class="pill${r.stage === "sent_back" ? "" : r.store && r.store.payout && !r.store.payout.matches ? " warn" : " red"}" style="align-self:flex-start;margin-top:4px">${r.stage === "sent_back" ? "Sent back" : r.stage === "submitted" ? "To approve" : "Onboarded"} · ${esc(r.onboarderName)}${r.company && r.company !== "Amabile" ? ", " + esc(r.company) : ""}</span>` : ""}
     <span class="faint">${esc(r.contactName)} · asked ${ago(r.createdAt)}</span>${r.visit && r.visit.date ? `<span class="pill gold" style="align-self:flex-start;margin-top:4px">${esc(r.visit.by)} · ${esc(r.visit.date)}</span>` : ""}
     ${r.stocksAmabile === "yes" ? '<span class="pill ok" style="align-self:flex-start;margin-top:4px">Stocks Amabile</span>' : ""}</div>`;
   function requestCard(r) {
+    if (r.source === "onboard") return submissionCard(r);
     const row = (k, val) => (val ? `<dt>${esc(k)}</dt><dd>${val}</dd>` : "");
     const venue = r.venueId ? venueById(r.venueId) : null;
     P().innerHTML = `<button class="lnk dim" id="back" style="margin-bottom:12px">← Requests</button>` + head(esc(r.name), `${esc(VKIND[r.kind] || r.kind)} · ${esc(r.area)} · asked ${ago(r.createdAt)}`, `<span class="pill${r.stage === "live" ? " ok" : r.stage === "declined" ? "" : " gold"}">${STAGE[r.stage] || r.stage}</span>`) +
@@ -802,6 +804,57 @@
         return M ? flag(M[0], M[1]) : toast("Couldn't save.");
       }
       toast("Saved."); await load("codes"); codes();
+    };
+  }
+
+  // ---------- stores from the onboard app ----------
+  // Everything the onboarder sent, the bank's name for the account next to the store's, and the decision.
+  function submissionCard(r) {
+    const x = r.store || {}, p = x.payout, venue = r.venueId ? venueById(r.venueId) : null, W = (D.venues && D.venues.wines) || [];
+    const row = (k, val) => (val ? `<dt>${esc(k)}</dt><dd>${val}</dd>` : "");
+    const decide = r.stage === "submitted" && can("submission-approve");
+    P().innerHTML = `<button class="lnk dim" id="back" style="margin-bottom:12px">← Requests</button>` + head(esc(r.name), `${esc(VKIND[r.kind] || r.kind)} · ${esc(r.area)} · from ${esc(r.onboarderName)}${r.company ? ", " + esc(r.company) : ""} · sent ${ago(r.updatedAt || r.createdAt)}`,
+      `<span class="pill${r.stage === "live" ? " ok" : r.stage === "submitted" ? " gold" : ""}">${{ submitted: "To approve", sent_back: "Sent back", live: "Live", declined: "Declined" }[r.stage] || esc(r.stage)}</span>`) +
+      `<div class="form2"><div><div class="card"><div class="ch"><h2>The store</h2></div><dl class="kv">
+        ${row("Where", x.lat != null ? `<a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${x.lat},${x.lng}">Open the pin</a> <span class="faint">to about ${x.acc || "?"} m</span>` : "")}
+        ${row("Menu prices", W.filter((w) => x.prices && x.prices[w.id]).map((w) => `${esc(w.name)} <b>${naira(x.prices[w.id])}</b>`).join("<br>") + (x.taxIncluded ? '<div class="faint">Including VAT and service</div>' : ""))}
+        ${row("Manager", `${esc(x.managerName)} · <a target="_blank" href="https://wa.me/${esc(String(x.managerPhone || "").replace(/\D/g, ""))}">${esc(x.managerPhone)}</a>`)}
+        ${row("Bar phones", (x.barPhones || []).map(esc).join("<br>"))}
+        ${row("Menu photo", x.hasPhoto ? `<button class="lnk" id="photo">Show the photo</button><div id="photobox"></div>` : "")}
+        ${row("Sent by", `${esc(r.onboarderName)}${r.company ? ", " + esc(r.company) : ""} · <a target="_blank" href="https://wa.me/${esc(String(r.submittedBy || "").replace(/\D/g, ""))}">${esc(r.submittedBy)}</a>`)}
+        ${row("Note sent back", r.returnNote ? esc(r.returnNote) : "")}</dl></div></div>
+      <div><div class="card"><div class="ch"><h2>Bank account</h2>${p ? (p.matches ? '<span class="pill ok">Name matches</span>' : '<span class="pill warn">Name doesn\'t match</span>') : ""}</div>
+        ${p ? `<p style="margin:0 0 4px"><b>${esc(p.accountName)}</b></p><p class="muted" style="margin:0">${esc(p.bank)} · ••••••${esc(String(p.account).slice(-4))}</p>
+          ${p.matches ? "" : `<div class="note red" style="margin-top:12px">The bank says this account belongs to <b>${esc(p.accountName)}</b>, not ${esc(r.name)}. Call the manager before you approve.</div>`}`
+          : `<p class="muted" style="margin:0">No account yet. The store can go live; it can't be paid until ops adds one.</p>`}
+        ${r.payoutError ? `<div class="note red" style="margin-top:12px">Paystack didn't take the account. Add it on the venue page.</div>` : ""}</div>
+      ${decide ? `<div class="card"><div class="ch"><h2>Decision</h2></div>
+        ${p && !p.matches ? `<label style="display:flex;gap:8px;align-items:flex-start;font-weight:700;margin:0 0 12px"><input type="checkbox" id="cm" style="margin-top:3px"> I've spoken to the manager. This account is theirs.</label>` : ""}
+        <button class="btn" id="ok" style="width:100%">Approve and put it live</button>
+        <label class="lb">Or send it back with what to fix</label><textarea id="note" placeholder="e.g. Rosso is ₦50,000 on their menu"></textarea>
+        <div class="row" style="margin-top:10px"><button class="btn sec" id="ret">Send back</button><button class="btn sec" id="dec">Decline</button></div></div>`
+        : venue ? `<div class="card"><button class="btn" id="openv" style="width:100%">Open the venue</button></div>` : ""}</div></div>`;
+    $("back").onclick = () => nav("requests");
+    const reload = async () => { await load("requests", "venues"); requestCard(D.requests.find((y) => y.id === r.id)); };
+    const ph = $("photo"); if (ph) ph.onclick = async () => { const q = await call({ action: "submission-photo", id: r.id }); $("photobox").innerHTML = q.ok && q.photo ? `<img src="${q.photo}" alt="Menu" style="max-width:100%;border-radius:12px;margin-top:8px">` : '<span class="faint">No photo.</span>'; };
+    const ov = $("openv"); if (ov) ov.onclick = () => venueForm(venue);
+    if (!decide) return;
+    $("ok").onclick = async () => {
+      if (p && !p.matches && !$("cm").checked) return flag($("cm").parentElement, "Tick this once you've spoken to the manager.");
+      $("ok").disabled = true;
+      const q = await call({ action: "submission-approve", id: r.id, confirmMismatch: !!(p && !p.matches && $("cm").checked) });
+      $("ok").disabled = false;
+      if (!q.ok) return toast(q.error === "mismatch" ? "Confirm the bank account first." : q.error === "not_ready" ? "It's missing " + (q.missing || []).join(", ") + "." : "Couldn't approve it.");
+      toast(q.payoutError ? "Live. Add the bank account on the venue page." : r.name + " is live."); reload();
+    };
+    $("ret").onclick = async () => {
+      if (!$("note").value.trim()) return flag($("note"), "Say what to fix. The onboarder sees this.");
+      const q = await call({ action: "submission-return", id: r.id, note: $("note").value }); if (!q.ok) return toast("Couldn't send it back.");
+      toast("Sent back to " + r.onboarderName + "."); reload();
+    };
+    $("dec").onclick = async () => {
+      const why = await dialog({ title: "Decline this store?", html: "Kept internal. The onboarder sees it as not taken.", input: "Reason", okText: "Decline", danger: true }); if (why === null) return;
+      await call({ action: "request-update", id: r.id, decline: why || "Declined" }); reload();
     };
   }
 

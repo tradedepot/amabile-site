@@ -188,6 +188,10 @@
   to = "/outside/venue.html"
   status = 200
 [[redirects]]
+  from = "/outside/onboard"
+  to = "/outside/onboard.html"
+  status = 200
+[[redirects]]
   from = "/outside/privacy"
   to = "/outside/privacy.html"
   status = 200
@@ -267,6 +271,11 @@
 [[redirects]]
   from = "https://andiamo.ng/venue"
   to = "/outside/venue.html"
+  status = 200
+  force = true
+[[redirects]]
+  from = "https://andiamo.ng/onboard"
+  to = "/outside/onboard.html"
   status = 200
   force = true
 [[redirects]]

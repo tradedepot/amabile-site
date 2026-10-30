@@ -4,6 +4,7 @@
 //   hello                            the Google client id (no sign-in needed)
 //   google {credential}              Google sign-in → session
 //   me                               who am I, and my role
+//   submission-approve {id, confirmMismatch?} | submission-return {id, note} | submission-photo {id}   stores from the onboard app
 //   team | team-save {member} | team-remove {email} | onb-save {onboarder} | onb-remove {phone} | activity   owner only
 //   venues            list all venues (with prices, bands, keys never shown)
 //   venue-save        {venue}          create or update; returns new runner/manager keys once when asked
@@ -61,6 +62,13 @@ export default async (req) => {
   if (a === "onb-save") { const r = await T.saveOnboarder(s, d.onboarder || {}, who.email); return json(r, r.ok ? 200 : 400); }
   if (a === "onb-remove") { const r = await T.removeOnboarder(s, d.phone); return json(r, r.ok ? 200 : 400); }
   if (a === "activity") return json({ ok: true, activity: await T.listActivity(s) });
+  // Stores from the onboard app: approve (creates the venue and takes it live) or send back with a note.
+  if (a === "submission-approve" || a === "submission-return") {
+    const O = await import("../lib/_outside_onboard.mjs");
+    const r = a === "submission-approve" ? await O.approveSubmission(s, d.id, { by, confirmMismatch: d.confirmMismatch === true }) : await O.returnSubmission(s, d.id, d.note, by);
+    return json(r, r.ok ? 200 : 400);
+  }
+  if (a === "submission-photo") return json({ ok: true, photo: (await s.get("menuimg/" + clean(d.id, 20)).catch(() => null)) || null });
   // Field can book visits and keep notes on a request; declining and reopening are for owner and ops.
   if (a === "request-update" && who.role === "field") { delete d.decline; delete d.reopen; }
 
