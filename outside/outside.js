@@ -109,7 +109,7 @@
     return new Promise((res) => {
       if (!navigator.geolocation) return res(null);
       navigator.geolocation.getCurrentPosition(
-        (p) => res({ lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }),
+        (p) => { const l = { lat: p.coords.latitude, lng: p.coords.longitude, acc: p.coords.accuracy }; S.lastLoc = { ...l, at: Date.now() }; res(l); },
         () => res(null), { enableHighAccuracy: true, timeout: 12000, maximumAge: 30000 });
     });
   }
@@ -523,7 +523,7 @@
     body.querySelectorAll("[data-qr]").forEach((b) => (b.onclick = () => qrFlow(b.dataset.qr)));
     body.querySelectorAll("[data-gs]").forEach((b) => (b.onclick = () => { closeSheet(); const x = S.me.sent.find((y) => y.id === b.dataset.gs); x && x.selfSend ? selfShare(x) : giftShare(x); }));
     body.querySelectorAll("[data-spots]").forEach((b) => (b.onclick = () => {
-      const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); focusSpots(S.cfg.venues.filter((v) => claimableAt(x, v)));
+      const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); whereToClaim(x);
     }));
     body.querySelectorAll("[data-more]").forEach((b) => (b.onclick = () => bottleMore(b.dataset.more)));
     body.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { const r = await api("cancel", { bottleId: b.dataset.cancel }); if (!r.ok) toast(errMsg(r.error)); await loadMe(); }));
@@ -567,7 +567,7 @@
     if (r.ok) return claimForm(b, r.venue.id, loc);
     if (r.error === "choose") return chooseVenue(r.venues, (vid) => claimForm(b, vid, loc), () => notHereYet(b));
     if (r.error === "confirm") return confirmVenue(r.venue, () => claimForm(b, r.venue.id, loc), () => notHereYet(b));
-    if (r.error === "no_venue") return notHereYet(b);
+    if (r.error === "no_venue") return noSpotHere(b);
     closeModal(); toast(errMsg(r.error));
   }
   function claimForm(b, venueId, loc) {
@@ -584,7 +584,7 @@
         if (r.error === "choose") { chooseVenue(r.venues, (vid) => send({ ...body, venueId: vid }), () => notHereYet(b)); return r; }
         if (r.error === "confirm") { confirmVenue(r.venue, () => send({ ...body, venueId: r.venue.id }), () => notHereYet(b)); return r; }
         if (r.error === "band") { topupStep(b, r, body); return r; }
-        if (r.error === "no_venue") { notHereYet(b); return r; }
+        if (r.error === "no_venue") { noSpotHere(b); return r; }
         const msg = r.error === "not_stocked" ? `${r.venue ? esc(r.venue.name) : "This venue"} doesn't stock ${esc(wineOf(b.wine).name)}. Your bottle keeps waiting.` : errMsg(r.error);
         if ($("#modalCard").contains(c.querySelector("#go"))) fail(c, msg); else toast(msg);
         return r;
@@ -596,6 +596,41 @@
       };
     });
   }
+  // Claim it found no spot on Andiamo where they are. Most people tap it from anywhere, so say why, then ask.
+  function noSpotHere(b) {
+    modal(`<h2>No Andiamo spot here</h2><p class="muted">Your bottle comes to your table at a spot on Andiamo. We couldn't find one where you are.</p>
+      <h3>Are you out right now?</h3><p class="muted">At a bar, lounge or restaurant.</p>
+      <button class="btn block" id="yes">Yes, I'm out</button><p></p><button class="btn block ghost" id="no">No, show me where to claim it</button>`, (c) => {
+      c.querySelector("#yes").onclick = () => notHereYet(b);
+      c.querySelector("#no").onclick = () => whereToClaim(b);
+    });
+  }
+  // Where a bottle can be claimed: the spots that pour it at its level or below, nearest first.
+  const kmBetween = (a, v) => { const R = 6371, r = Math.PI / 180, dLa = (v.lat - a.lat) * r, dLo = (v.lng - a.lng) * r;
+    const h = Math.sin(dLa / 2) ** 2 + Math.cos(a.lat * r) * Math.cos(v.lat * r) * Math.sin(dLo / 2) ** 2; return 2 * R * Math.asin(Math.sqrt(h)); };
+  const kmText = (k) => k < 1 ? Math.max(100, Math.round(k * 10) * 100) + " m" : (k < 10 ? k.toFixed(1) : Math.round(k)) + " km";
+  async function whereToClaim(b) {
+    if (!b) return;
+    const w = wineOf(b.wine).name, ok = S.cfg.venues.filter((v) => claimableAt(b, v));
+    // None at its level: the spots a level up still serve it with a top-up.
+    const up = ok.length ? [] : S.cfg.venues.filter((v) => v.wines.includes(b.wine));
+    const all = ok.length ? ok : up;
+    if (!all.length) return modal(`<h2>Nowhere to claim it yet</h2><p class="muted">No spot on Andiamo pours ${esc(w)} yet. We're adding spots all the time. Your bottle keeps waiting.</p>
+      <button class="btn block ghost" data-x4>OK</button>`, (c) => (c.querySelector("[data-x4]").onclick = closeModal));
+    let loc = S.lastLoc && Date.now() - S.lastLoc.at < 10 * 60e3 ? S.lastLoc : null;
+    if (!loc) { modal(`<h2>Finding spots...</h2><p class="muted">One moment.</p>`); loc = await getLocation(); }
+    const list = all.map((v) => ({ v, km: loc ? kmBetween(loc, v) : null })).sort((x, y) => (x.km == null ? 0 : x.km - y.km) || x.v.name.localeCompare(y.v.name));
+    const far = loc && list[0].km > 25;
+    const say = far ? `The nearest spot that pours ${esc(w)} is ${kmText(list[0].km)} away. Your bottle keeps waiting.`
+      : up.length ? `No ${esc(bandName(b.band))} spot pours ${esc(w)} yet. These do, a level up: top up there and it comes to your table.`
+      : `Spots that pour ${esc(w)}${loc ? ", nearest first" : ""}. Go to one and tap Claim it at your table.`;
+    modal(`<h2>${far ? "Nowhere near you yet" : "Where to claim it"}</h2><p class="muted">${say}</p>
+      <div class="list">${list.slice(0, 12).map(({ v, km }) => `<button class="item" data-v="${v.id}"><div class="bt">${A.venueArt(v.art, isNight(), 40)}</div><div class="grow" style="text-align:left"><h4>${esc(v.name)}</h4><div class="sub">${esc(v.area)}${km != null ? " · " + kmText(km) : ""}</div></div></button>`).join("")}</div>
+      <p></p><button class="btn block ghost" id="onmap">See them on the map</button>`, (c) => {
+      c.querySelectorAll("[data-v]").forEach((x) => (x.onclick = () => venueCard(x.dataset.v)));
+      c.querySelector("#onmap").onclick = () => { closeModal(); focusSpots(list.map((x) => x.v)); };
+    });
+  }
   // The spot they're at isn't on Andiamo: it pops up for the guest to show the waiter. Nothing for the guest to do.
   // Never shows what was paid. Many of these spots already sell Amabile, so it tells them the bottle is theirs to serve.
   function notHereYet(b) {
@@ -605,8 +640,8 @@
         <p class="askh">This table has a bottle of ${esc(wineOf(b.wine).label)}, already paid for.</p>
         <p>Serve it and you get your full menu price. You just need to be on Andiamo. Already selling Amabile? This is money you're leaving on the table.</p>
         <div class="qrbox">${qrSvg(url)}</div><div class="askurl">andiamo.ng/venue</div></div>
-      <button class="btn block ghost" data-x3>Keep it for another venue</button>`, (c) => {
-      c.querySelector("[data-x3]").onclick = closeModal;
+      <button class="btn block ghost" data-x3>Find a spot to claim it</button>`, (c) => {
+      c.querySelector("[data-x3]").onclick = () => whereToClaim(b);
     });
   }
   function chooseVenue(list, done, none) {
