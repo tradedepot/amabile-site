@@ -23,6 +23,7 @@
 //   glow              {force?}         venues with people outside now (cached unless force)
 //   codes | code-save {code} | code-active {code, active}   discount codes at checkout
 //   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
+//   wallet-status | wallet-request | wallet-apple-cert {file} | wallet-google {issuerId, saKey?} | wallet-reset {kind}   Wallet setup
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone, venueBand
@@ -290,6 +291,15 @@ export default async (req) => {
   if (a === "glow") return json({ ok: true, glow: await computeGlow(s, !!d.force) });
 
   if (a === "wa-status") return json({ ok: true, wa: await waStatus(s) });
+  // Wallet setup (Owner): the signing key never leaves the server; only the request for Apple does.
+  if (typeof a === "string" && a.startsWith("wallet-")) {
+    const W = await import("../lib/_outside_wallet.mjs");
+    if (a === "wallet-status") return json({ ok: true, wallet: await W.walletAdminStatus(s) });
+    if (a === "wallet-request") return json(await W.appleRequest(s));
+    if (a === "wallet-apple-cert") { const r = await W.appleCert(s, d.file); return json(r, r.ok ? 200 : 400); }
+    if (a === "wallet-google") { const r = await W.googleSetup(s, { issuerId: d.issuerId, saKey: d.saKey ? String(d.saKey).slice(0, 8000) : "" }); return json(r, r.ok ? 200 : 400); }
+    if (a === "wallet-reset") return json(await W.walletReset(s, d.kind));
+  }
   if (a === "wa-register") return json(await waRegister(d.pin));
   if (a === "wa-subscribe") return json(await waSubscribe());
   if (a === "wa-test") return json(await waTest(s, d.kind === "code" ? "code" : "bottle", d.phone));

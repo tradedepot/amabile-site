@@ -7,7 +7,7 @@
 //   POST   /api/wallet/v1/log                                           Wallet's own error reports
 // Apple calls these with "Authorization: ApplePass <token>", the token we put in the card.
 import { store, getJSON } from "../lib/_outside.mjs";
-import { WK, appleReady, authFor, addLinkOk, buildPkpass, register, unregister, updatedSince } from "../lib/_outside_wallet.mjs";
+import { WK, walletConfig, appleOn, authFor, addLinkOk, buildPkpass, register, unregister, updatedSince } from "../lib/_outside_wallet.mjs";
 
 export const config = { path: "/api/wallet/*" };
 
@@ -18,11 +18,12 @@ const passResponse = (bytes, c) => new Response(bytes, { status: 200, headers: {
   "last-modified": new Date(c.updatedAt || Date.now()).toUTCString() } });
 
 export default async (req) => {
-  if (!appleReady()) return txt(503, "Wallet is not set up yet.");
   const s = store();
+  const cfg = await walletConfig(s);
+  if (!appleOn(cfg)) return txt(503, "Wallet is not set up yet.");
   const url = new URL(req.url);
   const parts = url.pathname.replace(/^\/api\/wallet\/?/, "").split("/").filter(Boolean).map(decodeURIComponent);
-  const typeOk = (t) => t === process.env.ANDIAMO_PASS_TYPE_ID;
+  const typeOk = (t) => t === cfg.apple.passTypeId;
   const authed = (serial) => (req.headers.get("authorization") || "") === "ApplePass " + authFor(serial);
 
   try {

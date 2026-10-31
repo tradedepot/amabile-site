@@ -38,7 +38,11 @@
     clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>', cash: '<rect x="2" y="6" width="20" height="12" rx="2"/><circle cx="12" cy="12" r="3"/>',
     alert: '<path d="M12 3l10 18H2z"/><path d="M12 10v4M12 17.5v.5"/>', send: '<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>', refresh: '<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 5v6h-6"/>',
     chat: '<path d="M21 11.5a8.5 8.5 0 0 1-12.4 7.6L3 21l1.9-5.4A8.5 8.5 0 1 1 21 11.5z"/>', tick: '<path d="M5 12.5l4.5 4.5L19 7.5"/>',
-    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>'
+    copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/>',
+    wallet: '<rect x="3" y="5" width="18" height="15" rx="3"/><path d="M3 10h18"/><path d="M16 15h2"/>',
+    ext: '<path d="M14 4h6v6"/><path d="M20 4l-9 9"/><path d="M19 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V6a1 1 0 0 1 1-1h5"/>',
+    download: '<path d="M12 4v12"/><path d="M7 11l5 5 5-5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>',
+    upload: '<path d="M12 16V4"/><path d="M7 9l5-5 5 5"/><path d="M4 16v3a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-3"/>'
   };
   const ic = (n, cls = "") => `<svg class="${cls}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${ICON[n] || ""}</svg>`;
   const DKIND = {
@@ -118,9 +122,9 @@
   }
   const LOAD = {
     venues: () => call({ action: "venues" }), drops: () => call({ action: "drops" }), bottles: () => call({ action: "bottles" }),
-    ledger: () => call({ action: "ledger" }), codes: () => call({ action: "codes" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), team: () => call({ action: "team" }), activity: () => call({ action: "activity" }), wa: () => call({ action: "wa-status" })
+    ledger: () => call({ action: "ledger" }), codes: () => call({ action: "codes" }), balance: () => call({ action: "balance" }), requests: () => call({ action: "requests" }), unmet: () => call({ action: "unmet" }), glow: () => call({ action: "glow" }), team: () => call({ action: "team" }), activity: () => call({ action: "activity" }), wa: () => call({ action: "wa-status" }), wallet: () => call({ action: "wallet-status" })
   };
-  const ACT = { wa: "wa-status" };
+  const ACT = { wa: "wa-status", wallet: "wallet-status" };
   async function load(...all) {
     const keys = all.filter((k) => can(ACT[k] || k));
     const rs = await Promise.all(keys.map((k) => LOAD[k]()));
@@ -129,6 +133,7 @@
       if (k === "venues") D.venues = r.ok ? r : D.venues || { venues: [], wines: [], bands: {}, bandOrder: [] };
       else if (k === "glow") D.glow = r.ok ? r.glow : { glow: {} };
       else if (k === "wa") D.wa = r.ok ? r.wa : null;
+      else if (k === "wallet") D.wallet = r.ok ? r.wallet : null;
       else if (k === "balance") D.balance = r.ok ? r.balance : null;
       else if (k === "team") D.team = r.ok ? r : null;
       else if (k === "ledger") { D.ledger = r.ok ? r.ledger || [] : D.ledger || []; D.ledgerAuto = !!(r.ok && r.auto); }
@@ -213,9 +218,9 @@
     $("go").onclick = go; $("k").onkeydown = (e) => { if (e.key === "Enter") go(); };
     if (msg) err(msg);
   }
-  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["codes", "Codes", "codes"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"], ["team", "Team", "team"]];
+  const PAGES = [["overview", "Overview", "home"], ["drops", "Drops", "drops"], ["venues", "Venues", "venues"], ["requests", "Requests", "requests"], ["bottles", "Bottles", "bottles"], ["payouts", "Payouts", "payouts"], ["prices", "Prices", "prices"], ["codes", "Codes", "codes"], ["gaps", "Gaps", "gaps"], ["whatsapp", "WhatsApp", "chat"], ["wallet", "Wallet", "wallet"], ["team", "Team", "team"]];
   // A page shows when the person can do its main thing.
-  const PAGE_NEEDS = { overview: "venues", drops: "drop-save", venues: "venues", requests: "requests", bottles: "bottles", payouts: "ledger", prices: "bands-save", codes: "codes", gaps: "unmet", whatsapp: "wa-status", team: "team" };
+  const PAGE_NEEDS = { overview: "venues", drops: "drop-save", venues: "venues", requests: "requests", bottles: "bottles", payouts: "ledger", prices: "bands-save", codes: "codes", gaps: "unmet", whatsapp: "wa-status", wallet: "wallet-status", team: "team" };
   const myPages = () => PAGES.filter(([k]) => can(PAGE_NEEDS[k]));
   function frame() {
     root.innerHTML = `<div class="app"><aside class="side"><div class="brand"><span class="logo">Andiamo!</span><span class="by">Admin console</span></div>
@@ -250,6 +255,7 @@
       if (p === "codes") { await load("codes"); codes(opts); }
       if (p === "gaps") { await load("unmet", "venues"); gaps(); }
       if (p === "whatsapp") { await load("wa"); whatsapp(); }
+      if (p === "wallet") { await load("wallet"); wallet(); }
       if (p === "team") { await load("team", "activity"); team(); }
     } catch {}
   }
@@ -954,6 +960,74 @@
       `<div class="card">${cells.length ? `<div class="ch"><h2>${plural(total, "attempt")}</h2><span class="muted">Top of the list is where to sign a venue next.</span></div>` + cells.slice(0, 40).map((c, i) => `<div class="gap"><span class="rk">${i + 1}</span><div><b>${plural(c.n, "attempt")}</b><div class="faint">${near(c.k)}</div></div>
         <div class="bar"><i style="width:${Math.max(6, 100 * c.n / max)}%"></i></div><a class="btn sm sec" target="_blank" href="https://www.google.com/maps/search/?api=1&query=${c.k}">Open map</a></div>`).join("")
         : `<div class="empty"><b>No gaps yet.</b><br>When someone tries to claim far from every venue, the spot shows up here.</div>`}</div>`;
+  }
+
+  // ---------- wallet ----------
+  // The bottles card in Apple Wallet and Google Wallet. Set up here, never in Netlify: the signing key is made on
+  // the server and stays there; only the request goes to Apple.
+  const APPLE = { id: "https://developer.apple.com/account/resources/identifiers/add/passTypeId", cert: "https://developer.apple.com/account/resources/certificates/add" };
+  const GOOGLE = { console: "https://pay.google.com/business/console", api: "https://console.cloud.google.com/apis/library/walletobjects.googleapis.com?project=tradedepot-retail-167113" };
+  const WERR = { no_request: "Download the request first (step 2).", not_a_certificate: "That isn't a certificate. Upload the pass.cer file Apple gave you.",
+    other_request: "That certificate was made from a different request. Make a new one in Apple from the request in step 2.",
+    not_a_pass_certificate: "That isn't a Pass Type ID certificate. In Apple, choose Pass Type ID Certificate.", expired: "That certificate has expired. Make a new one in Apple.",
+    issuer: "Check the issuer ID. It's the long number at the top of the Pay & Wallet Console.", sa_key: "That key file isn't a Google service account key.",
+    google_signin: "Google didn't let the service account in. Check steps 2 and 3, then try again." };
+  const linkBtn = (href, t) => `<a class="btn sm sec" href="${href}" target="_blank" rel="noopener">${ic("ext")}${t}</a>`;
+  const copyBtn = (v) => `<button class="btn sm sec" data-copy="${esc(v)}">${ic("copy")}Copy</button>`;
+  function wallet() {
+    const w = D.wallet;
+    const acts = `<button class="btn sm sec" id="wlrefresh">${ic("refresh")}Check again</button>`;
+    if (!w) { P().innerHTML = head("Wallet", "", acts) + `<div class="card"><div class="empty"><b>Couldn't load Wallet.</b><br>Try again in a moment.</div></div>`; $("wlrefresh").onclick = () => nav("wallet"); return; }
+    const a = w.apple, g = w.google;
+    const ast = (done) => (done ? "ok" : "todo");
+    const appleSteps = [
+      { t: "Make the Andiamo pass ID in Apple", st: ast(a.on), d: `Add a <b>Pass Type ID</b>. Description <b>Andiamo</b>, identifier <code class="k">${esc(a.passTypeId)}</code>.`, act: linkBtn(APPLE.id, "Open Apple") + copyBtn(a.passTypeId) },
+      { t: "Download our request", st: ast(a.requested || a.on), d: "A small file for Apple. Our signing key stays on our server; only this request leaves it.", act: `<button class="btn sm" id="wlcsr">${ic("download")}Download request</button>` },
+      { t: "Make the certificate in Apple", st: ast(a.on), d: `Choose <b>Pass Type ID Certificate</b>, pick <b>${esc(a.passTypeId)}</b>, upload the request, then download the certificate (<b>pass.cer</b>).`, act: linkBtn(APPLE.cert, "Open Apple") },
+      { t: "Upload the certificate here", st: ast(a.on), d: a.on ? "Done. iPhones can add the card." : "The pass.cer file from Apple.", act: `<label class="btn sm${a.on ? " sec" : ""}" style="cursor:pointer">${ic("upload")}${a.on ? "Replace" : "Upload pass.cer"}<input type="file" id="wlcer" accept=".cer,.pem,.crt,application/x-x509-ca-cert,application/pkix-cert" hidden></label>` }
+    ];
+    const googleSteps = [
+      { t: "Open a Google Wallet issuer account", st: ast(g.on), d: "In the Pay & Wallet Console, open <b>Google Wallet API</b> and sign up as an issuer. The <b>Issuer ID</b> is the long number at the top.", act: linkBtn(GOOGLE.console, "Open Google") },
+      { t: "Turn on the Google Wallet API", st: ast(g.on), d: "In Google Cloud, for the project our records already use, press <b>Enable</b>.", act: linkBtn(GOOGLE.api, "Open Google Cloud") },
+      { t: "Let our service account in", st: ast(g.on), d: g.email ? `In the Pay & Wallet Console, <b>Users</b>, invite <code class="k">${esc(g.email)}</code> as <b>Developer</b>.` : "Add a service account key below first.", act: g.email ? copyBtn(g.email) : "" },
+      { t: "Enter the issuer ID", st: ast(g.on), d: `<div class="wlrow"><input id="wliss" inputmode="numeric" placeholder="3388000000012345678" value="${esc(g.issuerId)}"><button class="btn sm" id="wlgo">${g.on ? "Save" : "Turn on"}</button></div>`, act: "" }
+    ];
+    const card = (title, sub, on, steps, extra = "", top = "") => { const todo = steps.filter((x) => x.st === "todo").length;
+      return `<div class="card"${top}><div class="ready"><div class="big ${on ? "ok" : ""}">${ic(on ? "tick" : "wallet")}</div><div><h2>${title}</h2><p class="muted">${on ? sub : plural(todo, "step") + " to go. " + sub}</p></div></div>
+        <div class="chk">${steps.map((x, i) => `<div class="ci${x.st === "ok" ? " done" : ""}"><span class="st ${x.st}">${x.st === "ok" ? ic("tick") : i + 1}</span><div><b>${x.t}</b><div class="d">${x.d}</div></div><div class="act wlact">${x.act || ""}</div></div>`).join("")}</div>${extra}</div>`; };
+    const aExtra = a.on ? `<dl class="kv" style="margin-top:14px"><dt>Pass type</dt><dd>${esc(a.passTypeId)}</dd><dt>Team</dt><dd>${esc(a.teamId)}</dd><dt>Certificate valid until</dt><dd>${a.expires ? fmt(Date.parse(a.expires), { day: "numeric", month: "short", year: "numeric" }) : "·"}</dd><dt>Updates</dt><dd><code class="k">${esc(a.webService)}</code></dd></dl>` : "";
+    const gExtra = `<p class="muted" style="margin:14px 0 0">Google lets only test accounts add the card until it approves Andiamo for publishing. Ask for publishing in the console once it works.</p>
+      <details class="wlmore"><summary>Use a different service account</summary><p class="muted">Only if you'd rather not use ${esc(g.email || "the records account")}. Upload its JSON key.</p><label class="btn sm sec" style="cursor:pointer">${ic("upload")}Upload key<input type="file" id="wlsa" accept=".json,application/json" hidden></label></details>`;
+    P().innerHTML = head("Wallet", "The Andiamo! bottles card in Apple Wallet and Google Wallet. " + plural(w.cards, "card") + " made so far.", acts) +
+      `<div class="two">${card("Apple Wallet", a.on ? "iPhones can add the card." : "Then iPhones can add the card.", a.on, appleSteps, aExtra)}${card("Google Wallet", g.on ? "Android phones can add the card." : "Then Android phones can add the card.", g.on, googleSteps, gExtra, ' style="margin-top:0"')}</div>`;
+    $("wlrefresh").onclick = () => nav("wallet");
+    P().querySelectorAll("[data-copy]").forEach((b) => (b.onclick = () => { try { navigator.clipboard.writeText(b.dataset.copy).then(() => toast("Copied."), () => toast("Couldn't copy.")); } catch { toast("Couldn't copy."); } }));
+    $("wlcsr").onclick = async () => {
+      const r = await call({ action: "wallet-request" });
+      if (!r.ok) return toast("Couldn't make the request. Try again.");
+      const u = URL.createObjectURL(new Blob([r.csr], { type: "application/pkcs10" })), x = document.createElement("a");
+      x.href = u; x.download = "Andiamo.certSigningRequest"; document.body.appendChild(x); x.click(); x.remove(); setTimeout(() => URL.revokeObjectURL(u), 2000);
+      toast("Downloaded. Now make the certificate in Apple."); D.wallet.apple.requested = true; wallet();
+    };
+    const readB64 = (f) => new Promise((res) => { const fr = new FileReader(); fr.onload = () => res(String(fr.result).split(",")[1] || ""); fr.readAsDataURL(f); });
+    $("wlcer").onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      const r = await call({ action: "wallet-apple-cert", file: await readB64(f) });
+      if (!r.ok) return toast(WERR[r.error] || "Couldn't use that file.");
+      toast("Apple Wallet is on."); nav("wallet");
+    };
+    $("wlgo").onclick = async () => {
+      const r = await call({ action: "wallet-google", issuerId: $("wliss").value });
+      if (!r.ok) return flag($("wliss"), WERR[r.error] || "Couldn't save it.");
+      toast("Google Wallet is on."); nav("wallet");
+    };
+    $("wlsa").onchange = async (e) => {
+      const f = e.target.files[0]; if (!f) return;
+      if (!$("wliss").value) return flag($("wliss"), "Enter the issuer ID first.");
+      const r = await call({ action: "wallet-google", issuerId: $("wliss").value, saKey: await f.text() });
+      if (!r.ok) return toast(WERR[r.error] || "Couldn't use that key.");
+      toast("Saved. Invite " + r.email + " in the console."); nav("wallet");
+    };
   }
 
   // ---------- whatsapp ----------

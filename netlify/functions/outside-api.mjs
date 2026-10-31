@@ -113,7 +113,7 @@ export default async (req) => {
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
         venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map((v) => publicVenue(v, bands)), glow: glow.glow, drops: await liveDrops(s),
         beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", vapid: vapidPublic(), rules: { lightHours: RULES.lightHours },
-        wallet: await import("../lib/_outside_wallet.mjs").then((w) => ({ apple: w.appleReady(), google: w.googleReady() })) });
+        wallet: await import("../lib/_outside_wallet.mjs").then(async (w) => { const c = await w.walletConfig(s); return { apple: w.appleOn(c), google: w.googleOn(c) }; }) });
     }
 
     // A venue looking itself up in our records as it types its name (andiamo.ng/venue). Public: only what the
@@ -260,7 +260,8 @@ export default async (req) => {
     if (route === "wallet") {
       const w = await import("../lib/_outside_wallet.mjs");
       const kind = d.kind === "google" ? "google" : "apple";
-      if (kind === "apple" ? !w.appleReady() : !w.googleReady()) return bad("wallet_off", 503);
+      const cfg = await w.walletConfig(s);
+      if (kind === "apple" ? !w.appleOn(cfg) : !w.googleOn(cfg)) return bad("wallet_off", 503);
       const c = await w.cardFor(s, me);
       return json({ ok: true, url: kind === "apple" ? w.addLink(c.serial) : await w.googleSaveLink(s, c) });
     }

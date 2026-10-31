@@ -492,17 +492,21 @@
   // The bottles card in Apple Wallet or Google Wallet. It comes up on the lock screen near a spot that can serve them.
   const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
   const isAndroid = () => /Android/i.test(navigator.userAgent);
-  function walletKind() {
+  // Which Wallet buttons to show: the phone's own, or both where we can't tell. None once the card is on the phone.
+  function walletKinds() {
     const w = (S.cfg && S.cfg.wallet) || {}, mine = (S.me && S.me.wallet) || {};
-    if (isIOS() && w.apple && !mine.apple) return "apple";
-    if (isAndroid() && w.google && !mine.google) return "google";
-    return null;
+    const apple = w.apple && !mine.apple, google = w.google && !mine.google;
+    if (isIOS()) return apple ? ["apple"] : [];
+    if (isAndroid()) return google ? ["google"] : [];
+    return [apple && "apple", google && "google"].filter(Boolean);
   }
-  const WALLET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M3 13h18"/><rect x="13" y="13" width="8" height="7" rx="2" fill="currentColor"/></svg>';
+  // Apple's and Google's own buttons, as their guidelines ask: never redrawn.
+  const BADGE = { apple: { src: "/outside/img/wallet/add-to-apple-wallet.svg", alt: "Add to Apple Wallet" }, google: { src: "/outside/img/wallet/add-to-google-wallet.svg", alt: "Add to Google Wallet" } };
   function walletCard() {
-    const k = walletKind(); if (!k) return "";
-    return `<div class="wallet"><div class="grow"><b>Keep your bottles in Wallet.</b><small>It comes up on your lock screen when you're near a spot that can serve them.</small></div>
-      <button class="wbtn" data-wallet="${k}">${WALLET_ICON}<span>Add to ${k === "apple" ? "Apple" : "Google"} Wallet</span></button></div>`;
+    const ks = walletKinds(); if (!ks.length) return "";
+    return `<div class="wallet"><div class="wtop"><div class="wpass" aria-hidden="true"><i>Andiamo!</i><span></span><span></span><b><svg viewBox="0 0 21 21"><path fill="#2B1E17" d="M0 0h7v7H0zM2 2v3h3V2zM14 0h7v7h-7zm2 2v3h3V2zM0 14h7v7H0zm2 2v3h3v-3zM9 0h2v2H9zm0 4h3v3H9zm-1 4h2v3H8zm4 1h3v2h-3zm5 -1h2v2h-2zM9 13h2v2H9zm4 0h2v4h-2zm4 1h4v2h-4zM9 17h3v4H9zm8 2h4v2h-4z"/></svg></b></div>
+      <div class="grow"><b>Keep your bottles in your Wallet.</b><small>It comes up on your lock screen when you're near a spot that can serve them.</small></div></div>
+      <div class="wbadges">${ks.map((k) => `<button class="wbadge" data-wallet="${k}" aria-label="${BADGE[k].alt}"><img src="${BADGE[k].src}" alt="${BADGE[k].alt}" onerror="this.parentNode.classList.add('txt');this.replaceWith(document.createTextNode(this.alt))"></button>`).join("")}</div></div>`;
   }
   async function addToWallet(k, btn) {
     btn.disabled = true;

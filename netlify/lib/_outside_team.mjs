@@ -31,7 +31,7 @@ export const can = (role, action) => (P[action] || ["owner"]).includes(role);
 // What the console may show this person: "*" for the owner, else the actions their role allows.
 export const allowedFor = (role) => (role === "owner" ? "*" : Object.keys(P).filter((k) => P[k].includes(role)));
 // Actions that only read. Everything else goes in the activity log.
-const READS = new Set(["venues", "banks", "glow", "drops", "unmet", "requests", "bottles", "bottle", "ledger", "balance", "codes", "outlet-search", "outlet-get", "payout-resolve", "me", "team", "activity", "wa-status", "wa-test-status", "submission-photo"]);
+const READS = new Set(["venues", "banks", "glow", "drops", "unmet", "requests", "bottles", "bottle", "ledger", "balance", "codes", "outlet-search", "outlet-get", "payout-resolve", "me", "team", "activity", "wa-status", "wa-test-status", "wallet-status", "submission-photo"]);
 export const isWrite = (a) => !READS.has(a);
 
 // ---------- the team list ----------

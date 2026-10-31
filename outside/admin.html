@@ -380,6 +380,15 @@ code.k { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; backgro
 .nudge { animation: nudge .32s ease-in-out; }
 @keyframes nudge { 20% { transform: translateX(-6px); } 40% { transform: translateX(6px); } 60% { transform: translateX(-4px); } 80% { transform: translateX(3px); } }
 @media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
+
+/* Wallet setup */
+.wlact { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
+.wlact .btn { white-space: nowrap; }
+.wlrow { display: flex; gap: 8px; margin-top: 8px; }
+.wlrow input { flex: 1; min-width: 0; font: inherit; font-size: 15px; padding: 10px 12px; border: 1.5px solid var(--line); border-radius: 12px; background: #fff; }
+.wlmore { margin-top: 12px; } .wlmore summary { cursor: pointer; font-weight: 800; font-size: 14px; color: var(--ink-2); } .wlmore p { margin: 8px 0; }
+.chk code.k { font-size: 13px; }
+@media (max-width: 700px) { .chk .ci { grid-template-columns: 30px minmax(0, 1fr); } .chk .ci .wlact { grid-column: 2; justify-content: flex-start; } }
 </style>
 </head>
 <body>

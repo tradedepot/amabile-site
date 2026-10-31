@@ -381,11 +381,19 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .codesec .tofield input { text-transform: uppercase; }
 
 /* Wallet: the bottles card in Apple Wallet or Google Wallet */
-.wallet { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 12px 0 4px; border: 3px solid var(--rule); border-radius: 18px; background: #fff; text-align: left; }
+.wallet { margin: 14px 0 4px; padding: 14px; border: 3px solid var(--rule); border-radius: 20px; background: #fff; text-align: left; }
+.wallet .wtop { display: flex; align-items: center; gap: 14px; }
 .wallet .grow { min-width: 0; flex: 1; }
-.wallet b { display: block; font-size: 14.5px; line-height: 1.25; color: var(--ink); }
-.wallet small { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 2px; line-height: 1.3; }
-.wbtn { flex: none; display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; border: 0; border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 800; font-size: 13px; line-height: 1.1; cursor: pointer; max-width: 150px; text-align: left; }
-.wbtn svg { width: 20px; height: 20px; flex: none; }
-.wbtn:disabled { opacity: .6; }
-@media (max-width: 360px) { .wallet { flex-direction: column; align-items: stretch; } .wbtn { max-width: none; justify-content: center; } }
+.wallet b { display: block; font-size: 15px; line-height: 1.25; color: var(--ink); }
+.wallet small { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 3px; line-height: 1.35; }
+.wpass { flex: none; position: relative; width: 58px; height: 74px; border-radius: 9px; background: var(--wine, #E74529); box-shadow: 0 3px 0 rgba(43, 30, 23, .25); transform: rotate(-6deg); overflow: hidden; }
+.wpass i { position: absolute; left: 6px; top: 6px; font-style: normal; font-family: var(--serif); color: #fff; font-size: 11px; line-height: 1; }
+.wpass span { position: absolute; left: 6px; height: 3px; border-radius: 2px; background: rgba(255, 233, 214, .75); }
+.wpass span:nth-of-type(1) { top: 22px; width: 26px; } .wpass span:nth-of-type(2) { top: 29px; width: 18px; }
+.wpass b { position: absolute; left: 50%; bottom: 7px; width: 26px; height: 26px; margin-left: -13px; border-radius: 4px; background: #fff; padding: 3px; box-sizing: border-box; }
+.wpass b svg { width: 100%; height: 100%; display: block; }
+.wbadges { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 12px; }
+.wbadge { padding: 0; border: 0; background: none; cursor: pointer; line-height: 0; border-radius: 10px; }
+.wbadge img { height: 44px; width: auto; display: block; }
+.wbadge:disabled { opacity: .6; }
+.wbadge.txt { line-height: 1; height: 44px; padding: 0 16px; border-radius: 10px; background: #000; color: #fff; font: inherit; font-weight: 800; font-size: 14px; }
