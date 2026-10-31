@@ -929,6 +929,21 @@
     closeSheet();
     const st = resume || { mode: pre.friend ? "light" : pre.table ? "table" : "number", friend: pre.friend || null, table: pre.table || "", to: "", forLabel: "", wine: null, band: "lounge", note: "", anon: false };
     const out = S.me ? S.me.circle.filter((c) => c.out) : [];
+    // Your people, to pick from: anyone you've added or swapped bottles with. Those outside now come first.
+    const ppl = S.me ? S.me.circle.filter((c) => c.key && c.name).sort((a, b) => (b.out - a.out) || a.name.localeCompare(b.name)) : [];
+    const masked = (n) => { const d = String(n || "").replace(/\D/g, "").replace(/^234/, "0"); return d.length > 7 ? d.slice(0, 4) + " *** " + d.slice(-4) : n; };
+    const initials = (n) => esc(String(n || "?").trim().split(/\s+/).slice(0, 2).map((w) => w[0]).join("").toUpperCase());
+    // Their number: from your contacts first, then your people, typing it last.
+    const toNumber = () => {
+      if (st.picked) return `<div class="to-card"><div class="av">${st.picked.avatar ? A.avatar(st.picked.avatar, 48) : `<span class="ini">${initials(st.picked.name)}</span>`}</div>
+        <div class="grow"><b>${esc(st.picked.name)}</b><small>${esc(masked(st.toFull || st.to))}</small></div><button class="link" id="unpick">Change</button></div>`;
+      const typing = st.typing || (!hasPicker() && !ppl.length);
+      if (typing) return `<div class="tofield">${phoneField("to", st.to)}</div>
+        ${hasPicker() || ppl.length ? `<button class="link tolink" id="untype">${hasPicker() ? "Choose from your contacts instead" : "Choose from your people instead"}</button>` : ""}`;
+      return `${hasPicker() ? `<button class="pickc" id="pick"><span class="pi">${ICON.people}</span><span class="grow"><b>Choose from your contacts</b><small>Whoever it's for</small></span><span class="chev">›</span></button>` : ""}
+        ${ppl.length ? `<div class="peeps"><div class="plab">Your people</div><div class="prow">${ppl.map((c) => `<button class="pchip${c.out ? " out" : ""}" data-pp="${c.key}"><span class="av">${A.avatar(c.avatar || {}, 44)}${c.out ? "<i></i>" : ""}</span><span class="nm">${esc(c.name.split(" ")[0])}</span></button>`).join("")}</div></div>` : ""}
+        <button class="link tolink" id="type">Type a number instead</button>`;
+    };
     const draw = () => {
       const wines = st.mode === "light" ? S.cfg.wines.filter((w) => (st.friend.wines || []).includes(w.id)) : S.cfg.wines.filter((w) => anyBand(w.id));
       if (!st.wine || !wines.some((w) => w.id === st.wine)) st.wine = wines[0] && wines[0].id;
@@ -945,8 +960,7 @@
         : `<div class="seg"><button class="${st.mode === "number" ? "on" : ""}" data-m="number">Their number</button><button class="${st.mode === "link" ? "on" : ""}" data-m="link">Instagram or Snap</button></div>
            ${st.mode === "link" ? `<div class="tofield"><input id="forl" maxlength="40" autocomplete="off" placeholder="Their name, e.g. Tolu" value="${esc(st.forLabel)}"></div>
              <p class="hint">You'll get a sealed card to send to them on Instagram or Snapchat.</p>`
-           : `<div class="tofield">${phoneField("to", st.to)}${hasPicker() ? `<button class="btn small ghost" id="pick">Contacts</button>` : ""}</div>
-           ${out.length ? `<div class="outrow"><span>Outside now</span>${out.map((c) => `<button class="ochip" data-f="${c.key}"><span class="av">${A.avatar(c.avatar, 26)}</span>${esc(c.name)}</button>`).join("")}</div>` : ""}`}`;
+           : toNumber()}`;
       const bands = st.mode === "number" || st.mode === "link" ? S.cfg.bandOrder.filter((b) => bandPrice(b, st.wine)) : [];
       return `<h2>Send an Amabile</h2>
         <div class="sec"><div class="lab">To</div>${who}</div>
@@ -989,14 +1003,30 @@
       const cdi = c.querySelector("#codein"); if (cdi) cdi.onkeydown = (e) => { if (e.key === "Enter") { e.preventDefault(); applyCode(); } };
       if (st.autocode) { delete st.autocode; applyCode(); }
       const pick = c.querySelector("#pick");
-      if (pick) pick.onclick = async () => { try { const [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); if (ct && ct.tel && ct.tel[0]) { c.querySelector("#to").value = ct.tel[0]; redraw(); } } catch {} };
+      if (pick) pick.onclick = async () => {
+        let ct; try { [ct] = await navigator.contacts.select(["tel", "name"], { multiple: false }); } catch { return; }
+        if (!ct || !ct.tel || !ct.tel.length) return;
+        const tel = ct.tel.map(e164).find(Boolean), name = String((ct.name || [])[0] || "").trim();
+        // A number we can't read (no country code, say): drop it in the field to fix.
+        if (!tel) { keep(); st.typing = true; st.to = ct.tel[0]; st.picked = null; redraw(); return flag(document.querySelector("#to"), errMsg("phone")); }
+        keep(); st.picked = { name: name || masked(tel) }; st.to = tel; st.toFull = tel; st.toName = name; st.typing = false; redraw();
+      };
+      c.querySelectorAll("[data-pp]").forEach((b) => (b.onclick = () => {
+        const p = ppl.find((x) => x.key === b.dataset.pp); if (!p) return;
+        keep();
+        if (p.out) { st.mode = "light"; st.friend = p; return redraw(); } // outside now: straight to their table
+        st.picked = { name: p.name, avatar: p.avatar }; st.to = "+" + p.key; st.toFull = st.to; st.toName = ""; st.typing = false; redraw();
+      }));
+      const unp = c.querySelector("#unpick"); if (unp) unp.onclick = () => { keep(); st.picked = null; st.to = ""; st.toFull = ""; st.toName = ""; redraw(); };
+      const ty = c.querySelector("#type"); if (ty) ty.onclick = () => { keep(); st.typing = true; redraw(); setTimeout(() => { const i = document.querySelector("#to"); if (i) i.focus(); }, 50); };
+      const unt = c.querySelector("#untype"); if (unt) unt.onclick = () => { keep(); st.typing = false; st.to = ""; st.toFull = ""; redraw(); };
       c.querySelector("#pay").onclick = async () => {
         keep();
-        if (st.mode === "number" && !e164(st.toFull || st.to)) return flag(c.querySelector("#to"), String(st.to || "").trim() ? errMsg("phone") : "Add their number.");
+        if (st.mode === "number" && !e164(st.toFull || st.to)) return flag(c.querySelector("#to") || c.querySelector("#pick") || c.querySelector(".prow") || c.querySelector("#type"), String(st.to || "").trim() ? errMsg("phone") : c.querySelector("#to") ? "Add their number." : "Choose who it's for.");
         if (st.mode === "link" && !String(st.forLabel || "").trim()) return flag(c.querySelector("#forl"), "Add their name, so the card is for them.");
         if (!S.me) return signIn(() => sendFlow({}, { ...st, autopay: true }), WHY.pay);
         const body = { mode: st.mode, wine: st.wine, note: st.note, anon: st.anon };
-        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return flag(c.querySelector("#to"), errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; if (st.self) { body.self = true; body.anon = false; } }
+        if (st.mode === "number") { if (!e164(st.toFull || st.to)) return flag(c.querySelector("#to"), errMsg("phone")); body.to = st.toFull || st.to; body.band = st.band; if (st.picked && st.toName) body.toName = st.toName; if (st.self) { body.self = true; body.anon = false; } }
         if (st.mode === "link") { body.forLabel = st.forLabel; body.band = st.band; body.anon = false; }
         if (st.mode === "light") body.toKey = st.friend.key;
         if (st.mode === "table") body.table = st.table;
@@ -1060,11 +1090,11 @@
       ${x.out ? `<button class="btn small" data-sendto="${x.key}">Send</button>` : ""}
       ${x.key ? `<button class="link" data-hide="${x.key}" data-level="${x.level === "hidden" ? "visible" : "hidden"}">${x.level === "hidden" ? "Unhide" : "Hide"}</button>` : ""}</div>`;
     const nOut = people.filter((x) => x.out).length;
-    return `<h2>Your people</h2><p class="muted">Friends from your contacts who are on Andiamo and have your number too. No one can see where you are. They just know when you're outside.</p>
+    return `<h2>Your people</h2><p class="muted">Your contacts on Andiamo, and anyone you've sent a bottle to or got one from. No one can see where you are. They just know when you're outside.</p>
       <div class="row" style="flex-wrap:wrap;gap:8px;margin:10px 0">${hasPicker() ? `<button class="btn small" id="pickMany">Pick from contacts</button>` : ""}
       <button class="btn small ghost" id="addNum">Add a number</button><button class="btn small ghost" id="share">Share my link</button></div>
       ${people.length ? `<h3>${nOut ? nOut + " outside now" : "Nobody outside right now"}</h3><div class="list">${people.map(row).join("")}</div>` : `<p class="muted">Nobody yet. Pick friends from your contacts or share your link.</p>`}
-      ${pending.length ? `<h3>Waiting for them</h3><div class="list">${pending.map((x) => `<div class="item"><div class="bt av">${A.avatar({}, 44)}</div><div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">They need to add you back, or join Outside</div></div></div>`).join("")}</div>` : ""}`;
+      ${pending.length ? `<h3>Waiting for them</h3><div class="list">${pending.map((x) => `<div class="item"><div class="bt av">${A.avatar({}, 44)}</div><div class="grow"><h4>${esc(x.name || x.phone)}</h4><div class="sub">${!x.name ? "Not on Andiamo yet" : x.pending ? "They need to add you back" : "Hasn't shared their light with you yet"}</div></div></div>`).join("")}</div>` : ""}`;
   }
   function bindFriends(body) {
     const pm = body.querySelector("#pickMany");

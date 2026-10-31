@@ -4,7 +4,7 @@
 // The sender's "For" line is private: shown only on the opening, never in the link preview or a share card.
 import nodeCrypto from "node:crypto";
 import { K, getJSON, clean, wine, maskPhone, SITE, sendBottleNotice } from "./_outside.mjs";
-import { saveBottle } from "./_outside_flow.mjs";
+import { saveBottle, connectPeople } from "./_outside_flow.mjs";
 
 const ALPHA = "abcdefghjkmnpqrstuvwxyz23456789";
 const newCode = () => Array.from(nodeCrypto.randomBytes(9), (x) => ALPHA[x % ALPHA.length]).join("");
@@ -95,6 +95,7 @@ export async function acceptGift(s, me, player, code) {
   b.status = "waiting"; b.acceptedAt = Date.now();
   await s.setJSON(K.inbox(me, b.id), { id: b.id, at: b.createdAt });
   await saveBottle(s, b);
+  await connectPeople(s, b.from, me).catch(() => {});
   // From here it is Amabile's moment: the same WhatsApp a number send gets.
   const r = await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
   b.notice = { ok: !!(r && r.ok), at: Date.now(), skip: r && r.skip };

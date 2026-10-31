@@ -32,6 +32,18 @@ export function bagView(b) {
     table: b.table || null, ticketId: b.ticketId || null, createdAt: b.createdAt };
 }
 
+// A bottle makes two people friends. The sender chose this, so the person they sent to sees their light.
+// The person receiving didn't, so they're in each other's friends but the sender doesn't see their light
+// until they choose to share it (Unhide). Never for anonymous bottles, never past a block, never over an
+// edge someone already set.
+export async function connectPeople(s, from, to, { anon = false } = {}) {
+  if (!from || !to || from === to || anon) return;
+  if ((await getJSON(s, K.block(to, from))) || (await getJSON(s, K.block(from, to)))) return;
+  const at = Date.now();
+  if (!(await getJSON(s, K.circle(from, to)))) await s.setJSON(K.circle(from, to), { other: to, level: "visible", source: "bottle", at });
+  if (!(await getJSON(s, K.circle(to, from)))) await s.setJSON(K.circle(to, from), { other: from, level: "hidden", source: "bottle", at });
+}
+
 export async function saveBottle(s, b) {
   b.updatedAt = Date.now();
   // A bottle that lands, gets served or moves on changes its recipient's Wallet card.
@@ -78,6 +90,7 @@ export async function markBottlePaid(s, b, tx, via) {
     b.status = "on_way"; b.ticketId = t.id; b.claimedAt = Date.now();
     await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
     await saveBottle(s, b);
+    await connectPeople(s, b.from, b.to, { anon: b.anon }).catch(() => {});
     const from = b.anon ? "Someone" : (b.fromName || "A friend");
     // WhatsApp and a browser push, side by side.
     const { bottleOnWayPush } = await import("./_outside_push.mjs");
@@ -98,6 +111,7 @@ export async function markBottlePaid(s, b, tx, via) {
   b.status = "waiting";
   await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
   await saveBottle(s, b);
+  await connectPeople(s, b.from, b.to, { anon: b.anon }).catch(() => {});
   // The sender shares it on WhatsApp themselves: no message from Andiamo, only the push if they have Andiamo already.
   const r = b.selfSend
     ? await import("./_outside_push.mjs").then((m) => m.bottleWaitingPush(b)).then((p) => ({ ok: false, skip: "self", push: !!(p && p.ok) })).catch(() => ({ ok: false, skip: "self" }))

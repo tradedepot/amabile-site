@@ -322,6 +322,8 @@ export default async (req) => {
           if (d.self === true) { const { attachInvite } = await import("../lib/_outside_gift.mjs"); await attachInvite(s, b); }
         }
         b.to = toPhone; b.toMasked = b.toFirst || maskPhone(toPhone);
+        // The name they're saved as in the sender's contacts: shown only to the sender.
+        if (mode === "number" && d.toName) b.toName = clean(d.toName, 30);
       } else {
         // Send to a table in the same venue as me.
         const l = await getJSON(s, K.light(me));
@@ -509,12 +511,13 @@ export default async (req) => {
       if (await getJSON(s, K.block(to, me))) return bad("cant_send", 403);
       (b.history = b.history || []).push({ to: b.to, back: b.returnedAt || b.declinedAt || null });
       if (b.giftCode) await s.delete(K.gift(b.giftCode)).catch(() => {});
-      for (const k of ["selfSend", "giftCode", "shareTrack", "sharedAt", "shares", "openedAt", "openedByThem", "noticeFallback", "senderTold", "noticeRetries", "returnedAt", "declinedAt", "via"]) delete b[k];
+      for (const k of ["toName", "selfSend", "giftCode", "shareTrack", "sharedAt", "shares", "openedAt", "openedByThem", "noticeFallback", "senderTold", "noticeRetries", "returnedAt", "declinedAt", "via"]) delete b[k];
       const them = await getJSON(s, K.player(to));
       b.to = to; b.toFirst = them && them.name || ""; b.toMasked = b.toFirst || maskPhone(to);
       b.status = "waiting"; b.resentAt = Date.now();
       await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
       await saveBottle(s, b);
+      { const { connectPeople } = await import("../lib/_outside_flow.mjs"); await connectPeople(s, me, to, { anon: b.anon }).catch(() => {}); }
       const { sendBottleNotice } = await import("../lib/_outside.mjs");
       const r = await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
       b.notice = { ok: !!(r && r.ok), at: Date.now(), skip: r && r.skip };
@@ -532,6 +535,7 @@ export default async (req) => {
       b.anon = false; b.status = "waiting"; b.passedAt = Date.now();
       await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
       await saveBottle(s, b);
+      { const { connectPeople } = await import("../lib/_outside_flow.mjs"); await connectPeople(s, me, to).catch(() => {}); }
       const { sendBottleNotice } = await import("../lib/_outside.mjs");
       await sendBottleNotice(b).catch(() => {});
       return json({ ok: true });
@@ -576,7 +580,8 @@ export default async (req) => {
           if (other) {
             matched++;
             const existing = await getJSON(s, K.circle(me, "+" + other));
-            if (!existing) await s.setJSON(K.circle(me, "+" + other), { other: "+" + other, level: "visible", source: "contacts", at: Date.now() });
+            // Adding someone yourself shares your light with them, even if a bottle had already made you friends.
+            if (!existing || (existing.source === "bottle" && existing.level === "hidden")) await s.setJSON(K.circle(me, "+" + other), { other: "+" + other, level: "visible", source: "contacts", at: Date.now() });
           } else {
             const list = (await getJSON(s, K.waitingFor(h))) || [];
             if (!list.includes(phoneKey(me))) { list.push(phoneKey(me)); await s.setJSON(K.waitingFor(h), list.slice(-200)); }
