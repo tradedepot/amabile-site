@@ -48,7 +48,11 @@ async function fromSalesData() {
     return rows.map((r) => ({ id: String(r.id), name: String(r.name || "").trim(), type: r.type || "", lga: r.lga || "", state: r.state || "", street: /^(na|n\/a|nil|none|-)$/i.test(String(r.street || "").trim()) ? "" : String(r.street || "").trim(),
       contactPerson: String(r.contactPerson || "").trim(), contactPhone: r.contactPhone || "", lat: typeof r.lat === "number" ? r.lat : null, lng: typeof r.lng === "number" ? r.lng : null,
       lastBought: r.lastBought || null, cases: r.cases != null ? Number(r.cases) : 0 })).filter((r) => r.name);
-  } catch (e) { console.warn("outside outlets", String(e).slice(0, 300)); return null; }
+  } catch (e) {
+    // Name the account in the log (an address, not a secret), so a permission error says who needs the access.
+    let who = ""; try { who = JSON.parse(key).client_email || ""; } catch {}
+    console.warn("outside outlets", who, String(e).slice(0, 300)); return null;
+  }
 }
 
 let mem = null;
