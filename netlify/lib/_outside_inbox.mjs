@@ -2,7 +2,7 @@
 // Someone messages the Outside number -> we keep it -> it lands in #outside-inbox, one thread per person.
 // Ops reply in that thread -> it goes to their WhatsApp (only within 24 hours of their last message: WhatsApp's rule).
 // Our copy of every message is the record. Slack's free plan hides history after 90 days; that's fine.
-import { store, K, getJSON, listKeys, fetchAll, levelFor, wine, sendText, waMedia, phoneKey, now, SITE, TZ_OFFSET_MS } from "./_outside.mjs";
+import { store, K, getJSON, listKeys, fetchAll, levelFor, wine, sendText, waMedia, phoneKey, maskPhone, now, SITE, TZ_OFFSET_MS } from "./_outside.mjs";
 import * as S from "./_outside_slack.mjs";
 
 const HOUR = 3600 * 1000, DAY = 24 * HOUR;
@@ -149,6 +149,8 @@ export async function handleInbound(value) {
 export async function handleStatuses(value) {
   const s = store();
   for (const st of value.statuses || []) {
+    // One line per delivery update, so a code that "never arrived" can be traced in the function logs.
+    console.log("wa status", st.status, maskPhone("+" + (st.recipient_id || "")), (st.pricing && st.pricing.category) || "", (st.errors || []).map((e) => e.code + " " + ((e.error_data && e.error_data.details) || e.title || "")).join("; ").slice(0, 200));
     if (st.status !== "failed") continue;
     const why = (st.errors || []).map((e) => (e.error_data && e.error_data.details) || e.title || e.message).filter(Boolean).join("; ");
     console.warn("whatsapp failed", st.recipient_id, why.slice(0, 300));
