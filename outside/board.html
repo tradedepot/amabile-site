@@ -433,7 +433,7 @@
       topup: `This bottle is for cheaper spots. They can top up ${naira(r.topup)} on their phone, then it appears here.`,
       not_stocked: `This venue doesn't have ${esc(WINE[r.wine] || "this wine")} on the board. They keep the bottle for another night.`,
       qr_expired: "That QR has expired. Ask them to show a fresh one.", qr_used: "That bottle has already been claimed.",
-      qr_unknown: "That isn't an Andiamo bottle code.", paused: "Claims are paused here. A manager can resume them."
+      qr_unknown: "That isn't an Andiamo bottle code.", wallet_none: "None of their bottles can be served here. They keep them for another night.", paused: "Claims are paused here. A manager can resume them."
     }[r.error] || "Couldn't claim it. Try again.";
     modal(`<h2>Not this time</h2><p style="font-size:18px">${msg}</p><div class="stack"><button class="btn go" id="ag">Scan another</button><button class="btn" id="cl">Close</button></div>`, (c) => {
       c.querySelector("#ag").onclick = scanner; c.querySelector("#cl").onclick = close;

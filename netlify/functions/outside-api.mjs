@@ -18,6 +18,7 @@
 //   GET  room                        players visible in the same venue
 //   POST drop {dropId, lat, lng, acc, tent?, table, passTo?}
 //   POST push {sub} | push {off, endpoint}   browser notifications on this phone (alongside WhatsApp)
+//   POST wallet {kind: apple|google}  → a link that adds the bottles card to Apple Wallet or Google Wallet
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, phoneE164, phoneKey, maskPhone, sessionToken, sessionFrom,
   verify, rid, code4, WINES, wine, BAND_ORDER, BAND_NAMES, getBands, bandPrice, bandRank, venuesNear, allVenues,
@@ -111,7 +112,8 @@ export default async (req) => {
       const [bands, venues, glow] = await Promise.all([getBands(s), allVenues(s), computeGlow(s)]);
       return json({ ok: true, site: SITE, wines: WINES, bands, bandOrder: BAND_ORDER, bandNames: BAND_NAMES,
         venues: (await venuesByPopularity(s, venues.filter((v) => v.active))).map((v) => publicVenue(v, bands)), glow: glow.glow, drops: await liveDrops(s),
-        beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", vapid: vapidPublic(), rules: { lightHours: RULES.lightHours } });
+        beacons: BEACONS, levels: LEVELS, paystackKey: process.env.PAYSTACK_PUBLIC_KEY || "", vapid: vapidPublic(), rules: { lightHours: RULES.lightHours },
+        wallet: await import("../lib/_outside_wallet.mjs").then((w) => ({ apple: w.appleReady(), google: w.googleReady() })) });
     }
 
     // A venue looking itself up in our records as it types its name (andiamo.ng/venue). Public: only what the
@@ -249,8 +251,18 @@ export default async (req) => {
       return json({ ok: true, player: { ...publicPlayer(player), phone: maskPhone(me), invite: player.hash || numberHash(me), nights: (player.nights || []).length },
         bag: bag.map(bagView), sent, light: lightIsOn(light) ? { venueId: light.venueId, table: light.table, until: light.until, visible: !!light.visible, manual: !!light.manual } : null,
         circle, tickets: [...await openTicketsFor(s, me, bag), ...await dropTicketFor(s, light)], night: nightKey(),
+        wallet: await import("../lib/_outside_wallet.mjs").then((w) => w.walletState(s, me)),
         // Remembered from visit to visit: each visit pushes the 90 days out again (re-issued at most once a day).
         token: renewSession(req, me) });
+    }
+
+    // The bottles card in Apple Wallet or Google Wallet: a link the phone opens to add it.
+    if (route === "wallet") {
+      const w = await import("../lib/_outside_wallet.mjs");
+      const kind = d.kind === "google" ? "google" : "apple";
+      if (kind === "apple" ? !w.appleReady() : !w.googleReady()) return bad("wallet_off", 503);
+      const c = await w.cardFor(s, me);
+      return json({ ok: true, url: kind === "apple" ? w.addLink(c.serial) : await w.googleSaveLink(s, c) });
     }
 
     if (route === "send") {
@@ -483,8 +495,8 @@ export default async (req) => {
       await s.delete(K.inbox(me, b.id));
       b.passedFrom = me; b.to = to; b.fromName = player.name + " (from " + (b.anon ? "someone" : b.fromName) + ")";
       b.anon = false; b.status = "waiting"; b.passedAt = Date.now();
-      await saveBottle(s, b);
       await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
+      await saveBottle(s, b);
       const { sendBottleNotice } = await import("../lib/_outside.mjs");
       await sendBottleNotice(b).catch(() => {});
       return json({ ok: true });

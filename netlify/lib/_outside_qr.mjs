@@ -2,7 +2,7 @@
 // The scan is the location check: the runner's board belongs to one venue, so no phone location is needed.
 // The QR carries only a short code. It lasts 20 minutes and works once.
 import {
-  K, getJSON, clean, getBands, claimCheck, newTicket, saveTicket, pickBeacon, venuePrice, publicVenue, boardView, SITE, BAND_NAMES
+  K, getJSON, clean, getBands, claimCheck, newTicket, saveTicket, pickBeacon, venuePrice, publicVenue, boardView, SITE, BAND_NAMES, listKeys, fetchAll
 } from "./_outside.mjs";
 import { saveBottle, lightOn } from "./_outside_flow.mjs";
 import nodeCrypto from "node:crypto";
@@ -43,6 +43,14 @@ export async function scanQr(s, venue, rawCode, runner) {
   const code = normCode(rawCode);
   const r = code.length === 6 ? await getJSON(s, K.qr(code)) : null;
   if (!r) return { ok: false, error: "qr_unknown" };
+  // The QR on a Wallet card stands for the player, not one bottle: serve the oldest one this venue can pour.
+  if (r.kind === "wallet" && r.status === "ready") {
+    if (Date.now() > r.exp) return { ok: false, error: "qr_expired" };
+    if (venue.paused) return { ok: false, error: "paused" };
+    const pick = await walletPick(s, r.phone, venue);
+    if (!pick.b) return pick.topup ? { ok: false, error: "topup", topup: pick.topup, wine: pick.wine } : { ok: false, error: "wallet_none" };
+    r.bottleId = pick.b.id;
+  }
   const b = await getJSON(s, K.bottle(r.bottleId));
   if (!b || b.to !== r.phone) return { ok: false, error: "qr_unknown" };
   // Scanned again at the same venue after claiming: show the same ticket.
@@ -71,8 +79,24 @@ export async function scanQr(s, venue, rawCode, runner) {
   await saveBottle(s, b);
   r.status = "claimed"; r.venueId = venue.id; r.ticketId = t.id; r.claimedAt = Date.now();
   await s.setJSON(K.qr(code), r);
+  // A Wallet code works once: the card gets a fresh one (the bottle's change already refreshed it).
+  if (r.kind === "wallet") { const { touchCard } = await import("./_outside_wallet.mjs"); await touchCard(s, r.phone); }
   if (!r.quiet) await lightOn(s, r.phone, venue.id, "", { beacon: t.beacon });
   return { ok: true, ticket: boardView(t) };
+}
+
+// The bottle a Wallet card's QR stands for at this venue: the oldest waiting one it can pour without a top-up.
+async function walletPick(s, phone, venue) {
+  const keys = await listKeys(s, K.inboxPrefix(phone));
+  const bag = (await fetchAll(s, keys.map((k) => K.bottle(k.split("/").pop())))).filter((b) => b && b.status === "waiting" && b.to === phone).sort((a, b) => a.createdAt - b.createdAt);
+  const bands = await getBands(s);
+  let topup = null;
+  for (const b of bag) {
+    const chk = claimCheck(bands, b, venue);
+    if (chk.ok) return { b };
+    if (chk.reason === "band" && chk.topup && (!topup || chk.topup < topup.topup)) topup = { topup: chk.topup, wine: b.wine };
+  }
+  return topup || {};
 }
 
 // Top-up after a scan: the venue comes from the scan, not the phone's location.

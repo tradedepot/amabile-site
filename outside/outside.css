@@ -379,3 +379,13 @@ body.night .mk.district .lbl { color: rgba(233, 207, 155, .7); text-shadow: 0 0 
 .codeok { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; border-radius: 14px; border: 3px solid var(--rule); background: var(--card); font-weight: 800; }
 .codeok b { letter-spacing: .5px; }
 .codesec .tofield input { text-transform: uppercase; }
+
+/* Wallet: the bottles card in Apple Wallet or Google Wallet */
+.wallet { display: flex; align-items: center; gap: 12px; padding: 12px 14px; margin: 12px 0 4px; border: 3px solid var(--rule); border-radius: 18px; background: #fff; text-align: left; }
+.wallet .grow { min-width: 0; flex: 1; }
+.wallet b { display: block; font-size: 14.5px; line-height: 1.25; color: var(--ink); }
+.wallet small { display: block; font-size: 12.5px; color: var(--ink-2); margin-top: 2px; line-height: 1.3; }
+.wbtn { flex: none; display: inline-flex; align-items: center; gap: 8px; background: #000; color: #fff; border: 0; border-radius: 12px; padding: 10px 12px; font: inherit; font-weight: 800; font-size: 13px; line-height: 1.1; cursor: pointer; max-width: 150px; text-align: left; }
+.wbtn svg { width: 20px; height: 20px; flex: none; }
+.wbtn:disabled { opacity: .6; }
+@media (max-width: 360px) { .wallet { flex-direction: column; align-items: stretch; } .wbtn { max-width: none; justify-content: center; } }

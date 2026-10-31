@@ -486,11 +486,35 @@
       return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? " · Waiting" : ""}</div></div>` +
         (isLink || isSelf ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
-    return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
+    return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>${walletCard()}` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
   }
+  // The bottles card in Apple Wallet or Google Wallet. It comes up on the lock screen near a spot that can serve them.
+  const isIOS = () => /iPhone|iPad|iPod/.test(navigator.userAgent) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+  const isAndroid = () => /Android/i.test(navigator.userAgent);
+  function walletKind() {
+    const w = (S.cfg && S.cfg.wallet) || {}, mine = (S.me && S.me.wallet) || {};
+    if (isIOS() && w.apple && !mine.apple) return "apple";
+    if (isAndroid() && w.google && !mine.google) return "google";
+    return null;
+  }
+  const WALLET_ICON = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M3 9h18M3 13h18"/><rect x="13" y="13" width="8" height="7" rx="2" fill="currentColor"/></svg>';
+  function walletCard() {
+    const k = walletKind(); if (!k) return "";
+    return `<div class="wallet"><div class="grow"><b>Keep your bottles in Wallet.</b><small>It comes up on your lock screen when you're near a spot that can serve them.</small></div>
+      <button class="wbtn" data-wallet="${k}">${WALLET_ICON}<span>Add to ${k === "apple" ? "Apple" : "Google"} Wallet</span></button></div>`;
+  }
+  async function addToWallet(k, btn) {
+    btn.disabled = true;
+    const r = await api("wallet", { kind: k });
+    btn.disabled = false;
+    if (!r.ok) return toast(r.error === "wallet_off" ? "Wallet isn't available just yet." : "Couldn't open Wallet. Try again.");
+    location.href = r.url;
+  }
+
   function bindSheet(tab) {
     const body = $("#sheetBody");
+    body.querySelectorAll("[data-wallet]").forEach((b) => (b.onclick = () => addToWallet(b.dataset.wallet, b)));
     body.querySelectorAll("[data-claim]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.claim)));
     body.querySelectorAll("[data-qr]").forEach((b) => (b.onclick = () => qrFlow(b.dataset.qr)));
     body.querySelectorAll("[data-gs]").forEach((b) => (b.onclick = () => { closeSheet(); const x = S.me.sent.find((y) => y.id === b.dataset.gs); x && x.selfSend ? selfShare(x) : giftShare(x); }));

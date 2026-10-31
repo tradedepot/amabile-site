@@ -26,7 +26,15 @@ export function bagView(b) {
 
 export async function saveBottle(s, b) {
   b.updatedAt = Date.now();
+  // A bottle that lands, gets served or moves on changes its recipient's Wallet card.
+  const was = b.walletTo || null, changed = b.walletStatus !== b.status || was !== (b.to || null);
+  if (changed) { b.walletStatus = b.status; b.walletTo = b.to || null; }
   await s.setJSON(K.bottle(b.id), b);
+  if (changed) {
+    const { touchCard } = await import("./_outside_wallet.mjs");
+    if (b.to) await touchCard(s, b.to);
+    if (was && was !== b.to) await touchCard(s, was); // passed on: it leaves the old card
+  }
 }
 
 // Idempotent: webhook, status poll and return page may all arrive.
@@ -60,8 +68,8 @@ export async function markBottlePaid(s, b, tx, via) {
       playerPhone: b.to, senderPhone: b.from, payout: venuePrice(v, b.wine) || b.price });
     await saveTicket(s, t);
     b.status = "on_way"; b.ticketId = t.id; b.claimedAt = Date.now();
-    await saveBottle(s, b);
     await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
+    await saveBottle(s, b);
     const from = b.anon ? "Someone" : (b.fromName || "A friend");
     // WhatsApp and a browser push, side by side.
     const { bottleOnWayPush } = await import("./_outside_push.mjs");
@@ -80,8 +88,8 @@ export async function markBottlePaid(s, b, tx, via) {
   }
 
   b.status = "waiting";
-  await saveBottle(s, b);
   await s.setJSON(K.inbox(b.to, b.id), { id: b.id, at: b.createdAt });
+  await saveBottle(s, b);
   // The sender shares it on WhatsApp themselves: no message from Andiamo, only the push if they have Andiamo already.
   const r = b.selfSend
     ? await import("./_outside_push.mjs").then((m) => m.bottleWaitingPush(b)).then((p) => ({ ok: false, skip: "self", push: !!(p && p.ok) })).catch(() => ({ ok: false, skip: "self" }))

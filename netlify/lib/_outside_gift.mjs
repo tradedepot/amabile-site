@@ -67,8 +67,8 @@ export async function acceptGift(s, me, player, code) {
   if (b.from === me) return { ok: false, error: "self" };
   b.to = me; b.toFirst = player.name || ""; b.toMasked = b.toFirst || maskPhone(me);
   b.status = "waiting"; b.acceptedAt = Date.now();
-  await saveBottle(s, b);
   await s.setJSON(K.inbox(me, b.id), { id: b.id, at: b.createdAt });
+  await saveBottle(s, b);
   // From here it is Amabile's moment: the same WhatsApp a number send gets.
   const r = await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
   b.notice = { ok: !!(r && r.ok), at: Date.now(), skip: r && r.skip };
