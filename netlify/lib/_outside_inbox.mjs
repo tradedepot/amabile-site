@@ -151,6 +151,9 @@ export async function handleStatuses(value) {
   for (const st of value.statuses || []) {
     // One line per delivery update, so a code that "never arrived" can be traced in the function logs.
     console.log("wa status", st.status, maskPhone("+" + (st.recipient_id || "")), (st.pricing && st.pricing.category) || "", (st.errors || []).map((e) => e.code + " " + ((e.error_data && e.error_data.details) || e.title || "")).join("; ").slice(0, 200));
+    // A bottle notice: delivered ends any retries; refused hands the sender a link and schedules a retry.
+    const { noticeStatus } = await import("./_outside_notice.mjs");
+    await noticeStatus(s, st).catch((e) => console.warn("notice status", String(e).slice(0, 200)));
     if (st.status !== "failed") continue;
     const why = (st.errors || []).map((e) => (e.error_data && e.error_data.details) || e.title || e.message).filter(Boolean).join("; ");
     console.warn("whatsapp failed", st.recipient_id, why.slice(0, 300));

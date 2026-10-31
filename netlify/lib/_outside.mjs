@@ -472,6 +472,8 @@ export async function sendBottleNotice(bottle) {
   const from = bottle.anon ? "Someone" : (bottle.fromName || "A friend");
   const note = bottle.note ? "“" + bottle.note + "”" : "No note.";
   const r = tpl ? await wa(bottle.to, waTemplate(tpl, [from, note], link, SITE + "/img/wa-header.jpg")) : { ok: false, skip: "no-template" };
+  // Remember which bottle this message was, so Meta's delivery report can be matched to it (see _outside_notice.mjs).
+  if (r.id) await store().setJSON("wb/" + r.id, { b: bottle.id, at: Date.now() }).catch(() => {});
   const p = await push;
   return { ...r, push: !!(p && p.ok), link: SITE + "/c/" + link };
 }

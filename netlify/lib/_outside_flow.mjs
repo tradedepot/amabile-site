@@ -13,7 +13,7 @@ export function senderView(b) {
   const shown = b.status === "declined" && Date.now() - (b.paidAt || b.createdAt) > 30 * 864e5 ? "Not claimed" : status;
   return { id: b.id, toMasked: b.toName || b.toMasked || "", wine: b.wine, note: b.note || "", status: shown, via: b.via || "",
     ...(b.via === "link" && b.status === "link" ? { giftUrl: SITE + "/g/" + b.giftCode, forLabel: b.forLabel || "" } : {}),
-    ...(b.selfSend && b.giftCode && b.status === "waiting" ? { giftUrl: SITE + "/g/" + b.giftCode, selfSend: true, waTo: String(b.to || "").replace(/\D/g, "") } : {}),
+    ...(b.selfSend && b.giftCode && b.status === "waiting" ? { giftUrl: SITE + "/g/" + b.giftCode, selfSend: true, waTo: String(b.to || "").replace(/\D/g, ""), unreached: !!b.noticeFallback } : {}),
     day: b.servedAt ? new Date(b.servedAt).toISOString().slice(0, 10) : null, createdAt: b.createdAt };
 }
 

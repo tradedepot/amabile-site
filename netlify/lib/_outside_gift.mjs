@@ -28,6 +28,14 @@ export async function attachInvite(s, b) {
   await s.set(K.gift(b.giftCode), b.id);
 }
 
+// A bottle to a number whose WhatsApp notice Meta refused: give it a link the sender can share themselves.
+// Same as a self-send from here on; whether it was sent anonymously is left as it was.
+export async function ensureShareLink(s, b) {
+  if (!b.giftCode) { b.giftCode = newCode(); await s.set(K.gift(b.giftCode), b.id); }
+  b.selfSend = true;
+  return giftUrl(b.giftCode);
+}
+
 async function bottleFor(s, code) {
   const id = await s.get(K.gift(giftCode(code))).catch(() => null);
   return id ? getJSON(s, K.bottle(String(id))) : null;

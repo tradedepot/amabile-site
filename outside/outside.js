@@ -483,8 +483,8 @@
       </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => {
       const isLink = x.via === "link" && x.giftUrl, isSelf = x.selfSend && x.giftUrl;
-      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? " · Waiting" : ""}</div></div>` +
-        (isLink || isSelf ? `<button class="btn small gold" data-gs="${x.id}">Send it</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? (x.unreached ? " · couldn't reach them on WhatsApp" : " · Waiting") : ""}</div></div>` +
+        (isLink || isSelf ? `<button class="btn small gold" data-gs="${x.id}">${x.unreached ? "Send it yourself" : "Send it"}</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
     return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>${walletCard()}` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
@@ -654,8 +654,8 @@
     const url = b.giftUrl, text = "I'm sending an Amabile to your table. For next time you're outside. " + url;
     const wa = "https://wa.me/" + (b.waTo || "") + "?text=" + encodeURIComponent(text);
     modal(`<div class="sealcard">${A.envelope.closed()}</div>
-      <h2>Send it to ${esc(b.toMasked || "them")}</h2>
-      <p class="muted">Send them this link on WhatsApp. Only their number can open it.</p>
+      <h2>Send it to ${esc(b.toMasked || "them")}${b.unreached ? " yourself" : ""}</h2>
+      <p class="muted">${b.unreached ? "We couldn't reach them on WhatsApp. Send them this link and they'll have it. Only their number can open it." : "Send them this link on WhatsApp. Only their number can open it."}</p>
       <div class="sharegrid"><a class="btn block" id="wa" href="${esc(wa)}" target="_blank" rel="noopener">Send on WhatsApp</a>
         <button class="btn block ghost" id="cp">Copy link</button></div>`, (c) => {
       c.querySelector("#cp").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Copied."); } catch { prompt("Copy this link", url); } };
@@ -1209,7 +1209,13 @@
     else if (S.invite && !S.me) signIn(null, WHY.friends);
     const gc = url.searchParams.get("g");
     const paid = url.searchParams.get("paid") || url.searchParams.get("topup");
-    if (gc) { history.replaceState(null, "", BASE + "/"); giftOpen(gc.replace(/[^a-z0-9]/gi, "").slice(0, 12)); }
+    const sentId = url.searchParams.get("sent");
+    if (sentId && S.me) {
+      // From the "we couldn't reach them" ping: straight to sending it yourself.
+      history.replaceState(null, "", BASE + "/");
+      const x = (S.me.sent || []).find((y) => y.id === sentId.replace(/[^a-z0-9]/gi, ""));
+      if (x && x.selfSend) selfShare(x); else openSheet("bottles");
+    } else if (gc) { history.replaceState(null, "", BASE + "/"); giftOpen(gc.replace(/[^a-z0-9]/gi, "").slice(0, 12)); }
     else if (paid) { history.replaceState(null, "", BASE + "/"); paidReturn(paid, !!url.searchParams.get("topup")); }
     else if (!S.token && !S.invite) welcome();
     setInterval(() => { setDayNight(); if (document.visibilityState === "visible") loadMe(true); }, 30000);
