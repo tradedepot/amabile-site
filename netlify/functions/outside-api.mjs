@@ -484,12 +484,41 @@ export default async (req) => {
       return json({ ok: true });
     }
 
-    if (route === "decline") {
+    // Send it back: it leaves their bottles and returns to the sender, who can send it to someone else.
+    // Optionally, that sender can't send them bottles again. "decline" is the old name.
+    if (route === "return" || route === "decline") {
       const b = await getJSON(s, K.bottle(clean(d.bottleId, 20)));
       if (!b || b.to !== me || b.status !== "waiting") return bad("state", 409);
-      b.status = "declined"; b.declinedAt = Date.now();
+      b.status = "returned"; b.returnedAt = Date.now();
       await saveBottle(s, b);
       await s.delete(K.inbox(me, b.id));
+      await s.delete("nr/" + b.id).catch(() => {});
+      const giver = b.passedFrom || b.from;
+      if (d.block === true && giver && giver !== me) await s.setJSON(K.block(me, giver), { at: Date.now(), via: "return" });
+      return json({ ok: true });
+    }
+
+    // The sender gives a bottle that came back to someone else. Same level, same note; Amabile's WhatsApp goes out.
+    if (route === "resend") {
+      const { canResend } = await import("../lib/_outside_flow.mjs");
+      const b = await getJSON(s, K.bottle(clean(d.bottleId, 20)));
+      if (!b || b.from !== me || !canResend(b)) return bad("state", 409);
+      const to = phoneE164(d.to);
+      if (!to) return bad("phone");
+      if (to === me) return bad("self");
+      if (await getJSON(s, K.block(to, me))) return bad("cant_send", 403);
+      (b.history = b.history || []).push({ to: b.to, back: b.returnedAt || b.declinedAt || null });
+      if (b.giftCode) await s.delete(K.gift(b.giftCode)).catch(() => {});
+      for (const k of ["selfSend", "giftCode", "shareTrack", "sharedAt", "shares", "openedAt", "openedByThem", "noticeFallback", "senderTold", "noticeRetries", "returnedAt", "declinedAt", "via"]) delete b[k];
+      const them = await getJSON(s, K.player(to));
+      b.to = to; b.toFirst = them && them.name || ""; b.toMasked = b.toFirst || maskPhone(to);
+      b.status = "waiting"; b.resentAt = Date.now();
+      await s.setJSON(K.inbox(to, b.id), { id: b.id, at: Date.now() });
+      await saveBottle(s, b);
+      const { sendBottleNotice } = await import("../lib/_outside.mjs");
+      const r = await sendBottleNotice(b).catch((e) => ({ ok: false, err: String(e) }));
+      b.notice = { ok: !!(r && r.ok), at: Date.now(), skip: r && r.skip };
+      await saveBottle(s, b);
       return json({ ok: true });
     }
 

@@ -5,17 +5,23 @@ import {
 } from "./_outside.mjs";
 import { autoPayout } from "./_outside_payout.mjs";
 
+// A bottle sent back by its recipient shows as Waiting for a few days, then as Not claimed, and the sender
+// can send it to someone else. It never says it was sent back.
+export const RETURN_SHOWS_AFTER = 3 * 864e5;
+const backAt = (b) => (["returned", "declined"].includes(b.status) ? b.returnedAt || b.declinedAt || 0 : 0);
+export const canResend = (b, now = Date.now()) => !!backAt(b) && now - backAt(b) >= RETURN_SHOWS_AFTER;
+
 // A bottle as its sender may see it: never where, never when beyond the day, never a decline.
 export function senderView(b) {
   const status = { pending: "Paying", link: "Not opened yet", waiting: "Waiting", on_way: "Waiting", served: "Delivered",
-    declined: "Waiting", passed: "Passed on", refunded: "Not claimed", review: "Checking payment", expired: "Not claimed" }[b.status] || "Waiting";
-  // A decline shows as Waiting until 30 days, then Not claimed.
-  const shown = b.status === "declined" && Date.now() - (b.paidAt || b.createdAt) > 30 * 864e5 ? "Not claimed" : status;
+    declined: "Waiting", returned: "Waiting", passed: "Passed on", refunded: "Not claimed", review: "Checking payment", expired: "Not claimed" }[b.status] || "Waiting";
+  const back = canResend(b), shown = back ? "Not claimed" : status;
   return { id: b.id, toMasked: b.toName || b.toMasked || "", wine: b.wine, note: b.note || "", status: shown, via: b.via || "",
     ...(b.via === "link" && b.status === "link" ? { giftUrl: SITE + "/g/" + b.giftCode, forLabel: b.forLabel || "" } : {}),
     ...(b.selfSend && b.giftCode && b.status === "waiting" ? { giftUrl: SITE + "/g/" + b.giftCode, selfSend: true, waTo: String(b.to || "").replace(/\D/g, ""), unreached: !!b.noticeFallback,
       // Bottles from before the share tap was recorded were shown the share sheet at send time.
       shared: !!(b.sharedAt || (!b.shareTrack && !b.noticeFallback)), opened: !!b.openedAt } : {}),
+    ...(back ? { canResend: true } : {}),
     day: b.servedAt ? new Date(b.servedAt).toISOString().slice(0, 10) : null, createdAt: b.createdAt };
 }
 

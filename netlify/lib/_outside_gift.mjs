@@ -66,7 +66,7 @@ export async function giftView(s, code, me) {
   const base = { ok: true, from: b.fromName || "A friend", wine: b.wine, wineLabel: w ? w.label : "Amabile", note: b.note || "", band: b.band };
   if (b.selfSend) {
     if (b.status === "pending" || b.status === "review") return { ...base, state: "not_ready" };
-    if (["cancelled", "refunded", "expired"].includes(b.status)) return { ...base, state: "gone" };
+    if (["cancelled", "refunded", "expired", "returned", "declined"].includes(b.status)) return { ...base, state: "gone" };
     if (me !== b.from && (!b.openedAt || (me && b.to === me && !b.openedByThem))) await markOpened(s, b, me).catch(() => {});
     if (!me) return { ...base, state: "numbered" };
     if (b.to === me) return { ...base, state: "mine", bottleId: b.id };

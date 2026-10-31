@@ -483,8 +483,8 @@
       </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => {
       const isLink = x.via === "link" && x.giftUrl, isSelf = x.selfSend && x.giftUrl;
-      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? selfLine(x) : ""}</div></div>` +
-        (isLink || isSelf ? `<button class="btn small${isSelf && (x.shared || x.opened) ? " ghost" : " gold"}" data-gs="${x.id}">${isLink ? "Send it" : selfBtn(x)}</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${x.canResend ? " · Not claimed" : isLink ? " · not opened yet" : isSelf ? selfLine(x) : ""}</div></div>` +
+        (x.canResend ? `<button class="btn small gold" data-rs="${x.id}">Send it on</button>` : isLink || isSelf ? `<button class="btn small${isSelf && (x.shared || x.opened) ? " ghost" : " gold"}" data-gs="${x.id}">${isLink ? "Send it" : selfBtn(x)}</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
     return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>${walletCard()}` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
@@ -526,14 +526,26 @@
       const x = S.me.bag.find((y) => y.id === b.dataset.spots); closeSheet(); whereToClaim(x);
     }));
     body.querySelectorAll("[data-more]").forEach((b) => (b.onclick = () => bottleMore(b.dataset.more)));
+    body.querySelectorAll("[data-rs]").forEach((b) => (b.onclick = () => { closeSheet(); resendBottle(S.me.sent.find((y) => y.id === b.dataset.rs)); }));
     body.querySelectorAll("[data-cancel]").forEach((b) => (b.onclick = async () => { const r = await api("cancel", { bottleId: b.dataset.cancel }); if (!r.ok) toast(errMsg(r.error)); await loadMe(); }));
     bindPing(body, () => openSheet(S.sheetTab));
     if (tab === "friends") bindFriends(body);
     if (tab === "drops") body.querySelectorAll("[data-dropgo]").forEach((b) => (b.onclick = () => dropCard(b.dataset.dropgo)));
   }
   function bottleMore(id) {
-    modal(`<h2>This bottle</h2><button class="btn block ghost" id="pass">Pass it on to someone</button><p></p><button class="btn block ghost" id="no">Not for me</button>`, (c) => {
-      c.querySelector("#no").onclick = async () => { const r = await api("decline", { bottleId: id }); closeModal(); if (!r.ok) toast(errMsg(r.error)); else toast("Done. They won't be told."); loadMe(); };
+    const b = S.me.bag.find((x) => x.id === id), who = b && !b.anon ? b.from : "";
+    modal(`<h2>This bottle</h2><button class="btn block ghost" id="pass">Pass it on to someone</button><p></p><button class="btn block ghost" id="back">Send it back</button>`, (c) => {
+      // Back to the sender to give to someone else. They see it as not claimed, never as sent back.
+      c.querySelector("#back").onclick = () => modal(`<h2>Send it back${who ? " to " + esc(who) : ""}?</h2>
+        <p class="muted">It leaves your bottles and goes back to ${who ? esc(who) : "them"} to send to someone else. They'll only see it wasn't claimed.</p>
+        <label class="toggle"><input type="checkbox" id="blk"> Don't let ${who ? esc(who) : "them"} send me bottles again</label>
+        <button class="btn block" id="go">Send it back</button><p></p><button class="btn block ghost" id="keep">Keep it</button>`, (c2) => {
+        c2.querySelector("#keep").onclick = closeModal;
+        c2.querySelector("#go").onclick = async () => {
+          const r = await api("return", { bottleId: id, block: c2.querySelector("#blk").checked });
+          closeModal(); if (!r.ok) toast(errMsg(r.error)); else toast("Sent back."); loadMe();
+        };
+      });
       c.querySelector("#pass").onclick = () => modal(`<h2>Pass it on</h2><label class="field"><span>Their number</span>${phoneField("to")}</label><button class="btn block" id="go">Pass it on</button><p class="muted" id="msg"></p>`, (c2) => {
         wirePhone(c2, "to");
         c2.querySelector("#go").onclick = async () => {
@@ -544,6 +556,25 @@
           closeModal(); toast("Passed on."); loadMe();
         };
       });
+    });
+  }
+
+  // A bottle that wasn't claimed: the sender gives it to someone else. Same wine, same level.
+  function resendBottle(x) {
+    if (!x) return;
+    modal(`<div class="reveal">${photo(x.wine, 160)}</div><h2>Send it to someone else</h2>
+      <p class="muted">Your ${esc(wineOf(x.wine).name)} wasn't claimed. Who should get it?</p>
+      <label class="field"><span>Their number</span>${phoneField("to")}</label><button class="btn block" id="go">Send it</button><p class="muted" id="msg"></p>`, (c) => {
+      wirePhone(c, "to");
+      c.querySelector("#go").onclick = async () => {
+        const to = phoneOf(c, "to");
+        if (!e164(to)) return flag(c.querySelector("#to"), c.querySelector("#to").value.trim() ? errMsg("phone") : "Add their number.");
+        const go = c.querySelector("#go"); go.disabled = true;
+        const r = await api("resend", { bottleId: x.id, to });
+        go.disabled = false;
+        if (!r.ok) return PHONE_ERR.includes(r.error) ? flag(c.querySelector("#to"), errMsg(r.error)) : fail(c, errMsg(r.error));
+        closeModal(); toast("Sent. They'll get it on WhatsApp."); loadMe();
+      };
     });
   }
 

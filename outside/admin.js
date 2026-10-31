@@ -17,7 +17,7 @@
   const ROLE = { owner: "Owner", manager: "Manager", other: "Other" };
   const ARTS = ["lounge", "restaurant", "hotel", "rooftop", "beach", "brewery", "club", "garden"];
   const BST = { pending: ["Awaiting payment", ""], link: ["Card shared", "gold"], waiting: ["Waiting", "gold"], topup: ["Needs top-up", "warn"], on_way: ["On the way", "red"], claimed: ["Delivered", "ok"], served: ["Delivered", "ok"], paid: ["Paid", "gold"],
-    review: ["Review", "warn"], refused: ["Refused", "warn"], declined: ["Declined", ""], cancelled: ["Cancelled", ""] };
+    review: ["Review", "warn"], refused: ["Refused", "warn"], declined: ["Sent back", ""], returned: ["Sent back", ""], cancelled: ["Cancelled", ""] };
   const ICON = {
     home: '<path d="M3 11l9-7 9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
     drops: '<path d="M12 3l2.2 5.3L20 9l-4.4 3.8L17 19l-5-3-5 3 1.4-6.2L4 9l5.8-.7z"/>',

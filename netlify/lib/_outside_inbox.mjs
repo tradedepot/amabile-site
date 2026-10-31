@@ -46,7 +46,7 @@ export function describe(m) {
 }
 
 // Who they are to Outside: level and the last bottle sent to them.
-const BOTTLE_STATUS = { waiting: "not claimed yet", on_way: "on its way to their table", served: "served", declined: "not claimed", link: "card not opened yet", review: "payment being checked" };
+const BOTTLE_STATUS = { waiting: "not claimed yet", on_way: "on its way to their table", served: "served", declined: "not claimed yet", returned: "not claimed yet", link: "card not opened yet", review: "payment being checked" };
 async function context(s, phone) {
   const p = await getJSON(s, K.player(phone));
   if (!p) return { name: "", level: "", line: "Not on Andiamo yet" };
