@@ -13,7 +13,7 @@
 // it; the owner uploads Apple's certificate and enters the Google issuer id. Kept in the store (settings/wallet).
 // Google uses the records service account (GCP_SA_KEY) unless another key is uploaded.
 // Env overrides, for tests: ANDIAMO_PASS_TYPE_ID, ANDIAMO_PASS_TEAM_ID, ANDIAMO_PASS_CERT_B64, ANDIAMO_PASS_KEY_B64,
-// ANDIAMO_GW_ISSUER_ID, ANDIAMO_GW_SA_KEY.
+// ANDIAMO_GW_ISSUER_ID, ANDIAMO_GW_SA_KEY, ANDIAMO_GW_LIVE.
 import crypto from "node:crypto";
 import {
   K, getJSON, listKeys, fetchAll, phoneKey, SITE, wine, allVenues, getBands, claimCheck, computeGlow, venuesByPopularity
@@ -42,13 +42,29 @@ export async function walletConfig(s) {
   let sa = null;
   try { sa = JSON.parse(env("ANDIAMO_GW_SA_KEY") || g.saKey || env("GCP_SA_KEY") || "null"); } catch {}
   const issuerId = env("ANDIAMO_GW_ISSUER_ID") || g.issuerId || "";
-  const google = issuerId && sa && sa.private_key && sa.client_email ? { issuerId, sa } : null;
+  // live: Google has approved Andiamo for publishing. Until then only our onboarders are offered the button.
+  const google = issuerId && sa && sa.private_key && sa.client_email ? { issuerId, sa, live: !!(g.live || env("ANDIAMO_GW_LIVE")) } : null;
   const cfg = { apple, google };
   memo = { at: Date.now(), env: envKey(), cfg };
   return cfg;
 }
 export const appleOn = (cfg) => !!(cfg && cfg.apple);
 export const googleOn = (cfg) => !!(cfg && cfg.google);
+export const googleLive = (cfg) => !!(cfg && cfg.google && cfg.google.live);
+// The Google button for this player: everyone once Google has approved us, else only our own onboarders, to test.
+export async function googleFor(s, cfg, phone) {
+  if (!googleOn(cfg)) return false;
+  if (googleLive(cfg)) return true;
+  const { getOnboarder } = await import("./_outside_team.mjs");
+  return !!(phone && await getOnboarder(s, phone));
+}
+export async function googleSetLive(s, live) {
+  const st = await settings(s);
+  if (!st.google) return { ok: false, error: "google_off" };
+  st.google.live = !!live; st.google.liveAt = Date.now();
+  await saveSettings(s, st);
+  return { ok: true, live: !!live };
+}
 
 // ---------- who a card belongs to ----------
 const mac = (x) => crypto.createHmac("sha256", env("OUTSIDE_SECRET") || "dev").update(x).digest("hex");
@@ -298,10 +314,12 @@ export async function updatedSince(s, device, since) {
 export const isHolder = async (s, serial) => (await listKeys(s, WK.holderPrefix(serial))).length > 0;
 // For the app: is the card already on an iPhone (Apple tells us), or was it sent to Google Wallet.
 export async function walletState(s, phone) {
+  const cfg = await walletConfig(s);
+  const offer = await googleFor(s, cfg, phone);
   const link = await getJSON(s, WK.byPhone(phone));
-  if (!link) return { apple: false, google: false };
+  if (!link) return { apple: false, google: false, googleOffer: offer };
   const c = await getJSON(s, WK.card(link.serial));
-  return { apple: await isHolder(s, link.serial), google: !!(c && c.google) };
+  return { apple: await isHolder(s, link.serial), google: !!(c && c.google), googleOffer: offer };
 }
 
 // ---------- Google ----------
@@ -455,7 +473,7 @@ export async function googleSetup(s, { issuerId, saKey }) {
     design = { ok: false, status: cr.status, why: /has not been used|is disabled|SERVICE_DISABLED/i.test(msg) ? "api_off" : cr.status === 403 || cr.status === 401 ? "not_user" : msg || "Google said no (" + cr.status + ")." };
   }
   const st = await settings(s);
-  st.google = { issuerId: id, ...(sa ? { saKey } : {}), at: Date.now(), design: design.ok ? Date.now() : null, designWhy: design.ok ? "" : design.why };
+  st.google = { issuerId: id, ...(sa ? { saKey } : {}), live: !!(st.google && st.google.live), at: Date.now(), design: design.ok ? Date.now() : null, designWhy: design.ok ? "" : design.why };
   await saveSettings(s, st);
   return { ok: true, issuerId: id, email: use.client_email, design };
 }
@@ -469,7 +487,7 @@ export async function walletAdminStatus(s) {
   return {
     apple: { on: appleOn(cfg), requested: !!a.csrPem, passTypeId: (cfg.apple && cfg.apple.passTypeId) || PASS_TYPE_ID, teamId: (cfg.apple && cfg.apple.teamId) || "", expires: (cfg.apple && cfg.apple.expires) || a.expires || null, webService: WS_BASE() },
     google: { on: googleOn(cfg), issuerId: (cfg.google && cfg.google.issuerId) || "", email: (cfg.google && cfg.google.sa.client_email) || defaultEmail, ownKey: !!(st.google && st.google.saKey),
-      design: !!(st.google && st.google.design), designWhy: (st.google && st.google.designWhy) || "" },
+      design: !!(st.google && st.google.design), designWhy: (st.google && st.google.designWhy) || "", live: googleLive(cfg) },
     cards: cards.length
   };
 }

@@ -23,7 +23,7 @@
 //   glow              {force?}         venues with people outside now (cached unless force)
 //   codes | code-save {code} | code-active {code, active}   discount codes at checkout
 //   wa-status | wa-register {pin} | wa-subscribe | wa-test {kind: "code"|"bottle", phone} | wa-test-status {id}   WhatsApp check
-//   wallet-status | wallet-request | wallet-apple-cert {file} | wallet-google {issuerId, saKey?} | wallet-reset {kind}   Wallet setup
+//   wallet-status | wallet-request | wallet-apple-cert {file} | wallet-google {issuerId, saKey?} | wallet-reset {kind} | wallet-google-live {live}   Wallet setup
 import {
   store, json, clean, K, getJSON, listKeys, fetchAll, rid, hashKey, getBands, BAND_ORDER, WINES,
   wine, tentToken, SITE, computeGlow, maskPhone, venueBand
@@ -299,6 +299,7 @@ export default async (req) => {
     if (a === "wallet-apple-cert") { const r = await W.appleCert(s, d.file); return json(r, r.ok ? 200 : 400); }
     if (a === "wallet-google") { const r = await W.googleSetup(s, { issuerId: d.issuerId, saKey: d.saKey ? String(d.saKey).slice(0, 8000) : "" }); return json(r, r.ok ? 200 : 400); }
     if (a === "wallet-reset") return json(await W.walletReset(s, d.kind));
+    if (a === "wallet-google-live") { const r = await W.googleSetLive(s, !!d.live); return json(r, r.ok ? 200 : 400); }
   }
   if (a === "wa-register") return json(await waRegister(d.pin));
   if (a === "wa-subscribe") return json(await waSubscribe());

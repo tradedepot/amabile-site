@@ -495,7 +495,7 @@
   // Which Wallet buttons to show: the phone's own, or both where we can't tell. None once the card is on the phone.
   function walletKinds() {
     const w = (S.cfg && S.cfg.wallet) || {}, mine = (S.me && S.me.wallet) || {};
-    const apple = w.apple && !mine.apple, google = w.google && !mine.google;
+    const apple = w.apple && !mine.apple, google = (w.google || mine.googleOffer) && !mine.google;
     if (isIOS()) return apple ? ["apple"] : [];
     if (isAndroid()) return google ? ["google"] : [];
     return [apple && "apple", google && "google"].filter(Boolean);
