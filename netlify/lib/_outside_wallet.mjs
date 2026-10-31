@@ -340,7 +340,7 @@ async function googleToken(cfg) {
   const r = await fetch("https://oauth2.googleapis.com/token", { method: "POST", headers: { "content-type": "application/x-www-form-urlencoded" },
     body: "grant_type=" + encodeURIComponent("urn:ietf:params:oauth:grant-type:jwt-bearer") + "&assertion=" + assertion });
   const d = await r.json().catch(() => ({}));
-  if (!d.access_token) throw new Error("google token " + r.status);
+  if (!d.access_token) { console.warn("wallet google token", r.status, JSON.stringify(d).slice(0, 200)); throw new Error("google token " + r.status); }
   return d.access_token;
 }
 async function googleUpdate(s, c, cfg) {
@@ -443,13 +443,21 @@ export async function googleSetup(s, { issuerId, saKey }) {
   let tok;
   try { tok = await googleToken(gcfg); } catch { return { ok: false, error: "google_signin" }; }
   // Make the card design (class) now, so Google has something to review when publishing is requested.
+  // Saved either way; if Google won't take the design yet, say why.
+  let design = { ok: true };
   const cr = await fetch("https://walletobjects.googleapis.com/walletobjects/v1/genericClass", {
     method: "POST", headers: { authorization: "Bearer " + tok, "content-type": "application/json" }, body: JSON.stringify(googleClass(gcfg)) }).catch(() => null);
-  if (cr && !cr.ok && cr.status !== 409) { const t = await cr.text().catch(() => ""); console.warn("wallet google class", cr.status, t.slice(0, 200)); if (cr.status === 401 || cr.status === 403) return { ok: false, error: "google_signin" }; }
+  if (!cr) design = { ok: false, why: "Couldn't reach Google." };
+  else if (!cr.ok && cr.status !== 409) {
+    const j = await cr.json().catch(() => ({}));
+    const msg = String((j.error && j.error.message) || "").slice(0, 300);
+    console.warn("wallet google class", cr.status, msg);
+    design = { ok: false, status: cr.status, why: /has not been used|is disabled|SERVICE_DISABLED/i.test(msg) ? "api_off" : cr.status === 403 || cr.status === 401 ? "not_user" : msg || "Google said no (" + cr.status + ")." };
+  }
   const st = await settings(s);
-  st.google = { issuerId: id, ...(sa ? { saKey } : {}), at: Date.now() };
+  st.google = { issuerId: id, ...(sa ? { saKey } : {}), at: Date.now(), design: design.ok ? Date.now() : null, designWhy: design.ok ? "" : design.why };
   await saveSettings(s, st);
-  return { ok: true, issuerId: id, email: use.client_email };
+  return { ok: true, issuerId: id, email: use.client_email, design };
 }
 
 // What the admin shows. Never a key.
@@ -460,7 +468,8 @@ export async function walletAdminStatus(s) {
   const a = st.apple || {};
   return {
     apple: { on: appleOn(cfg), requested: !!a.csrPem, passTypeId: (cfg.apple && cfg.apple.passTypeId) || PASS_TYPE_ID, teamId: (cfg.apple && cfg.apple.teamId) || "", expires: (cfg.apple && cfg.apple.expires) || a.expires || null, webService: WS_BASE() },
-    google: { on: googleOn(cfg), issuerId: (cfg.google && cfg.google.issuerId) || "", email: (cfg.google && cfg.google.sa.client_email) || defaultEmail, ownKey: !!(st.google && st.google.saKey) },
+    google: { on: googleOn(cfg), issuerId: (cfg.google && cfg.google.issuerId) || "", email: (cfg.google && cfg.google.sa.client_email) || defaultEmail, ownKey: !!(st.google && st.google.saKey),
+      design: !!(st.google && st.google.design), designWhy: (st.google && st.google.designWhy) || "" },
     cards: cards.length
   };
 }

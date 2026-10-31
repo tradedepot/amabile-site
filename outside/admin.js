@@ -972,6 +972,7 @@
     not_a_pass_certificate: "That isn't a Pass Type ID certificate. In Apple, choose Pass Type ID Certificate.", expired: "That certificate has expired. Make a new one in Apple.",
     issuer: "Check the issuer ID. It's the long number at the top of the Pay & Wallet Console.", sa_key: "That key file isn't a Google service account key.",
     google_signin: "Google didn't let the service account in. Check steps 2 and 3, then try again." };
+  const GDESIGN = { api_off: "Google Wallet API isn't on in Google Cloud yet (step 2).", not_user: "The service account isn't on the console's Users list yet (step 3). Invites can take a few minutes." };
   const linkBtn = (href, t) => `<a class="btn sm sec" href="${href}" target="_blank" rel="noopener">${ic("ext")}${t}</a>`;
   const copyBtn = (v) => `<button class="btn sm sec" data-copy="${esc(v)}">${ic("copy")}Copy</button>`;
   function wallet() {
@@ -990,7 +991,8 @@
       { t: "Open a Google Wallet issuer account", st: ast(g.on), d: "In the Pay & Wallet Console, open <b>Google Wallet API</b> and sign up as an issuer. The <b>Issuer ID</b> is the long number at the top.", act: linkBtn(GOOGLE.console, "Open Google") },
       { t: "Turn on the Google Wallet API", st: ast(g.on), d: "In Google Cloud, for the project our records already use, press <b>Enable</b>.", act: linkBtn(GOOGLE.api, "Open Google Cloud") },
       { t: "Let our service account in", st: ast(g.on), d: g.email ? `In the Pay & Wallet Console, <b>Users</b>, invite <code class="k">${esc(g.email)}</code> as <b>Developer</b>.` : "Add a service account key below first.", act: g.email ? copyBtn(g.email) : "" },
-      { t: "Enter the issuer ID", st: ast(g.on), d: `<div class="wlrow"><input id="wliss" inputmode="numeric" placeholder="3388000000012345678" value="${esc(g.issuerId)}"><button class="btn sm" id="wlgo">${g.on ? "Save" : "Turn on"}</button></div>`, act: "" }
+      { t: "Enter the issuer ID", st: ast(g.on), d: `<div class="wlrow"><input id="wliss" inputmode="numeric" placeholder="3388000000012345678" value="${esc(g.issuerId)}"><button class="btn sm" id="wlgo">${g.on ? "Save" : "Turn on"}</button></div><p class="wlerr" id="wlerr" role="alert" hidden></p>`, act: "" },
+      ...(g.on ? [{ t: "Card design at Google", st: ast(g.design), d: g.design ? "Made. Google reviews it when you ask for publishing." : (GDESIGN[g.designWhy] || (g.designWhy ? esc(g.designWhy) : "Not made yet.")) + " Then press Save above.", act: "" }] : [])
     ];
     const card = (title, sub, on, steps, extra = "", top = "") => { const todo = steps.filter((x) => x.st === "todo").length;
       return `<div class="card"${top}><div class="ready"><div class="big ${on ? "ok" : ""}">${ic(on ? "tick" : "wallet")}</div><div><h2>${title}</h2><p class="muted">${on ? sub : plural(todo, "step") + " to go. " + sub}</p></div></div>
@@ -1016,14 +1018,18 @@
       if (!r.ok) return toast(WERR[r.error] || "Couldn't use that file.");
       toast("Apple Wallet is on."); nav("wallet");
     };
+    const gErr = (t) => { const e = $("wlerr"); e.textContent = t; e.hidden = !t; };
+    $("wliss").oninput = () => gErr("");
     $("wlgo").onclick = async () => {
+      gErr(""); $("wlgo").disabled = true;
       const r = await call({ action: "wallet-google", issuerId: $("wliss").value });
-      if (!r.ok) return flag($("wliss"), WERR[r.error] || "Couldn't save it.");
-      toast("Google Wallet is on."); nav("wallet");
+      $("wlgo").disabled = false;
+      if (!r.ok) return gErr(WERR[r.error] || "Couldn't save it.");
+      toast(r.design && r.design.ok ? "Google Wallet is on." : "Saved, but Google hasn't taken the card design yet."); nav("wallet");
     };
     $("wlsa").onchange = async (e) => {
       const f = e.target.files[0]; if (!f) return;
-      if (!$("wliss").value) return flag($("wliss"), "Enter the issuer ID first.");
+      if (!$("wliss").value) return gErr("Enter the issuer ID first.");
       const r = await call({ action: "wallet-google", issuerId: $("wliss").value, saKey: await f.text() });
       if (!r.ok) return toast(WERR[r.error] || "Couldn't use that key.");
       toast("Saved. Invite " + r.email + " in the console."); nav("wallet");
