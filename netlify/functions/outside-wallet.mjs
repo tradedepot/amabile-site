@@ -19,7 +19,7 @@ const passResponse = (bytes, c) => new Response(bytes, { status: 200, headers: {
 
 // In-app browsers (WhatsApp, Instagram, Facebook, Snapchat...) can't hand a card to Wallet: they show the file
 // as text. On an iPhone, anything that isn't Safari or a real browser gets a page that opens Safari instead.
-const IN_APP = /WhatsApp|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|Twitter|TikTok|musical_ly|BytedanceWebview|Line\/|LinkedInApp|Telegram/i;
+const IN_APP = /WhatsApp|WAiOS|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|Twitter|TikTok|musical_ly|BytedanceWebview|Line\/|LinkedInApp|Telegram/i;
 export const inAppIOS = (ua = "") => /iPhone|iPad|iPod/.test(ua) && (IN_APP.test(ua) || !/Safari\//.test(ua));
 const escapePage = (link) => new Response(`<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Add to Apple Wallet</title>
 <style>body{margin:0;font-family:-apple-system,system-ui,sans-serif;background:#F4EBDD;color:#3a2a20;display:grid;place-items:center;min-height:100vh;padding:24px;box-sizing:border-box}

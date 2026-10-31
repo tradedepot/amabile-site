@@ -524,7 +524,7 @@
     });
     location.href = r.url;
   }
-  const inAppIOS = () => isIOS() && (/WhatsApp|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|Twitter|TikTok|musical_ly|BytedanceWebview|Line\/|LinkedInApp|Telegram/i.test(navigator.userAgent) || !/Safari\//.test(navigator.userAgent));
+  const inAppIOS = () => isIOS() && (/WhatsApp|WAiOS|Instagram|FBAN|FBAV|FB_IAB|FBIOS|Snapchat|Twitter|TikTok|musical_ly|BytedanceWebview|Line\/|LinkedInApp|Telegram/i.test(navigator.userAgent) || !/Safari\//.test(navigator.userAgent));
 
   function bindSheet(tab) {
     const body = $("#sheetBody");
