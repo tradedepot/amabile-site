@@ -204,6 +204,8 @@ export async function goLive(s, venueId, by) {
   // The venue's contact becomes its first manager on the board. They sign in with their own WhatsApp number.
   const { ensureManager } = await import("./_outside_staff.mjs");
   Object.assign(v, await ensureManager(s, v));
+  // People holding a bottle that had nowhere to go: this is their spot.
+  { const { tellSpotOpened } = await import("./_outside_spots.mjs"); await tellSpotOpened(s, v.id).catch((e) => console.warn("spot tell", String(e))); }
   if (v.requestId) {
     const r = await getJSON(s, K.request(v.requestId));
     if (r) { r.stage = "live"; r.history = [...(r.history || []), { at: now(), stage: "live", by }]; r.updatedAt = now(); await s.setJSON(K.request(r.id), r); }

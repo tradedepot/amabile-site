@@ -61,7 +61,7 @@ export async function waStatus(s) {
     dev: process.env.OUTSIDE_DEV === "1",
     hookUrl: SITE.replace(/\/outside$/, "") + "/api/outside-wa",
     lastHook: await getJSON(s, "wa/hook"),
-    want: { code: process.env.OUTSIDE_TPL_CODE || "", bottle: process.env.OUTSIDE_TPL_BOTTLE || "", lang: process.env.OUTSIDE_TPL_LANG || "en" }
+    want: { code: process.env.OUTSIDE_TPL_CODE || "", bottle: process.env.OUTSIDE_TPL_BOTTLE || "", spot: process.env.OUTSIDE_TPL_SPOT || "andiamo_spot", lang: process.env.OUTSIDE_TPL_LANG || "en" }
   };
   if (!process.env.WA_TOKEN) { out.token = { ok: false, error: { message: "WA_TOKEN isn't set in Netlify." } }; return out; }
   const me = await graph("me?fields=id,name");
@@ -102,6 +102,24 @@ export async function waSubscribe() {
   return r.ok ? { ok: true } : { ok: false, error: "meta", meta: r.error };
 }
 
+// ---------- the new spot message ----------
+// "Good news. Knowhere is now on Andiamo, and you can claim the Amabile Ada sent you there next time you're out."
+// Submitted to Meta from the admin, so nobody has to build it by hand in WhatsApp Manager. Marketing, like the
+// bottle notice: Meta would class it that way anyway.
+export async function waCreateSpotTemplate() {
+  const w = await findWaba();
+  if (!w.id) return { ok: false, error: "meta", meta: w.error };
+  const { SPOT_TPL } = await import("./_outside_spots.mjs");
+  const r = await graph(`${w.id}/message_templates`, { method: "POST", body: {
+    name: SPOT_TPL(), language: process.env.OUTSIDE_TPL_LANG || "en", category: "MARKETING",
+    components: [
+      { type: "BODY", text: "Good news. {{1}} is now on Andiamo, and you can claim the Amabile {{2}} sent you there next time you're out.",
+        example: { body_text: [["Knowhere", "Ada"]] } },
+      { type: "BUTTONS", buttons: [{ type: "URL", text: "See it", url: SITE + "/c/{{1}}", example: [SITE + "/c/abc123"] }] }
+    ] } });
+  return r.ok ? { ok: true, status: r.data.status || "PENDING" } : { ok: false, error: "meta", meta: r.error };
+}
+
 // ---------- test messages ----------
 const testKey = (id) => "wat/" + crypto.createHash("sha256").update(String(id)).digest("hex").slice(0, 32);
 const RANK = { accepted: 0, sent: 1, delivered: 2, read: 3, failed: 9 };
@@ -114,6 +132,9 @@ export async function waTest(s, kind, phone) {
   if (kind === "code") {
     if (!process.env.OUTSIDE_TPL_CODE) return { ok: false, error: "no_template" };
     r = await sendCode(to, String(100000 + crypto.randomInt(900000)));
+  } else if (kind === "spot") {
+    const { SPOT_TPL } = await import("./_outside_spots.mjs");
+    r = await wa(to, waTemplate(SPOT_TPL(), ["Knowhere", "Test"], "test"));
   } else {
     const tpl = process.env.OUTSIDE_TPL_BOTTLE;
     if (!tpl) return { ok: false, error: "no_template" };

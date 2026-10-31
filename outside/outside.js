@@ -461,7 +461,7 @@
     modal(`<div class="reveal">${photo(b.wine, 260)}<div class="wn">${esc(wineOf(b.wine).label)}<small>${esc(wineOf(b.wine).kind || "")}</small></div></div>
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
-      <p class="muted">${!spots.length ? "No spot pours it yet. It waits in My bottles until one does."
+      <p class="muted">${!spots.length ? "No spot pours it yet. It waits in My bottles, and we'll tell you when one opens."
         : (spots.length === 1 ? `Claim it at ${esc(spots[0].name)}, outlined in gold on the map.` : `Claim it at any of the ${spots.length} spots outlined in gold on the map.`) + " When you're there, open Andiamo and tap Claim it."}</p>
       <button class="btn block" data-x2>${spots.length ? (spots.length === 1 ? "See the spot" : "See the spots") : "Cheers"}</button>${pingCard("intro")}`, (c) => {
       c.querySelector("[data-x2]").onclick = () => { closeModal(); if (spots.length) focusSpots(spots); };
@@ -649,7 +649,7 @@
     // None at its level: the spots a level up still serve it with a top-up.
     const up = ok.length ? [] : S.cfg.venues.filter((v) => v.wines.includes(b.wine));
     const all = ok.length ? ok : up;
-    if (!all.length) return modal(`<h2>Nowhere to claim it yet</h2><p class="muted">No spot on Andiamo pours ${esc(w)} yet. We're adding spots all the time. Your bottle keeps waiting.</p>
+    if (!all.length) return modal(`<h2>Nowhere to claim it yet</h2><p class="muted">No spot on Andiamo pours ${esc(w)} yet. Your bottle keeps waiting, and we'll tell you when one opens.</p>
       <button class="btn block ghost" data-x4>OK</button>`, (c) => (c.querySelector("[data-x4]").onclick = closeModal));
     let loc = S.lastLoc && Date.now() - S.lastLoc.at < 10 * 60e3 ? S.lastLoc : null;
     if (!loc) { modal(`<h2>Finding spots...</h2><p class="muted">One moment.</p>`); loc = await getLocation(); }

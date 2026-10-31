@@ -1162,14 +1162,19 @@
     const line = ready ? "Sign-in codes and bottle notices are going out." : todo ? `Nobody can sign in until these are done.${wait ? " " + plural(wait, "more is", "more are") + " with Meta." : ""}` : "Nothing for you to do. Meta is reviewing.";
     let no = 0;
     const tpls = Array.isArray(w.templates) ? w.templates : [];
+    // The new spot message: submitted from here, used once Meta approves it. Push goes out either way.
+    const spotName = (w.want && w.want.spot) || "andiamo_spot", spotT = tpls.find((t) => t.name === spotName);
     const tplPill = (st) => `<span class="pill ${st === "APPROVED" ? "ok" : ["PENDING", "IN_APPEAL"].includes(st) ? "gold" : "warn"}">${esc(String(st || "").toLowerCase().replace(/_/g, " "))}</span>`;
+    const spotBox = `<h3 style="font-size:19px;margin:22px 0 6px">New spot message</h3><p class="muted" style="margin:0 0 8px">When a spot opens for a bottle that had nowhere to go, its owner gets this on WhatsApp.</p>
+      ${spotT ? `<p style="margin:0">${kc(spotName)} ${tplPill(spotT.status)}${spotT.reason ? ` <span class="faint">${esc(spotT.reason.toLowerCase().replace(/_/g, " "))}</span>` : ""}</p>`
+        : Array.isArray(w.templates) ? `<button class="btn sm" id="wspot">Send it to Meta for approval</button>` : `<p class="faint" style="margin:0">Shows once the token works.</p>`}`;
     P().innerHTML = head("WhatsApp", "Sign-in codes and bottle notices. Checked live with Meta.", acts) +
       `<div class="card"><div class="ready"><div class="big ${ready ? "ok" : todo ? "" : "wait"}">${ic(ready ? "tick" : todo ? "chat" : "clock")}</div><div><h2>${title}</h2><p class="muted">${line}</p></div></div>
         <div class="chk">${steps.map((x) => { if (x.st === "todo") no++; return `<div class="ci${x.st === "ok" ? " done" : ""}" data-k="${x.k}"><span class="st ${x.st}">${x.st === "ok" ? ic("tick") : x.st === "wait" ? ic("clock") : no}</span>
           <div><b>${x.t}</b><div class="d">${x.d}</div>${x.m ? `<div class="m">${x.m}</div>` : ""}<div class="fixbox"></div></div><div class="act">${x.act || ""}</div></div>`; }).join("")}</div></div>
       <div class="two" style="margin-top:16px">
         <div class="card"><div class="ch"><h2>Send a test</h2></div><p class="muted" style="margin:-6px 0 0">The real message, to any WhatsApp number. Use your own.</p>
-          <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button></div>
+          <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button>${spotT && spotT.status === "APPROVED" ? '<button data-k="spot">New spot</button>' : ""}</div>
           <label class="lb">WhatsApp number</label>${phoneField("wphone", SS.get("outside.wtest") || "")}
           <button class="btn" id="wsend" style="margin-top:14px">${ic("send")}Send test</button>
           <div class="tests" id="wtests"></div></div>
@@ -1183,9 +1188,15 @@
           <dt>Verify token</dt><dd>${w.env.find((e) => e.key === "WA_VERIFY_TOKEN").set ? "Set in Netlify" : '<span class="faint">Not set</span>'}</dd></dl>
           <h3 style="font-size:19px;margin:22px 0 8px">Templates</h3>
           ${tpls.length ? `<div class="tw"><table class="t"><tr><th>Name</th><th>Language</th><th class="hm">Type</th><th></th></tr>${tpls.map((t) => `<tr><td><b>${esc(t.name)}</b></td><td class="muted">${esc(t.language)}</td><td class="muted hm">${esc(String(t.category || "").toLowerCase())}</td><td style="text-align:right">${tplPill(t.status)}</td></tr>`).join("")}</table></div>`
-            : `<p class="muted" style="margin:0">${Array.isArray(w.templates) ? "None yet." : "Shows once the token works."}</p>`}</div>
+            : `<p class="muted" style="margin:0">${Array.isArray(w.templates) ? "None yet." : "Shows once the token works."}</p>`}
+          ${spotBox}</div>
       </div>`;
     $("wrefresh").onclick = () => nav("whatsapp");
+    const ws = $("wspot"); if (ws) ws.onclick = async () => {
+      ws.disabled = true; const r = await call({ action: "wa-spot-template" }); ws.disabled = false;
+      if (!r.ok) return toast(metaSays(r.meta));
+      toast("Sent to Meta. Usually approved within a day."); nav("whatsapp");
+    };
     $("wcopy").onclick = () => { try { navigator.clipboard.writeText(w.hookUrl).then(() => toast("Copied."), () => toast("Couldn't copy.")); } catch { toast("Couldn't copy."); } };
     let kind = "code";
     $("wkind").querySelectorAll("button").forEach((b) => (b.onclick = () => { kind = b.dataset.k; $("wkind").querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b)); }));

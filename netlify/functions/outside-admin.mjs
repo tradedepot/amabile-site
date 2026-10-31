@@ -114,6 +114,10 @@ export default async (req) => {
     }
     await s.setJSON(K.venue(id), v);
     if (v.active) { const { ensureManager } = await import("../lib/_outside_staff.mjs"); Object.assign(v, await ensureManager(s, v)); }
+    // Newly live, or pouring something new: tell people whose bottle had nowhere to go.
+    if (v.active && (!prev.active || JSON.stringify(prev.prices || {}) !== JSON.stringify(v.prices))) {
+      const { tellSpotOpened } = await import("../lib/_outside_spots.mjs"); await tellSpotOpened(s, v.id).catch((e) => console.warn("spot tell", String(e)));
+    }
     const { runnerKeyHash, managerKeyHash, ...view } = v;
     return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null, checks });
   }
@@ -316,7 +320,8 @@ export default async (req) => {
   }
   if (a === "wa-register") return json(await waRegister(d.pin));
   if (a === "wa-subscribe") return json(await waSubscribe());
-  if (a === "wa-test") return json(await waTest(s, d.kind === "code" ? "code" : "bottle", d.phone));
+  if (a === "wa-test") return json(await waTest(s, ["code", "spot"].includes(d.kind) ? d.kind : "bottle", d.phone));
+  if (a === "wa-spot-template") { const { waCreateSpotTemplate } = await import("../lib/_outside_wa_check.mjs"); return json(await waCreateSpotTemplate()); }
   if (a === "wa-test-status") return json({ ok: true, test: await waTestStatus(s, d.id) });
 
   return json({ ok: false, error: "action" }, 400);
