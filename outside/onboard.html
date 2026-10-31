@@ -362,7 +362,7 @@ input:focus, select:focus { outline:none; border-color:var(--ink); box-shadow:0 
     const order = { sent_back: 0, submitted: 1, live: 2, declined: 3 };
     const stores = r.stores.slice().sort((x, y) => (order[x.stage] ?? 9) - (order[y.stage] ?? 9));
     app.innerHTML = (flash || "") + `<h1>Your stores</h1>${tiles}
-      <button class="cta" id="add"><span class="plus">+</span><span><b>Add a store</b><small>Standing in it. About three minutes.</small></span></button>
+      <button class="cta" id="add"><span class="plus">+</span><span><b>Add a store</b><small>While standing in it. Takes about 3 mins</small></span></button>
       <a class="guide" href="/onboard/guide">New to this? Read the guide</a>
       ${asked.length ? `<div class="sh"><h2>Asked to join</h2><span class="count">${asked.length}</span></div><p class="shsub">They signed up themselves. Message the manager, go, then add it from inside.</p>
         <div class="cards">${asked.map((q) => `<div class="ask"><div class="av">${esc((q.name || "?").trim().charAt(0).toUpperCase())}</div>
