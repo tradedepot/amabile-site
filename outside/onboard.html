@@ -105,8 +105,6 @@ input:focus, select:focus { outline:none; border-color:var(--ink); box-shadow:0 
 .loc2.ok, .shot.ok { border-style:solid; border-color:var(--ink); }
 .loc2.ok .pin, .shot.ok .cam { background:var(--ok-soft); color:var(--ok); }
 .loc2.ok .go { background:#fff; color:var(--ink); border:2px solid var(--ink); padding:5px 11px; }
-button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
-.loc2.bad { border-style:solid; border-color:var(--red-2); }
 .shot input { position:absolute; opacity:0; width:1px; height:1px; }
 .shot img { width:44px; height:44px; object-fit:cover; border-radius:10px; border:2px solid var(--ink); }
 .mlist { margin-top:12px; border:2px solid var(--ink); border-radius:16px; overflow:hidden; background:#fff; }
@@ -290,7 +288,7 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
   const ERR = {
     not_onboarder: "This number isn't set up to add stores. Ask your Amabile contact.", phone: "Check the number.", slow_down: "Too many codes. Try again in a few minutes.",
     send_failed: "We couldn't send the code just now. Try again in a minute.", not_on_whatsapp: "That number isn't on WhatsApp. Check the number and the country code.", expired: "That code has expired. Send a new one.", wrong_code: "That code isn't right.", too_many: "Too many tries. Send a new code.",
-    name: "Add the store's name.", area: "Choose the area.", kind: "Choose what kind of place it is.", location: "Turn on location for this site, standing in the store, so we can place it on the map.", here: "We need its location. Tap I'm here while you're standing in it.", prices: "Add the menu price of at least one wine.",
+    name: "Add the store's name.", area: "Choose the area.", kind: "Choose what kind of place it is.", location: "Turn on location for this site, standing in the store, so we can place it on the map.", prices: "Add the menu price of at least one wine.",
     manager_name: "Add the manager's name.", manager_phone: "Check the manager's WhatsApp number.", bar_phone: "Check the bar phone numbers.", account_number: "Account numbers have 10 digits.", bank: "Choose the bank.",
     resolve: "The bank doesn't recognise that account. Check the number and the bank.", already_live: "This store is already live on Andiamo!", outlet: "Choose the store again.", duplicate: "You've already sent this store. It's waiting for approval.", request_taken: "Someone has already added this venue.", not_editable: "This store can't be changed now.",
     offline: "You're offline. Try again.", server: "Something went wrong. Try again."
@@ -351,7 +349,7 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
     const r = await load(); if (!r) return;
     const nm = String(r.me.name || "?").trim(), ws = nm.split(/\s+/);
     const ini = (ws.length > 1 ? ws[0][0] + ws[1][0] : /^[A-Z]{2,3}$/.test(nm) ? nm : nm[0]).toUpperCase();
-    $("who").innerHTML = `<button class="me" id="me" aria-haspopup="true" aria-expanded="false"><i>${esc(ini)}</i>${esc(r.me.name)}<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5l5 5 5-5"/></svg></button>
+    $("who").innerHTML = `<button class="me" id="me" aria-haspopup="true" aria-expanded="false"><i>${esc(ini)}</i>${nm.toUpperCase() === ini ? "" : esc(nm)}<svg viewBox="0 0 12 8" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M1 1.5l5 5 5-5"/></svg></button>
       <div class="menu" id="menu" hidden><a href="/onboard/guide">How it works</a><button id="out">Sign out</button></div>`;
     $("me").onclick = (e) => { e.stopPropagation(); const m = $("menu"); m.hidden = !m.hidden; $("me").setAttribute("aria-expanded", String(!m.hidden)); };
     document.onclick = () => { const m = $("menu"); if (m) m.hidden = true; };
@@ -435,8 +433,8 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
       if (o.status === "live") return pick(`<b>${esc(o.name)}</b> is already live on Andiamo!`);
       if (o.status === "waiting") return pick(o.mine ? `You've sent <b>${esc(o.name)}</b>. It's waiting for approval.` : `<b>${esc(o.name)}</b> is waiting for approval${o.waitingBy ? ", added by " + esc(o.waitingBy) : ""}.`);
       if (o.status === "listed") return pick(`<b>${esc(o.name)}</b> is already being set up at the back end.`);
-      // Its location comes from our records. If they have none, it's taken on the form, only when you're standing in it.
-      const loc = o.lat != null ? { lat: o.lat, lng: o.lng, locFrom: "records" } : {};
+      // Its location is in our records; the phone's is used only if it isn't.
+      const loc = o.lat != null ? { lat: o.lat, lng: o.lng, locFrom: "records" } : here ? { lat: here.lat, lng: here.lng, acc: here.acc, locFrom: "gps" } : {};
       const c = (o.contacts || [])[0];
       form({ outlet: o.ref, rec: o, name: o.name, area: o.area, kind: o.kind || "", ...loc,
         ...(o.asked ? { fromRequest: o.asked.id, prices: o.asked.prices || {}, managerName: o.asked.contactName, managerPhone: o.asked.phone }
@@ -463,16 +461,13 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
     const recC = rec && rec.contacts && rec.contacts.length ? rec.contacts : [];
     // A store from our records already has its name, area, kind and location: nothing to ask. A new one asks for them.
     const known = !!(rec && pre.name && pre.area && st.kind);
-    // In our records but with no location: you can do everything else from anywhere, the pin only on site.
-    const needHere = !!(rec && st.lat == null);
     let n = 0; const num = () => ++n;
     app.innerHTML = `<button class="btn sm ghost" id="back" style="margin-bottom:14px">← Your stores</button>
       <h1>${pre.id ? "Fix " + esc(pre.name) : "Add a store"}</h1><p class="sub">${S.me.auto ? "It goes live as soon as you send it." : "Amabile checks it, then it goes live."}</p>
       ${rec ? `<div class="rec"><div><small>${rec.asked || pre.fromRequest ? "Asked to join · in our records" : "From our records"}</small><b>${esc(rec.name)}</b><span>${esc([rec.type, rec.place].filter(Boolean).join(" · "))}</span>
         <div class="tags">${rec.lastBought ? `<span class="tag">Last bought ${day(rec.lastBought)}</span>` : ""}${rec.cases ? `<span class="tag">${rec.cases} cases this year</span>` : ""}${rec.accounts > 1 ? `<span class="tag">${rec.accounts} accounts</span>` : ""}${pre.fromRequest && Object.keys(pre.prices || {}).length ? '<span class="tag ok">Prices from the venue</span>' : ""}</div></div>
         ${pre.fromRequest && !rec.ref ? "" : '<button type="button" id="chgst">Change</button>'}</div>` : ""}
-      ${needHere ? `<button type="button" class="loc2" id="here"><span class="pin">${svg('<path d="M12 21s-7-6.2-7-11.5A7 7 0 0 1 19 9.5C19 14.8 12 21 12 21z"/><circle cx="12" cy="9.5" r="2.5"/>')}</span><span class="lt"><b>Its location</b><small>Not in our records. Tap when you're standing in it.</small></span><span class="go">I'm here</span></button>` : ""}
-      <section class="blk"${known ? " hidden" : ""} id="sblk"><header><span class="n">${known ? "" : num()}</span><div><h2>The store</h2></div></header>
+      <section class="blk"${known ? " hidden" : ""} id="sblk"><header><span class="n">${known ? "" : num()}</span><div><h2>The store</h2><p>Be inside it. Its location comes from your phone.</p></div></header>
         <div id="sfields">
           <div class="fgroup"><label class="fld" for="nm"><span>Name</span><input id="nm" maxlength="60" value="${esc(pre.name || "")}" autocomplete="off" placeholder="As on the sign outside"></label>
           <label class="fld sel" for="ar"><span>Area</span><select id="ar" class="${pre.area ? "" : "empty"}"><option value="">Choose the area</option>${S.areas.map((a) => `<option${pre.area === a ? " selected" : ""}>${esc(a)}</option>`).join("")}</select></label></div>
@@ -512,13 +507,7 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
       navigator.geolocation.getCurrentPosition((p) => { st.lat = +p.coords.latitude.toFixed(6); st.lng = +p.coords.longitude.toFixed(6); st.acc = Math.round(p.coords.accuracy); res(true); },
         () => res(false), { enableHighAccuracy: true, timeout: 15000, maximumAge: 30000 });
     });
-    if (needHere) $("here").onclick = async () => {
-      const b = $("here"); b.disabled = true; b.querySelector(".go").textContent = "Finding you…";
-      const got = await locate(); b.disabled = false; unflag(b);
-      if (!got) { b.querySelector(".go").textContent = "I'm here"; return flag(b, ERR.location); }
-      b.classList.add("ok"); b.querySelector("small").textContent = "Added. Tap again if you've moved."; b.querySelector(".go").textContent = "Added";
-    };
-    else if (st.lat == null) locate();
+    if (st.lat == null) locate();
     // A smaller copy of the menu photo, so it sends quickly on a weak signal.
     $("ph").onchange = () => {
       const f = $("ph").files[0]; if (!f) return;
@@ -550,7 +539,6 @@ button.loc2 { width:100%; font:inherit; color:inherit; text-align:left; }
       if (store.name.length < 2) return flag($("nm"), ERR.name);
       if (!store.area) return flag($("ar"), ERR.area);
       if (!store.kind) { $("sblk").hidden = false; return flag($("kd"), ERR.kind); }
-      if (needHere && store.lat == null) return flag($("here"), ERR.here);
       if (store.lat == null) { $("send").disabled = true; const got = await locate(); $("send").disabled = false; if (!got) { $("err").textContent = ERR.location; return; } store.lat = st.lat; store.lng = st.lng; store.acc = st.acc; }
       if (!W.some((w) => String(prices[w.id]).replace(/\D/g, ""))) return flag($("mlist"), ERR.prices);
       if (!store.managerName) return flag($("mn"), ERR.manager_name);
