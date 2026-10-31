@@ -483,8 +483,8 @@
       </div></div>`).join("");
     const s2 = sent.slice(0, 12).map((x) => {
       const isLink = x.via === "link" && x.giftUrl, isSelf = x.selfSend && x.giftUrl;
-      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? (x.unreached ? " · couldn't reach them on WhatsApp" : " · Waiting") : ""}</div></div>` +
-        (isLink || isSelf ? `<button class="btn small gold" data-gs="${x.id}">${x.unreached ? "Send it yourself" : "Send it"}</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
+      return `<div class="item"><div class="bt ph">${photo(x.wine, 56)}</div><div class="grow"><h4>${isLink ? (x.forLabel ? "To " + esc(x.forLabel) : "Your card") : "To " + esc(x.toMasked)}</h4><div class="sub">${esc(wineOf(x.wine).name)}${isLink ? " · not opened yet" : isSelf ? selfLine(x) : ""}</div></div>` +
+        (isLink || isSelf ? `<button class="btn small${isSelf && (x.shared || x.opened) ? " ghost" : " gold"}" data-gs="${x.id}">${isLink ? "Send it" : selfBtn(x)}</button>` : `<span class="tag${x.status === "Delivered" ? " gold" : ""}">${esc(x.status)}</span>`) + `</div>`;
     }).join("");
     return `<h2>My bottles</h2>${pingCard("bottles")}<h3>Sent to you</h3>${items ? `<div class="bags">${items}</div>${walletCard()}` : `<div class="empty"><div class="art">${A.bottle("rosato", 80, false)}</div>No bottles waiting. When someone sends you one, it lands here.</div>`}
       <h3>You sent</h3>${s2 ? `<div class="list">${s2}</div>` : `<p class="muted">Nothing yet. Tap Send to put a bottle on a friend's table.</p>`}`;
@@ -648,17 +648,27 @@
     sc.onerror = () => [...document.querySelectorAll(".snapwrap")].forEach((w) => w.remove());
     document.head.appendChild(sc);
   }
+  // A self-send goes from the sender's own WhatsApp. We know they tapped send, and when the link was opened.
+  const selfLine = (x) => x.opened ? " · Opened" : x.shared ? " · Sent by you" : x.unreached ? " · couldn't reach them on WhatsApp" : " · Not sent yet";
+  const selfBtn = (x) => x.shared || x.opened ? "Resend" : x.unreached ? "Send it yourself" : "Send it";
+  function markShared(b) {
+    if (!b || !b.id) return;
+    api("shared", { bottleId: b.id }).catch(() => {});
+    const x = S.me && (S.me.sent || []).find((y) => y.id === b.id);
+    if (x) x.shared = true;
+  }
   // The sender sends it themselves on WhatsApp. The link opens it; only the number it was sent to can keep it.
   function selfShare(b) {
     if (!b || !b.giftUrl) return;
     const url = b.giftUrl, text = "I'm sending an Amabile to your table. For next time you're outside. " + url;
     const wa = "https://wa.me/" + (b.waTo || "") + "?text=" + encodeURIComponent(text);
     modal(`<div class="sealcard">${A.envelope.closed()}</div>
-      <h2>Send it to ${esc(b.toMasked || "them")}${b.unreached ? " yourself" : ""}</h2>
-      <p class="muted">${b.unreached ? "We couldn't reach them on WhatsApp. Send them this link and they'll have it. Only their number can open it." : "Send them this link on WhatsApp. Only their number can open it."}</p>
+      <h2>${b.shared || b.opened ? "Resend it to " + esc(b.toMasked || "them") : "Send it to " + esc(b.toMasked || "them") + (b.unreached ? " yourself" : "")}</h2>
+      <p class="muted">${b.opened ? "They've opened it. Send the link again if they need it. Only their number can open it." : b.shared ? "Send the link again if they didn't get it. Only their number can open it." : b.unreached ? "We couldn't reach them on WhatsApp. Send them this link and they'll have it. Only their number can open it." : "Send them this link on WhatsApp. Only their number can open it."}</p>
       <div class="sharegrid"><a class="btn block" id="wa" href="${esc(wa)}" target="_blank" rel="noopener">Send on WhatsApp</a>
         <button class="btn block ghost" id="cp">Copy link</button></div>`, (c) => {
-      c.querySelector("#cp").onclick = async () => { try { await navigator.clipboard.writeText(url); toast("Copied."); } catch { prompt("Copy this link", url); } };
+      c.querySelector("#wa").addEventListener("click", () => markShared(b));
+      c.querySelector("#cp").onclick = async () => { markShared(b); try { await navigator.clipboard.writeText(url); toast("Copied."); } catch { prompt("Copy this link", url); } };
     });
   }
   function giftShare(b) {

@@ -734,14 +734,27 @@
   let bFilter = "all";
   function bottles() {
     const all = D.bottles || [];
-    const groups = { all: () => true, waiting: (b) => ["waiting", "link", "topup"].includes(b.status), on_way: (b) => b.status === "on_way", claimed: (b) => ["served", "claimed"].includes(b.status), other: (b) => !["waiting", "link", "topup", "on_way", "claimed", "served"].includes(b.status) };
+    // Unsent: never paid for (drafts). Kept out of All.
+    const groups = { all: (b) => b.status !== "pending", waiting: (b) => ["waiting", "link", "topup"].includes(b.status), on_way: (b) => b.status === "on_way", claimed: (b) => ["served", "claimed"].includes(b.status), other: (b) => !["waiting", "link", "topup", "on_way", "claimed", "served", "pending"].includes(b.status), unsent: (b) => b.status === "pending" };
     const bs = all.filter(groups[bFilter]);
-    const failed = all.filter((b) => b.notice && !b.notice.ok).length;
-    P().innerHTML = head("Bottles", `The last ${all.length} sent.${failed ? ` ${plural(failed, "WhatsApp message")} didn't go out.` : ""}`) +
-      `<div class="seg" style="margin-bottom:16px">${[["all", "All"], ["waiting", "Waiting"], ["on_way", "On the way"], ["claimed", "Delivered"], ["other", "Other"]].map(([k, n]) => `<button data-bf="${k}" class="${bFilter === k ? "on" : ""}">${n} <small>${all.filter(groups[k]).length}</small></button>`).join("")}</div>
+    const failed = all.filter((b) => b.status !== "pending" && b.notice && !b.notice.ok && !(b.self && (!b.self.fallback || b.self.shared || b.self.opened))).length;
+    // WhatsApp: ours (Sent, Delivered, Refused) or, for a self-send, the sender's own (Shared, Opened).
+    const wa = (b) => {
+      const n = b.notice, sf = b.self;
+      if (sf && sf.opened) return `<span class="pill ok" title="Opened ${esc(ago(sf.opened))}${sf.byThem ? " by them" : ""}">Opened</span>`;
+      if (sf && sf.shared) return `<span class="pill gold" title="${sf.sharedAt ? "Shared " + esc(ago(sf.sharedAt)) : "Sent from the sender's phone"}">Sent by sender</span>`;
+      if (n && n.code) return `<span class="pill warn" title="WhatsApp error ${esc(n.code)}">Refused</span>`;
+      if (n && n.delivered) return '<span class="pill ok">Delivered</span>';
+      if (n && n.ok) return '<span class="pill ok">Sent</span>';
+      if (sf) return '<span class="faint" title="The sender hasn\'t sent the link yet">Not sent yet</span>';
+      if (n) return `<span class="pill warn" title="${esc(n.skip || (n.error && n.error.message) || "")}">Not sent</span>`;
+      return '<span class="faint">·</span>';
+    };
+    P().innerHTML = head("Bottles", `The last ${all.filter(groups.all).length} sent.${failed ? ` ${plural(failed, "WhatsApp message")} didn't go out.` : ""}`) +
+      `<div class="seg" style="margin-bottom:16px">${[["all", "All"], ["waiting", "Waiting"], ["on_way", "On the way"], ["claimed", "Delivered"], ["other", "Other"], ["unsent", "Unsent"]].map(([k, n]) => `<button data-bf="${k}" class="${bFilter === k ? "on" : ""}">${n} <small>${all.filter(groups[k]).length}</small></button>`).join("")}</div>
       <div class="card"><div class="tw"><table class="t"><tr><th></th><th>From</th><th>To</th><th>Level</th><th>Paid</th><th>Status</th><th>WhatsApp</th><th>When</th></tr>
       ${bs.map((b) => `<tr><td style="width:44px">${photo(b.wine, "thumb")}</td><td><b>${esc(b.from || "Someone")}</b><div class="faint">${esc(wineOf(b.wine).name)}</div></td><td>${esc(b.to || "Card link")}${b.venueId ? `<div class="faint">at ${esc(vName(b.venueId))}</div>` : ""}</td><td>${BAND_NAMES[b.band] || ""}</td><td class="money">${b.price ? naira(b.charged != null ? b.charged : b.price) : ""}${b.code ? `<div class="faint">${esc(b.code)}</div>` : ""}</td><td>${bpill(b.status)}</td>
-        <td>${b.notice ? (b.notice.ok ? '<span class="pill ok">Sent</span>' : `<span class="pill warn" title="${esc(b.notice.skip || (b.notice.error && b.notice.error.message) || "")}">Not sent</span>`) : '<span class="faint">·</span>'}</td><td class="faint" style="white-space:nowrap">${ago(b.createdAt)}</td></tr>`).join("") || `<tr><td colspan="8"><div class="empty">Nothing here.</div></td></tr>`}</table></div></div>`;
+        <td>${wa(b)}</td><td class="faint" style="white-space:nowrap">${ago(b.createdAt)}</td></tr>`).join("") || `<tr><td colspan="8"><div class="empty">Nothing here.</div></td></tr>`}</table></div></div>`;
     P().querySelectorAll("[data-bf]").forEach((b) => (b.onclick = () => { bFilter = b.dataset.bf; bottles(); }));
   }
 

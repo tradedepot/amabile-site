@@ -23,7 +23,7 @@ export async function attachGift(s, b, forLabel) {
 // A bottle to a number that the sender shares themselves on WhatsApp. The link carries no number: it opens
 // the bottle, and only someone who signs in with the number it was sent to can keep it.
 export async function attachInvite(s, b) {
-  b.selfSend = true; b.anon = false;
+  b.selfSend = true; b.anon = false; b.shareTrack = true;
   b.giftCode = newCode();
   await s.set(K.gift(b.giftCode), b.id);
 }
@@ -32,8 +32,25 @@ export async function attachInvite(s, b) {
 // Same as a self-send from here on; whether it was sent anonymously is left as it was.
 export async function ensureShareLink(s, b) {
   if (!b.giftCode) { b.giftCode = newCode(); await s.set(K.gift(b.giftCode), b.id); }
-  b.selfSend = true;
+  b.selfSend = true; b.shareTrack = true;
   return giftUrl(b.giftCode);
+}
+
+// The sender sends a self-send from their own WhatsApp, so we can't see it go. We record the tap on
+// Send on WhatsApp or Copy link, and the link being opened by anyone but the sender.
+export async function markShared(s, me, bottleId) {
+  const b = await getJSON(s, K.bottle(clean(bottleId, 20)));
+  if (!b || b.from !== me || !b.selfSend) return { ok: false, error: "not_found" };
+  b.sharedAt = Date.now(); b.shares = (b.shares || 0) + 1;
+  await saveBottle(s, b);
+  return { ok: true };
+}
+async function markOpened(s, b, me) {
+  const now = Date.now();
+  if (!b.openedAt) b.openedAt = now;
+  if (me && b.to === me && !b.openedByThem) b.openedByThem = now;
+  if (b.noticeFallback && me && b.to === me) await s.delete("nr/" + b.id).catch(() => {});
+  await saveBottle(s, b);
 }
 
 async function bottleFor(s, code) {
@@ -50,6 +67,7 @@ export async function giftView(s, code, me) {
   if (b.selfSend) {
     if (b.status === "pending" || b.status === "review") return { ...base, state: "not_ready" };
     if (["cancelled", "refunded", "expired"].includes(b.status)) return { ...base, state: "gone" };
+    if (me !== b.from && (!b.openedAt || (me && b.to === me && !b.openedByThem))) await markOpened(s, b, me).catch(() => {});
     if (!me) return { ...base, state: "numbered" };
     if (b.to === me) return { ...base, state: "mine", bottleId: b.id };
     if (b.from === me) return { ...base, state: "sender" };

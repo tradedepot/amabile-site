@@ -240,7 +240,8 @@ export default async (req) => {
   if (a === "bottles") {
     const keys = (await listKeys(s, "b/")).slice(-400);
     const bs = (await fetchAll(s, keys)).sort((x, y) => y.createdAt - x.createdAt).slice(0, 200)
-      .map((b) => ({ id: b.id, kind: b.kind, wine: b.wine, band: b.band, price: b.price, charged: b.charged != null ? b.charged : b.price, code: b.code || "", status: b.status, from: b.fromName, to: b.to ? maskPhone(b.to) : b.toMasked, venueId: b.venueId || null, createdAt: b.createdAt, notice: b.notice || null }));
+      .map((b) => ({ id: b.id, kind: b.kind, wine: b.wine, band: b.band, price: b.price, charged: b.charged != null ? b.charged : b.price, code: b.code || "", status: b.status, from: b.fromName, to: b.to ? maskPhone(b.to) : b.toMasked, venueId: b.venueId || null, createdAt: b.createdAt, notice: b.notice || null,
+        ...(b.selfSend ? { self: { shared: !!(b.sharedAt || (!b.shareTrack && !b.noticeFallback)), sharedAt: b.sharedAt || null, opened: b.openedAt || null, byThem: b.openedByThem || null, fallback: !!b.noticeFallback } } : {}) }));
     return json({ ok: true, bottles: bs });
   }
 

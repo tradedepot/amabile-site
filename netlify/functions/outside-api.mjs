@@ -212,6 +212,11 @@ export default async (req) => {
       const r = await acceptGift(s, me, player, d.code);
       return r.ok ? json(r) : bad(r.error, r.error === "gift_unknown" ? 404 : 409);
     }
+    if (route === "shared") {
+      const { markShared } = await import("../lib/_outside_gift.mjs");
+      const r = await markShared(s, me, d.bottleId);
+      return r.ok ? json(r) : bad(r.error, 404);
+    }
     if (route === "gift-reissue") {
       const { reissueGift } = await import("../lib/_outside_gift.mjs");
       const r = await reissueGift(s, me, d.bottleId);
