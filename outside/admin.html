@@ -382,6 +382,8 @@ code.k { font-family: ui-monospace, Menlo, monospace; font-size: 12.5px; backgro
 @media (prefers-reduced-motion: reduce) { .nudge { animation: none; } }
 
 /* Wallet setup */
+.wlgrid { grid-template-columns: 1fr 1fr; align-items: stretch; } .wlgrid > .card { margin-top: 0; }
+@media (max-width: 1000px) { .wlgrid { grid-template-columns: 1fr; } }
 .wlact { display: flex; gap: 6px; flex-wrap: wrap; justify-content: flex-end; }
 .wlact .btn { white-space: nowrap; }
 .wlrow { display: flex; gap: 8px; margin-top: 8px; }

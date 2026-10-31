@@ -439,7 +439,13 @@ export async function googleSetup(s, { issuerId, saKey }) {
   if (saKey) { try { sa = JSON.parse(saKey); } catch { return { ok: false, error: "sa_key" }; } if (!sa.private_key || !sa.client_email) return { ok: false, error: "sa_key" }; }
   const use = sa || (() => { try { return JSON.parse(env("GCP_SA_KEY") || "null"); } catch { return null; } })();
   if (!use || !use.private_key) return { ok: false, error: "sa_key" };
-  try { await googleToken({ google: { issuerId: id, sa: use } }); } catch { return { ok: false, error: "google_signin" }; }
+  const gcfg = { google: { issuerId: id, sa: use } };
+  let tok;
+  try { tok = await googleToken(gcfg); } catch { return { ok: false, error: "google_signin" }; }
+  // Make the card design (class) now, so Google has something to review when publishing is requested.
+  const cr = await fetch("https://walletobjects.googleapis.com/walletobjects/v1/genericClass", {
+    method: "POST", headers: { authorization: "Bearer " + tok, "content-type": "application/json" }, body: JSON.stringify(googleClass(gcfg)) }).catch(() => null);
+  if (cr && !cr.ok && cr.status !== 409) { const t = await cr.text().catch(() => ""); console.warn("wallet google class", cr.status, t.slice(0, 200)); if (cr.status === 401 || cr.status === 403) return { ok: false, error: "google_signin" }; }
   const st = await settings(s);
   st.google = { issuerId: id, ...(sa ? { saKey } : {}), at: Date.now() };
   await saveSettings(s, st);
