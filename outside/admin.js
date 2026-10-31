@@ -1172,13 +1172,8 @@
       `<div class="card"><div class="ready"><div class="big ${ready ? "ok" : todo ? "" : "wait"}">${ic(ready ? "tick" : todo ? "chat" : "clock")}</div><div><h2>${title}</h2><p class="muted">${line}</p></div></div>
         <div class="chk">${steps.map((x) => { if (x.st === "todo") no++; return `<div class="ci${x.st === "ok" ? " done" : ""}" data-k="${x.k}"><span class="st ${x.st}">${x.st === "ok" ? ic("tick") : x.st === "wait" ? ic("clock") : no}</span>
           <div><b>${x.t}</b><div class="d">${x.d}</div>${x.m ? `<div class="m">${x.m}</div>` : ""}<div class="fixbox"></div></div><div class="act">${x.act || ""}</div></div>`; }).join("")}</div></div>
-      <div class="two" style="margin-top:16px">
-        <div class="card"><div class="ch"><h2>Send a test</h2></div><p class="muted" style="margin:-6px 0 0">The real message, to any WhatsApp number. Use your own.</p>
-          <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button>${spotT && spotT.status === "APPROVED" ? '<button data-k="spot">New spot</button>' : ""}</div>
-          <label class="lb">WhatsApp number</label>${phoneField("wphone", SS.get("outside.wtest") || "")}
-          <button class="btn" id="wsend" style="margin-top:14px">${ic("send")}Send test</button>
-          <div class="tests" id="wtests"></div></div>
-        <div class="card" style="margin-top:0"><div class="ch"><h2>Details</h2></div><dl class="kv">
+      <div class="two wa" style="margin-top:16px">
+        <div class="card"><div class="ch"><h2>Details</h2></div><dl class="kv">
           <dt>Number</dt><dd>${n ? esc(n.display_phone_number || "") : '<span class="faint">Not connected</span>'}</dd>
           <dt>Name</dt><dd>${n && n.verified_name ? esc(n.verified_name) : '<span class="faint">·</span>'}</dd>
           <dt>Quality</dt><dd>${n ? QUALITY[n.quality_rating] || "Not rated yet" : '<span class="faint">·</span>'}</dd>
@@ -1190,6 +1185,11 @@
           ${tpls.length ? `<div class="tw"><table class="t"><tr><th>Name</th><th>Language</th><th class="hm">Type</th><th></th></tr>${tpls.map((t) => `<tr><td><b>${esc(t.name)}</b></td><td class="muted">${esc(t.language)}</td><td class="muted hm">${esc(String(t.category || "").toLowerCase())}</td><td style="text-align:right">${tplPill(t.status)}</td></tr>`).join("")}</table></div>`
             : `<p class="muted" style="margin:0">${Array.isArray(w.templates) ? "None yet." : "Shows once the token works."}</p>`}
           ${spotBox}</div>
+        <div class="card" style="margin-top:0"><div class="ch"><h2>Send a test</h2></div><p class="muted" style="margin:-6px 0 0">The real message, to any WhatsApp number. Use your own.</p>
+          <label class="lb">Message</label><div class="seg" id="wkind"><button data-k="code" class="on">Sign-in code</button><button data-k="bottle">Bottle notice</button>${spotT && spotT.status === "APPROVED" ? '<button data-k="spot">New spot</button>' : ""}</div>
+          <label class="lb">WhatsApp number</label>${phoneField("wphone", SS.get("outside.wtest") || "")}
+          <button class="btn" id="wsend" style="margin-top:14px">${ic("send")}Send test</button>
+          <div class="tests" id="wtests"></div></div>
       </div>`;
     $("wrefresh").onclick = () => nav("whatsapp");
     const ws = $("wspot"); if (ws) ws.onclick = async () => {
