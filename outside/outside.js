@@ -461,9 +461,10 @@
     modal(`<div class="reveal">${photo(b.wine, 260)}<div class="wn">${esc(wineOf(b.wine).label)}<small>${esc(wineOf(b.wine).kind || "")}</small></div></div>
       <h2>${esc(b.from)}'s sending an Amabile to your table.</h2><p>For next time you're outside.</p>
       ${b.note ? `<p class="note" style="font-family:var(--serif);font-size:20px;color:var(--wine)">"${esc(b.note)}"</p>` : ""}
-      <p class="muted">Claim it at any of the ${spots.length} spots outlined in gold on the map. When you're there, open Andiamo and tap Claim it.</p>
-      <button class="btn block" data-x2>See the spots</button>${pingCard("intro")}`, (c) => {
-      c.querySelector("[data-x2]").onclick = () => { closeModal(); focusSpots(spots); };
+      <p class="muted">${!spots.length ? "No spot pours it yet. It waits in My bottles until one does."
+        : (spots.length === 1 ? `Claim it at ${esc(spots[0].name)}, outlined in gold on the map.` : `Claim it at any of the ${spots.length} spots outlined in gold on the map.`) + " When you're there, open Andiamo and tap Claim it."}</p>
+      <button class="btn block" data-x2>${spots.length ? (spots.length === 1 ? "See the spot" : "See the spots") : "Cheers"}</button>${pingCard("intro")}`, (c) => {
+      c.querySelector("[data-x2]").onclick = () => { closeModal(); if (spots.length) focusSpots(spots); };
       bindPing(c, () => { const p = c.querySelector(".ping"); if (p) p.remove(); });
     });
   }
