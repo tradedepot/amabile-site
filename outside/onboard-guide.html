@@ -131,11 +131,14 @@ ol.steps > li { position: relative; display: grid; grid-template-columns: 40px m
 .step.live { background: var(--green-soft); border-color: var(--green); }
 .step.live h3 { color: var(--green); }
 .num.live { background: var(--green); }
-.flow { display: flex; gap: 6px; overflow-x: auto; margin: 10px -2px 2px; padding: 2px 2px 6px; scroll-snap-type: x mandatory; }
-.flow div { flex: none; scroll-snap-align: start; background: var(--cream); border: 1.5px solid var(--ink); border-radius: 12px; padding: 7px 10px; font-weight: 900; font-size: 13px; max-width: 150px; line-height: 1.25; }
-.flow div small { display: block; font-size: 10px; letter-spacing: 1px; text-transform: uppercase; color: var(--ink-2); font-weight: 800; }
-.flow .done { background: var(--green); color: #fff; border-color: var(--green); }
-.flow .done small { color: rgba(255,255,255,.85); }
+.flow { display: grid; margin: 12px 0 2px; }
+.flow > div { display: grid; grid-template-columns: 28px minmax(0, 1fr); gap: 12px; align-items: start; position: relative; padding: 0 0 10px; font-weight: 800; font-size: 14.5px; line-height: 1.3; }
+.flow > div > span { padding-top: 4px; }
+.flow > div i { font-style: normal; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; background: var(--cream); border: 2px solid var(--ink); font-size: 12px; font-weight: 900; position: relative; z-index: 1; }
+.flow > div:not(:last-child)::after { content: ""; position: absolute; left: 13px; top: 28px; bottom: 0; width: 2px; background: var(--ink); }
+.flow > div.done { padding-bottom: 0; color: var(--green); }
+.flow > div.done i { background: var(--green); border-color: var(--green); color: #fff; }
+.flow > div.done i svg { width: 14px; height: 14px; }
 .after { display: grid; grid-template-columns: 1fr; gap: 10px; }
 .card { background: var(--paper); border: 2px solid var(--ink); border-radius: 16px; padding: 13px 14px; display: grid; grid-template-columns: 36px minmax(0, 1fr); gap: 12px; align-items: start; }
 .card .ic { width: 36px; height: 36px; border-radius: 10px; background: var(--gold); border: 2px solid var(--ink); display: grid; place-items: center; }
@@ -213,7 +216,7 @@ ol.steps > li { position: relative; display: grid; grid-template-columns: 40px m
       <li><span class="num live">3</span><div class="step live"><h3>Approved at the back end, it's live</h3><p>You and the manager both get a WhatsApp.</p></div></li>
       <li><span class="num">4</span><div class="step"><h3>Set up the bar phone</h3><p>andiamo.ng/board on the phone that stays at the bar. The manager signs in once, then taps Test the sound.</p></div></li>
       <li><span class="num">5</span><div class="step"><h3>Walk the staff through one bottle</h3>
-        <div class="flow"><div><small>1</small>Board pings</div><div><small>2</small>I'm on it</div><div><small>3</small>Find the glowing phone</div><div><small>4</small>Scan their QR or type the 4 digits</div><div class="done"><small>5</small>Delivered</div></div>
+        <div class="flow"><div><i>1</i><span>Board pings</span></div><div><i>2</i><span>I'm on it</span></div><div><i>3</i><span>Find the glowing phone</span></div><div><i>4</i><span>Scan their QR or type the 4 digits</span></div><div class="done"><i><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></i><span>Delivered</span></div></div>
         <p>Paid the moment it's Delivered.</p></div></li>
       <li><span class="num">6</span><div class="step"><h3>Run one real bottle</h3><p>A test bottle is sent to your number. Claim it at a table with the staff watching.</p></div></li>
     </ol>
