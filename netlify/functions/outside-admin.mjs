@@ -105,6 +105,8 @@ export default async (req) => {
     const checks = liveChecks(v);
     if (v.active && checks.missing.length) { v.active = false; v.blockedLive = checks.missing; } else delete v.blockedLive;
     if (v.active) v.stage = "live";
+    // Its Google Maps place, for Directions: found again when the name or location changes, unless set by hand.
+    { const { matchVenue } = await import("../lib/_outside_places.mjs"); await matchVenue(v); }
     let keys = null;
     if (v.active && (!v.runnerKeyHash || d.newKeys)) {
       keys = { runner: rid(6), manager: rid(8) };
@@ -114,6 +116,16 @@ export default async (req) => {
     if (v.active) { const { ensureManager } = await import("../lib/_outside_staff.mjs"); Object.assign(v, await ensureManager(s, v)); }
     const { runnerKeyHash, managerKeyHash, ...view } = v;
     return json({ ok: true, venue: view, keys, board: keys ? SITE + "/board?v=" + id : null, checks });
+  }
+
+  if (a === "venue-place") {
+    const { setPlace } = await import("../lib/_outside_places.mjs");
+    const r = await setPlace(s, d.id, d);
+    return json(r, r.ok ? 200 : 400);
+  }
+  if (a === "places-fill") {
+    const { fillPlaces } = await import("../lib/_outside_places.mjs");
+    return json(await fillPlaces(s));
   }
 
   if (a === "venue-keys") {

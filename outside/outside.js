@@ -52,6 +52,8 @@
   const ticketName = (t) => t.item || wineOf(t.wine).name;
   const spotName = (b) => { const n = bandName(b); return (/^[AEIOU]/i.test(n) ? "an " : "a ") + n + " spot"; };
   const wineOf = (id) => (S.cfg && S.cfg.wines.find((w) => w.id === id)) || { name: id, label: id };
+  // Directions to the venue's own Google Maps place when we have it (name, photos, entrance), else its pin.
+  const dirUrl = (v) => "https://www.google.com/maps/dir/?api=1&destination=" + (v.placeId ? encodeURIComponent(v.name + (v.area ? ", " + v.area : "")) + "&destination_place_id=" + encodeURIComponent(v.placeId) : v.lat + "," + v.lng);
   const venueOf = (id) => (S.cfg && S.cfg.venues.find((v) => v.id === id)) || null;
   const beaconOf = (id) => (S.cfg && (S.cfg.beacons || []).find((b) => b.id === id)) || { hex: "#F2B705", name: "Gold" };
   // A venue's level is per wine, worked out from its menu price on the server (levels); band is its headline level.
@@ -1116,7 +1118,7 @@
       ${d.reward ? `<p class="muted">${esc(d.reward)}</p>` : ""}
       <p class="muted">One ${isItem(d) ? "" : "bottle "}per table of two or more, shared. One drop a night.</p>
       ${d.state === "live" ? `<button class="btn block" id="go">I'm here. Claim one</button>` : ""}
-      ${v && !d.hidden ? `<p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>` : ""}`, (c) => {
+      ${v && !d.hidden ? `<p></p><a class="btn block ghost" target="_blank" rel="noopener" href="${esc(dirUrl(v))}">Directions</a>` : ""}`, (c) => {
       const go = c.querySelector("#go"); if (go) go.onclick = () => needSignIn(() => dropClaim(d), WHY.drop);
     });
   }
@@ -1157,7 +1159,7 @@
       <p class="muted">Pours ${v.wines.map((w) => esc(wineOf(w).name)).join(", ")}.</p>
       ${drop ? `<button class="item" data-d="${drop.id}" style="width:100%;text-align:left"><div class="bt">${dropArt(drop, 40)}</div><div class="grow"><h4>${isItem(drop) ? esc(drop.item) + " drop" : "Drop"} ${drop.state === "live" ? "live now" : timeShort(drop.start)}</h4><div class="sub">${drop.left} of ${drop.bottles} left</div></div></button>` : ""}
       ${bag.length ? `<h3>Claimable here</h3><div class="list">${bag.map((b) => `<div class="item"><div class="bt ph">${photo(b.wine, 56)}</div><div class="grow"><h4>From ${esc(b.from)}</h4></div><button class="btn small" data-c="${b.id}">Claim it</button></div>`).join("")}</div>` : ""}
-      <p></p><a class="btn block ghost" target="_blank" rel="noopener" href="https://www.google.com/maps/dir/?api=1&destination=${v.lat},${v.lng}">Directions</a>`, (c) => {
+      <p></p><a class="btn block ghost" target="_blank" rel="noopener" href="${esc(dirUrl(v))}">Directions</a>`, (c) => {
       c.querySelectorAll("[data-c]").forEach((b) => (b.onclick = () => claimFlow(b.dataset.c, v.id)));
       c.querySelectorAll("[data-d]").forEach((b) => (b.onclick = () => dropCard(b.dataset.d)));
     });

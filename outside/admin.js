@@ -511,7 +511,8 @@
   function venues(flash) {
     const all = venuesAll().slice().sort((a, b) => (b.active - a.active) || a.name.localeCompare(b.name));
     const vs = all.filter((v) => vFilter === "all" || (vFilter === "live" ? v.active : !v.active));
-    P().innerHTML = head("Venues", `${all.filter((v) => v.active).length} live on the map, ${all.filter((v) => !v.active).length} getting there.`, `<button class="btn" id="new">${ic("plus")} Add a venue</button>`) + (flash || "") +
+    const noPlace = all.filter((v) => v.lat != null && !v.place).length;
+    P().innerHTML = head("Venues", `${all.filter((v) => v.active).length} live on the map, ${all.filter((v) => !v.active).length} getting there.`, `${noPlace && can("places-fill") ? `<button class="btn sec" id="gpl" title="So Directions opens the venue on Google Maps, not a pin">Find on Google Maps (${noPlace})</button> ` : ""}<button class="btn" id="new">${ic("plus")} Add a venue</button>`) + (flash || "") +
       `<div class="row" style="margin-bottom:16px;justify-content:space-between"><div class="seg">${[["all", "All"], ["live", "Live"], ["not", "Not live"]].map(([k, n]) => `<button data-vf="${k}" class="${vFilter === k ? "on" : ""}">${n}</button>`).join("")}</div><input id="vq" placeholder="Search venues" style="max-width:260px"></div>
       <div class="vgrid" id="vg">${vs.map((v) => `<div class="vcard" data-e="${v.id}" data-name="${esc((v.name + " " + (v.area || "")).toLowerCase())}"><div class="top">${vArt(v, !!glowOf(v.id))}<div style="min-width:0"><h3>${esc(v.name)}</h3><div class="muted">${esc(v.area || "No area yet")}</div></div></div>
         <div class="meta">${v.active ? '<span class="pill ok"><span class="dot"></span>Live</span>' : `<span class="pill${v.stage === "paused" ? "" : " gold"}">${esc(STAGE[v.stage] || "Not live")}</span>`}<span class="pill">${BAND_NAMES[v.band] || "No level"}</span>${v.paused ? '<span class="pill warn">Paused by venue</span>' : ""}${v.outlet ? '<span class="pill">Account linked</span>' : ""}</div>
@@ -519,6 +520,11 @@
         <div class="foot"><button class="btn sm sec" data-open="${v.id}">Open</button>${v.active ? `<a class="btn sm sec" href="/outside/board?v=${esc(v.id)}" target="_blank" onclick="event.stopPropagation()">Runner board</a>` : ""}</div></div>`).join("")
         || `<div class="empty">No venues here yet.</div>`}</div>`;
     if (can("venue-save")) $("new").onclick = () => venueForm({}); else $("new").hidden = true;
+    const gpl = $("gpl"); if (gpl) gpl.onclick = async () => {
+      gpl.disabled = true; gpl.textContent = "Finding...";
+      const r = await call({ action: "places-fill" }); await load("venues");
+      venues(r.ok ? `<div class="note">Found ${plural(r.found, "venue")} on Google Maps.${r.none ? ` ${plural(r.none, "venue")} had no match within 250 m: set those by hand.` : ""}</div>` : `<div class="note red">${esc(PLACE_ERR[r.error] || "Google Maps didn't answer. Try again.")}</div>`);
+    };
     P().querySelectorAll("[data-vf]").forEach((b) => (b.onclick = () => { vFilter = b.dataset.vf; venues(); }));
     $("vq").oninput = () => { const q = $("vq").value.toLowerCase(); P().querySelectorAll(".vcard").forEach((c) => (c.style.display = c.dataset.name.includes(q) ? "" : "none")); };
     P().querySelectorAll("[data-e]").forEach((c) => (c.onclick = () => venueForm(venueById(c.dataset.e))));
@@ -529,6 +535,14 @@
     }));
   }
   const keysNote = (r, name) => `<div class="note keys"><b>Board codes for ${esc(name)}.</b> Shown once. Save them now.<br><span class="muted">Board link</span> <a href="${esc(r.board)}" target="_blank">${esc(r.board)}</a><div class="row" style="margin-top:10px;gap:18px"><span>Runner <b class="code">${esc(r.keys.runner)}</b></span><span>Manager <b class="code">${esc(r.keys.manager)}</b></span></div></div>`;
+  // A venue's Google Maps place: what Directions opens.
+  const PLACE_ERR = { api_off: "Places API isn't on for the Google project yet.", not_allowed: "The records service account isn't allowed to use Places yet.", no_key: "No Google service account is set.", place_id: "Google doesn't know that place ID.", not_found: "Venue not found." };
+  const placeLink = (p) => p.uri || "https://www.google.com/maps/place/?q=place_id:" + encodeURIComponent(p.id);
+  function placeBox(p) {
+    if (!p) return `<p class="muted" style="margin:0">Not looked up yet. Directions use the pin.</p>`;
+    if (p.none) return `<p class="muted" style="margin:0">No Google place within 250 m of the pin. Directions use the pin.</p>`;
+    return `<p style="margin:0"><b>${esc(p.name)}</b> <span class="pill${p.manual ? "" : " ok"}">${p.manual ? "Set by hand" : "Matched"}</span><br><span class="muted">${esc(p.addr)}${p.m != null ? " · " + p.m + " m from the pin" : ""}</span><br><a target="_blank" href="${esc(placeLink(p))}">Open it on Google Maps</a></p>`;
+  }
   async function reopenVenue(id, flash) { await load("venues"); venueForm(venueById(id), flash); }
   function venueForm(v, flash) {
     page = "venues"; root.querySelectorAll("[data-nav]").forEach((b) => b.classList.toggle("on", b.dataset.nav === "venues"));
@@ -551,7 +565,10 @@
         <p class="muted" style="margin:0 0 12px">Stand inside and tap Use my location, or paste a Google Maps link.</p>
         <div class="row"><button class="btn sec" id="here">${ic("gaps")} Use my location</button><input id="gm" placeholder="Paste a Google Maps link" style="flex:1;min-width:220px"></div>
         <div class="grid"><div><label class="lb">Latitude</label><input id="lat" value="${v.lat ?? ""}"></div><div><label class="lb">Longitude</label><input id="lng" value="${v.lng ?? ""}"></div><div><label class="lb">Radius, metres</label><input id="radius" value="${v.radius || 60}"></div></div>
-        ${v.lat ? `<p style="margin:12px 0 0"><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${v.lat},${v.lng}">Check it on Google Maps</a></p>` : ""}</div>
+        ${v.lat ? `<p style="margin:12px 0 0"><a target="_blank" href="https://www.google.com/maps/search/?api=1&query=${v.lat},${v.lng}">Check it on Google Maps</a></p>` : ""}
+        ${v.id && v.lat != null ? `<div class="gplace"><label class="lb">Google Maps place <span class="faint">Directions open this</span></label><div id="gpbox">${placeBox(v.place)}</div>
+          <div class="row" style="margin-top:8px"><input id="gpid" placeholder="${v.place && v.place.id ? "Wrong? " : ""}Paste its place ID" style="flex:1;min-width:200px"><button class="btn sm sec" id="gpset">Use</button><button class="btn sm sec" id="gpfind">Find again</button></div>
+          <div class="faint" style="margin-top:6px">Get a place ID from <a target="_blank" href="https://developers.google.com/maps/documentation/javascript/examples/places-placeid-finder">Google's place ID finder</a>.</div></div>` : ""}</div>
       <div class="card"><div class="ch"><h2>Manager</h2></div><div class="grid"><div><label class="lb">Name</label><input id="cn" value="${esc((v.contact || {}).name || "")}"></div><div><label class="lb">Phone</label><input id="cp" value="${esc((v.contact || {}).phone || "")}"></div></div></div>
       <div class="row" style="margin-top:16px"><button class="btn lg" id="save">Save venue</button><span class="muted" id="msg"></span></div></div>
       <div>${v.id ? `<div class="card"><div class="ch"><h2>${v.active ? "Live" : "Go live"}</h2></div>
@@ -580,6 +597,12 @@
     });
     document.querySelectorAll("[data-p]").forEach((i) => i.addEventListener("input", showLevels)); showLevels();
     P().querySelectorAll("[data-art]").forEach((b) => (b.onclick = () => { $("art").value = b.dataset.art; P().querySelectorAll("[data-art]").forEach((x) => x.classList.toggle("on", x === b)); }));
+    const gps = async (body, btn) => {
+      btn.disabled = true; const r = await call({ action: "venue-place", id: v.id, ...body }); btn.disabled = false;
+      if (!r.ok) return toast(PLACE_ERR[r.error] || "Google Maps didn't answer. Try again.");
+      v.place = r.place; $("gpbox").innerHTML = placeBox(r.place); $("gpid").value = ""; toast(r.place && r.place.id ? "Place set." : "No match near the pin."); load("venues");
+    };
+    if ($("gpset")) { $("gpset").onclick = (e) => $("gpid").value.trim() ? gps({ placeId: $("gpid").value.trim() }, e.currentTarget) : toast("Paste a place ID first."); $("gpfind").onclick = (e) => gps({}, e.currentTarget); }
     $("here").onclick = () => navigator.geolocation.getCurrentPosition((p) => { $("lat").value = p.coords.latitude.toFixed(6); $("lng").value = p.coords.longitude.toFixed(6); toast("Location set, about " + Math.round(p.coords.accuracy) + "m. Save to keep it."); }, () => toast("Location not available."), { enableHighAccuracy: true, timeout: 15000 });
     $("gm").oninput = () => { const m = $("gm").value.match(/(-?\d{1,2}\.\d{3,})[, ]+(-?\d{1,3}\.\d{3,})/) || $("gm").value.match(/@(-?\d+\.\d+),(-?\d+\.\d+)/); if (m) { $("lat").value = m[1]; $("lng").value = m[2]; toast("Location read from the link. Save to keep it."); } };
     $("save").onclick = async () => {

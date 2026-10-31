@@ -21,7 +21,7 @@ const P = {
   requests: ["owner", "ops", "field"], "request-update": ["owner", "ops", "field"],
   bottles: ["owner", "ops", "field", "finance"], bottle: ["owner", "ops", "field", "finance"],
   ledger: ["owner", "ops", "finance"], balance: ["owner", "ops", "finance"], "ledger-paid": ["owner", "ops", "finance"], "payout-send": ["owner", "ops", "finance"],
-  "request-list": RUN, "venue-save": RUN, "venue-keys": RUN, "venue-link": RUN, "venue-supply": RUN, "venue-purchase": RUN, "venue-live": RUN, "venue-off": RUN,
+  "request-list": RUN, "venue-save": RUN, "venue-place": RUN, "places-fill": RUN, "venue-keys": RUN, "venue-link": RUN, "venue-supply": RUN, "venue-purchase": RUN, "venue-live": RUN, "venue-off": RUN,
   "staff-add": RUN, "staff-remove": RUN, "payout-account": RUN, "payout-resolve": RUN, "outlet-search": RUN, "outlet-get": RUN,
   tents: RUN, "bands-save": RUN, codes: RUN, "code-save": RUN, "code-active": RUN,
   "submission-approve": RUN, "submission-return": RUN, "submission-photo": ["owner", "ops", "field"],

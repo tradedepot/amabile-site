@@ -278,7 +278,8 @@ export function publicVenue(v, bands) {
     id: v.id, name: v.name, area: v.area || "", lat: v.lat, lng: v.lng, band: bands ? venueBand(bands, v) : v.band,
     ...(bands ? { levels: venueLevels(bands, v) } : {}),
     wines: Object.keys(v.prices || {}).filter((w) => v.prices[w] > 0),
-    tonight: v.tonight || "", art: v.art || "lounge", active: !!v.active
+    tonight: v.tonight || "", art: v.art || "lounge", active: !!v.active,
+    ...(v.place && v.place.id ? { placeId: v.place.id } : {})
   };
 }
 

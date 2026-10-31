@@ -34,6 +34,7 @@ export async function approveSubmission(s, id, { by, confirmMismatch = false }) 
   // Picked from our records: the venue stays tied to the account we supply.
   if (x.outletId) v.outlet = { id: x.outletId, ids: x.outletIds || [x.outletId], name: x.recordName || x.name, linkedAt: now, linkedBy: by };
   v.band = venueBand(await getBands(s), v);
+  { const { matchVenue } = await import("./_outside_places.mjs"); await matchVenue(v); }
   await s.setJSON(K.venue(v.id), v);
   r.venueId = v.id;
   r.history = [...(r.history || []), { at: now, stage: "approved", by: confirmMismatch ? by + " (checked the bank name)" : by }].slice(-30);
