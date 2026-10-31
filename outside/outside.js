@@ -518,9 +518,10 @@
     if (!r.ok) return toast(r.error === "wallet_off" ? "Wallet isn't available just yet." : "Couldn't open Wallet. Try again.");
     // WhatsApp's or Instagram's own browser can't hand a card to Wallet. Safari can.
     if (k === "apple" && inAppIOS()) return modal(`<h2>Add it in Safari</h2><p class="muted">This browser can't add cards to Wallet. Safari can, in one tap.</p>
-      <a class="btn block" href="x-safari-${esc(r.url)}">Open in Safari</a><p></p><button class="btn block ghost" id="cpw">Copy the link</button>
+      <a class="btn block" href="x-safari-${esc(r.url.replace("/api/wallet/add?", "/api/wallet/open?"))}">Open in Safari</a><p></p><button class="btn block ghost" id="cpw">Copy the link</button>
       <p class="fine" style="text-align:center">If Safari doesn't open, tap ⋯ at the top and choose Open in browser.</p>`, (c) => {
-      c.querySelector("#cpw").onclick = async () => { try { await navigator.clipboard.writeText(r.url); toast("Copied. Paste it in Safari."); } catch { prompt("Copy this link", r.url); } };
+      const open = r.url.replace("/api/wallet/add?", "/api/wallet/open?");
+      c.querySelector("#cpw").onclick = async () => { try { await navigator.clipboard.writeText(open); toast("Copied. Paste it in Safari."); } catch { prompt("Copy this link", open); } };
     });
     location.href = r.url;
   }
